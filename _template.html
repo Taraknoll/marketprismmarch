@@ -17494,38 +17494,6 @@ var BOARDS=[
   fetch:function(){return scorecardFallback(function(s){var ns=s.narrative_state;return Number(s.narrative_mass_score)>0.35 && ns!=null && ns!=='DORMANT';},function(s){var m=Number(s.narrative_mass_score)||0;var wks=Number(s.wks_score)||0;var wL=wks>10?'bullish':wks<-10?'bearish':'neutral';return{name:s.ticker,link:'/ticker/'+s.ticker,meta:'WKS '+(wks>0?'+':'')+Math.round(wks)+' ('+wL+') \u00b7 NRS '+Math.round(Number(s.nrs)||0),score:m*100,scoreDisplay:m.toFixed(2),_scoreColor:wks>10?'#00DE94':wks<-10?'#FF4D4D':'#00AEFF'};},function(a,b){return(Number(b.narrative_mass_score)||0)-(Number(a.narrative_mass_score)||0);},10);}},
   {id:'coordination',title:'SPAM ALARM',sub:'Synchronized bot chatter detected',color:'#FF4D4D',bg:'rgba(255,77,77,0.12)',scoreLabel:'Coord Score',
   fetch:function(){return scorecardFallback(function(s){return Number(s.coordination_score)>30;},function(s){var cs=Number(s.coordination_score)||0;return{name:s.ticker,link:'/ticker/'+s.ticker,meta:(s.coordination_class||'')+' \u00b7 NRS '+Math.round(Number(s.nrs)||0),score:cs,scoreDisplay:Math.round(cs),_scoreColor:cs>70?'#FF4D4D':cs>50?'#FFB800':'#FFD700'};},function(a,b){return(Number(b.coordination_score)||0)-(Number(a.coordination_score)||0);},10);}},
-  {id:'best-entry-zone',title:'DISCOUNT WINDOW',sub:'Live price just dropped into a historically-profitable buy zone',color:'#38C8B8',bg:'rgba(56,200,184,0.12)',scoreLabel:'Discount',
-  fetch:async function(){
-    try{
-      // v_tickers_in_best_entry_zone joins ticker_strategy_summary with the latest
-      // ticker_snapshots row to compute live drawdown vs 60d peak, then flags
-      // tickers whose live drawdown lands inside their best historical zone.
-      // Filter to in-zone AND positive historical edge \u2014 a "best zone" with a
-      // negative backtest isn't actually a buy signal even if currently cheap.
-      // Sort by deepest discount first.
-      var rows=await sq('v_tickers_in_best_entry_zone?in_zone=eq.true&backtested_5d_return=gt.0&order=current_drawdown.asc&limit=10');
-      if(!rows||!rows.length) return [];
-      return rows.map(function(r){
-        var dd=Number(r.current_drawdown)||0;
-        var ddPct=dd*100;
-        var bt=Number(r.backtested_5d_return)||0;
-        var btPct=bt*100;
-        var zoneShort=String(r.best_historical_entry_zone||'').split(' ')[0].replace(/_/g,' ')||'\u2014';
-        var obs=Number(r.best_entry_zone_observations)||0;
-        var px=Number(r.current_price)||0;
-        // Color: deeper, more proven discount = greener
-        var color = ddPct<=-20 ? '#00DE94' : ddPct<=-10 ? '#38C8B8' : '#00AEFF';
-        return {
-          name:r.ticker,
-          link:'/ticker/'+r.ticker,
-          meta:'$'+px.toFixed(2)+' \u00b7 '+zoneShort+' zone \u00b7 '+obs+' obs \u00b7 backtest +'+btPct.toFixed(1)+'%',
-          score:-ddPct, // larger positive number = bigger discount, sorts to top
-          scoreDisplay:ddPct.toFixed(1)+'%',
-          _scoreColor:color
-        };
-      });
-    }catch(e){console.warn('[Leaderboard Best Entry Zone] fetch failed:',e);return [];}
-  }},
   {id:'ai-picks',title:'CLAUDE\u2019S CONVICTION LIST',sub:'Claude\u2019s top 10 picks \u2014 synthesized only from Market Prism\u2019s daily signal stack',color:'#A78BFA',bg:'rgba(167,139,250,0.12)',scoreLabel:'Conviction',
   // 30s override \u2014 Claude calls can take 5-15s on a cold Supabase cache miss.
   timeout:30000,
