@@ -17718,6 +17718,21 @@ function renderBoardSkeleton(b){
 function replaceBoardData(b, rows){
   var slot=document.querySelector('[data-board-id="'+CSS.escape(b.id)+'"]');
   if(!slot) return;
+  // Per-board dedup: the same ticker must never occupy two rows on the same
+  // board, even if the underlying data has whitespace/case variants of the
+  // ticker string or a board's fetch joins to a multi-row source (e.g. Clean
+  // Signals' per-keyword rows). Keep the first occurrence — rows are already
+  // sorted by the board's ranking criterion, so the higher-ranked entry wins.
+  if(Array.isArray(rows) && rows.length){
+    var _seen=Object.create(null);
+    rows=rows.filter(function(r){
+      var k=(r&&r.name?String(r.name):'').trim().toUpperCase();
+      if(!k) return true;
+      if(_seen[k]) return false;
+      _seen[k]=true;
+      return true;
+    });
+  }
   var html = (rows && rows.length) ? renderBoard(b, rows) : renderEmpty(b);
   // Replace just the section, preserving DOM position so the grid doesn't reflow.
   var tmp=document.createElement('div');
