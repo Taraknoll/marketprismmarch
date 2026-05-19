@@ -4794,6 +4794,13 @@ body{
         </button>
       </div>
 
+      <!-- Dashboard data error banner (shown when loadData() throws — e.g. dashboard-data 500, RLS blocks, missing keys) -->
+      <div id="daily-error-banner" style="display:none;background:rgba(255,77,77,0.10);border:1px solid rgba(255,77,77,0.32);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#FF8B8B;line-height:1.55;">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:18px;color:#FF4D4D;margin-bottom:6px;letter-spacing:-0.01em;">Live data unavailable</div>
+        <div id="daily-error-banner-msg">We couldn't load today's trade ideas or signal counts. Static sector cards below are seed data — prices and verdicts won't be current until the data pipeline recovers.</div>
+        <div id="daily-error-banner-detail" style="font-size:11px;color:rgba(255,139,139,0.7);margin-top:8px;font-family:var(--font-body);"></div>
+      </div>
+
       <!-- 0b) WHAT'S THE PLAY — Trade Lanes -->
       <div class="tl-section" id="tl-container" style="display:none;">
         <div class="tl-header">
@@ -5464,6 +5471,12 @@ body{
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           <span>Refresh</span>
         </button>
+      </div>
+      <!-- Leaderboard data error banner (shown when board fetches fail — e.g. RLS lockdown, dashboard-data 500, missing keys) -->
+      <div id="lb-error-banner" style="display:none;background:rgba(255,77,77,0.10);border:1px solid rgba(255,77,77,0.32);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#FF8B8B;line-height:1.55;">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:18px;color:#FF4D4D;margin-bottom:6px;letter-spacing:-0.01em;">Live rankings unavailable</div>
+        <div id="lb-error-banner-msg">Several leaderboards couldn't load. This usually means the data pipeline is down or table permissions were recently changed.</div>
+        <div id="lb-error-banner-detail" style="font-size:11px;color:rgba(255,139,139,0.7);margin-top:8px;font-family:var(--font-body);"></div>
       </div>
       <div id="lb-loading" style="text-align:center;padding:60px 0;color:var(--mp-text-tertiary);font-size:14px;">Loading rankings…</div>
       <div id="lb-error" style="display:none;color:#FF4D4D;font-size:13px;padding:20px 0;"></div>
@@ -8060,6 +8073,15 @@ async function loadData(){
   } catch(err){
     if(_tipInterval){clearInterval(_tipInterval);_tipInterval=null;}
     feed.innerHTML='<div class="empty-state" style="color:var(--mp-red);">Failed to load: '+esc(err.message)+'<br><small style="font-size:11px;opacity:.6;">Check Supabase credentials in environment variables.</small></div>';
+    // Surface the failure on the Daily Plays tab — otherwise users see dashes
+    // and blank lanes with no explanation. Trade ideas, Signal Summary, Sector
+    // Momentum and Upcoming Earnings all depend on this fetch.
+    try{
+      var _eb=document.getElementById('daily-error-banner');
+      var _ed=document.getElementById('daily-error-banner-detail');
+      if(_eb)_eb.style.display='block';
+      if(_ed)_ed.textContent='Error: '+(err&&err.message?err.message:'unknown')+' · Tried '+new Date().toLocaleTimeString();
+    }catch(_){}
     // Still render static demos
     renderSectors();
     renderTrapChart();
@@ -17904,6 +17926,24 @@ async function loadLeaderboard(){
     // can render the moment Supabase responds, often well before the bundle.
     var scorecardReady = waitForScorecardMap(10000);
 
+    // Track board failures. If a meaningful fraction fail (>=3), surface the
+    // banner so users understand why so many boards are empty — silent per-board
+    // failures (the prior behavior) made an RLS/keys outage look like "no data".
+    var _lbFailures=[];
+    var _lbSettled=0;
+    var _lbTotal=BOARDS.length;
+    var _lbBanner=document.getElementById('lb-error-banner');
+    var _lbBannerDetail=document.getElementById('lb-error-banner-detail');
+    function _lbMaybeShowBanner(){
+      if(_lbSettled<_lbTotal||!_lbBanner)return;
+      if(_lbFailures.length>=3){
+        _lbBanner.style.display='block';
+        if(_lbBannerDetail){
+          var sample=_lbFailures.slice(0,2).map(function(f){return f.id+': '+f.msg;}).join(' · ');
+          _lbBannerDetail.textContent=_lbFailures.length+'/'+_lbTotal+' boards failed · '+sample+(_lbFailures.length>2?' · …':'')+' · '+new Date().toLocaleTimeString();
+        }
+      }
+    }
     BOARDS.forEach(function(b){
       var usesScorecard = b.fetch.toString().indexOf('scorecardFallback') !== -1
                        || b.fetch.toString().indexOf('dataFallback') !== -1;
@@ -17912,9 +17952,13 @@ async function loadLeaderboard(){
         return withTimeout(b.fetch(), b.timeout||10000);
       }).then(function(rows){
         replaceBoardData(b, rows);
+        _lbSettled++;_lbMaybeShowBanner();
       }).catch(function(e){
-        console.warn('Leaderboard board "'+b.id+'" failed:', e&&e.message?e.message:e);
+        var msg=e&&e.message?e.message:String(e||'unknown');
+        console.warn('Leaderboard board "'+b.id+'" failed:', msg);
+        _lbFailures.push({id:b.id,msg:msg});
         replaceBoardData(b, []);
+        _lbSettled++;_lbMaybeShowBanner();
       });
     });
     // Live-price MutationObserver will auto-fire on the newly-inserted rows.
