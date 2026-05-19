@@ -8144,7 +8144,7 @@ async function loadNarratives() {
 
       // Quality signals
       const signals = [
-        n.has_source_ref     ? { lbl: 'Has source',    cls: 'good' } : { lbl: 'No source',     cls: 'warn' },
+        n.has_source_ref     ? { lbl: 'Has source',    cls: 'good' } : null,
         n.has_numeric_anchor ? { lbl: 'Data-backed',   cls: 'good' } : { lbl: 'No data anchor', cls: 'warn' },
         n.has_vague_language ? { lbl: 'Vague language',cls: 'warn' } : { lbl: 'Precise language', cls: 'good' },
         n.causal_logic_score != null
