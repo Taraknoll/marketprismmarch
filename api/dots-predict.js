@@ -291,7 +291,11 @@ module.exports = async function (req, res) {
       for (let i = 0; i < hitVals.length; i++) wSum += hitVals[i] * hitWeights[i];
       narrativeHitRate5d = Math.round((wSum / totalW) * 1000) / 1000;
       narrativeHitRateNResolved = hitVals.length;
-      narrativeHitRateConfidence = Math.round(Math.min(hitVals.length / 200.0, 1.0) * 1000) / 1000;
+      // Confidence saturates at ~80 resolved analogues. Previously /200, which
+      // forced ~every search below the 35% verdict floor in computeDecision()
+      // and made the Narrative Lab read "WEAK SIGNAL" universally. 80 better
+      // matches the typical resolved-neighbor distribution.
+      narrativeHitRateConfidence = Math.round(Math.min(hitVals.length / 80.0, 1.0) * 1000) / 1000;
     }
 
     // 4c. Cluster-conditional hit rate (best-effort — clusterer cron may not
