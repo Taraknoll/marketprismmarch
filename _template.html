@@ -4784,6 +4784,10 @@ body{
       </div>
       <div class="lb-toolbar">
         <span class="lb-toolbar-date" id="daily-date-tag"></span>
+        <button class="lb-refresh-btn mp-export-hide" id="daily-download-btn" onclick="mpDownloadDailyPage(this)" title="Download entire dashboard as PNG">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m6 12 6 6 6-6"/><path d="M5 20h14"/></svg>
+          <span>Download page</span>
+        </button>
         <button class="lb-refresh-btn mp-export-hide" id="daily-refresh-btn" onclick="refreshDailyBrief()" title="Refresh daily plays">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           <span>Refresh</span>
@@ -10419,6 +10423,24 @@ function ncTruthRingSVG(val, color){
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function esc(s){return s?(s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';  }
+// Strip a trailing duplicated suffix from sector/narrative text.
+// Some upstream summaries occasionally emit "...X. X." where X is the last
+// 1-3 sentences. Find the longest tail (>=40 chars) that also appears earlier
+// in the string and trim the trailing copy.
+function dedupSuffix(s){
+  if(!s||typeof s!=='string')return s;
+  var t=s.replace(/\s+$/,'');
+  if(t.length<80)return s;
+  var maxLen=Math.floor(t.length/2);
+  for(var L=maxLen;L>=40;L--){
+    var tail=t.slice(-L);
+    var head=t.slice(0,t.length-L);
+    if(head.lastIndexOf(tail)>=0){
+      return head.replace(/[\s\n]+$/,'');
+    }
+  }
+  return s;
+}
 function stateClass(s){return {'Breaking':'badge-breaking','Surging':'badge-surging','Fragile':'badge-fragile','Stable':'badge-stable'}[s]||'badge-stable';}
 function verdictClass(v){var l=(v||'').toLowerCase();if(l.indexOf('trap')!==-1||l.indexOf('disconnect')!==-1)return 'verdict-trap';if(l.indexOf('supported')!==-1||l.indexOf('verified')!==-1)return 'verdict-supported';if(l.indexOf('monitor')!==-1)return 'verdict-monitoring';return 'verdict-neutral';}
 function pipClass(v){return v==='Narrative Trap'?'pip-trap':v==='Structurally Supported'?'pip-supported':'pip-monitoring';}
@@ -11049,7 +11071,7 @@ function renderSectors(){
         +'<div class="sector-tickers">'+s.tickers.map(sectorChipHTML).join('')+'</div>'
       +'</div>'
       +'<div class="sector-body">'
-        +'<div class="sector-desc">'+esc(s.desc)+'</div>'
+        +'<div class="sector-desc">'+esc(dedupSuffix(s.desc))+'</div>'
         +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'
           +'<span class="sector-state '+sc+'" style="font-size:10px;padding:2px 8px;">'+s.state.toUpperCase()+'</span>'
           +liveNote
@@ -11090,7 +11112,7 @@ function renderSectors(){
         +dlBtn
         +'</div></div>'
         +'<div class="sector-tickers-row" style="padding:0 16px 10px;border-bottom:1px solid var(--mp-border);"><div class="sector-tickers">'+s.tickers.map(sectorChipHTML).join('')+'</div></div>'
-        +'<div class="sector-body"><div class="sector-desc">'+esc(s.desc)+'</div>'
+        +'<div class="sector-body"><div class="sector-desc">'+esc(dedupSuffix(s.desc))+'</div>'
         +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><span class="sector-state badge-stable" style="font-size:10px;padding:2px 8px;">'+s.state.toUpperCase()+'</span>'+liveNote+'</div></div>'
         +'<div class="sector-momentum-bar"><span class="sector-bar-lbl">Momentum</span><div class="sector-bar-track"><div class="sector-bar-fill" style="width:'+s.momentum+'%;background:'+bar_color+';"></div></div><span class="sector-bar-pct">'+s.momentum+'%</span></div>'
         +'<div class="sector-footer"><span class="sector-cagr">CAGR '+s.cagr+'</span>'+liveNote+'</div></div>';
