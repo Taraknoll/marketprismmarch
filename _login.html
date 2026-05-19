@@ -417,6 +417,9 @@ body::before{
     ]).then(function(result){
       if(result && result.data && result.data.session){
         // Self-heal: mint the cookie for legacy localStorage-only sessions, then continue.
+        // Also set mp_auth so the legacy pw-gate overlay on _template.html dismisses for
+        // returning paid users (matches what handleBetaCode does).
+        try { localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()})); } catch(_){}
         mintSessionCookie(result.data.session.access_token).then(function(){
           window.location.href = nextDestination();
         });
@@ -530,6 +533,8 @@ body::before{
       document.getElementById('btn-signin').classList.add('success');
       var token = result.data && result.data.session ? result.data.session.access_token : null;
       await mintSessionCookie(token);
+      // Dismiss the legacy pw-gate overlay on gated pages (same flag handleBetaCode sets).
+      try { localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()})); } catch(_){}
       setTimeout(function(){ window.location.href = nextDestination(); }, 800);
     } catch(err){
       if(isOutageError(err)){
@@ -567,6 +572,8 @@ body::before{
       }
       var regToken = result.data && result.data.session ? result.data.session.access_token : null;
       await mintSessionCookie(regToken);
+      // Dismiss the legacy pw-gate overlay on gated pages (same flag handleBetaCode sets).
+      try { localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()})); } catch(_){}
       setTimeout(function(){ window.location.href = nextDestination(); }, 800);
     } catch(err){
       if(isOutageError(err)){

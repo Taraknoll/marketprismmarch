@@ -3804,49 +3804,7 @@ body{
   .scholar-fab.open{width:48px;height:48px;position:fixed;bottom:0;right:0;left:auto;border-radius:0;border-top:1px solid rgba(0,174,255,0.12);border-left:1px solid rgba(0,174,255,0.12);}
   .scholar-panel{bottom:48px;right:0;left:0;width:auto;max-width:none;max-height:calc(100vh - 56px);border-radius:16px 16px 0 0;}
 }
-/* ── PASSWORD GATE ── */
-.pw-gate{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--mp-obsidian);
-  display:flex;align-items:center;justify-content:center;
-  transition:opacity .4s,visibility .4s;
-}
-.pw-gate.hidden{opacity:0;visibility:hidden;pointer-events:none;}
-.pw-box{
-  width:340px;padding:36px 32px;border-radius:16px;
-  background:var(--mp-surface);
-  border:1px solid var(--mp-border);
-  box-shadow:0 8px 40px rgba(0,0,0,0.5),0 0 80px rgba(0,174,255,0.04);
-  text-align:center;
-}
-.pw-box-logo{
-  display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;
-}
-.pw-box-logo span{font-family:'Inter',var(--font-body);font-size:18px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--mp-text-primary);}
-.pw-box h2{
-  font-family:var(--font-body);font-size:15px;font-weight:500;
-  color:var(--mp-text-secondary);margin-bottom:20px;
-}
-.pw-input{
-  width:100%;padding:12px 16px;border-radius:10px;
-  background:var(--mp-obsidian);border:1px solid var(--mp-border);
-  color:var(--mp-text-primary);font-family:var(--font-body);font-size:14px;
-  outline:none;transition:border-color .2s;
-}
-.pw-input:focus{border-color:rgba(0,174,255,0.4);}
-.pw-input.error{border-color:#FF4D4D;animation:pwShake .4s ease;}
-.pw-submit{
-  width:100%;margin-top:12px;padding:11px;border-radius:10px;border:none;
-  background:linear-gradient(135deg,#00AEFF,#0090DD);
-  color:#fff;font-family:var(--font-body);font-size:13px;font-weight:600;
-  cursor:pointer;transition:opacity .2s;letter-spacing:.02em;
-}
-.pw-submit:hover{opacity:.9;}
-.pw-error-msg{
-  font-family:var(--font-body);font-size:12px;color:#FF4D4D;
-  margin-top:10px;min-height:18px;
-}
-@keyframes pwShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}50%{transform:translateX(6px);}75%{transform:translateX(-4px);}}
+/* (legacy .pw-gate / .pw-box styles removed 2026-05-19 — overlay deleted, server gate is sole authority) */
 
 /* ══════════════════════════════════════════════════════════════════════════════
    NARRATIVE FEED — 2-column tabbed scrollable layout
@@ -4631,92 +4589,16 @@ body{
 </style>
 </head>
 <body>
-<!-- ── ACCESS GATE ── -->
-<div class="pw-gate" id="pw-gate">
-  <div class="pw-box" style="max-width:420px;">
-    <div class="pw-box-logo">
-      <span>Market Prism</span>
-    </div>
-    <h2 style="margin-bottom:8px;">Unlock the dashboard</h2>
-    <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:24px;line-height:1.5;">Enter a beta access code, or subscribe for full access to all 172 tickers, Signal Lab, Trading Cards, and more.</p>
-    <form id="pw-form" onsubmit="return checkAccessCode(event)">
-      <input class="pw-input" id="pw-input" type="text" placeholder="Beta access code" autocomplete="off" autofocus>
-      <button class="pw-submit" type="submit">Unlock</button>
-      <div class="pw-error-msg" id="pw-error"></div>
-    </form>
-    <div style="display:flex;align-items:center;gap:12px;margin:20px 0 16px;">
-      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
-      <span style="font-size:11px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.08em;">or</span>
-      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
-    </div>
-    <a href="/pricing" style="display:block;width:100%;padding:13px 0;border-radius:10px;background:linear-gradient(135deg,rgba(0,222,148,0.85),rgba(0,222,148,0.55));color:#fff;font-size:14px;font-weight:600;text-align:center;text-decoration:none;letter-spacing:.04em;border:none;cursor:pointer;transition:transform .2s;box-shadow:0 8px 20px rgba(0,0,0,0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">GET FULL ACCESS — <span style="text-decoration:line-through;opacity:0.5;font-weight:400;">$68</span> $25/MONTH</a>
-    <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:10px;text-align:center;">63% off — founding member pricing locked for 12 months. First 150 spots only.</div>
-  </div>
-</div>
-<script>
-(function(){
-  var STORAGE_KEY = 'mp_auth';
-  var SESSION_HOURS = 24;
+<!-- ── ACCESS GATE removed 2026-05-19 ──
+     The legacy pw-gate overlay (with hardcoded "karma"/"prismview" passwords)
+     used to live here. It's gone because:
+       1. api/_require-auth.js (the server gate) is the sole source of truth.
+          Unauthenticated visitors are 302'd to /login before any HTML is sent.
+       2. Beta code redemption lives at /login#beta where it's server-validated
+          against the BETA_CODES env var — no client-side hardcoded passwords.
+       3. The vercel.json /dashboard CDN cache header was also removed in the
+          same change, so the server gate actually runs on every request. -->
 
-  // Check if already authenticated via old password gate session
-  try{
-    var stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-    if(stored.t && (Date.now()-stored.t)<SESSION_HOURS*3600000){
-      document.getElementById('pw-gate').classList.add('hidden');
-    }
-  }catch(e){}
-
-  // Also check beta access
-  try{
-    var isBeta = localStorage.getItem('mp-beta-access') === 'true';
-    var betaExpires = localStorage.getItem('mp-beta-expires');
-    if(isBeta && betaExpires && new Date(betaExpires) > new Date()){
-      document.getElementById('pw-gate').classList.add('hidden');
-    }
-  }catch(e){}
-
-  window.checkAccessCode=function(e){
-    e.preventDefault();
-    var input=document.getElementById('pw-input');
-    var val=input.value.trim().toLowerCase();
-
-    if(val==='prismview'){
-      var expires = new Date(); expires.setDate(expires.getDate() + 14);
-      localStorage.setItem('mp-beta-access', 'true');
-      localStorage.setItem('mp-beta-tier', 'pro');
-      localStorage.setItem('mp-beta-expires', expires.toISOString());
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({t:Date.now()}));
-      document.getElementById('pw-gate').classList.add('hidden');
-      input.value='';
-      return false;
-    }
-
-    if(val==='karma'){
-      var expires = new Date(); expires.setDate(expires.getDate() + 7);
-      localStorage.setItem('mp-beta-access', 'true');
-      localStorage.setItem('mp-beta-tier', 'pro');
-      localStorage.setItem('mp-beta-expires', expires.toISOString());
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({t:Date.now()}));
-      document.getElementById('pw-gate').classList.add('hidden');
-      input.value='';
-      return false;
-    }
-
-    // Legacy password support
-    if(val==='Karma' || val==='karma'){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({t:Date.now()}));
-      document.getElementById('pw-gate').classList.add('hidden');
-      input.value='';
-      return false;
-    }
-
-    input.classList.add('error');
-    document.getElementById('pw-error').textContent='Invalid access code. Try again.';
-    setTimeout(function(){input.classList.remove('error');},500);
-    return false;
-  };
-})();
-</script>
 <!-- ── FULL PAGE LOADER ── -->
 <div class="mp-page-loader" id="mp-page-loader">
   <img class="mp-loader-logo" src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
