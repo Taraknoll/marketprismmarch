@@ -17949,6 +17949,64 @@ onTabSwitch(function(id){
     if(_lbAutoRefresh){clearInterval(_lbAutoRefresh);_lbAutoRefresh=null;}
   }
 });
+
+// Dev tool — board orthogonality analyzer. Run from devtools console while
+// on the Leaderboard tab. Returns the per-board ticker sets, the full
+// pairwise Jaccard similarity matrix, and any pair above 0.4 (the rough
+// "these boards are redundant" threshold). No render-time cost; lazy.
+window.computeBoardJaccard = function(opts){
+  var threshold = (opts && opts.threshold!=null) ? Number(opts.threshold) : 0.4;
+  var titleById={};
+  BOARDS.forEach(function(b){titleById[b.id]=b.title;});
+  var sections=document.querySelectorAll('.lb-section[data-board-id]');
+  var boards={};
+  sections.forEach(function(s){
+    var id=s.getAttribute('data-board-id');
+    var set=new Set();
+    s.querySelectorAll('.lb-row .lb-name').forEach(function(n){
+      var raw=n.firstChild&&n.firstChild.textContent||n.textContent||'';
+      var t=raw.trim().toUpperCase();
+      if(t) set.add(t);
+    });
+    if(set.size) boards[id]=set;
+  });
+  var ids=Object.keys(boards);
+  var matrix={};
+  ids.forEach(function(a){
+    matrix[titleById[a]||a]={};
+    ids.forEach(function(b){
+      if(a===b){matrix[titleById[a]||a][titleById[b]||b]=1;return;}
+      var sa=boards[a],sb=boards[b],inter=0;
+      sa.forEach(function(t){if(sb.has(t))inter++;});
+      var union=sa.size+sb.size-inter;
+      matrix[titleById[a]||a][titleById[b]||b]=union?Number((inter/union).toFixed(3)):0;
+    });
+  });
+  var redundant=[];
+  for(var i=0;i<ids.length;i++){
+    for(var j=i+1;j<ids.length;j++){
+      var sa=boards[ids[i]],sb=boards[ids[j]],inter=0;
+      sa.forEach(function(t){if(sb.has(t))inter++;});
+      var union=sa.size+sb.size-inter;
+      var jac=union?inter/union:0;
+      if(jac>threshold){
+        var shared=[];sa.forEach(function(t){if(sb.has(t))shared.push(t);});
+        redundant.push({a:titleById[ids[i]]||ids[i],b:titleById[ids[j]]||ids[j],jaccard:Number(jac.toFixed(3)),sharedCount:inter,shared:shared.join(',')});
+      }
+    }
+  }
+  console.log('%cBoard Jaccard similarity matrix','font-weight:bold;font-size:13px;');
+  console.table(matrix);
+  if(redundant.length){
+    console.log('%cRedundant pairs (Jaccard > '+threshold+'):','color:#FF4D4D;font-weight:bold;');
+    console.table(redundant);
+  } else {
+    console.log('%cNo redundant pairs above '+threshold+' — boards are independent.','color:#00DE94;');
+  }
+  var tickers={};
+  ids.forEach(function(id){tickers[titleById[id]||id]=Array.from(boards[id]);});
+  return {tickers:tickers,matrix:matrix,redundant:redundant};
+};
 })();
 
 // ── Info tooltip hover handler ──
