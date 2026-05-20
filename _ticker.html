@@ -5314,15 +5314,30 @@ var _livePrefetch = TICKER
       .catch(function(){ return null; })
   : null;
 
-async function sbFetch(table, params) {
+// 15s ceiling per Supabase REST call. When the DB is saturated the response
+// can hang indefinitely; without this loadHero's Promise.allSettled would
+// sit at "Analyzing signals…" forever. Aborting lets callers degrade with
+// whatever data did come back. Mirrors the Signal Lab fix in e2af8ad.
+async function sbFetch(table, params, timeoutMs) {
   const qs = Object.entries(params || {})
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
     .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
     .join('&');
   const url = SUPABASE_URL + '/rest/v1/' + table + (qs ? '?' + qs : '');
-  const res = await fetch(url, {
-    headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Accept': 'application/json' }
-  });
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs || 15000);
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Accept': 'application/json' },
+      signal: ctrl.signal
+    });
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('[' + table + '] timeout after ' + (timeoutMs || 15000) + 'ms');
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error('[' + table + '] ' + res.status + ': ' + body.slice(0, 200));
@@ -6240,7 +6255,11 @@ async function loadHero() {
       'sector_trap_flag','sector_trap_name','days_to_options_expiry','next_options_expiry'
     ].join(',');
 
-    const [rows, healthRows, snapRows, tradeRows, scorecardRows, cvRows, earnContextRows, forecastRows, latestBzEarningsRows, fairValueRows, strategyRows] = await Promise.all([
+    // allSettled — hero renders with whatever data did come back. Without this,
+    // a single saturated-Supabase hang in any of the 11 calls below freezes the
+    // "Analyzing signals" overlay forever. Critical-path row is v_dash_daily_story
+    // (rows[0]); if THAT one is empty we still treat it as ticker-not-found below.
+    const _heroSettled = await Promise.allSettled([
       sbFetch('v_dash_daily_story', { select: cols, ticker: `eq.${TICKER}`, order: 'snapshot_date.desc', limit: '1' }),
       sbFetch('v_dash_narrative_health', {
         select: 'narrative_health,narrative_trend,attention_trend',
@@ -6316,9 +6335,31 @@ async function loadHero() {
         limit: '1'
       }).catch(function(){ return []; })
     ]);
+    const _heroPick = function(i){ return _heroSettled[i].status === 'fulfilled' && _heroSettled[i].value != null ? _heroSettled[i].value : []; };
+    _heroSettled.forEach(function(s, i){ if (s.status === 'rejected') console.warn('[ticker hero] source', i, 'failed:', s.reason && s.reason.message || s.reason); });
+    const rows                 = _heroPick(0);
+    const healthRows           = _heroPick(1);
+    const snapRows             = _heroPick(2);
+    const tradeRows            = _heroPick(3);
+    const scorecardRows        = _heroPick(4);
+    const cvRows               = _heroPick(5);
+    const earnContextRows      = _heroPick(6);
+    const forecastRows         = _heroPick(7);
+    const latestBzEarningsRows = _heroPick(8);
+    const fairValueRows        = _heroPick(9);
+    const strategyRows         = _heroPick(10);
 
-    if (!rows.length) {
+    // v_dash_daily_story is the gating row. Empty = not-tracked-or-timed-out.
+    // We can't reliably tell those apart with allSettled, so route to the
+    // not-found state only when the call succeeded AND returned no rows.
+    if (_heroSettled[0].status === 'fulfilled' && (!rows || !rows.length)) {
       renderTickerNotFound();
+      return null;
+    }
+    if (!rows.length) {
+      // Story row timed out / errored — bail gracefully, leave skeletons so
+      // the next auto-refresh (or manual reload) can recover.
+      console.warn('[ticker hero] v_dash_daily_story unavailable, skipping render');
       return null;
     }
 
@@ -10413,10 +10454,15 @@ var _tickerPulseData = null;
 
 async function refreshAll() {
   if (!TICKER) return;
-  const [heroData, pulse] = await Promise.all([
-    loadHero(),
-    loadPulse()
-  ]);
+  // allSettled so a single hung call doesn't block downstream loaders from
+  // firing. loadHero/loadPulse already swallow their own errors internally,
+  // but if either promise itself never resolves the page stays at "Analyzing
+  // signals…" forever. The sbFetch 15s timeout backstops that.
+  const _bootSettled = await Promise.allSettled([loadHero(), loadPulse()]);
+  const heroData = _bootSettled[0].status === 'fulfilled' ? _bootSettled[0].value : null;
+  const pulse    = _bootSettled[1].status === 'fulfilled' ? _bootSettled[1].value : null;
+  if (_bootSettled[0].status === 'rejected') console.warn('[ticker] loadHero failed:', _bootSettled[0].reason);
+  if (_bootSettled[1].status === 'rejected') console.warn('[ticker] loadPulse failed:', _bootSettled[1].reason);
   // Ticker isn't tracked — renderTickerNotFound() has already swapped the page
   // to an empty-state. Skip every downstream loader so they don't render skeletons.
   if (_TICKER_NOT_FOUND) {
@@ -10462,7 +10508,10 @@ async function refreshAll() {
   // hero row and frequently contradicted the existing insight chips.
   // enrichLeaderboardBadges();
 
-  await Promise.all([
+  // allSettled — one card's failure (or a hung Supabase query) shouldn't
+  // sink the other nine. Each loader is expected to render its own error
+  // state; this just keeps siblings from blocking on each other.
+  await Promise.allSettled([
     loadNarratives(),
     loadChart(),
     loadLifecycle(),
