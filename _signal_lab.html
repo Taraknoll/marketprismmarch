@@ -807,15 +807,30 @@
 const SUPABASE_URL  = window.__env?.SUPABASE_URL  || '';
 const SUPABASE_ANON = window.__env?.SUPABASE_ANON || '';
 
-async function sbFetch(table, params) {
+// 15s ceiling per Supabase REST call. When the DB is saturated the response
+// can hang indefinitely; without this the chart's Promise.all sits at
+// "Loading…" forever. Aborting lets Promise.allSettled in loadChart render
+// the chart with whatever data did come back.
+async function sbFetch(table, params, timeoutMs) {
   const qs = Object.entries(params || {})
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
     .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
     .join('&');
   const url = SUPABASE_URL + '/rest/v1/' + table + (qs ? '?' + qs : '');
-  const res = await fetch(url, {
-    headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Accept': 'application/json' }
-  });
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs || 15000);
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Accept': 'application/json' },
+      signal: ctrl.signal
+    });
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('[' + table + '] timeout after ' + (timeoutMs || 15000) + 'ms');
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error('[' + table + '] ' + res.status + ': ' + body.slice(0, 200));
@@ -1203,13 +1218,20 @@ function drawChart(snaps, narrs, drawCandles) {
 
 // ── Load chart data ──
 async function loadChart(ticker) {
-  const [priceRows, storyRows, healthRows, decayRows, scorecardRows] = await Promise.all([
+  // allSettled — chart renders even if one or more Supabase calls hang/fail.
+  // Only the price series is critical (caller short-circuits to "No price
+  // data" if empty); the rest degrade to empty arrays so we don't draw an
+  // overlay we can't compute. See sbFetch's 15s timeout above.
+  const settled = await Promise.allSettled([
     fetchPriceSeries(ticker, 2000),
     sbFetch('narrative_analyses', { select: 'snapshot_date,narrative_text,source_outlet,article_url,sentiment_score,verdict', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' }),
     sbFetch('v_dash_narrative_health', { select: 'snapshot_date,narrative_trend,sentiment_score', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' }),
     sbFetch('decay_metrics', { select: 'snapshot_date,energy_remaining_pct,day_number', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' }),
     sbFetch('narrative_scorecard', { select: 'snapshot_date,narrative_energy_absolute,nrs,overreaction_ratio,coordination_score,narrative_energy_t,wks_score,narrative_mass_score', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' })
   ]);
+  const pick = (i) => settled[i].status === 'fulfilled' && Array.isArray(settled[i].value) ? settled[i].value : [];
+  settled.forEach((r, i) => { if (r.status === 'rejected') console.warn('[SL] source', i, 'failed:', r.reason && r.reason.message || r.reason); });
+  const priceRows = pick(0), storyRows = pick(1), healthRows = pick(2), decayRows = pick(3), scorecardRows = pick(4);
 
   ALL_SNAPS = priceRows.filter(r => r.snapshot_date && r.price_close != null);
 

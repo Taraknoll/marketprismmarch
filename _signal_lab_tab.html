@@ -921,7 +921,11 @@
 
   // ── Load data ──
   async function slLoadChart(ticker){
-    var r=await Promise.all([
+    // allSettled so a saturated/hung Supabase leg doesn't block the chart.
+    // Only the price series (index 0) is critical — caller short-circuits to
+    // "No price data" when SL_SNAPS is empty. Every other leg degrades to []
+    // so the overlays we can't compute simply don't draw.
+    var settled=await Promise.allSettled([
       fetch('/api/price-history?ticker='+encodeURIComponent(ticker)+'&days=2000').then(function(res){return res.ok?res.json():{series:[]};}).then(function(j){return (j&&Array.isArray(j.series))?j.series.map(function(x){return {snapshot_date:x.snapshot_date,price_close:x.price_close};}):[];}).catch(function(){return [];}),
       restFetch('narrative_analyses',{select:'snapshot_date,narrative_text,source_outlet,article_url,sentiment_score,verdict',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
       restFetch('v_dash_narrative_health',{select:'snapshot_date,narrative_trend,sentiment_score',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
@@ -930,6 +934,8 @@
       restFetch('mv_energy_t_normalized',{select:'snapshot_date,raw_et,te_rank_pct,te_rolling_q90_norm,full_coverage_day',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
       restFetch('mv_physics_energy_normalized',{select:'snapshot_date,raw_pe,pe_rank_pct,pe_rolling_q90_norm,full_coverage_day',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'})
     ]);
+    settled.forEach(function(s,i){ if(s.status==='rejected') console.warn('[SL] source',i,'failed:', s.reason && s.reason.message || s.reason); });
+    var r=settled.map(function(s){ return s.status==='fulfilled' && Array.isArray(s.value) ? s.value : []; });
     SL_SNAPS=r[0].filter(function(x){return x.snapshot_date&&x.price_close!=null;});
     var tbd={};r[2].forEach(function(h){var d=h.snapshot_date?.slice(0,10);if(d)tbd[d]=h.narrative_trend||'';});
     SL_NARRS=r[1].map(function(row){var v=(row.verdict||'').toUpperCase(),d=row.snapshot_date?.slice(0,10),trend=d?(tbd[d]||''):'';var isBear=v.includes('TRAP')||v.includes('MISLEAD')||v.includes('FALSE')||v.includes('BEARISH')||v.includes('DECLINE')||v.includes('NEGATIVE')||v.includes('NEEDS VALIDATION')||v.includes('PLAUSIBLE BUT UNVERIFIED')||trend==='Collapsing'||trend==='Weakening';return{snapshot_date:row.snapshot_date,sentiment_score:row.sentiment_score,isBear:isBear,verdict:row.verdict||'',narrative_trend:trend,narrative_text:row.narrative_text||'',source_outlet:row.source_outlet||'',article_url:row.article_url||''};});
