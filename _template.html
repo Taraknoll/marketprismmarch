@@ -17528,6 +17528,32 @@ var BOARDS=[
   fetch:function(){return scorecardFallback(function(s){var nm=Number(s.narrative_mass_score)||0;var vms=s.vms!=null?Number(s.vms):null;var v=s.verdict||'';return nm>0.2 && vms!=null && vms<60 && v!=='Narrative Trap' && v!=='Narrative Risk';},function(s){var nm=Number(s.narrative_mass_score)||0;var vms=Number(s.vms)||0;var nrs=Math.round(Number(s.nrs)||0);var ratio=vms>1?(nm*100)/vms:nm*100;return{name:s.ticker,link:'/ticker/'+s.ticker,meta:(s.verdict||'No verdict')+' · VMS '+Math.round(vms)+' · NRS '+nrs,score:ratio,scoreDisplay:ratio.toFixed(1)+'x',_scoreColor:'#F472B6'};},function(a,b){var ra=Number(a.vms)>1?(Number(a.narrative_mass_score)||0)*100/Number(a.vms):(Number(a.narrative_mass_score)||0)*100;var rb=Number(b.vms)>1?(Number(b.narrative_mass_score)||0)*100/Number(b.vms):(Number(b.narrative_mass_score)||0)*100;return rb-ra;},10);}},
   {id:'honest-stable',title:'HONEST & STABLE',sub:'Low drama, supported by filings, narrative holding firm',color:'#00DE94',bg:'rgba(0,222,148,0.12)',scoreLabel:'Integrity',
   fetch:function(){return scorecardFallback(function(s){if(s.vms==null||s.fvd_pct==null)return false;var integ=(Number(s.vms)||0)-(Number(s.drift_score)||0)-(Number(s.suspicion_score)||0)/2-Math.abs(Number(s.fvd_pct)||0)-(Number(s.coordination_score)||0)/4;return integ>20;},function(s){var vms=Number(s.vms)||0;var drift=Number(s.drift_score)||0;var susp=Number(s.suspicion_score)||0;var coord=Number(s.coordination_score)||0;var fvd=Number(s.fvd_pct)||0;var integrity=Math.max(0,Math.min(100,Math.round(vms-drift-susp/2-Math.abs(fvd)-coord/4)));var regime=s.walsh_regime||'—';return{name:s.ticker,link:'/ticker/'+s.ticker,meta:regime+' · drift '+Math.round(drift)+' · '+(fvd>0?'+':'')+Math.round(fvd)+'% FV',score:integrity,scoreDisplay:String(integrity),_scoreColor:'#00DE94'};},function(a,b){var sA=(Number(a.vms)||0)-(Number(a.drift_score)||0)-(Number(a.suspicion_score)||0)/2-Math.abs(Number(a.fvd_pct)||0)-(Number(a.coordination_score)||0)/4;var sB=(Number(b.vms)||0)-(Number(b.drift_score)||0)-(Number(b.suspicion_score)||0)/2-Math.abs(Number(b.fvd_pct)||0)-(Number(b.coordination_score)||0)/4;return sB-sA;},10);}},
+  {id:'growth-at-discount',title:'GROWTH AT A DISCOUNT',sub:'High 5y revenue CAGR, trading below sector median P/E',color:'#00DE94',bg:'rgba(0,222,148,0.12)',scoreLabel:'5y CAGR',
+  // Curated universe: ticker_valuation_config has rev_cagr_5yr_est for ~187 tickers.
+  // View joins that to sector_pe_benchmarks (median P/E by sector×growth_tier) and
+  // the latest ticker_snapshots.pe_implied, returning only rows where the ticker
+  // is currently trading below its sector cohort's median multiple.
+  fetch:async function(){
+    try{
+      var rows=await sq('v_growth_at_discount?select=ticker,sector,rev_cagr_5yr_est,ticker_pe,sector_median_pe,discount_pct&order=rev_cagr_5yr_est.desc,discount_pct.asc&limit=10');
+      if(!rows||!rows.length) return [];
+      return rows.map(function(r){
+        var cagr=Number(r.rev_cagr_5yr_est)||0;
+        var pe=Number(r.ticker_pe)||0;
+        var med=Number(r.sector_median_pe)||0;
+        var disc=Number(r.discount_pct)||0;
+        var col=disc<=-30?'#00DE94':disc<=-15?'#38C8B8':'#00AEFF';
+        return{
+          name:r.ticker,
+          link:'/ticker/'+r.ticker,
+          meta:(r.sector||'')+' · P/E '+pe.toFixed(1)+' vs sector median '+med.toFixed(1)+' ('+Math.round(disc)+'%)',
+          score:cagr,
+          scoreDisplay:cagr.toFixed(0)+'%',
+          _scoreColor:col
+        };
+      });
+    }catch(e){console.warn('[Leaderboard Growth-at-Discount] fetch failed:',e);return [];}
+  }},
 ];
 
 
