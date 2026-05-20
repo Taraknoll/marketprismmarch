@@ -3359,6 +3359,45 @@
     font-size:14px;color:var(--mp-text-secondary);line-height:1.55;
     margin-bottom:14px;
   }
+  /* Loading placeholder shown inside #verdict-banner before loadHero() resolves
+     and inside #tt-headline while /api/hero-summary is in flight. Replaced
+     in-place by innerHTML / textContent swaps — no extra wiring needed. */
+  .tt-loading-card{
+    display:flex;align-items:center;gap:14px;
+    min-height:120px;
+    font-family:'Inter',system-ui,sans-serif;
+  }
+  .tt-loading-spinner{
+    width:18px;height:18px;border-radius:50%;flex-shrink:0;
+    border:2px solid rgba(0,174,255,0.20);border-top-color:#00AEFF;
+    animation:tk-spin 0.9s linear infinite;
+  }
+  .tt-loading-label{
+    font-size:14px;font-weight:500;color:var(--mp-text-primary);
+    letter-spacing:-0.005em;
+  }
+  .tt-loading-sub{
+    font-size:12px;color:var(--mp-text-tertiary);margin-top:3px;
+    line-height:1.5;
+  }
+  .tt-loading-dots::after{
+    display:inline-block;width:1em;text-align:left;
+    content:'';animation:tt-loading-dots 1.4s steps(4,end) infinite;
+  }
+  @keyframes tt-loading-dots{
+    0%   { content:''; }
+    25%  { content:'.'; }
+    50%  { content:'..'; }
+    75%,100% { content:'...'; }
+  }
+  /* Inline variant used inside the narrative paragraph slot — single line,
+     muted, no min-height. */
+  .tt-loading-inline{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:14px;color:var(--mp-text-tertiary);line-height:1.55;
+    font-family:'Inter',system-ui,sans-serif;
+  }
+  .tt-loading-inline .tt-loading-spinner{ width:12px;height:12px;border-width:2px; }
   .tt-narr-signals{
     margin-top:0;border-top:none;
   }
@@ -4369,7 +4408,19 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
   </div>
 
   <!-- ── Verdict Banner — immediately visible on page load ── -->
-  <div class="verdict-banner" id="verdict-banner" style="display:none;"></div>
+  <!-- Loading placeholder sits inside the banner until loadHero() resolves.
+       renderTradeTicket() swaps innerHTML and the placeholder is gone. The
+       ticker-not-found and no-forecast branches set display:none on the
+       wrapper so the placeholder hides too. -->
+  <div class="verdict-banner" id="verdict-banner">
+    <div class="tt-loading-card" id="verdict-banner-loading">
+      <div class="tt-loading-spinner"></div>
+      <div>
+        <div class="tt-loading-label">Analyzing signals<span class="tt-loading-dots"></span></div>
+        <div class="tt-loading-sub">Loading narrative state, forecast, and reality-belief signals.</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Ask Market Scholar AI bar removed — replaced by the sidebar AI section. -->
   <!-- Attached script at the bottom of the file is guarded with a null check. -->
@@ -5956,7 +6007,9 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy) {
               + actionHtml
             + '</div>'
           + '</div>'
-          + '<div class="tt-narr-desc" id="tt-headline" data-pending="1" data-fallback="'+ esc(headline || '') +'" style="display:none;"></div>'
+          + '<div class="tt-narr-desc" id="tt-headline" data-pending="1" data-fallback="'+ esc(headline || '') +'">'
+            + '<span class="tt-loading-inline"><span class="tt-loading-spinner"></span>Analyzing narrative<span class="tt-loading-dots"></span></span>'
+          + '</div>'
           + signalsHtml
           + pricePosHtml
         + '</div>'
@@ -6600,10 +6653,10 @@ async function loadHero() {
         if (!hl || !r.ticker) return;
         var fallback = hl.getAttribute('data-fallback') || '';
         var revealFallback = function(){
-          if (fallback) {
-            hl.textContent = fallback;
-            hl.style.display = '';
-          }
+          // Always clear the loading spinner — if fallback is empty, the slot
+          // collapses to nothing rather than spinning forever.
+          hl.textContent = fallback || '';
+          hl.style.display = '';
           hl.removeAttribute('data-pending');
         };
         fetch('/api/hero-summary?ticker=' + encodeURIComponent(r.ticker) + '&v=2')
