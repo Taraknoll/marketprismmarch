@@ -5839,9 +5839,12 @@ function renderRealityBeliefGaugeBody(rbi) {
 function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy) {
   var color = ttColor(f.color);
 
-  // Headline reads `v_dash_daily_story.headline_explanation` directly — that
-  // column is the pre-computed per-ticker editorial line, refreshed upstream.
-  // Falls back to forecast/scorecard fields when the column is null.
+  // Headline is rendered hidden, then populated by /api/hero-summary (Claude
+  // Haiku synthesis off recent article text — produces the rich, ticker-specific
+  // editorial line). The cascade below is the fallback shown only if the API
+  // errors or returns empty: headline_explanation column → one_line_headline →
+  // story_claim/forensic_rebuttal. The upstream column is templated most of
+  // the time, so we treat it as last-resort fill rather than primary content.
   var headline = (story && story.headline_explanation && story.headline_explanation.trim())
     ? story.headline_explanation.trim()
     : (f.one_line_headline && f.one_line_headline.trim())
@@ -5953,7 +5956,7 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy) {
               + actionHtml
             + '</div>'
           + '</div>'
-          + '<div class="tt-narr-desc" id="tt-headline">'+ esc(headline || '') +'</div>'
+          + '<div class="tt-narr-desc" id="tt-headline" data-pending="1" data-fallback="'+ esc(headline || '') +'" style="display:none;"></div>'
           + signalsHtml
           + pricePosHtml
         + '</div>'
@@ -6585,9 +6588,37 @@ async function loadHero() {
         var posWrap = verdictBanner.querySelector('.tt-pricepos');
         if (posWrap) posWrap.style.visibility = 'visible';
       }).catch(function(){ /* leave placeholder */ });
-      // Headline now reads `v_dash_daily_story.headline_explanation` directly
-      // (see renderTradeTicket). No per-visit LLM fetch — the column is
-      // pre-computed upstream and refreshed on the daily-story pipeline.
+      // Headline = Claude Haiku synthesis off recent article text. We prioritize
+      // /api/hero-summary because the pre-computed v_dash_daily_story.headline_explanation
+      // column is templated upstream most days (4 stems recycled across all
+      // tickers) — only the LLM endpoint produces the rich, ticker-specific
+      // copy. Edge-cached 30 min fresh + 24h SWR, so most visitors hit the cache.
+      // The fallback (data-fallback) reveals only if the API errors or returns
+      // empty, so the user always sees *something*.
+      (function(){
+        var hl = document.getElementById('tt-headline');
+        if (!hl || !r.ticker) return;
+        var fallback = hl.getAttribute('data-fallback') || '';
+        var revealFallback = function(){
+          if (fallback) {
+            hl.textContent = fallback;
+            hl.style.display = '';
+          }
+          hl.removeAttribute('data-pending');
+        };
+        fetch('/api/hero-summary?ticker=' + encodeURIComponent(r.ticker) + '&v=2')
+          .then(function(res){ return res.ok ? res.json() : null; })
+          .then(function(j){
+            if (j && j.summary) {
+              hl.textContent = j.summary;
+              hl.style.display = '';
+              hl.removeAttribute('data-pending');
+            } else {
+              revealFallback();
+            }
+          })
+          .catch(revealFallback);
+      })();
     } else if (verdictBanner) {
       // No forecast row yet for this ticker — keep the banner hidden.
       verdictBanner.style.display = 'none';
