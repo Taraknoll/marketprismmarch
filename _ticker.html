@@ -5632,15 +5632,41 @@ var TT_TRADE_TYPE_NAME = {
 //   probValHtml, probSub  — PROB UP cell content (Html overrides numeric)
 //   confValHtml, confSub  — FORECAST CONFIDENCE cell content (Html overrides numeric)
 //   suppressDots          — suppress the 10-dot meter
-function ttResolveHorizon(f, sc, fv, tab, strategy, story) {
+function ttResolveHorizon(f, sc, fv, tab, strategy, story, hzMap) {
   var bias = (f.bias || '').toLowerCase();
   var current = Number(f.current_price);
   var res = {
-    pct:null, price:null, lo:null, hi:null, conv:null,
+    pct:null, price:null, lo:null, hi:null, conv:null, prob:null,
     tradeLabel:null, tradeLabelColor:null, tradeSub:'', tradeSubColor:null,
     moveValHtml:null, probValHtml:null, confValHtml:null, suppressDots:false,
     convSub:'', moveSub:'', probSub: tab.horizonDays + '-day horizon'
   };
+
+  // Preferred source: per-horizon row from v_ticker_forecast_horizons.
+  // Conviction stays on ticker_forecast (smarter blended number — there is
+  // no conviction_20d by design, so 20D resolves with conv=null and the
+  // Forecast Confidence cell is suppressed downstream).
+  var hzRow = hzMap && hzMap[tab.horizonDays];
+  if (hzRow) {
+    res.pct   = hzRow.predicted_move_pct != null ? Number(hzRow.predicted_move_pct) : null;
+    res.price = hzRow.predicted_price    != null ? Number(hzRow.predicted_price)    : null;
+    res.lo    = hzRow.predicted_low      != null ? Number(hzRow.predicted_low)      : null;
+    res.hi    = hzRow.predicted_high     != null ? Number(hzRow.predicted_high)     : null;
+    res.prob  = hzRow.prob_up            != null ? Number(hzRow.prob_up) * 100      : null;
+    res.conv  = f['conviction_' + tab.key];
+    res.tradeLabel = TT_TRADE_TYPE_NAME[tab.key] || tab.label;
+    res.tradeSub = ttBiasDescriptor(bias);
+    if (bias === 'long'  || bias === 'watch_long')  res.tradeSubColor = '#00DE94';
+    if (bias === 'short' || bias === 'watch_short') res.tradeSubColor = '#FF4D4D';
+    var resolvedTotal = hzRow.resolved_total_30d != null ? Number(hzRow.resolved_total_30d) : 0;
+    if (resolvedTotal > 0) {
+      var resolvedCorrect = hzRow.resolved_correct_30d != null ? Number(hzRow.resolved_correct_30d) : 0;
+      res.convSub = resolvedCorrect + '/' + resolvedTotal + ' last 30d';
+    } else {
+      res.convSub = 'Tracking';
+    }
+    return res;
+  }
 
   if (tab.source === 'forecast') {
     res.pct   = f['predicted_' + tab.key + '_pct'];
@@ -5687,10 +5713,10 @@ function ttResolveHorizon(f, sc, fv, tab, strategy, story) {
   return res;
 }
 
-function buildHorizonGrid(f, sc, fv, h, strategy, story) {
+function buildHorizonGrid(f, sc, fv, h, strategy, story, hzMap) {
   var color = ttColor(f.color);
   var tab = TT_HORIZON_TABS.filter(function(t){ return t.key === h; })[0] || TT_HORIZON_TABS[1];
-  var data = ttResolveHorizon(f, sc, fv, tab, strategy, story);
+  var data = ttResolveHorizon(f, sc, fv, tab, strategy, story, hzMap);
 
   // ── TRADE TYPE ──
   // Value-only cell: the horizon-type name (Day trade / Short swing / Long
@@ -5729,9 +5755,14 @@ function buildHorizonGrid(f, sc, fv, h, strategy, story) {
     + '</div>';
 
   // ── PROB UP ──
+  // Per-horizon prob_up from v_ticker_forecast_horizons (data.prob, already
+  // scaled to 0-100). Legacy conviction-derived fallback kept for rows that
+  // pre-date the view; should not fire in practice (view covers all tickers).
   var probVal;
   if (data.probValHtml != null) {
     probVal = data.probValHtml;
+  } else if (data.prob != null && isFinite(data.prob)) {
+    probVal = Math.round(data.prob) + '%';
   } else {
     var prob = null;
     if (data.conv != null) {
@@ -5781,6 +5812,13 @@ function buildHorizonGrid(f, sc, fv, h, strategy, story) {
     + '<div class="tt-cell-sub">'+ (data.convSub ? esc(data.convSub) : '&nbsp;') +'</div>'
     + '</div>';
 
+  // 20D: ticker_forecast has no conviction_20d. Drop the Forecast Confidence
+  // cell entirely (don't show 0% / blank / N/A) and collapse the grid to 3
+  // columns so it still reads as a single intentional row.
+  if (h === '20d') {
+    return '<div class="tt-grid" style="grid-template-columns:repeat(3,1fr);">'
+      + tradeCell + moveCell + probCell + '</div>';
+  }
   return '<div class="tt-grid">' + tradeCell + moveCell + probCell + convCell + '</div>';
 }
 
@@ -5902,7 +5940,7 @@ function renderRealityBeliefGaugeBody(rbi) {
     + '</div>';
 }
 
-function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy) {
+function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) {
   var color = ttColor(f.color);
 
   // Headline is rendered hidden, then populated by /api/hero-summary (Claude
@@ -5924,7 +5962,7 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy) {
   var bestKey = null;
   var bestConv = -Infinity;
   TT_HORIZON_TABS.forEach(function(t){
-    var d = ttResolveHorizon(f, sc, fv, t, strategy, story);
+    var d = ttResolveHorizon(f, sc, fv, t, strategy, story, hzMap);
     if (d.conv != null && isFinite(d.conv) && d.conv > bestConv) {
       bestConv = d.conv;
       bestKey = t.key;
@@ -6052,7 +6090,7 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy) {
         + tabsHtml
       + '</div>'
       + '<div class="tt-grid-wrap">'
-        + buildHorizonGrid(f, sc, fv, primary, strategy, story)
+        + buildHorizonGrid(f, sc, fv, primary, strategy, story, hzMap)
       + '</div>'
     + '</div>';
 
@@ -6065,7 +6103,7 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy) {
 
 // Attach horizon-tab click handler. Called once after renderTradeTicket()
 // writes the banner HTML. Re-renders only the .tt-grid-wrap inner content.
-function wireTradeTicket(bannerEl, f, sc, fv, strategy, story) {
+function wireTradeTicket(bannerEl, f, sc, fv, strategy, story, hzMap) {
   if (!bannerEl) return;
   var card = bannerEl.querySelector('.tt-horizons');
   if (!card) return;
@@ -6079,7 +6117,7 @@ function wireTradeTicket(bannerEl, f, sc, fv, strategy, story) {
     if (prev) prev.classList.remove('active');
     btn.classList.add('active');
     var wrap = card.querySelector('.tt-grid-wrap');
-    if (wrap) wrap.innerHTML = buildHorizonGrid(f, sc, fv, h, strategy, story);
+    if (wrap) wrap.innerHTML = buildHorizonGrid(f, sc, fv, h, strategy, story, hzMap);
   });
 }
 
@@ -6305,6 +6343,14 @@ async function loadHero() {
         ticker: `eq.${TICKER}`,
         limit:  '1'
       }).catch(function(){ return []; }),
+      // Per-horizon trade ticket — predicted move / range / prob_up / 30d resolutions.
+      // Source of truth for the four horizon tabs (1D / 5D / 10D / 20D).
+      sbFetch('v_ticker_forecast_horizons', {
+        select: 'horizon_days,predicted_move_pct,predicted_price,predicted_low,predicted_high,prob_up,resolved_correct_30d,resolved_total_30d',
+        ticker: `eq.${TICKER}`,
+        'horizon_days': 'in.(1,5,10,20)',
+        order: 'horizon_days'
+      }).catch(function(){ return []; }),
       // Latest ACTUAL quarterly earnings — used to override claim_verifications
       // in the Forensic Analysis strip when CV is stale (CV is keyed off
       // claim-verification snapshots, which can lag the most recent quarter).
@@ -6345,9 +6391,10 @@ async function loadHero() {
     const cvRows               = _heroPick(5);
     const earnContextRows      = _heroPick(6);
     const forecastRows         = _heroPick(7);
-    const latestBzEarningsRows = _heroPick(8);
-    const fairValueRows        = _heroPick(9);
-    const strategyRows         = _heroPick(10);
+    const horizonRows          = _heroPick(8);
+    const latestBzEarningsRows = _heroPick(9);
+    const fairValueRows        = _heroPick(10);
+    const strategyRows         = _heroPick(11);
 
     // v_dash_daily_story is the gating row. Empty = not-tracked-or-timed-out.
     // We can't reliably tell those apart with allSettled, so route to the
@@ -6629,14 +6676,19 @@ async function loadHero() {
     var fv = (fairValueRows || [])[0] || null;
     var earnCtxForTicket = (earnContextRows || [])[0] || null;
     var strategyForTicket = (strategyRows || [])[0] || null;
+    // Index per-horizon rows by horizon_days for O(1) lookup by the resolver.
+    var hzMap = {};
+    (horizonRows || []).forEach(function(row){
+      if (row && row.horizon_days != null) hzMap[Number(row.horizon_days)] = row;
+    });
     if (verdictBanner && f) {
       verdictBanner.style.display = 'block';
       verdictBanner.style.borderLeftColor = ttColor(f.color);
       // Kick off 60-day price-range fetch in parallel; render with placeholder
       // initially and patch the price-position bar once it lands.
       var priceRange60 = null;
-      verdictBanner.innerHTML = renderTradeTicket(f, r, sc, fv, earnCtxForTicket, priceRange60, strategyForTicket);
-      wireTradeTicket(verdictBanner, f, sc, fv, strategyForTicket, r);
+      verdictBanner.innerHTML = renderTradeTicket(f, r, sc, fv, earnCtxForTicket, priceRange60, strategyForTicket, hzMap);
+      wireTradeTicket(verdictBanner, f, sc, fv, strategyForTicket, r, hzMap);
 
       // ── Reality-Belief gauge ──
       // Fetches ticker_reality_belief view and mounts the gauge into the
