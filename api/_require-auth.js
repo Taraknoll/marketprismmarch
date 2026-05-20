@@ -104,6 +104,41 @@ function isAdminUser(userId){
   return raw.split(',').map(s => s.trim()).filter(Boolean).includes(userId);
 }
 
+// Self-heal: ask the Supabase edge function to query Stripe directly and
+// upsert the canonical subscription row. Returns the sub-like object on
+// success (active or trialing), null otherwise. Used as a last-chance rescue
+// before bouncing a paying user to /pricing — covers the case where the
+// Stripe webhook silently missed an event (race, misconfigured endpoint,
+// dropped delivery). Capped to one attempt per user per SUB_CACHE TTL via
+// the caching pattern below.
+async function attemptSubscriptionRepair(supabaseUrl, supabaseAnon, jwt){
+  if (!supabaseUrl || !supabaseAnon || !jwt) return null;
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 8000);
+    const r = await fetch(`${supabaseUrl}/functions/v1/repair-subscription`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwt}`,
+        'apikey': supabaseAnon,
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+      signal: controller.signal,
+    });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const data = await r.json();
+    if (!data || !data.ok || !data.active) return null;
+    return {
+      status: data.status,
+      current_period_end: data.current_period_end || null,
+    };
+  } catch (_e) {
+    return null;
+  }
+}
+
 function isSubscriptionActive(sub){
   if (!sub) return false;
   const status = String(sub.status || '').toLowerCase();
@@ -160,6 +195,17 @@ module.exports = async function requireAuth(req, res, options){
     const sub = await getActiveSubscription(user.id, supabaseUrl, supabaseAnon, cookies.mp_session);
     if (isSubscriptionActive(sub)) {
       return { user: user, hasBeta: false, subscription: sub, jwt: cookies.mp_session };
+    }
+
+    // Last-chance self-heal: ask Stripe directly. Covers the case where the
+    // webhook silently missed an event and a real paying customer would
+    // otherwise be wrongly bounced to /pricing.
+    const repaired = await attemptSubscriptionRepair(supabaseUrl, supabaseAnon, cookies.mp_session);
+    if (repaired) {
+      // Populate SUB_CACHE so subsequent requests within the TTL don't
+      // re-hit the repair endpoint.
+      SUB_CACHE.set(user.id, { t: Date.now(), sub: repaired });
+      return { user: user, hasBeta: false, subscription: repaired, jwt: cookies.mp_session };
     }
 
     // Logged in but no active subscription.
