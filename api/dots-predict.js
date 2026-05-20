@@ -385,18 +385,31 @@ module.exports = async function (req, res) {
       predicted_5d_return:  round2(agg.p5),
       predicted_10d_return: round2(agg.p10),
       predicted_20d_return: round2(agg.p20),
-      neighbor_examples: neighbors.slice(0, 3).map(function (n) {
-        return {
-          ticker: n.ticker,
-          narrative: n.narrative_text ? n.narrative_text.slice(0, 200) : null,
-          observed_at: n.observed_at,
-          speaker: n.speaker_id,
-          return_5d: n.return_5d,
-          return_10d: n.return_10d,
-          return_20d: n.return_20d,
-          similarity: n.similarity == null ? null : Math.round(Number(n.similarity) * 100) / 100
-        };
-      }),
+      neighbor_examples: (function () {
+        // Dedupe by (ticker, speaker, observed_at, narrative_text) so the
+        // same source post indexed twice in narrative_dots doesn't render
+        // back-to-back identical cards. Aggregation above is untouched.
+        const seen = new Set();
+        const out = [];
+        for (let i = 0; i < neighbors.length && out.length < 3; i++) {
+          const n = neighbors[i];
+          const txt = n.narrative_text ? n.narrative_text.slice(0, 200) : '';
+          const key = [n.ticker || '', n.speaker_id || '', n.observed_at || '', txt].join('|');
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push({
+            ticker: n.ticker,
+            narrative: txt || null,
+            observed_at: n.observed_at,
+            speaker: n.speaker_id,
+            return_5d: n.return_5d,
+            return_10d: n.return_10d,
+            return_20d: n.return_20d,
+            similarity: n.similarity == null ? null : Math.round(Number(n.similarity) * 100) / 100
+          });
+        }
+        return out;
+      })(),
       warning: agg.resolved.length > 0 && agg.resolved.length < 30 ? 'sparse_neighborhood' : null,
       context: context || null,
       recent_narratives: recentNarratives || [],
