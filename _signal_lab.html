@@ -135,31 +135,96 @@
   .page-title { font-family: var(--font-display); font-size: 32px; font-weight: 400; letter-spacing: -0.025em; margin-bottom: 6px; }
   .page-subtitle { font-size: 14px; color: var(--mp-text-secondary); }
 
-  /* ── Ticker search ── */
+  /* ── Ticker search (mirrors the topbar scholar bar in _template.html) ── */
   .ticker-search {
     display: flex; align-items: center; gap: 10px;
     margin-bottom: 24px;
+    max-width: 520px;
   }
-  .ticker-input {
-    font-family: var(--font-body); font-size: 16px; font-weight: 600;
-    padding: 10px 16px; border-radius: 10px;
-    border: 1px solid var(--mp-border-mid);
-    background: var(--mp-surface);
-    color: var(--mp-text-primary);
-    width: 160px; text-transform: uppercase;
-    outline: none; transition: border-color 0.15s;
+  @keyframes scholar-glisten {
+    0%, 100% { background-position: 200% 0; }
+    50%      { background-position: -100% 0; }
   }
-  .ticker-input:focus { border-color: var(--mp-blue); }
-  .ticker-input::placeholder { color: var(--mp-text-tertiary); text-transform: none; font-weight: 400; }
-  .analyze-btn {
-    font-family: var(--font-body); font-size: 14px; font-weight: 500;
-    padding: 10px 24px; border-radius: 10px;
-    border: none; cursor: pointer;
-    background: var(--mp-blue); color: #FFFFFF;
-    transition: opacity 0.15s;
+  .scholar-bar {
+    display: flex; align-items: center; gap: 10px; width: 100%; position: relative;
+    padding: 9px 16px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.20);
+    background: linear-gradient(110deg,rgba(255,255,255,0.10) 0%,rgba(255,255,255,0.22) 45%,rgba(255,255,255,0.10) 55%,rgba(255,255,255,0.10) 100%);
+    background-size: 220% 100%;
+    animation: scholar-glisten 5s ease-in-out infinite;
+    transition: border-color .25s ease, box-shadow .25s ease;
+    cursor: text;
+    box-shadow: 0 0 24px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.12);
   }
-  .analyze-btn:hover { opacity: 0.85; }
-  .analyze-btn:disabled { opacity: 0.4; cursor: default; }
+  .scholar-bar:hover {
+    border-color: rgba(0,174,255,0.40);
+    box-shadow: 0 0 28px rgba(0,174,255,0.15), inset 0 1px 0 rgba(255,255,255,0.14);
+  }
+  .scholar-bar:focus-within {
+    border-color: rgba(0,174,255,0.55);
+    box-shadow: 0 0 0 3px rgba(0,174,255,0.18), 0 0 32px rgba(0,174,255,0.20), inset 0 1px 0 rgba(255,255,255,0.16);
+    animation-play-state: paused;
+  }
+  [data-theme="light"] .scholar-bar {
+    border-color: rgba(0,0,0,0.10);
+    background: linear-gradient(110deg,#FFFFFF 0%,#F5F7FA 45%,#FFFFFF 55%,#FFFFFF 100%);
+    background-size: 220% 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  [data-theme="light"] .scholar-bar:hover {
+    border-color: rgba(0,174,255,0.25);
+    box-shadow: 0 2px 8px rgba(0,174,255,0.08);
+  }
+  [data-theme="light"] .scholar-bar:focus-within {
+    border-color: rgba(0,174,255,0.4);
+    box-shadow: 0 0 0 3px rgba(0,174,255,0.12), 0 4px 16px rgba(0,174,255,0.10);
+  }
+  .scholar-bar-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.85; }
+  .scholar-bar-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-family: var(--font-body); font-size: 13px; color: var(--mp-text-primary);
+    letter-spacing: 0.01em;
+  }
+  .scholar-bar-input::placeholder { color: var(--mp-text-tertiary); font-weight: 400; }
+  .scholar-bar-kbd {
+    font-family: var(--font-body); font-size: 10px;
+    color: var(--mp-text-tertiary);
+    padding: 2px 6px; border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    line-height: 1; flex-shrink: 0;
+  }
+  [data-theme="light"] .scholar-bar-kbd {
+    border-color: rgba(0,0,0,0.1);
+    background: rgba(0,0,0,0.04);
+  }
+  .scholar-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 999;
+    margin-top: 4px;
+    background: var(--mp-surface); border: 1px solid var(--mp-border-hover);
+    border-radius: 12px; max-height: 320px; overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  .scholar-dropdown.open { display: block; }
+  .scholar-dd-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.03); transition: background .12s;
+  }
+  .scholar-dd-item:last-child { border-bottom: none; }
+  .scholar-dd-item:hover, .scholar-dd-item.active { background: rgba(255,255,255,0.05); }
+  .scholar-dd-ticker { font-size: 13px; font-weight: 700; color: var(--mp-text-primary); min-width: 50px; font-family: var(--font-body); }
+  .scholar-dd-name { font-size: 12px; color: var(--mp-text-tertiary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .scholar-dd-sector { font-size: 10px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
+  .scholar-dd-empty { padding: 16px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.3); }
+  .scholar-dropdown.scholar-browse-mode { max-height: min(70vh, 560px); padding: 8px 0; }
+  .scholar-browse-head { padding: 10px 16px 8px; font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: .10em; font-family: var(--font-body); border-bottom: 1px solid rgba(255,255,255,0.04); margin-bottom: 6px; }
+  .scholar-sector-group { padding: 10px 16px 14px; }
+  .scholar-sector-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--mp-text-tertiary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-family: var(--font-body); }
+  .scholar-sector-label::after { content: ''; flex: 1; height: 1px; background: var(--mp-border); }
+  .scholar-sector-count { font-size: 10px; color: rgba(255,255,255,0.3); font-weight: 500; letter-spacing: .04em; }
+  .scholar-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .scholar-chip { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); font-size: 12px; font-weight: 600; color: var(--mp-text-secondary); text-decoration: none; font-family: var(--font-body); transition: background .15s, border-color .15s, color .15s; letter-spacing: .02em; cursor: pointer; }
+  .scholar-chip:hover { background: rgba(0,174,255,0.10); border-color: rgba(0,174,255,0.30); color: #00AEFF; }
 
   /* ── Section card ── */
   .section {
@@ -543,12 +608,12 @@
 
   <!-- Ticker Search -->
   <div class="ticker-search">
-    <select class="ticker-input" id="ticker-select" style="width:200px;cursor:pointer;">
-      <option value="">Select ticker...</option>
-    </select>
-    <span style="font-size:12px;color:var(--mp-text-tertiary);">or</span>
-    <input class="ticker-input" id="ticker-input" placeholder="Type ticker..." maxlength="10" autofocus>
-    <button class="analyze-btn" id="load-btn">Analyze</button>
+    <div class="scholar-bar" id="scholar-bar">
+      <svg class="scholar-bar-icon" viewBox="0 0 24 24" fill="none" stroke="var(--mp-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="scholar-bar-input" id="ticker-input" placeholder="Search tickers… e.g. AAPL, NVDA, TSLA" autocomplete="off" maxlength="10" autofocus>
+      <kbd class="scholar-bar-kbd">Enter</kbd>
+      <div class="scholar-dropdown" id="scholar-dropdown"></div>
+    </div>
   </div>
 
   <!-- Chart Section (hidden until ticker loaded) -->
@@ -1439,26 +1504,106 @@ async function interpretChart() {
   btn.disabled = false;
 }
 
-// ── Populate ticker dropdown ──
+// ── Scholar-bar ticker search (mirrors topbar in _template.html) ──
 (function(){
-  const TICKERS = ['AAPL','ABNB','ABT','ABBV','ACM','ADM','ADBE','AMAT','AMD','AMT','AMZN','APD','ARM','ASTS','AVGO','AWK','AWR','AA','BA','BAC','BG','BHP','BKNG','BUD','BYND','CAT','CCJ','CDNS','CEG','CLF','CMG','CMCSA','COIN','COP','COST','CRM','CRWD','CVX','CWT','DASH','DE','DELL','DHI','DHR','DIS','DJT','DUK','EMR','ENPH','EOG','F','FCX','FSLR','GE','GIS','GM','GME','GOLD','GOOGL','GS','HAL','HD','HIMS','HMC','HOOD','HPQ','IBM','IBRX','INTC','INTU','J','JNJ','JPM','KHC','KO','LCID','LEU','LIN','LLY','LMT','LOW','LRCX','MA','MCD','MDLZ','META','MLM','MOS','MP','MRK','MRVL','MSFT','MSTR','MU','NBIS','NEM','NEE','NFLX','NIO','NKE','NOW','NVDA','NVO','OKLO','OPEN','ORCL','OXY','PANW','PEP','PFE','PLD','PLTR','PNR','PTON','PWR','PYPL','QCOM','RACE','RBLX','RDDT','RIO','RIVN','RTX','SBUX','SCCO','SLB','SMCI','SMR','SNAP','SNPS','SO','SOFI','SONY','SPOT','SQ','STN','STX','TGT','TM','TMO','TMUS','TSLA','TSM','TSN','TTEK','TTWO','TXN','UAL','UBER','UNH','UPS','URI','V','VALE','VMC','VRT','VST','VZ','WDAY','WDC','WFC','WM','WMT','WTRG','XOM','XYL'].sort();
-  const sel = document.getElementById('ticker-select');
-  if(sel) TICKERS.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
-})();
+  const barInput = document.getElementById('ticker-input');
+  const ddEl     = document.getElementById('scholar-dropdown');
+  const scholarBar = document.getElementById('scholar-bar');
+  let ddTickers  = [];
+  let ddIdx      = -1;
 
-// ── Event handlers ──
-document.getElementById('load-btn').onclick = () => {
-  let val = document.getElementById('ticker-input').value.trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
-  if (!val) val = document.getElementById('ticker-select').value;
-  if (val) loadSignalLab(val);
-};
-document.getElementById('ticker-input').onkeydown = (e) => {
-  if (e.key === 'Enter') document.getElementById('load-btn').click();
-};
-document.getElementById('ticker-select').onchange = function() {
-  const v = this.value;
-  if (v) { document.getElementById('ticker-input').value = ''; loadSignalLab(v); }
-};
+  function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function ddClose(){ if(ddEl){ ddEl.classList.remove('open'); ddEl.classList.remove('scholar-browse-mode'); } ddIdx=-1; }
+  function ddHighlight(idx){
+    const items = ddEl ? ddEl.querySelectorAll('.scholar-dd-item') : [];
+    items.forEach(it => it.classList.remove('active'));
+    if(idx>=0 && idx<items.length){ items[idx].classList.add('active'); items[idx].scrollIntoView({block:'nearest'}); }
+  }
+  function pick(t){ if(!t) return; barInput.value = t; ddClose(); loadSignalLab(t); }
+
+  function ddRender(matches){
+    if(!ddEl) return;
+    ddEl.classList.remove('scholar-browse-mode');
+    if(!matches.length){ ddEl.innerHTML='<div class="scholar-dd-empty">No matching tickers</div>'; ddEl.classList.add('open'); return; }
+    ddIdx=-1;
+    ddEl.innerHTML = matches.slice(0,12).map((r,i) =>
+      '<div class="scholar-dd-item" data-ticker="'+esc(r.ticker)+'" data-idx="'+i+'">'
+        +'<span class="scholar-dd-ticker">'+esc(r.ticker)+'</span>'
+        +'<span class="scholar-dd-name">'+esc(r.name||'')+'</span>'
+        +'<span class="scholar-dd-sector">'+esc(r.sector||'')+'</span>'
+      +'</div>'
+    ).join('');
+    ddEl.classList.add('open');
+    ddEl.querySelectorAll('.scholar-dd-item').forEach(item => {
+      item.addEventListener('mousedown', function(e){ e.preventDefault(); pick(this.dataset.ticker); });
+    });
+  }
+
+  // Browse-all flyout: every tracked ticker grouped by sector, alphabetical within each group.
+  function ddRenderBrowseAll(){
+    if(!ddEl) return;
+    ddIdx=-1;
+    if(!ddTickers.length){ ddEl.innerHTML='<div class="scholar-dd-empty">Loading tickers…</div>'; ddEl.classList.add('open'); return; }
+    const bySector = {};
+    ddTickers.forEach(r => { const s = r.sector || 'Other'; (bySector[s] = bySector[s] || []).push(r); });
+    const sectorNames = Object.keys(bySector).sort((a,b) => bySector[b].length - bySector[a].length);
+    let html = '<div class="scholar-browse-head">All '+ddTickers.length+' tickers · grouped by sector · type to filter</div>';
+    html += sectorNames.map(s => {
+      const tickers = bySector[s].slice().sort((a,b) => a.ticker.localeCompare(b.ticker));
+      return '<div class="scholar-sector-group">'
+        +'<div class="scholar-sector-label">'+esc(s)+'<span class="scholar-sector-count">'+tickers.length+'</span></div>'
+        +'<div class="scholar-chips">'
+        + tickers.map(r => '<span class="scholar-chip" title="'+esc(r.name||r.ticker)+'" data-ticker="'+esc(r.ticker)+'">'+esc(r.ticker)+'</span>').join('')
+        +'</div>'
+      +'</div>';
+    }).join('');
+    ddEl.innerHTML = html;
+    ddEl.classList.add('open');
+    ddEl.classList.add('scholar-browse-mode');
+    ddEl.querySelectorAll('.scholar-chip').forEach(chip => {
+      chip.addEventListener('mousedown', function(e){ e.preventDefault(); pick(this.dataset.ticker); });
+    });
+  }
+
+  // Load full ticker universe from Supabase (alphabetical).
+  if(SUPABASE_URL && SUPABASE_ANON){
+    fetch(SUPABASE_URL+'/rest/v1/ticker_industry_lookup?select=ticker,name,sector&order=ticker.asc&limit=1000',{
+      headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'}
+    }).then(r => r.ok ? r.json() : []).then(rows => {
+      ddTickers = (rows||[]).filter(r => r.ticker);
+      if(ddTickers.length) barInput.placeholder = 'Search '+ddTickers.length+' tickers… e.g. AAPL, NVDA, TSLA';
+    }).catch(()=>{});
+  }
+
+  function filterMatches(q){
+    return ddTickers.filter(r => r.ticker.indexOf(q)===0 || (r.name && r.name.toUpperCase().indexOf(q)!==-1));
+  }
+
+  barInput.addEventListener('input', function(){
+    const q = this.value.trim().toUpperCase();
+    if(!q){ ddRenderBrowseAll(); return; }
+    ddRender(filterMatches(q));
+  });
+  barInput.addEventListener('focus', function(){
+    const q = this.value.trim().toUpperCase();
+    if(!q){ ddRenderBrowseAll(); return; }
+    ddRender(filterMatches(q));
+  });
+  barInput.addEventListener('blur', () => setTimeout(ddClose, 150));
+  barInput.addEventListener('keydown', function(e){
+    const items = ddEl ? ddEl.querySelectorAll('.scholar-dd-item') : [];
+    if(e.key==='ArrowDown'){ e.preventDefault(); ddIdx = Math.min(ddIdx+1, items.length-1); ddHighlight(ddIdx); return; }
+    if(e.key==='ArrowUp'){ e.preventDefault(); ddIdx = Math.max(ddIdx-1, 0); ddHighlight(ddIdx); return; }
+    if(e.key==='Escape'){ ddClose(); return; }
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(ddIdx>=0 && items[ddIdx]){ pick(items[ddIdx].dataset.ticker); return; }
+      const v = this.value.trim().toUpperCase().replace(/[^A-Z0-9.\-]/g,'');
+      if(v) pick(v);
+    }
+  });
+  if(scholarBar){ scholarBar.addEventListener('click', () => barInput.focus()); }
+})();
 
 // Toggle buttons
 document.querySelectorAll('.toggle-btn').forEach(btn => {
