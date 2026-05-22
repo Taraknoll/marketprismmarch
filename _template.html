@@ -9131,23 +9131,51 @@ function renderLivePortfolioStats(elId, rows){
     +'<div class="val-stat"><div class="val-stat-label">Status</div><div class="val-stat-value pos" style="font-size:16px;">Live</div><div class="val-stat-sub">paper-trading the signal engine</div></div>';
 }
 async function loadLivePortfolios(){
+  // Unified live-portfolio cards driven by the public.sim_stats view.
+  // One round-trip pulls return %, portfolio value, # trades, win rate, Sharpe,
+  // and time period for all three sims (TDP, v6, Long-Term) into the same 6-box
+  // layout. Per-sim source tables are refreshed by their respective rebuild
+  // crons (rebuild_tracked_daily_plays_daily, rebuild_paper_portfolio_daily_v6,
+  // rebuild_paper_portfolio_daily_long_term); this function just renders.
   if(!SUPABASE_URL||!SUPABASE_ANON) return;
-  var SELECT='snapshot_date,portfolio_value,realized_pnl_cumulative,unrealized_pnl,open_count,open_exposure';
-  var COMMON={select:SELECT, order:'snapshot_date.desc', limit:'120'};
-  var jobs=[
-    {table:'tracked_daily_plays_daily', el:'val-stats-tdp'},
-    {table:'paper_portfolio_daily_v6',  el:'val-stats-ppd'}
-  ];
-  await Promise.all(jobs.map(async function(j){
-    try{
-      var rows=await restFetch(j.table, COMMON);
-      renderLivePortfolioStats(j.el, rows);
-    }catch(e){
-      console.warn('Live portfolio load failed for '+j.table, e&&e.message?e.message:e);
-      var el=document.getElementById(j.el);
+  try{
+    var rows=await restFetch('sim_stats',{select:'*'});
+    var byKey={};
+    (rows||[]).forEach(function(r){byKey[r.sim_key]=r;});
+    _renderSimStats('val-stats-tdp', byKey.tdp);
+    _renderSimStats('val-stats-ppd', byKey.v6);
+    _renderSimStats('val-stats',     byKey.long_term);
+  }catch(e){
+    console.warn('[sim_stats] Load failed:', e);
+    ['val-stats-tdp','val-stats-ppd','val-stats'].forEach(function(id){
+      var el=document.getElementById(id);
       if(el) el.innerHTML='<div style="grid-column:1/-1;padding:14px 4px;text-align:center;color:var(--mp-text-tertiary);font-size:13px;">Could not load &mdash; '+(e&&e.message?e.message:'unknown error')+'.</div>';
-    }
-  }));
+    });
+  }
+}
+
+function _renderSimStats(elId, stats){
+  var el=document.getElementById(elId);
+  if(!el) return;
+  if(!stats){
+    el.innerHTML='<div style="grid-column:1/-1;padding:14px 4px;text-align:center;color:var(--mp-text-tertiary);font-size:13px;">No data yet.</div>';
+    return;
+  }
+  var ret    = Number(stats.return_pct)||0;
+  var pv     = Number(stats.portfolio_value)||0;
+  var trades = Number(stats.num_trades)||0;
+  var winRt  = Number(stats.win_rate)||0;
+  var shp    = Number(stats.sharpe_ratio)||0;
+  var days   = Number(stats.days_live)||0;
+  var retCls = ret>0?'pos':ret<0?'neg':'';
+  var shpCls = shp>=1?'pos':shp<0?'neg':'';
+  el.innerHTML=''
+    +'<div class="val-stat"><div class="val-stat-label">Return to date</div><div class="val-stat-value '+retCls+'">'+(ret>=0?'+':'')+ret.toFixed(2)+'%</div><div class="val-stat-sub">since '+valFmtDate(stats.period_start)+'</div></div>'
+    +'<div class="val-stat"><div class="val-stat-label">Portfolio value</div><div class="val-stat-value">'+_livePortFmtMoney(pv)+'</div><div class="val-stat-sub">live equity</div></div>'
+    +'<div class="val-stat"><div class="val-stat-label">Trades</div><div class="val-stat-value">'+trades.toLocaleString()+'</div><div class="val-stat-sub">closed positions</div></div>'
+    +'<div class="val-stat"><div class="val-stat-label">Win rate</div><div class="val-stat-value '+(winRt>=55?'pos':'')+'">'+winRt.toFixed(1)+'%</div><div class="val-stat-sub">wins / closed</div></div>'
+    +'<div class="val-stat"><div class="val-stat-label">Sharpe ratio</div><div class="val-stat-value '+shpCls+'">'+shp.toFixed(2)+'</div><div class="val-stat-sub">annualized &middot; √252 &times; μ/σ</div></div>'
+    +'<div class="val-stat"><div class="val-stat-label">Track period</div><div class="val-stat-value" style="font-size:16px;">'+valFmtDate(stats.period_start)+' → '+valFmtDate(stats.period_end)+'</div><div class="val-stat-sub">'+days+' trading day'+(days===1?'':'s')+'</div></div>';
 }
 
 async function loadValidation(force){
@@ -9207,10 +9235,10 @@ async function loadValidation(force){
     var spyStart=(_VAL_CACHED_STATS&&_VAL_CACHED_STATS.period_start)||(rows[0]&&rows[0].entry_date)||'2025-01-31';
     var spyEnd=valTodayET();
     _VAL_SPY_ANNUALIZED=await _valFetchSpyAnnualized(spyStart,spyEnd);
-    valRenderStats(rows);
-    // Live paper-portfolio summaries (Daily Plays sim + Conviction sim).
-    // Fire-and-forget — failures render an inline "Could not load" message in
-    // each card and never block the rest of the validation render.
+    // val-stats / val-stats-tdp / val-stats-ppd all rendered by loadLivePortfolios
+    // off the public.sim_stats view (Long-Term Paper Sim moved off paper_trades
+    // client-aggregation, now driven by paper_portfolio_daily_long_term).
+    // Fire-and-forget — failures render an inline "Could not load" per card.
     loadLivePortfolios();
     var byS=valAggregateBySignal(rows);
     valRenderSignalBars('val-bar-avg',byS,'avg_pnl',function(v){return valFmtPct(v,2);});
