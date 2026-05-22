@@ -9169,12 +9169,19 @@ function _renderSimStats(elId, stats){
   var days   = Number(stats.days_live)||0;
   var retCls = ret>0?'pos':ret<0?'neg':'';
   var shpCls = shp>=1?'pos':shp<0?'neg':'';
+  // Win rate + annualized Sharpe both need a reasonable sample to stop being
+  // statistical noise. Below ~60 trading days, badge the value as preliminary
+  // so the page doesn't quietly imply a 17-day Sharpe of 5+ is real.
+  var isPrelim = days < 60;
+  var prelimBadge = '<span title="Limited history — number will move as the sample grows" style="display:inline-block;padding:1px 6px;background:rgba(255,184,0,0.18);color:var(--mp-amber);font-size:10px;font-weight:600;letter-spacing:.06em;border-radius:4px;margin-right:6px;vertical-align:middle;">PRELIM</span>';
+  var winSub = (isPrelim?prelimBadge:'')+'wins / closed';
+  var shpSub = (isPrelim?prelimBadge:'')+'annualized &middot; √252 &times; μ/σ';
   el.innerHTML=''
     +'<div class="val-stat"><div class="val-stat-label">Return to date</div><div class="val-stat-value '+retCls+'">'+(ret>=0?'+':'')+ret.toFixed(2)+'%</div><div class="val-stat-sub">since '+valFmtDate(stats.period_start)+'</div></div>'
     +'<div class="val-stat"><div class="val-stat-label">Portfolio value</div><div class="val-stat-value">'+_livePortFmtMoney(pv)+'</div><div class="val-stat-sub">live equity</div></div>'
     +'<div class="val-stat"><div class="val-stat-label">Trades</div><div class="val-stat-value">'+trades.toLocaleString()+'</div><div class="val-stat-sub">closed positions</div></div>'
-    +'<div class="val-stat"><div class="val-stat-label">Win rate</div><div class="val-stat-value '+(winRt>=55?'pos':'')+'">'+winRt.toFixed(1)+'%</div><div class="val-stat-sub">wins / closed</div></div>'
-    +'<div class="val-stat"><div class="val-stat-label">Sharpe ratio</div><div class="val-stat-value '+shpCls+'">'+shp.toFixed(2)+'</div><div class="val-stat-sub">annualized &middot; √252 &times; μ/σ</div></div>'
+    +'<div class="val-stat"><div class="val-stat-label">Win rate</div><div class="val-stat-value '+(winRt>=55?'pos':'')+'">'+winRt.toFixed(1)+'%</div><div class="val-stat-sub">'+winSub+'</div></div>'
+    +'<div class="val-stat"><div class="val-stat-label">Sharpe ratio</div><div class="val-stat-value '+shpCls+'">'+shp.toFixed(2)+'</div><div class="val-stat-sub">'+shpSub+'</div></div>'
     +'<div class="val-stat"><div class="val-stat-label">Track period</div><div class="val-stat-value" style="font-size:16px;">'+valFmtDate(stats.period_start)+' → '+valFmtDate(stats.period_end)+'</div><div class="val-stat-sub">'+days+' trading day'+(days===1?'':'s')+'</div></div>';
 }
 
