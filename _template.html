@@ -9240,6 +9240,12 @@ async function loadValidation(force){
     // client-aggregation, now driven by paper_portfolio_daily_long_term).
     // Fire-and-forget — failures render an inline "Could not load" per card.
     loadLivePortfolios();
+    // Re-enabled 2026-05-22: the rebuild crons land every 15 min during market
+    // hours; a 60s poll surfaces new portfolio_value / trade counts within ~1
+    // min of each rebuild. Query is a single SELECT against the sim_stats view
+    // (one round-trip, lightweight). Guard against duplicate timers on re-entry.
+    if(_LIVE_PORT_TIMER)clearInterval(_LIVE_PORT_TIMER);
+    _LIVE_PORT_TIMER=setInterval(loadLivePortfolios,60000);
     var byS=valAggregateBySignal(rows);
     valRenderSignalBars('val-bar-avg',byS,'avg_pnl',function(v){return valFmtPct(v,2);});
     valRenderSignalBars('val-bar-ann',byS,'annualized',function(v){return valFmtPct(v,0);});
