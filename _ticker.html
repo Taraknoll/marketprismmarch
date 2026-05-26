@@ -2017,6 +2017,113 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ── Share card (offscreen render target for Create Image + Export Report PDF) ── */
+  .mp-share-card-wrap {
+    position: fixed; left: -99999px; top: 0;
+    width: 1080px;
+    pointer-events: none; z-index: -1;
+  }
+  .mp-share-card {
+    width: 1080px; box-sizing: border-box;
+    padding: 36px 44px 28px;
+    background: #080B11;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    color: #FFFFFF;
+    font-family: 'Inter', system-ui, sans-serif;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 24px;
+    display: flex; flex-direction: column; gap: 26px;
+  }
+  .mp-share-card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .mp-share-card-brand { display: flex; align-items: center; gap: 10px; }
+  .mp-share-card-mark { color: #00AEFF; font-size: 18px; line-height: 1; }
+  .mp-share-card-brandtxt {
+    font-family: 'Instrument Serif','DM Serif Display',Georgia,serif;
+    font-size: 22px; font-weight: 400; letter-spacing: 0.04em; color: #FFFFFF;
+  }
+  .mp-share-card-sep { color: rgba(255,255,255,0.30); font-size: 14px; }
+  .mp-share-card-kicker {
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #00AEFF; font-weight: 600;
+  }
+  .mp-share-card-date {
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+  }
+  .mp-share-card-body { display: flex; flex-direction: column; gap: 22px; }
+  .mp-share-card-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 12px; color: rgba(255,255,255,0.55);
+  }
+  .mp-share-card-url { color: #00AEFF; font-weight: 600; letter-spacing: 0.04em; font-size: 13px; }
+
+  /* Light variant */
+  [data-theme="light"] .mp-share-card {
+    background: #FFFFFF; color: #0F1422;
+    background-image:
+      linear-gradient(rgba(15,20,34,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15,20,34,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    border-color: rgba(15,20,34,0.10);
+  }
+  [data-theme="light"] .mp-share-card-brandtxt { color: #0F1422; }
+  [data-theme="light"] .mp-share-card-date { color: rgba(15,20,34,0.55); }
+  [data-theme="light"] .mp-share-card-footer,
+  [data-theme="light"] .mp-share-card-header { border-color: rgba(15,20,34,0.10); }
+  [data-theme="light"] .mp-share-card-footer { color: rgba(15,20,34,0.55); }
+
+  /* Cleanup of cloned content inside the share-card body */
+  .mp-share-card-body .skel,
+  .mp-share-card-body .tt-loading-card,
+  .mp-share-card-body .tt-loading-inline,
+  .mp-share-card-body .tt-loading-spinner,
+  .mp-share-card-body .tt-loading-dots,
+  .mp-share-card-body .tt-horizon-tabs,
+  .mp-share-card-body .story-popup,
+  .mp-share-card-body #verdict-banner-loading,
+  .mp-share-card-body .bear-stories-wrap,
+  .mp-share-card-body .chart-tip,
+  .mp-share-card-body #tk-open-signal-lab { display: none !important; }
+  .mp-share-card-body details.tt-narr-signals { display: block !important; }
+  .mp-share-card-body details.tt-narr-signals > summary { display: none !important; }
+  .mp-share-card-body .tt-narr-signals-body,
+  .mp-share-card-body details.tt-narr-signals > .tt-narr-signals-body { display: block !important; }
+  .mp-share-card-body .verdict-banner {
+    background: transparent !important; border: none !important; padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .mp-share-card-body .ticker-hero {
+    background: transparent !important; border: none !important; padding: 0 0 8px 0 !important;
+    box-shadow: none !important; margin: 0 !important;
+  }
+  .mp-share-card-body .ticker-hero::before,
+  .mp-share-card-body .ticker-hero::after { display: none !important; }
+  .mp-share-card-active-horizon {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Inter',system-ui,sans-serif;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.70);
+    padding: 6px 12px; margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+  }
+  [data-theme="light"] .mp-share-card-active-horizon {
+    color: rgba(15,20,34,0.70); border-color: rgba(15,20,34,0.14);
+  }
+  .mp-share-card-active-horizon-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #00AEFF;
+  }
+
   /* ── Meme card buttons (in action-bar) ── */
   .meme-btn {
     display: inline-flex; align-items: center; gap: 6px;
@@ -4456,6 +4563,31 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
     <a class="meme-share-link" onclick="MPMemeCard.openShare('bear')">Share</a>
   </div>
   <div class="capture-overlay" id="capture-overlay"><div class="capture-spinner"></div></div>
+
+  <!-- ── Share card template ───────────────────────────────────────────────
+       Fixed 1080px-wide branded frame rendered offscreen. Both PNG export
+       (Create Image) and PDF export (Export Report page 1) populate this by
+       deep-cloning the live #hero + #verdict-banner into the body slot, then
+       html2canvas snapshots the wrap. Single source of truth — whatever the
+       user sees on the live page is what gets shared. -->
+  <div id="mp-share-card-wrap" class="mp-share-card-wrap" aria-hidden="true">
+    <div id="mp-share-card" class="mp-share-card">
+      <div class="mp-share-card-header">
+        <div class="mp-share-card-brand">
+          <span class="mp-share-card-mark">&#9670;</span>
+          <span class="mp-share-card-brandtxt">MARKET PRISM</span>
+          <span class="mp-share-card-sep">&middot;</span>
+          <span class="mp-share-card-kicker">Narrative Intelligence</span>
+        </div>
+        <div class="mp-share-card-date" id="mp-share-card-date"></div>
+      </div>
+      <div class="mp-share-card-body" id="mp-share-card-body"></div>
+      <div class="mp-share-card-footer">
+        <div class="mp-share-card-url" id="mp-share-card-url"></div>
+        <div class="mp-share-card-tagline">Forensic intel &middot; not investment advice</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Meme card UI: toast + share modal (hidden by default) -->
   <div class="mp-toast" id="mp-toast" role="status" aria-live="polite"></div>
@@ -9396,29 +9528,124 @@ function renderHeatmap(p) {
     </div>`;
 }
 
+// ── Share card pipeline (drives both Create Image PNG + Export Report PDF) ──
+// Clones the live #hero + #verdict-banner into the offscreen #mp-share-card,
+// strips loading/skeleton/interactive bits, forces the "signals behind this
+// label" expandable open, and inserts a single active-horizon chip in place of
+// the View-As tab row. Single source of truth — whatever the user sees on the
+// live page is what gets shared, with no template drift.
+async function ensureHtml2Canvas() {
+  if (typeof html2canvas !== 'undefined') return;
+  await new Promise(function(resolve, reject) {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = resolve;
+    s.onerror = function() { reject(new Error('Failed to load html2canvas')); };
+    document.head.appendChild(s);
+  });
+}
+
+function _shareCardActiveHorizonLabel() {
+  // Read the active horizon's button label out of the live DOM so the chip
+  // always matches what the user picked (1d → "Day trade · 1D", etc.).
+  var active = document.querySelector('#verdict-banner .tt-horizon-tab.active');
+  if (active) {
+    var txt = active.textContent.replace(/[★\s]+/g, ' ').trim();
+    if (txt) return txt;
+  }
+  return '';
+}
+
+function populateShareCard() {
+  var body  = document.getElementById('mp-share-card-body');
+  var dateEl = document.getElementById('mp-share-card-date');
+  var urlEl  = document.getElementById('mp-share-card-url');
+  if (!body) return;
+
+  body.innerHTML = '';
+
+  // Header chrome
+  if (dateEl) {
+    dateEl.textContent = new Date().toLocaleDateString('en-US', {
+      year:'numeric', month:'long', day:'numeric'
+    });
+  }
+  if (urlEl) {
+    var _t = (typeof TICKER !== 'undefined' && TICKER) ? TICKER : '';
+    urlEl.textContent = _t ? ('marketprism.co/ticker/' + _t) : 'marketprism.co';
+  }
+
+  // Clone hero
+  var hero = document.getElementById('hero');
+  if (hero) body.appendChild(hero.cloneNode(true));
+
+  // Active-horizon chip — drops in just above the cloned verdict banner so
+  // the share card reads "DAY TRADE · 1D" instead of the noisy tab row.
+  var hzLabel = _shareCardActiveHorizonLabel();
+  if (hzLabel) {
+    var chip = document.createElement('div');
+    chip.className = 'mp-share-card-active-horizon';
+    chip.innerHTML = '<span class="mp-share-card-active-horizon-dot"></span>' + hzLabel;
+    body.appendChild(chip);
+  }
+
+  // Clone verdict banner (label card + signals + price-pos + horizon grid)
+  var verdict = document.getElementById('verdict-banner');
+  if (verdict) {
+    var clone = verdict.cloneNode(true);
+    // Force the "Signals behind this label" expandable open in the clone.
+    clone.querySelectorAll('details.tt-narr-signals').forEach(function(d){
+      d.setAttribute('open', 'open');
+    });
+    // If the headline is still in its pending state, swap in the data-fallback
+    // so the card never ships with "Analyzing narrative…" visible.
+    var hl = clone.querySelector('#tt-headline');
+    if (hl && hl.getAttribute('data-pending') === '1') {
+      var fallback = hl.getAttribute('data-fallback') || '';
+      if (fallback) { hl.textContent = fallback; hl.removeAttribute('data-pending'); }
+      else { hl.style.display = 'none'; }
+    }
+    // Drop duplicate IDs from the clone so live event handlers stay attached
+    // to the original DOM only.
+    clone.querySelectorAll('[id]').forEach(function(n){ n.removeAttribute('id'); });
+    body.appendChild(clone);
+  }
+}
+
+async function captureShareCard() {
+  await ensureHtml2Canvas();
+  populateShareCard();
+  var wrap = document.getElementById('mp-share-card-wrap');
+  var card = document.getElementById('mp-share-card');
+  if (!wrap || !card) throw new Error('Share card template missing');
+
+  // Make the wrap measurable but still offscreen (left:-99999px).
+  // html2canvas reads the *card* directly, ignoring the wrap offset.
+  var canvas = await html2canvas(card, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
+    windowWidth: 1080
+  });
+  return canvas;
+}
+
 // ── Export Report (PDF via jsPDF + html2canvas) ──────────────────────────────
 function exportReport() {
   var btn = document.querySelector('.action-btn[onclick="exportReport()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Generating...'; }
 
   async function doExport() {
-    // Ensure html2canvas is loaded
-    if (typeof html2canvas === 'undefined') {
-      await new Promise(function(resolve, reject) {
-        var s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload = resolve;
-        s.onerror = function() { reject(new Error('Failed to load html2canvas')); };
-        document.head.appendChild(s);
-      });
-    }
+    await ensureHtml2Canvas();
 
     var jsPDF = window.jspdf.jsPDF;
     var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     var pw = 210, ph = 297, mx = 14, cw = pw - 28;
     var y = 0;
 
-    var bg = [8,11,17], surface = [12,16,24], cyan = [0,174,255], green = [0,222,148], red = [255,77,77], white = [255,255,255], muted = [160,168,176], secondary = [180,185,192];
+    var bg = [8,11,17], surface = [12,16,24], cyan = [0,174,255], green = [0,222,148], red = [255,77,77], amber = [255,184,0], white = [255,255,255], muted = [160,168,176], secondary = [180,185,192];
 
     function drawPageBg() { doc.setFillColor(bg[0],bg[1],bg[2]); doc.rect(0,0,pw,ph,'F'); }
     function checkPage(need) { if (y + need > ph - 20) { doc.addPage(); drawPageBg(); y = 14; } return y; }
@@ -9429,256 +9656,43 @@ function exportReport() {
     var date = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     var dateShort = new Date().toISOString().slice(0,10);
 
-    // Capture a DOM element as image and add to PDF
-    async function captureSection(selector, label) {
-      var el = typeof selector === 'string' ? document.querySelector(selector) : selector;
-      if (!el || el.offsetHeight < 5) return;
-
-      try {
-        var canvas = await html2canvas(el, {
-          backgroundColor: '#080B11',
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          logging: false
-        });
-
-        var imgData = canvas.toDataURL('image/png');
-        var imgW = cw;
-        var imgH = (canvas.height / canvas.width) * imgW;
-
-        // If image is taller than a page, scale down
-        var maxH = ph - 40;
-        if (imgH > maxH) {
-          imgH = maxH;
-          imgW = (canvas.width / canvas.height) * imgH;
-        }
-
-        checkPage(imgH + (label ? 10 : 4));
-
-        // Optional section label
-        if (label) {
-          doc.setFillColor(cyan[0],cyan[1],cyan[2]);
-          doc.rect(mx, y, 2, 6, 'F');
-          doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(white[0],white[1],white[2]);
-          doc.text(label, mx + 5, y + 5);
-          y += 10;
-        }
-
-        doc.addImage(imgData, 'PNG', mx, y, imgW, imgH);
-        y += imgH + 6;
-      } catch(e) {
-        console.warn('[PDF] Failed to capture:', selector, e);
-      }
-    }
-
-    // ── Page 1: Header ──
+    // ── Page 1: share-card snapshot ──
     drawPageBg();
 
-    // Header bar
-    doc.setFillColor(surface[0],surface[1],surface[2]);
-    doc.rect(0, 0, pw, 48, 'F');
-    doc.setFillColor(cyan[0],cyan[1],cyan[2]);
-    doc.rect(0, 48, pw, 0.8, 'F');
-
-    // Try to add company logo
-    var logoImg = document.querySelector('.hero-logo img, .hero-logo-wrap img');
-    if (logoImg && logoImg.src) {
-      try {
-        var logoCanvas = await html2canvas(logoImg.parentElement || logoImg, { backgroundColor: null, scale: 2, useCORS: true, allowTaint: true, logging: false });
-        doc.addImage(logoCanvas.toDataURL('image/png'), 'PNG', mx, 6, 10, 10);
-      } catch(_) {}
+    var cardCanvas;
+    try {
+      cardCanvas = await captureShareCard();
+    } catch (e) {
+      console.warn('[PDF] Share card capture failed, falling back to text-only header:', e);
     }
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor(white[0],white[1],white[2]);
-    doc.text(t, mx + 14, 16);
-
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(cyan[0],cyan[1],cyan[2]);
-    doc.text('MARKET PRISM  ·  NARRATIVE INTELLIGENCE REPORT', mx, 28);
-
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(muted[0],muted[1],muted[2]);
-    doc.text(date, mx, 36);
-
-    if (r.sector_name) {
-      doc.setFontSize(9); doc.setTextColor(secondary[0],secondary[1],secondary[2]);
-      doc.text(r.sector_name, mx, 43);
+    if (cardCanvas) {
+      var cardImg = cardCanvas.toDataURL('image/png');
+      var cardW = pw - 20;
+      var cardH = (cardCanvas.height / cardCanvas.width) * cardW;
+      var maxH = ph - 20;
+      if (cardH > maxH) {
+        cardH = maxH;
+        cardW = (cardCanvas.width / cardCanvas.height) * cardH;
+      }
+      var cardX = (pw - cardW) / 2;
+      var cardY = (ph - cardH) / 2;
+      doc.addImage(cardImg, 'PNG', cardX, cardY, cardW, cardH);
+      doc.addPage();
+      drawPageBg();
+      y = 14;
+    } else {
+      // Minimal text header if the card couldn't render (very unlikely)
+      doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor(white[0],white[1],white[2]);
+      doc.text(t, mx, 22);
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(cyan[0],cyan[1],cyan[2]);
+      doc.text('MARKET PRISM  ·  ' + date, mx, 30);
+      y = 44;
     }
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(cyan[0],cyan[1],cyan[2]);
-    doc.text('marketprism.co', pw - mx, 36, {align:'right'});
-
-    var prc = r.price != null ? '$'+Number(r.price).toFixed(2) : '';
-    var pctVal = r.price_change_pct || 0;
-    var chgTxt = pctVal !== 0 ? ((pctVal > 0 ? '+' : '') + Number(pctVal).toFixed(2) + '%') : '';
-    var chgColor = pctVal > 0 ? green : pctVal < 0 ? red : muted;
-
-    if (prc) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(white[0],white[1],white[2]);
-      doc.text(prc, pw - mx, 16, {align:'right'});
-    }
-    if (chgTxt) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(chgColor[0],chgColor[1],chgColor[2]);
-      doc.text(chgTxt, pw - mx, 26, {align:'right'});
-    }
-
-    y = 56;
-
-    // Verdict — small inline badge, not a massive banner
-    var verdict = r.prism_verdict || p.prevailing_verdict || 'Monitoring';
-    var isTrap = verdict.toLowerCase().indexOf('trap') !== -1;
-    var isSupported = verdict.toLowerCase().indexOf('supported') !== -1;
-    var vColor = isTrap ? red : isSupported ? green : cyan;
-
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(vColor[0],vColor[1],vColor[2]);
-    var verdictW = doc.getTextWidth(verdict.toUpperCase()) + 10;
-    var vBg = isTrap ? [30,12,12] : isSupported ? [10,28,20] : [10,20,32];
-    doc.setFillColor(vBg[0],vBg[1],vBg[2]);
-    doc.setDrawColor(vColor[0],vColor[1],vColor[2]); doc.setLineWidth(0.3);
-    doc.roundedRect(mx, y, verdictW, 8, 2, 2, 'FD');
-    doc.text(verdict.toUpperCase(), mx + verdictW/2, y + 5.5, {align:'center'});
-    var badgeX = mx + verdictW + 4;
-
-    // Insight badges (High Hype Gap, #2 Most Overvalued, etc.)
-    var heroBadges = document.querySelectorAll('.hero-insight-badges .hero-insight-badge');
-    heroBadges.forEach(function(el) {
-      var label = el.textContent.trim();
-      if (!label) return;
-      var style = el.getAttribute('style') || '';
-      var c = cyan;
-      if (style.indexOf('FF4D4D') !== -1 || style.indexOf('red') !== -1) c = red;
-      else if (style.indexOf('00DE94') !== -1 || style.indexOf('green') !== -1) c = green;
-      else if (style.indexOf('FFB800') !== -1 || style.indexOf('amber') !== -1) c = [255,184,0];
-      else if (style.indexOf('7B61FF') !== -1) c = [123,97,255];
-      else if (style.indexOf('38C8B8') !== -1) c = [56,200,184];
-
-      doc.setFont('helvetica','bold'); doc.setFontSize(7);
-      var tw = doc.getTextWidth(label) + 8;
-      // Wrap to next line if needed
-      if (badgeX + tw > pw - mx) { y += 10; badgeX = mx; }
-      var tagBg = [Math.round(c[0]*0.12 + bg[0]*0.88), Math.round(c[1]*0.12 + bg[1]*0.88), Math.round(c[2]*0.12 + bg[2]*0.88)];
-      doc.setFillColor(tagBg[0], tagBg[1], tagBg[2]);
-      doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(0.2);
-      doc.roundedRect(badgeX, y, tw, 7, 2, 2, 'FD');
-      doc.setTextColor(c[0], c[1], c[2]);
-      doc.text(label, badgeX + tw/2, y + 4.8, {align:'center'});
-      badgeX += tw + 3;
-    });
-
-    y += 14;
-
-    // ── Capture live sections from the page ──
-
-    // Score color helper (used by narrative section + text sections below)
-    function sc(v) { return v >= 70 ? cyan : v >= 40 ? [255,184,0] : red; }
-
-    // The Narrative (strength ring) — draw natively to fix SVG/absolute-position rendering
-    (function drawNarrativeSection() {
-      // Match live page calculations (renderPrimaryClaim)
-      var momentum = Math.round(p.prevailing_energy != null ? p.prevailing_energy : (p.avg_energy_remaining || 50));
-      var credibility = Math.round(p.pulse_health_score != null ? p.pulse_health_score : (p.pulse_vms || 50));
-      var coordRaw = Math.round(p.pulse_coordination || 0);
-      var fragRaw = (function() {
-        if (!p) return 0;
-        var coord = p.worst_coordination || 0;
-        var invHlth = 100 - (p.pulse_health_score != null ? p.pulse_health_score : 50);
-        var drift = Math.min(100, Math.abs(p.pulse_drift || 0));
-        return Math.round(coord * 0.35 + invHlth * 0.35 + drift * 0.30);
-      })();
-      var risk = Math.round(Math.min(100, (coordRaw * 0.6) + (fragRaw * 0.4)));
-      var overall = Math.round((momentum * 0.35) + (credibility * 0.35) + ((100 - risk) * 0.30));
-      var phase = phaseFromPulse(p);
-      var verdict = p.prevailing_verdict || 'Monitoring';
-      var claim = p.prevailing_narrative || 'No prevailing narrative found';
-      var exdays = (p.nearest_exhaustion_days != null) ? (Math.round(p.nearest_exhaustion_days) + ' days') : null;
-      var oc = sc(overall);
-
-      checkPage(60);
-
-      // Section label
-      doc.setFillColor(cyan[0],cyan[1],cyan[2]);
-      doc.rect(mx, y, 1.2, 5, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(white[0],white[1],white[2]);
-      doc.text('The Narrative', mx + 4, y + 4);
-      y += 10;
-
-      // Ring background
-      var ringCx = mx + 14, ringCy = y + 14, ringR = 11;
-      doc.setDrawColor(255,255,255); doc.setLineWidth(0.3);
-      doc.setDrawColor(40,45,55);
-      doc.circle(ringCx, ringCy, ringR, 'S');
-      // Ring arc (colored)
-      doc.setDrawColor(oc[0],oc[1],oc[2]); doc.setLineWidth(1.8);
-      var arcEnd = (overall / 100) * 360;
-      // Draw the ring as a colored circle (full or partial)
-      if (overall > 0) {
-        // Approximate arc with a full circle since jsPDF lacks native arc
-        doc.circle(ringCx, ringCy, ringR, 'S');
-      }
-      // Score number in center
-      doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(oc[0],oc[1],oc[2]);
-      doc.text(String(overall), ringCx, ringCy + 2, { align: 'center' });
-      // "Strength" label below number
-      doc.setFontSize(6); doc.setFont('helvetica','normal'); doc.setTextColor(muted[0],muted[1],muted[2]);
-      doc.text('STRENGTH', ringCx, ringCy + 6, { align: 'center' });
-
-      // Badges (phase, verdict, days remaining)
-      var badgeX = mx + 30;
-      var badgeY = y + 4;
-      doc.setFontSize(7); doc.setFont('helvetica','bold');
-      if (phase) {
-        doc.setFillColor(0,222,148); doc.setTextColor(8,11,17);
-        var tw1 = doc.getTextWidth(phase.toUpperCase()) + 5;
-        doc.roundedRect(badgeX, badgeY - 3, tw1, 5, 1.5, 1.5, 'F');
-        doc.text(phase.toUpperCase(), badgeX + 2.5, badgeY + 0.5);
-        badgeX += tw1 + 2;
-      }
-      if (verdict) {
-        doc.setFillColor(255,184,0); doc.setTextColor(8,11,17);
-        var tw2 = doc.getTextWidth(verdict.toUpperCase()) + 5;
-        doc.roundedRect(badgeX, badgeY - 3, tw2, 5, 1.5, 1.5, 'F');
-        doc.text(verdict.toUpperCase(), badgeX + 2.5, badgeY + 0.5);
-        badgeX += tw2 + 2;
-      }
-      if (exdays) {
-        doc.setFillColor(255,184,0); doc.setTextColor(8,11,17);
-        var lbl = '~' + exdays + ' remaining';
-        var tw3 = doc.getTextWidth(lbl.toUpperCase()) + 5;
-        doc.roundedRect(badgeX, badgeY - 3, tw3, 5, 1.5, 1.5, 'F');
-        doc.text(lbl.toUpperCase(), badgeX + 2.5, badgeY + 0.5);
-      }
-
-      // Narrative claim text
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(white[0],white[1],white[2]);
-      var claimLines = doc.splitTextToSize(claim, cw - 32);
-      doc.text(claimLines, mx + 30, badgeY + 7);
-      var claimH = claimLines.length * 4;
-
-      y += 28 + claimH;
-
-      // Mini score boxes (Energy, Credibility, Pressure)
-      checkPage(16);
-      var boxW = (cw - 8) / 3;
-      var scores = [
-        { label: 'ENERGY', val: momentum, c: sc(momentum) },
-        { label: 'CREDIBILITY', val: credibility, c: sc(credibility) },
-        { label: 'PRESSURE', val: risk, c: sc(100 - risk) }
-      ];
-      for (var si = 0; si < 3; si++) {
-        var bx = mx + si * (boxW + 4);
-        doc.setFillColor(surface[0],surface[1],surface[2]);
-        doc.roundedRect(bx, y, boxW, 14, 2, 2, 'F');
-        doc.setFontSize(14); doc.setFont('helvetica','bold');
-        doc.setTextColor(scores[si].c[0],scores[si].c[1],scores[si].c[2]);
-        doc.text(String(scores[si].val), bx + boxW/2, y + 7, { align: 'center' });
-        doc.setFontSize(6); doc.setFont('helvetica','normal'); doc.setTextColor(muted[0],muted[1],muted[2]);
-        doc.text(scores[si].label, bx + boxW/2, y + 12, { align: 'center' });
-      }
-      y += 18;
-    })();
-
-    // ── Helper: draw a text section with label + key-value rows ──
+    // ── Helpers: text section + key-value rows ──
     function sectionLabel(label) {
-      checkPage(12);
+      checkPage(14);
       doc.setFillColor(cyan[0],cyan[1],cyan[2]);
       doc.rect(mx, y, 2, 6, 'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(white[0],white[1],white[2]);
@@ -9704,172 +9718,119 @@ function exportReport() {
       y += 3;
     }
 
-    // ── Executive Summary ──
-    var storyClaim = r.story_claim || r.primary_driver || '';
-    var forensicRebuttal = r.forensic_rebuttal || '';
-    if (storyClaim || forensicRebuttal) {
-      sectionLabel('Executive Summary');
-      if (storyClaim) {
-        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(cyan[0],cyan[1],cyan[2]);
-        doc.text('PREVAILING NARRATIVE', mx + 2, y); y += 5;
-        textBlock(storyClaim);
+    // ── Page 2: Forensic Detail ──
+    // Renders the same vocabulary the live page uses (narrative state,
+    // coordination, fair-value gap, regime, verdict, driving theme, predicted
+    // move / prob up / forecast confidence). Read straight off the rendered
+    // DOM so we stay in lockstep with whatever the user is looking at.
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(cyan[0],cyan[1],cyan[2]);
+    doc.text(t + '  ·  Forensic detail', mx, 10);
+    doc.setFontSize(8); doc.setTextColor(muted[0],muted[1],muted[2]);
+    doc.text(date, pw - mx, 10, { align: 'right' });
+    y = 20;
+
+    // Narrative read — pull title + action chip + signals rows directly from
+    // the live verdict-banner clone source.
+    var narr = document.querySelector('#verdict-banner .tt-narr');
+    if (narr) {
+      sectionLabel('Narrative read');
+      var titleEl  = narr.querySelector('.tt-narr-title');
+      var actionEl = narr.querySelector('.tt-narr-action');
+      var descEl   = narr.querySelector('#tt-headline');
+      if (titleEl) kvRow('Label', titleEl.textContent.trim(), white);
+      if (actionEl) kvRow('Stance', actionEl.textContent.trim(), amber);
+      var descTxt = descEl ? descEl.textContent.trim() : '';
+      if (descTxt && !/Analyzing narrative/i.test(descTxt)) {
+        y += 1;
+        textBlock(descTxt);
       }
-      if (forensicRebuttal) {
-        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(red[0],red[1],red[2]);
-        doc.text('FORENSIC COUNTER-NARRATIVE', mx + 2, y); y += 5;
-        textBlock(forensicRebuttal);
-      }
-      y += 2;
+      // Signals rows (Narrative state, Coordination, Fair-value gap, Fair value,
+      // Regime, Verdict) — render exactly the labels the live page shows.
+      narr.querySelectorAll('.tt-narr-signal').forEach(function(row){
+        var lbl = row.querySelector('.tt-narr-signal-label');
+        var val = row.querySelector('.tt-narr-signal-val');
+        if (!lbl || !val) return;
+        var lblTxt = lbl.textContent.trim();
+        var valTxt = val.textContent.trim();
+        var color = white;
+        var lower = (lblTxt + ' ' + valTxt).toLowerCase();
+        if (lower.indexOf('coordinated') !== -1 || lower.indexOf('suspicious') !== -1) color = red;
+        else if (lower.indexOf('supported') !== -1) color = green;
+        kvRow(lblTxt, valTxt, color);
+      });
+      // Driving theme chip (Reality-Belief gauge sidekick)
+      var themeChip = narr.querySelector('.rbi-theme-chip');
+      if (themeChip) kvRow('Driving theme', themeChip.textContent.trim(), cyan);
+      y += 4;
     }
 
-    // ── Fair Value Analysis ──
+    // Active horizon forecast — read live cells (no template recalc needed).
+    var horizons = document.querySelector('#verdict-banner .tt-horizons');
+    var activeTab = horizons && horizons.querySelector('.tt-horizon-tab.active');
+    var grid = horizons && horizons.querySelector('.tt-grid');
+    if (grid) {
+      var horizonLabel = activeTab ? activeTab.textContent.replace(/[★\s]+/g, ' ').trim() : 'Forecast';
+      sectionLabel('Forecast · ' + horizonLabel);
+      grid.querySelectorAll('.tt-cell').forEach(function(cell){
+        var lbl = cell.querySelector('.tt-cell-label');
+        var val = cell.querySelector('.tt-cell-val');
+        var sub = cell.querySelector('.tt-cell-sub');
+        if (!lbl || !val) return;
+        var lblTxt = lbl.textContent.trim();
+        var valTxt = val.textContent.replace(/\s+/g, ' ').trim();
+        var subTxt = sub ? sub.textContent.trim() : '';
+        var c = white;
+        if (/-/.test(valTxt) && /%/.test(valTxt) && /^-/.test(valTxt)) c = red;
+        else if (/\+/.test(valTxt) && /%/.test(valTxt)) c = green;
+        kvRow(lblTxt, valTxt + (subTxt && subTxt !== ' ' ? '  (' + subTxt + ')' : ''), c);
+      });
+      y += 4;
+    }
+
+    // Fair Value Analysis — pulled from hero data (not pulse, to avoid stale
+    // sources). Uses current vocabulary only.
     var fairVal = r.fair_value || p.fair_value;
     var curPrice = r.price;
     if (fairVal != null && curPrice != null) {
-      sectionLabel('Fair Value Analysis');
+      sectionLabel('Fair value');
       var fvDev = ((curPrice - fairVal) / fairVal * 100).toFixed(1);
       var fvColor = fvDev > 15 ? red : fvDev < -15 ? green : cyan;
-      var fvLabel = fvDev > 0 ? fvDev + '% ABOVE fair value' : Math.abs(fvDev) + '% BELOW fair value';
-      kvRow('Current Price', '$' + Number(curPrice).toFixed(2), white);
-      kvRow('Valuation Gap', fvLabel, fvColor);
-      if (r.pe_ratio != null) kvRow('P/E Ratio', Number(r.pe_ratio).toFixed(1), white);
-      if (r.revenue_growth_pct != null) kvRow('Revenue Growth', r.revenue_growth_pct + '%', r.revenue_growth_pct > 0 ? green : red);
-      if (r.institutional_positioning) kvRow('Institutional', r.institutional_positioning, white);
+      var fvLabel = fvDev > 0 ? fvDev + '% above fair value' : Math.abs(fvDev) + '% below fair value';
+      kvRow('Current price', '$' + Number(curPrice).toFixed(2), white);
+      kvRow('Fair value', '$' + Number(fairVal).toFixed(2), cyan);
+      kvRow('Valuation gap', fvLabel, fvColor);
+      if (r.pe_ratio != null) kvRow('P/E ratio', Number(r.pe_ratio).toFixed(1) + 'x', white);
+      if (r.revenue_growth_pct != null) kvRow('Revenue growth', r.revenue_growth_pct + '%', r.revenue_growth_pct > 0 ? green : red);
       y += 4;
     }
 
-    // ── Key Forensic Metrics (text-based, always renders) ──
-    var hasPulseMetrics = p.pulse_health_score != null || p.fvd_pct != null || p.pulse_vms != null;
-    if (hasPulseMetrics) {
-      sectionLabel('Key Forensic Metrics');
-      kvRow('Pulse Health', (p.pulse_health_score || 0) + '/100', sc(p.pulse_health_score || 0));
-      if (p.fvd_pct != null) {
-        var fvdColor = p.fvd_pct > 20 ? red : p.fvd_pct < -20 ? green : cyan;
-        kvRow('FV Deviation', (p.fvd_pct > 0 ? '+' : '') + Number(p.fvd_pct).toFixed(1) + '%', fvdColor);
-      }
-      if (p.pulse_vms != null) kvRow('VMS (Validation)', p.pulse_vms + '/100', sc(p.pulse_vms));
-      if (p.pulse_coordination != null) kvRow('Coordination', p.pulse_coordination + '/100', p.pulse_coordination > 40 ? red : green);
-      if (p.pulse_nrs != null) kvRow('NRS (Risk)', p.pulse_nrs + '/100', p.pulse_nrs > 40 ? red : green);
-      if (p.pulse_ccp != null) kvRow('CCP (Claim Power)', p.pulse_ccp + '/100', sc(p.pulse_ccp));
-      if (p.pulse_or != null) kvRow('Overreaction Ratio', Number(p.pulse_or).toFixed(2), p.pulse_or > 0.15 ? red : green);
-      if (p.net_sentiment != null) kvRow('Net Sentiment', Number(p.net_sentiment).toFixed(0), p.net_sentiment > 0 ? green : red);
-      if (p.active_narrative_count != null) kvRow('Active Narratives', String(p.active_narrative_count), white);
-      if (p.trap_count != null && p.trap_count > 0) kvRow('Trap Count', String(p.trap_count), red);
-      y += 4;
-    }
-
-    // ── Earnings Intelligence ──
-    var hasEarnings = r.days_to_earnings != null || r.benzinga_eps_actual != null || r.guidance_direction;
-    if (hasEarnings) {
-      sectionLabel('Earnings Intelligence');
+    // Earnings (only if it's actually within a meaningful window or there's
+    // a recent surprise — drop the legacy "EARNINGS INTELLIGENCE" framing).
+    if (r.days_to_earnings != null || r.benzinga_eps_surprise_pct != null) {
+      sectionLabel('Earnings');
       if (r.days_to_earnings != null) {
-        var earnColor = r.days_to_earnings <= 14 ? [255,184,0] : white;
-        kvRow('Days to Earnings', r.days_to_earnings + ' days' + (r.earnings_window_flag ? ' (EARNINGS WINDOW)' : ''), earnColor);
+        var earnColor = r.days_to_earnings <= 14 ? amber : white;
+        kvRow('Days to earnings', r.days_to_earnings + ' days' + (r.earnings_window_flag ? '  (earnings window)' : ''), earnColor);
       }
-      if (r.benzinga_eps_actual != null) kvRow('EPS Actual', '$' + Number(r.benzinga_eps_actual).toFixed(2), white);
-      if (r.benzinga_eps_estimate != null) kvRow('EPS Estimate', '$' + Number(r.benzinga_eps_estimate).toFixed(2), muted);
+      if (r.benzinga_eps_actual != null) kvRow('EPS actual', '$' + Number(r.benzinga_eps_actual).toFixed(2), white);
+      if (r.benzinga_eps_estimate != null) kvRow('EPS estimate', '$' + Number(r.benzinga_eps_estimate).toFixed(2), muted);
       if (r.benzinga_eps_surprise_pct != null) {
-        var surpriseColor = r.benzinga_eps_surprise_pct > 0 ? green : red;
-        kvRow('EPS Surprise', (r.benzinga_eps_surprise_pct > 0 ? '+' : '') + Number(r.benzinga_eps_surprise_pct).toFixed(1) + '%', surpriseColor);
+        var surpC = r.benzinga_eps_surprise_pct > 0 ? green : red;
+        kvRow('EPS surprise', (r.benzinga_eps_surprise_pct > 0 ? '+' : '') + Number(r.benzinga_eps_surprise_pct).toFixed(1) + '%', surpC);
       }
-      if (r.guidance_direction && r.guidance_direction !== 'Neutral') kvRow('Guidance', r.guidance_direction, r.guidance_direction === 'Positive' ? green : red);
-      if (r.mda_snippet) {
-        y += 2;
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(muted[0],muted[1],muted[2]);
-        doc.text('MD&A EXCERPT', mx + 2, y); y += 4;
-        textBlock(r.mda_snippet.slice(0, 500));
+      if (r.guidance_direction && r.guidance_direction !== 'Neutral') {
+        kvRow('Guidance', r.guidance_direction, r.guidance_direction === 'Positive' ? green : red);
       }
       y += 4;
     }
 
-    // ── Sector Context ──
+    // Sector context — keep it tight, no STRENGTHS/WEAKNESSES legacy headers.
     if (r.sector_name) {
-      sectionLabel('Sector: ' + r.sector_name);
+      sectionLabel('Sector · ' + r.sector_name);
       if (r.sector_cagr_pct != null) kvRow('Sector CAGR', r.sector_cagr_pct + '%', cyan);
-      if (r.sector_key_strengths) {
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(green[0],green[1],green[2]);
-        doc.text('STRENGTHS', mx + 2, y); y += 4;
-        textBlock(r.sector_key_strengths.slice(0, 300));
-      }
-      if (r.sector_key_weaknesses) {
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(red[0],red[1],red[2]);
-        doc.text('WEAKNESSES', mx + 2, y); y += 4;
-        textBlock(r.sector_key_weaknesses.slice(0, 300));
-      }
-      if (r.sector_contrarian_thesis) {
-        var amber = [255,184,0];
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(amber[0],amber[1],amber[2]);
-        doc.text('CONTRARIAN THESIS', mx + 2, y); y += 4;
-        textBlock(r.sector_contrarian_thesis.slice(0, 300));
-      }
-      y += 4;
-    }
-
-    // What's Driving the Price
-    var driversSection = document.querySelector('#drivers-body');
-    if (driversSection && driversSection.textContent.trim() && driversSection.textContent.indexOf('No driver') === -1) {
-      await captureSection(driversSection.closest('.section') || driversSection, "What's Driving the Price");
-    }
-
-    // Warranted vs Hype
-    var wvhSection = document.querySelector('#warranted-body');
-    if (wvhSection && wvhSection.querySelector('.tug-bar-wrap')) {
-      await captureSection(wvhSection, 'Warranted vs Hype');
-    }
-
-    // Forensic Analysis (metrics strip)
-    var metricsEl = document.querySelector('#metrics-strip');
-    if (metricsEl && metricsEl.children.length) {
-      await captureSection(metricsEl.closest('.section') || metricsEl, 'Forensic Analysis');
-    }
-
-    // Sector Intelligence
-    var sectorEl = document.querySelector('#sector-body');
-    if (sectorEl && sectorEl.textContent.trim().indexOf('No sector') === -1) {
-      await captureSection(sectorEl.closest('.section') || sectorEl, 'Sector Intelligence');
-    }
-
-    // Trending Narratives (from Narratives tab — make visible temporarily)
-    var narrPanel = document.getElementById('tab-narratives');
-    var narrList = document.getElementById('narr-list');
-    if (narrPanel && narrList && narrList.children.length) {
-      narrPanel.style.display = 'block';
-      narrPanel.style.position = 'absolute';
-      narrPanel.style.left = '-9999px';
-      await captureSection(narrList.closest('.narr-section') || narrList, 'Trending Narratives');
-      narrPanel.style.display = '';
-      narrPanel.style.position = '';
-      narrPanel.style.left = '';
-    }
-
-    // Story Lifecycle
-    var lcBody = document.getElementById('lc-body');
-    if (lcBody && lcBody.textContent.trim()) {
-      var lcSection = lcBody.closest('.section') || lcBody;
-      var lcPanel = document.getElementById('tab-narratives');
-      if (lcPanel) { lcPanel.style.display = 'block'; lcPanel.style.position = 'absolute'; lcPanel.style.left = '-9999px'; }
-      await captureSection(lcSection, 'Story Lifecycle');
-      if (lcPanel) { lcPanel.style.display = ''; lcPanel.style.position = ''; lcPanel.style.left = ''; }
-    }
-
-    // Pulse Summary text
-    if (p.pulse_summary) {
-      sectionLabel('Pulse Summary');
-      textBlock(p.pulse_summary);
+      if (r.sector_key_strengths) textBlock(r.sector_key_strengths.slice(0, 280));
+      if (r.sector_key_weaknesses) textBlock(r.sector_key_weaknesses.slice(0, 280));
       y += 2;
-    }
-
-    // ── Narrative Loyalty & Fragility Assessment ──
-    var hasLoyalty = p.narrative_loyalty != null || p.worst_nrs != null || p.coordinated_count != null;
-    if (hasLoyalty) {
-      sectionLabel('Risk Assessment');
-      if (p.narrative_loyalty != null) kvRow('Narrative Loyalty', Number(p.narrative_loyalty).toFixed(0) + '%', sc(p.narrative_loyalty));
-      if (p.worst_nrs != null) kvRow('Worst NRS', p.worst_nrs + '/100', p.worst_nrs > 40 ? red : green);
-      if (p.worst_vms != null) kvRow('Worst VMS', p.worst_vms + '/100', sc(p.worst_vms));
-      if (p.worst_coordination != null) kvRow('Worst Coord.', p.worst_coordination + '/100', p.worst_coordination > 40 ? red : green);
-      if (p.coordinated_count != null && p.coordinated_count > 0) kvRow('Coordinated Claims', String(p.coordinated_count), red);
-      if (p.sentiment_momentum != null) kvRow('Sentiment Momentum', (p.sentiment_momentum > 0 ? '+' : '') + Number(p.sentiment_momentum).toFixed(1), p.sentiment_momentum > 0 ? green : red);
-      y += 4;
     }
 
     // ── Disclaimer ──
@@ -9881,9 +9842,10 @@ function exportReport() {
     var disclaimerLines = doc.splitTextToSize('This report is generated by Market Prism AI narrative intelligence. It is for informational purposes only and does not constitute financial advice. All signals, scores, and verdicts are algorithmically derived from public data sources including SEC filings, news sentiment, and market data. Past performance does not guarantee future results. Always do your own research.', cw);
     disclaimerLines.forEach(function(line) { checkPage(4); doc.text(line, mx, y); y += 3.5; });
 
-    // ── Footer on all pages ──
+    // ── Footer on detail pages (skip page 1 — share card has its own footer) ──
     var pageCount = doc.internal.getNumberOfPages();
-    for (var pg = 1; pg <= pageCount; pg++) {
+    var firstFooterPage = cardCanvas ? 2 : 1;
+    for (var pg = firstFooterPage; pg <= pageCount; pg++) {
       doc.setPage(pg);
       doc.setFillColor(surface[0],surface[1],surface[2]);
       doc.rect(0, ph - 14, pw, 14, 'F');
@@ -9913,51 +9875,28 @@ function exportReport() {
   }
 }
 
-// ── Create Image (capture page as PNG) ───────────────────────────────────────
+// ── Create Image (share card → PNG) ──────────────────────────────────────────
+// Renders the unified share card (same pipeline as Export Report page 1) to
+// a 2x PNG. Designed for Reddit / Twitter / LinkedIn — fixed 1080px wide,
+// branded header + footer, never carries the live page's sidebar or chrome.
 async function createImage() {
-  const overlay = document.getElementById('capture-overlay');
-  overlay.classList.add('active');
-
+  var overlay = document.getElementById('capture-overlay');
+  if (overlay) overlay.classList.add('active');
   try {
-    // Dynamically load html2canvas if not already loaded
-    if (typeof html2canvas === 'undefined') {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load html2canvas'));
-        document.head.appendChild(script);
-      });
-    }
-
-    // Capture the main content area (excluding sidebar)
-    const target = document.querySelector('.page-wrap');
-    const canvas = await html2canvas(target, {
-      backgroundColor: isLight() ? '#F5F6FA' : '#0A0E1A',
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      windowWidth: 960,
-      onclone: (doc) => {
-        // Hide the action bar in the captured image
-        const ab = doc.getElementById('action-bar');
-        if (ab) ab.style.display = 'none';
-      }
-    });
-
-    canvas.toBlob(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+    var canvas = await captureShareCard();
+    canvas.toBlob(function(blob){
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
       a.href = url;
-      a.download = `${TICKER}-market-prism-${new Date().toISOString().slice(0,10)}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
+      a.download = TICKER + '-scorecard-' + new Date().toISOString().slice(0,10) + '.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
     }, 'image/png');
   } catch (err) {
-    console.error('Image capture failed:', err);
+    console.error('[share-card] Image capture failed:', err);
     alert('Failed to create image. Please try again.');
   } finally {
-    overlay.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
   }
 }
 
