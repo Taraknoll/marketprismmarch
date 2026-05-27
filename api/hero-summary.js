@@ -127,7 +127,32 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
     var fvdDirection = fvd >= 0 ? 'overvalued' : 'undervalued';
     lines.push('Fair-value gap: stock is ' + Math.abs(fvd).toFixed(1) + '% ' + fvdDirection + ' vs fair value');
   }
-  if (s.days_to_earnings != null) lines.push('Days to earnings: ' + s.days_to_earnings + ' (negative = post-earnings)');
+  // Earnings timing — recompute days_to_earnings from next_earnings_date relative
+  // to TODAY (server clock), not from the snapshot row. Snapshots are generated
+  // pre-market and can be 1 day stale, which causes the LLM to say "earnings
+  // tomorrow" when the frontend badge correctly says "Earnings today".
+  var dteResolved = null;
+  var earnDateISO = s.next_earnings_date || null;
+  if (earnDateISO) {
+    var _ep = String(earnDateISO).split('-');
+    if (_ep.length === 3) {
+      var _earnDate = new Date(Number(_ep[0]), Number(_ep[1]) - 1, Number(_ep[2]));
+      var _now = new Date(); _now.setHours(0, 0, 0, 0);
+      dteResolved = Math.round((_earnDate - _now) / 86400000);
+    }
+  }
+  if (dteResolved == null && s.days_to_earnings != null) {
+    dteResolved = Number(s.days_to_earnings);
+  }
+  if (dteResolved != null && isFinite(dteResolved)) {
+    var earnPhrase;
+    if (dteResolved === 0) earnPhrase = 'TODAY (after-hours or scheduled today — do NOT say "tomorrow")';
+    else if (dteResolved === 1) earnPhrase = 'tomorrow (in 1 day)';
+    else if (dteResolved === -1) earnPhrase = 'yesterday (1 day ago, post-earnings)';
+    else if (dteResolved > 0) earnPhrase = 'in ' + dteResolved + ' days';
+    else earnPhrase = Math.abs(dteResolved) + ' days ago (post-earnings)';
+    lines.push('Earnings: ' + earnPhrase + (earnDateISO ? ' [' + earnDateISO + ']' : ''));
+  }
   if (s.earnings_surprise_pct != null) lines.push('Last earnings surprise: ' + Number(s.earnings_surprise_pct).toFixed(1) + '%');
   if (s.guidance_direction) lines.push('Guidance: ' + s.guidance_direction);
 
@@ -219,7 +244,7 @@ module.exports = async (req, res) => {
   // falls back to the deduped scorecard narratives view.
   var sinceISO = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
   var [storyRows, scoreRows, healthRows, narrativeRows, fvRows, articleRows] = await Promise.all([
-    fetchSupabase('v_dash_daily_story?select=ticker,sector_name,price,price_change_pct,narrative_state,prism_verdict,story_claim,forensic_rebuttal,days_to_earnings,guidance_direction,earnings_surprise_pct,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
+    fetchSupabase('v_dash_daily_story?select=ticker,sector_name,price,price_change_pct,narrative_state,prism_verdict,story_claim,forensic_rebuttal,days_to_earnings,next_earnings_date,guidance_direction,earnings_surprise_pct,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('narrative_scorecard?select=ticker,verdict,narrative_state,coordination_score,walsh_regime,narrative_energy_regime,narrative_energy_absolute,current_sentiment,fvd_pct,half_life,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('v_dash_narrative_health?select=ticker,narrative_health,narrative_trend,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('v_narrative_scorecard_deduped?select=narrative,propagation_pressure,energy_remaining,narrative_energy_regime,snapshot_date&' + tFilter + '&order=snapshot_date.desc,propagation_pressure.desc.nullslast&limit=8'),
