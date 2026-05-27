@@ -133,8 +133,8 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
 
   // Valuation-temperature flag — controls hype-style word bans in the LLM
   // paragraph. TEMPERATE = stock is within VALUATION_PREMIUM_TEMPERATE_PCT of
-  // fair value AND pe_used < industry_pe_avg (multiple below sector peers).
-  // Both conditions must be computable; when industry_pe_avg is null (current
+  // fair value AND pe_used < industry_pe_median (multiple below sector peers).
+  // Both conditions must be computable; when industry_pe_median is null (current
   // state for most rows pending the upstream backfill of daily_fair_value),
   // the flag is left absent rather than guessed.
   var VALUATION_PREMIUM_TEMPERATE_PCT = 20;
@@ -145,9 +145,9 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
   } else if (fv.fair_value != null && s.price) {
     _premiumAbsPct = Math.abs((Number(s.price) - Number(fv.fair_value)) / Number(fv.fair_value) * 100);
   }
-  if (_premiumAbsPct != null && fv.pe_used != null && fv.industry_pe_avg != null) {
+  if (_premiumAbsPct != null && fv.pe_used != null && fv.industry_pe_median != null) {
     var _closeToFV = _premiumAbsPct <= VALUATION_PREMIUM_TEMPERATE_PCT;
-    var _underSectorPE = Number(fv.pe_used) < Number(fv.industry_pe_avg);
+    var _underSectorPE = Number(fv.pe_used) < Number(fv.industry_pe_median);
     valuationFlag = (_closeToFV && _underSectorPE) ? 'TEMPERATE' : 'ELEVATED';
   }
   if (valuationFlag) {
@@ -156,14 +156,14 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
       + ' (premium |' + _premiumAbsPct.toFixed(1) + '%| vs '
       + VALUATION_PREMIUM_TEMPERATE_PCT + '% threshold, P/E '
       + Number(fv.pe_used).toFixed(1) + 'x '
-      + (Number(fv.pe_used) < Number(fv.industry_pe_avg) ? 'below' : 'at or above')
-      + ' industry avg ' + Number(fv.industry_pe_avg).toFixed(1) + 'x)');
+      + (Number(fv.pe_used) < Number(fv.industry_pe_median) ? 'below' : 'at or above')
+      + ' industry median ' + Number(fv.industry_pe_median).toFixed(1) + 'x)');
   }
 
   // P/E context from daily_fair_value — gives the LLM the same valuation lenses
   // that drive the visible "P/E vs Sector" badge so the paragraph can't
   // contradict it. Emit each lens as an explicit comparison vs the current P/E
-  // so the model can't flip the direction. industry_pe_avg is the canonical
+  // so the model can't flip the direction. industry_pe_median is the canonical
   // sector source on this table but is currently unpopulated for most rows;
   // when null, the sector-comparison lens is simply absent from the prompt.
   if (fv.pe_used != null) {
@@ -182,12 +182,12 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
       peLines.push('Implied P/E at fair value: ' + peImp.toFixed(1) + 'x (current is '
         + impDir + ' the implied multiple)');
     }
-    if (fv.industry_pe_avg != null) {
-      var peInd = Number(fv.industry_pe_avg);
+    if (fv.industry_pe_median != null) {
+      var peInd = Number(fv.industry_pe_median);
       var indDir = peNow >= peInd ? 'above' : 'below';
       var indGap = Math.abs((peNow - peInd) / peInd * 100);
-      peLines.push('Industry average P/E: ' + peInd.toFixed(1) + 'x (current is '
-        + indGap.toFixed(0) + '% ' + indDir + ' sector peers — THIS is what the visible badge compares against)');
+      peLines.push('Industry median P/E: ' + peInd.toFixed(1) + 'x (current is '
+        + indGap.toFixed(0) + '% ' + indDir + ' sector peers — THIS matches what the visible "vs Sector" badge displays)');
     }
     lines.push('');
     lines.push('Valuation multiples (use these alongside fair value for the disagreement rule):');
@@ -314,7 +314,7 @@ module.exports = async (req, res) => {
     fetchSupabase('narrative_scorecard?select=ticker,verdict,narrative_state,coordination_score,walsh_regime,narrative_energy_regime,narrative_energy_absolute,current_sentiment,fvd_pct,half_life,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('v_dash_narrative_health?select=ticker,narrative_health,narrative_trend,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('v_narrative_scorecard_deduped?select=narrative,propagation_pressure,energy_remaining,narrative_energy_regime,snapshot_date&' + tFilter + '&order=snapshot_date.desc,propagation_pressure.desc.nullslast&limit=8'),
-    fetchSupabase('daily_fair_value?select=fair_value,fv_low,fv_high,verdict,premium_pct,pe_used,pe_5y_median,pe_implied,industry_pe_avg,snapshot_date&' + tFilter + '&fair_value=not.is.null&order=snapshot_date.desc&limit=1'),
+    fetchSupabase('daily_fair_value?select=fair_value,fv_low,fv_high,verdict,premium_pct,pe_used,pe_5y_median,pe_implied,industry_pe_median,snapshot_date&' + tFilter + '&fair_value=not.is.null&order=snapshot_date.desc&limit=1'),
     fetchSupabase('narrative_analyses?select=narrative_text,source_outlet,sentiment_score,snapshot_date&' + tFilter + '&snapshot_date=gte.' + sinceISO + '&order=snapshot_date.desc&limit=10')
   ]);
 
