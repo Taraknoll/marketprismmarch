@@ -33,7 +33,8 @@ Hard rules:
 - A synthesized state label is shown directly above this paragraph (e.g. "Smart money behind a story"). Do NOT restate or paraphrase it — show what is happening, do not declare it.
 - Do not say "this stock", "this ticker", or restate the ticker symbol — they are shown adjacent to the paragraph.
 - Read like a Bloomberg analyst wrote it. Not breathless, not robotic.
-- Banned words: crash, guaranteed, certain, always, never, explosion, manipulation. Use "stretched", "diverging", or "outpacing fundamentals" instead.
+- Banned words (always): crash, guaranteed, certain, always, never, explosion, manipulation. Use "stretched", "diverging", or "outpacing fundamentals" instead.
+- Conditional banned words: when the input contains "Valuation flag: TEMPERATE", these additional words become banned in the paragraph: hype, hyped, frothy, froth, mania, manic, euphoria, euphoric, bubble, parabolic, blow-off. A TEMPERATE flag means the stock is within 20% of fair value AND the multiple is below sector peers, so any "hype" framing would contradict the multiple math. Use "extended", "consensus-long", "well-owned", or "crowded" instead. The synthesized state label above the paragraph may still contain "hype" - that is fine, the label is separate; but the paragraph itself must avoid those words. When the flag is "ELEVATED" or absent, normal valuation language is allowed.
 
 Output ONLY the paragraph. No headers, no quotes around it, no preamble.`;
 
@@ -128,6 +129,35 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
     var fvd = Number(sc.fvd_pct);
     var fvdDirection = fvd >= 0 ? 'overvalued' : 'undervalued';
     lines.push('Fair-value gap: stock is ' + Math.abs(fvd).toFixed(1) + '% ' + fvdDirection + ' vs fair value');
+  }
+
+  // Valuation-temperature flag — controls hype-style word bans in the LLM
+  // paragraph. TEMPERATE = stock is within VALUATION_PREMIUM_TEMPERATE_PCT of
+  // fair value AND pe_used < industry_pe_avg (multiple below sector peers).
+  // Both conditions must be computable; when industry_pe_avg is null (current
+  // state for most rows pending the upstream backfill of daily_fair_value),
+  // the flag is left absent rather than guessed.
+  var VALUATION_PREMIUM_TEMPERATE_PCT = 20;
+  var valuationFlag = null;
+  var _premiumAbsPct = null;
+  if (fv.premium_pct != null) {
+    _premiumAbsPct = Math.abs(Number(fv.premium_pct));
+  } else if (fv.fair_value != null && s.price) {
+    _premiumAbsPct = Math.abs((Number(s.price) - Number(fv.fair_value)) / Number(fv.fair_value) * 100);
+  }
+  if (_premiumAbsPct != null && fv.pe_used != null && fv.industry_pe_avg != null) {
+    var _closeToFV = _premiumAbsPct <= VALUATION_PREMIUM_TEMPERATE_PCT;
+    var _underSectorPE = Number(fv.pe_used) < Number(fv.industry_pe_avg);
+    valuationFlag = (_closeToFV && _underSectorPE) ? 'TEMPERATE' : 'ELEVATED';
+  }
+  if (valuationFlag) {
+    lines.push('');
+    lines.push('Valuation flag: ' + valuationFlag
+      + ' (premium |' + _premiumAbsPct.toFixed(1) + '%| vs '
+      + VALUATION_PREMIUM_TEMPERATE_PCT + '% threshold, P/E '
+      + Number(fv.pe_used).toFixed(1) + 'x '
+      + (Number(fv.pe_used) < Number(fv.industry_pe_avg) ? 'below' : 'at or above')
+      + ' industry avg ' + Number(fv.industry_pe_avg).toFixed(1) + 'x)');
   }
 
   // P/E context from daily_fair_value — gives the LLM the same valuation lenses
