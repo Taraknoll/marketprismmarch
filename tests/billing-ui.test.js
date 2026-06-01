@@ -7,7 +7,7 @@ const {
   getPricingPagePresentation,
   canAccessFeature,
   getFeatureLockPresentation
-} = require('../billing-ui.js');
+} = require('../public/billing-ui.js');
 
 test('getTrialDaysRemaining counts a future trial end date as days remaining', () => {
   const now = new Date('2026-03-31T12:00:00Z');

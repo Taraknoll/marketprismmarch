@@ -3,6 +3,7 @@
 .vercel
 node_modules
 .worktrees/
+.claude/
 .env*.local
 branch_structure.json
 temp_auto_push.bat
