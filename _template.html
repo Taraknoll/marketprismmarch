@@ -6868,7 +6868,25 @@ function applyAuthenticatedUser(user){
   if(logoutBtn){
     logoutBtn.style.display = user ? '' : 'none';
   }
-  if(user) document.body.style.opacity = '1';
+  if(user){
+    document.body.style.opacity = '1';
+    // Soft-gate overlays (the "create a free account" nudge on Leaderboard,
+    // narrative, scorer) are populated synchronously by switchTab before this
+    // async auth check resolves. Once we know there IS a logged-in user, tear
+    // any of them down and un-blur the content — a login must never see an
+    // unlock prompt on these tabs, regardless of auth-resolution timing.
+    document.querySelectorAll('.soft-gate-overlay').forEach(function(sg){
+      var tabEl = sg.parentElement;
+      sg.remove();
+      if(tabEl){
+        Array.from(tabEl.children).forEach(function(ch){
+          ch.style.filter = '';
+          ch.style.pointerEvents = '';
+          ch.style.userSelect = '';
+        });
+      }
+    });
+  }
 }
 
 function redirectToLogin(){
