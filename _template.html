@@ -136,9 +136,8 @@ body{
 /* ── LAYOUT ── */
 .app{display:flex;min-height:100vh;}
 /* ── SIDE NAV ──
-   Default state: visible on desktop, hidden on mobile (the mobile sidebar
-   covers the content area, so showing it by default would block the page).
-   Desktop user can hide via .collapsed (hamburger toggle).
+   Always visible on desktop; hidden on mobile (the mobile sidebar covers the
+   content area, so showing it by default would block the page).
    Mobile user reveals via .open (hamburger toggle). */
 .side-nav{
   position:fixed;top:0;left:0;width:248px;height:100vh;
@@ -146,12 +145,6 @@ body{
   border-right:1px solid rgba(0,0,0,0.08);
   display:flex;flex-direction:column;z-index:100;overflow-y:auto;
   transition:transform .25s ease;
-}
-@media(min-width:768px){
-  /* Desktop: visible by default; .collapsed pulls it from layout entirely.
-     We use display:none rather than transform here because some parts of the
-     dashboard run animation libs that cancel sibling transform transitions. */
-  .side-nav.collapsed{display:none;}
 }
 @media(max-width:767px){
   .side-nav{transform:translateX(-100%);}
@@ -295,26 +288,9 @@ body{
 /* No margin-left transition — the dashboard's animation lib stalls it,
    leaving main stuck at the wrong width. Snap is fine for an explicit toggle. */
 .main{margin-left:0;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;}
-/* Desktop: sidebar is visible by default → push main over by its width.
-   When .collapsed is set on the sidebar, snap main back to flush-left. */
+/* Desktop: sidebar is always visible → push main over by its width. */
 @media(min-width:768px){
   .side-nav ~ .main{margin-left:248px;}
-  .side-nav.collapsed ~ .main{margin-left:0;}
-}
-/* Hide-sidebar button — desktop-only, lives inside the sidebar bottom. */
-.mp-sidebar-collapse{display:none;}
-@media(min-width:768px){
-  .mp-sidebar-collapse{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--mp-text-tertiary);cursor:pointer;font-family:var(--font-body);font-size:11px;padding:6px 8px;border-radius:8px;text-align:left;width:auto;transition:background .15s,color .15s;}
-  .mp-sidebar-collapse:hover{background:rgba(0,0,0,0.04);color:var(--mp-text-primary);}
-  .mp-sidebar-collapse svg{width:14px;height:14px;opacity:.7;}
-  [data-theme="dark"] .mp-sidebar-collapse:hover{background:rgba(255,255,255,0.05);}
-}
-/* Floating Show-sidebar button. Desktop-only, hidden until body.mp-sidebar-collapsed. */
-.mp-sidebar-expand{display:none;}
-@media(min-width:768px){
-  body.mp-sidebar-collapsed .mp-sidebar-expand{display:flex;align-items:center;gap:8px;position:fixed;top:14px;left:14px;z-index:99;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:10px;padding:8px 12px;cursor:pointer;font-family:var(--font-body);font-size:12px;font-weight:500;color:var(--mp-text-primary);box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:transform .15s,box-shadow .15s;}
-  body.mp-sidebar-collapsed .mp-sidebar-expand:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,0.12);}
-  body.mp-sidebar-collapsed .mp-sidebar-expand svg{width:14px;height:14px;}
 }
 /* topbar */
 .topbar{
@@ -4630,9 +4606,6 @@ body{
   <div class="scan-line"></div>
   <!-- Top bar -->
   <div class="topbar">
-    <button class="hamburger-btn" id="hamburger-btn-desktop" aria-label="Toggle menu" style="margin-right:8px;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
     <div class="topbar-title" id="topbar-title">Daily Plays</div>
     <div class="topbar-center">
       <div class="scholar-bar" id="scholar-bar">
@@ -6293,24 +6266,17 @@ function ensureJsPDF(){
 <!-- Env vars injected by Vercel API handler — do not edit this line -->
 <script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', SCHOLAR_ENABLED: '', ANTHROPIC_KEY: '', MASSIVE_API: '' };</script>
 <script>
-// ── Sidebar toggle (desktop + mobile) ────────────────────────────────────────
-// Default state per viewport:
-//   Desktop (≥768px): sidebar VISIBLE; hamburger toggles .collapsed (hide).
-//   Mobile  (<768px): sidebar HIDDEN;  hamburger toggles .open (slide in).
-// The two classes are kept independent so resizing the viewport doesn't
-// trap the sidebar in a wrong state — each media query owns its own toggle.
+// ── Sidebar toggle (mobile only) ─────────────────────────────────────────────
+// Desktop (≥768px): sidebar is ALWAYS visible — there is no hide/collapse.
+// Mobile  (<768px): sidebar HIDDEN; the mobile-topbar hamburger slides it in.
 (function(){
   var nav=document.getElementById('side-nav');
   var ov=document.getElementById('nav-overlay');
   if(!nav||!ov) return;
   document.querySelectorAll('.hamburger-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
-      if(window.innerWidth >= 768){
-        nav.classList.toggle('collapsed');
-      }else{
-        var open=nav.classList.toggle('open');
-        ov.classList.toggle('open',open);
-      }
+      var open=nav.classList.toggle('open');
+      ov.classList.toggle('open',open);
     });
   });
   ov.addEventListener('click',function(){
