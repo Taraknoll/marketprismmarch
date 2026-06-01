@@ -173,7 +173,7 @@
       "destination": "/api/home-v2"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/).*)",
       "destination": "/api/index"
     }
   ],
