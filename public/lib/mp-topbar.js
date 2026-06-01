@@ -66,8 +66,6 @@
     '.scholar-chips{display:flex;flex-wrap:wrap;gap:6px;}'+
     '.scholar-chip{display:inline-flex;align-items:center;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);font-size:12px;font-weight:600;color:var(--mp-text-secondary);text-decoration:none;font-family:var(--font-body,Inter,sans-serif);transition:background .15s,border-color .15s,color .15s;letter-spacing:.02em;}'+
     '.scholar-chip:hover{background:rgba(0,174,255,0.10);border-color:rgba(0,174,255,0.30);color:#00AEFF;}'+
-    '.hamburger-btn{background:none;border:none;color:var(--mp-text-primary);cursor:pointer;padding:4px;display:flex;align-items:center;}'+
-    '.hamburger-btn svg{width:20px;height:20px;}'+
     '.theme-toggle{background:none;border:none;cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:6px;transition:background .15s;}'+
     '.theme-toggle:hover{background:rgba(255,255,255,0.05);}'+
     '@media(max-width:767px){.topbar{padding:0 14px;}.topbar-title{display:none;}.topbar-date{display:none;}}';
@@ -98,9 +96,6 @@
       : 'Search tickers… e.g. AAPL, NVDA, TSLA';
 
     container.innerHTML = ''+
-      '<button class="hamburger-btn" id="hamburger-btn-desktop" aria-label="Toggle menu" style="margin-right:8px;">'+
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>'+
-      '</button>'+
       '<div class="topbar-title" id="topbar-title">'+escAttr(title)+'</div>'+
       '<div class="topbar-center">'+
         '<div class="scholar-bar" id="scholar-bar">'+

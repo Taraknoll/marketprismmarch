@@ -4481,21 +4481,6 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
   <script>
     MP.renderTopbar({ container: '#topbar', title: 'Stock Prism' });
     MP.initScholarBar();
-    // Mirror the dashboard's hamburger → sidebar toggle so the topbar's
-    // hamburger collapses/restores the sidebar on desktop.
-    (function(){
-      var ham = document.getElementById('hamburger-btn-desktop');
-      var nav = document.getElementById('side-nav');
-      if (!ham || !nav) return;
-      ham.addEventListener('click', function(){
-        if (window.innerWidth >= 768) {
-          nav.classList.toggle('collapsed');
-          document.body.classList.toggle('mp-sidebar-collapsed', nav.classList.contains('collapsed'));
-        } else {
-          nav.classList.toggle('open');
-        }
-      });
-    })();
   </script>
 
   <!-- Hero -->
