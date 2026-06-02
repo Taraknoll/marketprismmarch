@@ -203,6 +203,14 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
   max-width:640px;
 }
 
+/* ── RESULTS DISCLAIMER (historical-comparison, not a prediction) ───────── */
+.results-disclaimer{
+  font-size:12px;color:var(--mp-text-tertiary);line-height:1.5;
+  background:rgba(255,255,255,0.03);border:1px solid var(--mp-border);
+  border-radius:10px;padding:10px 14px;margin-bottom:14px;
+}
+[data-theme="light"] .results-disclaimer{background:rgba(0,0,0,0.03);}
+
 /* ── PLAIN-ENGLISH TAKEAWAY ─────────────────────────────────────────────── */
 .takeaway-box{
   background:var(--mp-surface2);border:1px solid var(--mp-border);border-radius:14px;
@@ -351,12 +359,6 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
   margin-top:6px;font-size:13px;color:var(--mp-text-secondary);line-height:1.5;
 }
 .bs-played strong{color:var(--mp-text-primary);font-weight:600;}
-.bs-mlsig{
-  margin-top:14px;padding-top:14px;border-top:1px solid var(--mp-border);
-  font-size:11px;color:var(--mp-text-muted);letter-spacing:.04em;
-  text-transform:uppercase;font-weight:500;
-}
-.bs-mlsig strong{color:var(--mp-text-tertiary);font-weight:600;font-variant-numeric:tabular-nums;}
 
 /* ── CLUSTER PATTERN-MATCH CARD ─────────────────────────────────────────── */
 .cluster-card{
@@ -626,6 +628,13 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
     <!-- ── RESULTS ── -->
     <div class="results" id="results">
 
+      <!-- Honest-framing disclaimer — this is a reference-class / historical
+           comparison tool, NOT a forward prediction or trade recommendation. -->
+      <div class="results-disclaimer" id="results-disclaimer">
+        This is a historical comparison of similar narratives — not a prediction or
+        trade recommendation. Similar stories often resolve differently.
+      </div>
+
       <!-- Earnings-proximity warning strip — surfaced FIRST so users see the
            print-vs-narrative caveat before the decision label. -->
       <div class="ctx-warn" id="ctx-warn" style="display:none;">
@@ -636,9 +645,9 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
         </div>
       </div>
 
-      <!-- 1. Decision card — top-level "should I trade this?" answer -->
+      <!-- 1. Outcome card — how the closest historical analogues resolved -->
       <div class="decision-card" id="decision-card">
-        <div class="dc-tag" id="dc-tag">Trade decision</div>
+        <div class="dc-tag" id="dc-tag">How similar narratives resolved</div>
         <div class="dc-label" id="dc-label">—</div>
         <div class="dc-summary" id="dc-summary">—</div>
       </div>
@@ -649,33 +658,32 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
         <div class="tk-body" id="tk-body">—</div>
       </div>
 
-      <!-- 3. Historical Edge Score (renamed from Narrative Hit Rate) -->
+      <!-- 3. Analogue Consensus (renamed from Narrative Hit Rate) -->
       <div class="bs-hero" id="bs-hero">
-        <div class="bs-signal flat" id="bs-signal">SIGNAL: AWAITING DATA</div>
+        <div class="bs-signal flat" id="bs-signal">AWAITING DATA</div>
         <div class="bs-num" id="bs-num">—</div>
-        <div class="bs-lbl" id="bs-lbl">Historical Edge Score</div>
+        <div class="bs-lbl" id="bs-lbl">Analogue Consensus</div>
         <div class="edge-interp" id="edge-interp"></div>
         <div class="bs-meta" id="bs-meta"></div>
         <div class="bs-played" id="bs-played"></div>
         <div class="bs-warn" id="bs-warn" style="display:none;"></div>
-        <div class="bs-mlsig" id="bs-mlsig" style="display:none;"></div>
       </div>
 
-      <!-- 4. Expected moves (with noise / moderate / meaningful framing) -->
-      <div class="pred-intro" id="pred-intro">Expected outcome</div>
+      <!-- 4. How similar narratives moved (avg move of past analogues) -->
+      <div class="pred-intro" id="pred-intro">How similar narratives moved</div>
       <div class="pred-grid" id="pred-grid">
         <div class="pred-cell">
-          <div class="pred-lbl">5d expected move</div>
+          <div class="pred-lbl">5d avg move of similar narratives</div>
           <div class="pred-val flat" id="pred-5d">—</div>
           <div class="pred-sub" id="pred-5d-sub"></div>
         </div>
         <div class="pred-cell">
-          <div class="pred-lbl">10d expected move</div>
+          <div class="pred-lbl">10d avg move of similar narratives</div>
           <div class="pred-val flat" id="pred-10d">—</div>
           <div class="pred-sub" id="pred-10d-sub"></div>
         </div>
         <div class="pred-cell">
-          <div class="pred-lbl">20d expected move</div>
+          <div class="pred-lbl">20d avg move of similar narratives</div>
           <div class="pred-val flat" id="pred-20d">—</div>
           <div class="pred-sub" id="pred-20d-sub"></div>
         </div>
@@ -693,10 +701,10 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
         <div class="cluster-delta" id="cluster-delta" style="display:none;"></div>
       </div>
 
-      <!-- 5. Analogues — reframed as "Why the signal is mixed" -->
+      <!-- 5. Analogues — the closest historical narratives and how they resolved -->
       <div class="analogue-intro">
-        <div class="ai-h" id="ai-h">Why the signal is mixed</div>
-        <div class="ai-sub" id="ai-sub">These are past narratives that were semantically similar. Similar stories produced both winners and losers, which lowers conviction.</div>
+        <div class="ai-h" id="ai-h">The closest historical analogues</div>
+        <div class="ai-sub" id="ai-sub">These are past narratives that were semantically similar. Similar stories produced both winners and losers — outcomes here were mixed.</div>
       </div>
       <div id="neighbors"></div>
 
@@ -831,47 +839,47 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
     if ((p5p != null && p5p < -2) || (p10p != null && p10p < -3) || (p20p != null && p20p < -5)) {
       return {
         tone: 'bear',
-        label: 'BEARISH RISK — AVOID LONG',
-        summary: 'Historical analogues suggest downside risk.'
+        label: 'SIMILAR STORIES SKEWED DOWNWARD',
+        summary: 'Most similar past narratives resolved to the downside.'
       };
     }
     if ((confPct != null && confPct < 35) || (hitRatePct != null && hitRatePct < 52)) {
       return {
         tone: 'warn',
-        label: 'WEAK SIGNAL — AVOID OR SMALL POSITION',
-        summary: 'This narrative does not show a strong historical edge.'
+        label: 'LOW CONSENSUS — SIMILAR STORIES WENT BOTH WAYS',
+        summary: 'Similar past narratives resolved inconsistently — no clear historical pattern.'
       };
     }
     if (hitRatePct != null && hitRatePct < 60) {
       return {
         tone: 'neutral',
-        label: 'MIXED SIGNAL — WAIT FOR CONFIRMATION',
-        summary: 'Similar narratives have produced inconsistent outcomes.'
+        label: 'MIXED — SIMILAR STORIES SPLIT ROUGHLY EVEN',
+        summary: 'Similar narratives produced inconsistent outcomes.'
       };
     }
     if (hitRatePct != null && hitRatePct >= 60 && confPct != null && confPct >= 40) {
       return {
         tone: 'bull',
-        label: 'BULLISH EDGE — WATCH FOR ENTRY',
-        summary: 'Similar narratives have historically shown positive follow-through.'
+        label: 'HIGH CONSENSUS AMONG SIMILAR NARRATIVES',
+        summary: 'Most similar past narratives resolved to the upside.'
       };
     }
     return {
       tone: 'warn',
-      label: 'WEAK SIGNAL — AVOID OR SMALL POSITION',
-      summary: 'This narrative does not show a strong historical edge.'
+      label: 'LOW CONSENSUS — SIMILAR STORIES WENT BOTH WAYS',
+      summary: 'Similar past narratives resolved inconsistently — no clear historical pattern.'
     };
   }
 
   function edgeInterp(hitRatePct){
     if (hitRatePct == null || isNaN(hitRatePct)) return { text: 'Insufficient data', cls: 'flat' };
-    if (hitRatePct >= 70) return { text: 'Strong edge',   cls: 'up'   };
-    if (hitRatePct >= 60) return { text: 'Positive edge', cls: 'up'   };
-    if (hitRatePct >= 52) return { text: 'Mixed edge',    cls: 'warn' };
-    return                       { text: 'No clear edge', cls: 'dn'   };
+    if (hitRatePct >= 70) return { text: 'High consensus',     cls: 'up'   };
+    if (hitRatePct >= 60) return { text: 'Moderate consensus', cls: 'up'   };
+    if (hitRatePct >= 52) return { text: 'Weak consensus',     cls: 'warn' };
+    return                       { text: 'Mixed outcomes',     cls: 'dn'   };
   }
 
-  // Returns { text, cls } describing a single-horizon expected move.
+  // Returns { text, cls } describing a single-horizon avg move of similar narratives.
   // p is a fraction (e.g. -0.034). confPct is 0–100 number or null.
   function moveLabel(p, confPct){
     if (p == null || isNaN(p)) return { text: 'no data', cls: '' };
@@ -879,7 +887,7 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
     var abs = Math.abs(pct);
     var base, cls;
     if (abs < 2) {
-      base = pct === 0 ? 'no edge' : 'noise / not actionable';
+      base = pct === 0 ? 'no clear move' : 'mixed — no clear pattern';
       cls = '';
     } else if (abs <= 5) {
       base = pct > 0 ? 'moderate upside move' : 'moderate downside move';
@@ -909,18 +917,18 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       + (snippet ? '’s narrative — “' + esc(snippet) + '” — ' : ' — ');
     var body;
     if (bearish) {
-      body = 'shows clearly negative follow-through in the historical analogues. The system flags downside risk; this is not a long setup.';
+      body = 'mostly resolved to the downside in the closest historical analogues. This is a record of how similar stories played out — not a prediction.';
     } else if (weak) {
-      body = 'does not have a strong historical edge in our match set. The system does not show enough confidence for an aggressive trade.';
+      body = 'resolved inconsistently across our match set — similar stories went both ways, with no clear historical pattern.';
     } else if (mixed) {
       var hint = (p20p != null && p20p > 5) ? ' has some longer-term upside analogues, but the current match set is mixed.' :
                  (p20p != null && p20p < -5) ? ' has some longer-term downside analogues, but the current match set is mixed.' :
-                 ' has historically produced inconsistent outcomes in similar setups.';
-      body = hint + ' Wait for confirmation before sizing up.';
+                 ' produced inconsistent outcomes in similar past setups.';
+      body = hint + ' Similar stories split roughly even.';
     } else if (bullish) {
-      body = 'has historically shown positive follow-through in similar setups. Watch for an entry, but size to the confidence on display.';
+      body = 'mostly resolved to the upside in similar past setups. This describes how comparable narratives played out — not a forecast.';
     } else {
-      body = 'has limited historical signal at present. Treat the metrics as directional, not actionable.';
+      body = 'has few resolved historical analogues so far — treat the comparison as thin.';
     }
     return head + body;
   }
@@ -1420,7 +1428,7 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
         genTakeaway(tickerVal, narrVal, hrPct, confPct, p5, p10, p20);
     })();
 
-    // ── Hero: Historical Edge Score (renamed from Narrative Hit Rate) ──
+    // ── Hero: Analogue Consensus (renamed from Narrative Hit Rate) ──
     var hr = (data.narrative_hit_rate_5d == null) ? null : Number(data.narrative_hit_rate_5d);
     bsHero.classList.remove('high','med','low');
     bsNum.classList.remove('high','med','low');
@@ -1429,10 +1437,10 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       bsNum.textContent = '—';
       bsHero.classList.add('med');
       bsNum.classList.add('med');
-      bsLbl.textContent = 'Historical Edge Score';
+      bsLbl.textContent = 'Analogue Consensus';
     } else {
       bsNum.textContent = hrPctNum + '%';
-      bsLbl.textContent = 'Historical Edge Score';
+      bsLbl.textContent = 'Analogue Consensus';
       // Higher hit rate = better. CSS classes: low→green, med→amber, high→red.
       // Map inverted so good=green, bad=red.
       var bucket = hr >= 0.60 ? 'low' : (hr >= 0.40 ? 'med' : 'high');
@@ -1451,7 +1459,7 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
     var nRes = data.n_resolved_neighbors || 0;
     var nSim = data.n_similar_dots || 0;
     bsMeta.innerHTML =
-      'Confidence <strong>' + hrConf + '%</strong> · ' +
+      'Coverage <strong>' + hrConf + '%</strong> · ' +
       '<strong>' + hrN + '</strong> directional of <strong>' + nSim + '</strong> similar cases';
 
     // ── Signal banner: combines hit-rate conviction with predicted-return direction ──
@@ -1467,20 +1475,20 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       var conf = (hr == null || isNaN(hr)) ? null : (hr >= 0.60 ? 'high' : (hr >= 0.40 ? 'mixed' : 'weak'));
 
       var txt, cls;
-      if (conf == null)                       { txt = 'SIGNAL: AWAITING DATA';                          cls = 'flat'; }
-      else if (conf === 'high' && dir === 'up') { txt = 'SIGNAL: HIGH-PROBABILITY UPSIDE SETUP';        cls = 'up';   }
-      else if (conf === 'high' && dir === 'dn') { txt = 'SIGNAL: HIGH-PROBABILITY DOWNSIDE SETUP';      cls = 'dn';   }
-      else if (conf === 'high')                 { txt = 'SIGNAL: HIGH CONVICTION — RANGE-BOUND';        cls = 'warn'; }
-      else if (conf === 'mixed' && dir === 'up'){ txt = 'SIGNAL: MIXED — UPSIDE TILT';                  cls = 'warn'; }
-      else if (conf === 'mixed' && dir === 'dn'){ txt = 'SIGNAL: MIXED — DOWNSIDE TILT';                cls = 'warn'; }
-      else if (conf === 'mixed')                { txt = 'SIGNAL: MIXED — NO CLEAR EDGE';                cls = 'warn'; }
-      else if (dir === 'dn')                    { txt = 'SIGNAL: WEAK — DOWNSIDE RISK ELEVATED';        cls = 'dn';   }
-      else if (dir === 'up')                    { txt = 'SIGNAL: WEAK — NARRATIVE OFTEN MISFIRES';      cls = 'dn';   }
-      else                                      { txt = 'SIGNAL: WEAK — INSUFFICIENT EDGE';             cls = 'flat'; }
+      if (conf == null)                       { txt = 'AWAITING DATA';                                  cls = 'flat'; }
+      else if (conf === 'high' && dir === 'up') { txt = 'HIGH CONSENSUS — SIMILAR STORIES MOSTLY ROSE'; cls = 'up';   }
+      else if (conf === 'high' && dir === 'dn') { txt = 'HIGH CONSENSUS — SIMILAR STORIES MOSTLY FELL'; cls = 'dn';   }
+      else if (conf === 'high')                 { txt = 'HIGH CONSENSUS — SIMILAR STORIES STAYED FLAT';cls = 'warn'; }
+      else if (conf === 'mixed' && dir === 'up'){ txt = 'MIXED — SLIGHT UPSIDE TILT';                   cls = 'warn'; }
+      else if (conf === 'mixed' && dir === 'dn'){ txt = 'MIXED — SLIGHT DOWNSIDE TILT';                 cls = 'warn'; }
+      else if (conf === 'mixed')                { txt = 'MIXED — SIMILAR STORIES SPLIT ROUGHLY EVEN';  cls = 'warn'; }
+      else if (dir === 'dn')                    { txt = 'LOW CONSENSUS — SIMILAR STORIES WENT BOTH WAYS';cls = 'dn';  }
+      else if (dir === 'up')                    { txt = 'LOW CONSENSUS — SIMILAR STORIES WENT BOTH WAYS';cls = 'dn';  }
+      else                                      { txt = 'LOW CONSENSUS — FEW RESOLVED ANALOGUES';       cls = 'flat'; }
 
-      // Sparse data overrides everything: drop conviction down to a caution pill
+      // Sparse data overrides everything: drop to a caution pill
       if (data.warning === 'sparse_neighborhood') {
-        txt = 'SIGNAL: SPARSE DATA — TREAT WITH CAUTION';
+        txt = 'SPARSE DATA — FEW RESOLVED ANALOGUES';
         cls = 'warn';
       }
 
@@ -1488,13 +1496,13 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       bsSignal.className = 'bs-signal ' + cls;
     })();
 
-    // ── Pred intro: "Expected outcome (based on N similar cases)" ──
+    // ── Pred intro: "How similar narratives moved (based on N similar cases)" ──
     if (hrN > 0) {
-      predIntro.innerHTML = 'Expected outcome <span class="pi-sub">(based on <strong>' + hrN + '</strong> similar cases)</span>';
+      predIntro.innerHTML = 'How similar narratives moved <span class="pi-sub">(based on <strong>' + hrN + '</strong> similar cases)</span>';
     } else if (nSim > 0) {
-      predIntro.innerHTML = 'Expected outcome <span class="pi-sub">(based on <strong>' + nSim + '</strong> similar cases)</span>';
+      predIntro.innerHTML = 'How similar narratives moved <span class="pi-sub">(based on <strong>' + nSim + '</strong> similar cases)</span>';
     } else {
-      predIntro.textContent = 'Expected outcome';
+      predIntro.textContent = 'How similar narratives moved';
     }
 
     // "X of Y similar narratives played out"
@@ -1543,16 +1551,6 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       clusterCard.style.display = '';
     } else {
       clusterCard.style.display = 'none';
-    }
-
-    // ── ML signal footer (debug-style; only shown when bullshit_probability is non-null) ──
-    var mlSig = document.getElementById('bs-mlsig');
-    if (data.bullshit_probability != null) {
-      var bs = Number(data.bullshit_probability);
-      mlSig.innerHTML = 'ML signal: <strong>' + Math.round(bs * 100) + '%</strong>';
-      mlSig.style.display = '';
-    } else {
-      mlSig.style.display = 'none';
     }
 
     function setPred(el, v){
