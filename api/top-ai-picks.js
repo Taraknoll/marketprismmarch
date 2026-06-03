@@ -8,6 +8,21 @@
 
 const { isHidden: isHiddenTicker } = require('./_hidden-tickers');
 
+// FIX 2A — a pick may never be persisted/returned as Long when the forensic
+// verdict is bearish OR price sits above fair value (fvd > 0 = overvalued).
+// Deterministic, verdict-driven; mirrors the frontend Conviction List guard.
+const BEARISH_VERDICTS = new Set([
+  'Narrative Risk', 'Narrative Trap', 'Air Pocket Short',
+  'Drift Compression Short', 'Exhausted Narrative', 'Omission Cascade'
+]);
+function longContradictsForensics(pick, signals) {
+  var isLong = pick && (pick.direction === 'BULLISH' || pick.action === 'Long');
+  if (!isLong || !signals) return false;
+  if (signals.verdict && BEARISH_VERDICTS.has(signals.verdict)) return true;
+  if (signals.fvd != null && Number(signals.fvd) > 0) return true; // overvalued
+  return false;
+}
+
 const CACHE = new Map(); // key = snapshot_date, value = {picks, generated_at, model}
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h safety cap
 
@@ -260,7 +275,16 @@ module.exports = async (req, res) => {
       return res.status(502).json({ error: 'AI returned unparseable response' });
     }
 
-    var clean = picks.filter(function(p){ return p && p.ticker && !isHiddenTicker(p.ticker); }).slice(0, 10).map(function(p){
+    // Map each candidate ticker back to its forensic signals so we can drop
+    // any model "Long" call that contradicts the verdict / fair-value gap.
+    var candByTicker = {};
+    candidates.forEach(function(c){ if (c && c.ticker) candByTicker[c.ticker] = { verdict: c.verdict, fvd: c.fvd }; });
+
+    var clean = picks.filter(function(p){
+      if (!p || !p.ticker || isHiddenTicker(p.ticker)) return false;
+      if (longContradictsForensics(p, candByTicker[String(p.ticker).toUpperCase()])) return false;
+      return true;
+    }).slice(0, 10).map(function(p){
       return {
         ticker: String(p.ticker).toUpperCase().slice(0, 8),
         action: ['Long','Short','Watch'].indexOf(p.action) >= 0 ? p.action : 'Watch',

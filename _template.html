@@ -17399,6 +17399,31 @@ onTabSwitch(function(id){if(id==='mindmap'){setTimeout(function(){if(!mmInited){
 (function(){
 var LB_BOOTED=false;
 
+// ── Deterministic leaderboard guardrails (rule-based, no per-name overrides) ──
+// FIX 1 — Growth at a Discount: a sector×growth_tier benchmark is only
+// trustworthy if it was computed from enough constituents. Below this, the
+// "sector median P/E" is noise (e.g. an Energy/HIGH bucket of 2 names yields a
+// median of 105, making a 68x stock look cheap).
+var MIN_BENCHMARK_SAMPLE = 5;
+// FIX 3 — Gossip Hour: the "Chatter" metric is social_velocity_ratio. A ticker
+// only qualifies as chatter-y above baseline (1.0 = normal velocity).
+var MIN_CHATTER_RATIO = 1.0;
+// FIX 3 — hide Gossip Hour entirely if fewer than this many tickers have live,
+// above-baseline chatter (avoids a "lots of mouths moving" headline over a
+// stale/empty feed).
+var MIN_CHATTER_ROWS = 3;
+// FIX 2B — Narrative Traps: suspicion bands are NORMAL_ACTIVITY (0–35),
+// MODERATE_CONCERN (40–60), HIGH_MANIPULATION_RISK (80). "Elevated" = the
+// MODERATE_CONCERN floor. A Narrative Risk/Trap verdict alone is NOT a trap.
+var MIN_TRAP_SUSPICION = 40;
+// FIX 2A — Conviction List: a ticker may never display Long when its forensic
+// verdict is bearish OR its fair-value gap shows price above fair value
+// (fvd_pct > 0 = overvalued, per this dashboard's FVD convention).
+var CONVICTION_BEARISH_VERDICTS = {
+  'Narrative Risk':1,'Narrative Trap':1,'Air Pocket Short':1,
+  'Drift Compression Short':1,'Exhausted Narrative':1,'Omission Cascade':1
+};
+
 function hdrs(){return{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};}
 async function sq(path){
   var h=hdrs();
@@ -17455,6 +17480,38 @@ var BOARDS=[
   // 30s override \u2014 Claude calls can take 5-15s on a cold Supabase cache miss.
   timeout:30000,
   fetch:async function(){
+    // FIX 2A: a Conviction pick may NEVER display Long/Bullish when the
+    // authoritative scorecard verdict is bearish (CONVICTION_BEARISH_VERDICTS)
+    // OR its fair-value gap shows price above fair value (fvd_pct > 0 =
+    // overvalued). Displayed direction is derived from the forensic record, not
+    // the model's self-reported label. An offending Long pick is omitted rather
+    // than shown with a contradictory thesis.
+    function convictionAllowed(p,vmap){
+      var isLong=(p.direction==='BULLISH')||(p.action==='Long');
+      if(!isLong) return true;                 // Short/Watch are unaffected
+      var v=vmap[p.ticker]; if(!v) return true; // no forensic record \u2192 don't fabricate a block
+      if(v.verdict && CONVICTION_BEARISH_VERDICTS[v.verdict]) return false;
+      if(v.fvd!=null && Number(v.fvd)>0) return false;
+      return true;
+    }
+    function toRow(p){
+      var dirArrow=p.direction==='BULLISH'?'\u25b2':p.direction==='BEARISH'?'\u25bc':'\u25cf';
+      var dirColor=p.direction==='BULLISH'?'#00DE94':p.direction==='BEARISH'?'#FF4D4D':'#00AEFF';
+      var thesis=String(p.thesis||'');
+      var truncated=thesis.length>90?thesis.slice(0,87)+'\u2026':thesis;
+      return{name:p.ticker,link:'/ticker/'+p.ticker,meta:(p.action||'')+' '+dirArrow+' \u00b7 '+truncated,score:Number(p.conviction)||0,scoreDisplay:Math.round(Number(p.conviction)||0)+'%',_scoreColor:dirColor};
+    }
+    async function loadVerdictMap(snapshotDate,picks){
+      var vmap={};
+      try{
+        var tickers=(picks||[]).map(function(p){return p&&p.ticker;}).filter(Boolean);
+        if(!tickers.length) return vmap;
+        var inList=tickers.map(function(t){return encodeURIComponent(t);}).join(',');
+        var vr=await sq('narrative_scorecard?select=ticker,verdict,fvd_pct&snapshot_date=eq.'+encodeURIComponent(snapshotDate)+'&ticker=in.('+inList+')');
+        (vr||[]).forEach(function(s){vmap[s.ticker]={verdict:s.verdict,fvd:s.fvd_pct};});
+      }catch(_){}
+      return vmap;
+    }
     try{
       window.__lbAiPicksError=null;
       var dateRows=await sq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
@@ -17465,14 +17522,9 @@ var BOARDS=[
       try{
         var _ssCached=sessionStorage.getItem(_ssKey);
         if(_ssCached){
-          var _cached=JSON.parse(_ssCached);
-          return _cached.slice(0,10).map(function(p){
-            var dirArrow=p.direction==='BULLISH'?'\u25b2':p.direction==='BEARISH'?'\u25bc':'\u25cf';
-            var dirColor=p.direction==='BULLISH'?'#00DE94':p.direction==='BEARISH'?'#FF4D4D':'#00AEFF';
-            var thesis=String(p.thesis||'');
-            var truncated=thesis.length>90?thesis.slice(0,87)+'\u2026':thesis;
-            return{name:p.ticker,link:'/ticker/'+p.ticker,meta:(p.action||'')+' '+dirArrow+' \u00b7 '+truncated,score:Number(p.conviction)||0,scoreDisplay:Math.round(Number(p.conviction)||0)+'%',_scoreColor:dirColor};
-          });
+          var _cached=(JSON.parse(_ssCached)||[]).slice(0,10);
+          var _vmap=await loadVerdictMap(snapshotDate,_cached);
+          return _cached.filter(function(p){return convictionAllowed(p,_vmap);}).map(toRow);
         }
       }catch(_){}
       // narrative_scorecard has no `price` column; the AI endpoint accepts null
@@ -17487,26 +17539,20 @@ var BOARDS=[
         console.warn('[Leaderboard AI Picks] API '+res.status+': '+msg);
         return [];
       }
-      var picks=(data&&data.picks)||[];
-      try{sessionStorage.setItem(_ssKey,JSON.stringify(picks));}catch(_){}
-      return picks.slice(0,10).map(function(p){
-        var dirArrow=p.direction==='BULLISH'?'\u25b2':p.direction==='BEARISH'?'\u25bc':'\u25cf';
-        var dirColor=p.direction==='BULLISH'?'#00DE94':p.direction==='BEARISH'?'#FF4D4D':'#00AEFF';
-        var thesis=String(p.thesis||'');
-        var truncated=thesis.length>90?thesis.slice(0,87)+'\u2026':thesis;
-        return {
-          name:p.ticker,
-          link:'/ticker/'+p.ticker,
-          meta:(p.action||'')+' '+dirArrow+' \u00b7 '+truncated,
-          score:Number(p.conviction)||0,
-          scoreDisplay:Math.round(Number(p.conviction)||0)+'%',
-          _scoreColor:dirColor
-        };
-      });
+      var picks=((data&&data.picks)||[]).slice(0,10);
+      try{sessionStorage.setItem(_ssKey,JSON.stringify(data&&data.picks||[]));}catch(_){}
+      // We already pulled verdict + fvd_pct for every snapshot ticker in `rows`,
+      // so build the guard map locally instead of a second round-trip.
+      var localMap={};
+      rows.forEach(function(s){localMap[s.ticker]={verdict:s.verdict,fvd:s.fvd_pct};});
+      return picks.filter(function(p){return convictionAllowed(p,localMap);}).map(toRow);
     }catch(e){window.__lbAiPicksError=String(e&&e.message||e);console.warn('[Leaderboard AI Picks] fetch failed:',e);return [];}
   }},
   {id:'manipulation',title:'NARRATIVE TRAPS',sub:'The story doesn’t match the filings',color:'#FF4D4D',bg:'rgba(255,77,77,0.12)',scoreLabel:'Confidence',
-  fetch:function(){return scorecardFallback(function(s){return s.verdict==='Narrative Trap'||s.verdict==='Narrative Risk';},function(s){var isTrap=s.verdict==='Narrative Trap';return{name:s.ticker,link:'/ticker/'+s.ticker,meta:s.verdict+(s.suspicion_score?' \u00b7 Suspicion '+Math.round(Number(s.suspicion_score)):''),score:Number(s.verdict_confidence)||0,scoreDisplay:Math.round(Number(s.verdict_confidence)||0)+'%',_scoreColor:isTrap?'#FF4D4D':'#FFB800'};},function(a,b){var ao=a.verdict==='Narrative Trap'?0:1,bo=b.verdict==='Narrative Trap'?0:1;return ao!==bo?ao-bo:(Number(b.verdict_confidence)||0)-(Number(a.verdict_confidence)||0);},10);}},
+  // FIX 2B: a trap/risk verdict alone is not a trap \u2014 require the suspicion
+  // signal to be elevated (>= MIN_TRAP_SUSPICION). This drops NORMAL_ACTIVITY
+  // (suspicion 0\u201335) names like BG that the verdict filter alone admitted.
+  fetch:function(){return scorecardFallback(function(s){return (s.verdict==='Narrative Trap'||s.verdict==='Narrative Risk') && s.suspicion_score!=null && Number(s.suspicion_score)>=MIN_TRAP_SUSPICION;},function(s){var isTrap=s.verdict==='Narrative Trap';return{name:s.ticker,link:'/ticker/'+s.ticker,meta:s.verdict+(s.suspicion_score?' \u00b7 Suspicion '+Math.round(Number(s.suspicion_score)):''),score:Number(s.verdict_confidence)||0,scoreDisplay:Math.round(Number(s.verdict_confidence)||0)+'%',_scoreColor:isTrap?'#FF4D4D':'#FFB800'};},function(a,b){var ao=a.verdict==='Narrative Trap'?0:1,bo=b.verdict==='Narrative Trap'?0:1;return ao!==bo?ao-bo:(Number(b.verdict_confidence)||0)-(Number(a.verdict_confidence)||0);},10);}},
   {id:'dark-pool',title:'WHALE TRACKS',sub:'Highest dark-pool volume · where the institutions are moving',color:'#6366F1',bg:'rgba(99,102,241,0.12)',scoreLabel:'DP Vol %',
   fetch:async function(){
     try{
@@ -17545,7 +17591,12 @@ var BOARDS=[
   {id:'pullback-sectors',title:'SECTOR DISCOUNTS',sub:'Sectors with the most tickers sitting in their best entry zone',color:'#38C8B8',bg:'rgba(56,200,184,0.12)',scoreLabel:'Avg Return',
   fetch:async function(){try{var rows=await sq('ticker_pullback_live?select=ticker,best_historical_entry_zone,latest_drawdown_vs_60d_peak,avg_5d_return_from_best_entry_zone,best_entry_zone_observations&avg_5d_return_from_best_entry_zone=gt.0&order=avg_5d_return_from_best_entry_zone.desc&limit=200');var sectors=await sq('ticker_industry_lookup?select=ticker,sector&limit=200');if(!rows||!rows.length||!sectors||!sectors.length)return[];var secMap={};sectors.forEach(function(s){if(s.ticker&&s.sector)secMap[s.ticker]=s.sector;});var matched=rows.filter(function(r){var dd=Number(r.latest_drawdown_vs_60d_peak);var z=r.best_historical_entry_zone||'';if(z.indexOf('near_high')===0&&dd>-0.05)return true;if(z.indexOf('dip')===0&&dd<=-0.05&&dd>-0.10)return true;if(z.indexOf('pullback')===0&&z.indexOf('deep')===-1&&dd<=-0.10&&dd>-0.20)return true;if(z.indexOf('deep_pullback')===0&&dd<=-0.20)return true;return false;});var agg={};matched.forEach(function(r){var sec=secMap[r.ticker]||'Other';if(!agg[sec])agg[sec]={sector:sec,count:0,totalRet:0,totalObs:0};agg[sec].count++;agg[sec].totalRet+=Number(r.avg_5d_return_from_best_entry_zone)||0;agg[sec].totalObs+=Number(r.best_entry_zone_observations)||0;});var result=Object.values(agg).filter(function(s){return s.count>=1;});result.sort(function(a,b){return(b.totalRet/b.count)-(a.totalRet/a.count);});return result.slice(0,10).map(function(s){var avgRet=(s.totalRet/s.count)*100;return{name:s.sector,link:'#',meta:s.count+' ticker'+(s.count!==1?'s':'')+' in zone \u00b7 '+s.totalObs+' observations',score:avgRet,scoreDisplay:'+'+avgRet.toFixed(1)+'%',_scoreColor:avgRet>2?'#00DE94':avgRet>1?'#38C8B8':'#00AEFF'};});}catch(e){return[];}}},
   {id:'gossip-hour',title:'GOSSIP HOUR',sub:'Lots of mouths moving — fundamentals haven’t caught up',color:'#F472B6',bg:'rgba(244,114,182,0.12)',scoreLabel:'Chatter',
-  fetch:function(){return scorecardFallback(function(s){var nm=Number(s.narrative_mass_score)||0;var vms=s.vms!=null?Number(s.vms):null;var v=s.verdict||'';return nm>0.2 && vms!=null && vms<60 && v!=='Narrative Trap' && v!=='Narrative Risk';},function(s){var nm=Number(s.narrative_mass_score)||0;var vms=Number(s.vms)||0;var nrs=Math.round(Number(s.nrs)||0);var ratio=vms>1?(nm*100)/vms:nm*100;return{name:s.ticker,link:'/ticker/'+s.ticker,meta:(s.verdict||'No verdict')+' · VMS '+Math.round(vms)+' · NRS '+nrs,score:ratio,scoreDisplay:ratio.toFixed(1)+'x',_scoreColor:'#F472B6'};},function(a,b){var ra=Number(a.vms)>1?(Number(a.narrative_mass_score)||0)*100/Number(a.vms):(Number(a.narrative_mass_score)||0)*100;var rb=Number(b.vms)>1?(Number(b.narrative_mass_score)||0)*100/Number(b.vms):(Number(b.narrative_mass_score)||0)*100;return rb-ra;},10);}},
+  // FIX 3: "Chatter" is social_velocity_ratio (baseline 1.0). Only surface
+  // tickers whose chatter is live (non-null) AND above baseline for the latest
+  // snapshot — never a narrative_mass/vms fallback under the Chatter label. If
+  // fewer than MIN_CHATTER_ROWS qualify, return [] so the board shows its
+  // explicit "awaiting data" empty state rather than a misleading headline.
+  fetch:function(){var rows=scorecardFallback(function(s){return s.social_velocity_ratio!=null && Number(s.social_velocity_ratio)>MIN_CHATTER_RATIO;},function(s){var r=Number(s.social_velocity_ratio)||0;return{name:s.ticker,link:'/ticker/'+s.ticker,meta:(s.verdict||'No verdict')+' · VMS '+Math.round(Number(s.vms)||0)+' · NRS '+Math.round(Number(s.nrs)||0),score:r,scoreDisplay:r.toFixed(2)+'x',_scoreColor:'#F472B6'};},function(a,b){return(Number(b.social_velocity_ratio)||0)-(Number(a.social_velocity_ratio)||0);},10);return rows.length>=MIN_CHATTER_ROWS?rows:[];}},
   {id:'honest-stable',title:'HONEST & STABLE',sub:'Low drama, supported by filings, narrative holding firm',color:'#00DE94',bg:'rgba(0,222,148,0.12)',scoreLabel:'Integrity',
   fetch:function(){return scorecardFallback(function(s){if(s.vms==null||s.fvd_pct==null)return false;var integ=(Number(s.vms)||0)-(Number(s.drift_score)||0)-(Number(s.suspicion_score)||0)/2-Math.abs(Number(s.fvd_pct)||0)-(Number(s.coordination_score)||0)/4;return integ>20;},function(s){var vms=Number(s.vms)||0;var drift=Number(s.drift_score)||0;var susp=Number(s.suspicion_score)||0;var coord=Number(s.coordination_score)||0;var fvd=Number(s.fvd_pct)||0;var integrity=Math.max(0,Math.min(100,Math.round(vms-drift-susp/2-Math.abs(fvd)-coord/4)));var regime=s.walsh_regime||'—';return{name:s.ticker,link:'/ticker/'+s.ticker,meta:regime+' · drift '+Math.round(drift)+' · '+(fvd>0?'+':'')+Math.round(fvd)+'% FV',score:integrity,scoreDisplay:String(integrity),_scoreColor:'#00DE94'};},function(a,b){var sA=(Number(a.vms)||0)-(Number(a.drift_score)||0)-(Number(a.suspicion_score)||0)/2-Math.abs(Number(a.fvd_pct)||0)-(Number(a.coordination_score)||0)/4;var sB=(Number(b.vms)||0)-(Number(b.drift_score)||0)-(Number(b.suspicion_score)||0)/2-Math.abs(Number(b.fvd_pct)||0)-(Number(b.coordination_score)||0)/4;return sB-sA;},10);}},
   {id:'growth-at-discount',title:'GROWTH AT A DISCOUNT',sub:'High 5y revenue CAGR, trading below sector median P/E',color:'#00DE94',bg:'rgba(0,222,148,0.12)',scoreLabel:'5y CAGR',
@@ -17555,9 +17606,15 @@ var BOARDS=[
   // is currently trading below its sector cohort's median multiple.
   fetch:async function(){
     try{
-      var rows=await sq('v_growth_at_discount?select=ticker,sector,rev_cagr_5yr_est,ticker_pe,sector_median_pe,discount_pct&order=rev_cagr_5yr_est.desc,discount_pct.asc&limit=10');
+      // FIX 1: only trust a sector median P/E built from >= MIN_BENCHMARK_SAMPLE
+      // constituents. ticker_count_pe is exposed additively by v_growth_at_discount.
+      var rows=await sq('v_growth_at_discount?select=ticker,sector,rev_cagr_5yr_est,ticker_pe,sector_median_pe,discount_pct,ticker_count_pe&ticker_count_pe=gte.'+MIN_BENCHMARK_SAMPLE+'&order=rev_cagr_5yr_est.desc,discount_pct.asc&limit=10');
       if(!rows||!rows.length) return [];
-      return rows.map(function(r){
+      return rows.filter(function(r){
+        // Belt-and-suspenders: drop any row whose benchmark sample is too small
+        // (or missing) even if the server filter were bypassed.
+        return r.ticker_count_pe!=null && Number(r.ticker_count_pe)>=MIN_BENCHMARK_SAMPLE;
+      }).map(function(r){
         var cagr=Number(r.rev_cagr_5yr_est)||0;
         var pe=Number(r.ticker_pe)||0;
         var med=Number(r.sector_median_pe)||0;
@@ -17647,6 +17704,12 @@ function renderEmpty(b){
   if(b.id==='ai-picks'&&window.__lbAiPicksError){
     subtitle='Error';
     emptyMsg='AI picks unavailable: '+lbEsc(window.__lbAiPicksError);
+  }
+  // FIX 3: Gossip Hour hides when there is no live, above-baseline chatter for
+  // the latest snapshot — say so explicitly rather than implying empty data.
+  if(b.id==='gossip-hour'){
+    subtitle='Awaiting data';
+    emptyMsg='No live chatter above baseline for the latest snapshot.';
   }
   return '<div class="lb-section" data-board-id="'+lbEsc(b.id)+'">'
     +'<div class="lb-accent" style="background:'+b.color+';opacity:.4;"></div>'
