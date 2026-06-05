@@ -49,9 +49,9 @@
   [data-theme="light"] .icon-sun { display: none; } [data-theme="light"] .icon-moon { display: block; }
 
   /* ── Main content ── */
-  .main-content { margin-left: 200px; padding: 24px 32px; max-width: 1200px; }
+  .main-content { margin-left: 200px; padding: 24px 32px; }
   .page-header { margin-bottom: 24px; }
-  .page-title { font-family: var(--font-display); font-size: 32px; font-weight: 400; letter-spacing: -0.025em; margin-bottom: 6px; }
+  .page-title { font-family: var(--font-body); font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
   .page-subtitle { font-size: 14px; color: var(--mp-text-secondary); max-width: 720px; }
 
   /* ── Beta gate ── */
@@ -469,8 +469,14 @@ window.NHM = (function () {
     const sel = $('nhm-ticker');
     if (!sel) { if (defaultTicker) load(defaultTicker); return; }
     try {
-      const list = await sb('narrative_heatmap_tickers', { select: 'ticker' });
-      const tickers = list.map(r => r.ticker).sort();
+      // Dropdown = the tracked system universe (ticker_industry_lookup, same as
+      // Signal Lab) intersected with names that actually have narrative data.
+      const [sysList, dataList] = await Promise.all([
+        sb('ticker_industry_lookup', { select: 'ticker', order: 'ticker.asc', limit: '1000' }),
+        sb('narrative_heatmap_tickers', { select: 'ticker' })
+      ]);
+      const hasData = new Set(dataList.map(r => r.ticker));
+      const tickers = [...new Set(sysList.map(r => r.ticker))].filter(t => hasData.has(t)).sort();
       sel.innerHTML = tickers.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('');
       const start = tickers.includes(defaultTicker) ? defaultTicker : tickers[0];
       sel.value = start;
