@@ -158,6 +158,31 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
 }
 .search-error.show{display:block;}
 
+/* ── SEARCH SUGGESTIONS (click to prefill + run) ────────────────────────── */
+.suggest{margin-top:20px;}
+.suggest-lbl{
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--mp-text-muted);margin-bottom:10px;
+}
+.suggest-grid{display:flex;flex-wrap:wrap;gap:10px;}
+.suggest-chip{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:10px;cursor:pointer;text-align:left;
+  background:var(--mp-surface);border:1px solid var(--mp-border);
+  font-family:var(--font-body);color:var(--mp-text-secondary);
+  transition:border-color .15s,background .15s,transform .15s;
+}
+.suggest-chip:hover{
+  border-color:var(--mp-border-hover);background:var(--mp-surface2);
+  transform:translateY(-1px);
+}
+.suggest-chip:active{transform:translateY(0);}
+.suggest-tk{
+  font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--mp-cyan);
+  flex:none;min-width:46px;
+}
+.suggest-txt{font-size:13px;line-height:1.35;color:var(--mp-text-secondary);}
+
 /* ── RESULTS ────────────────────────────────────────────────────────────── */
 .results{margin-top:32px;display:none;}
 .results.show{display:block;animation:fadeIn .4s ease both;}
@@ -624,6 +649,14 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
         Anonymous searches are logged to improve our prediction model. We don't store IP addresses or fingerprints — just a random session ID kept in your browser. Clearing your browser storage removes it permanently.
       </p>
     </form>
+
+    <!-- ── SUGGESTIONS ── Click to prefill + run. Each pair is engineered to
+         land in a dense, recently-resolved neighborhood of narrative_dots
+         (high-coverage ticker × high-coverage macro theme). -->
+    <div class="suggest" id="suggest">
+      <div class="suggest-lbl">Not sure where to start? Try one of these</div>
+      <div class="suggest-grid" id="suggest-grid"></div>
+    </div>
 
     <!-- ── RESULTS ── -->
     <div class="results" id="results">
@@ -1623,6 +1656,54 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
     resultsEl.classList.add('show');
     resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+
+  // ── Search suggestions ──────────────────────────────────────────────────
+  // Curated ticker × narrative pairs, each chosen to hit a dense, recently-
+  // resolved cluster in narrative_dots so the click reliably returns a strong,
+  // well-populated result (not a sparse / "no similar dots" dead end). Tickers
+  // are the highest-coverage symbols in the corpus; phrasings mirror the most
+  // common macro themes (AI infrastructure, valuation/capex-fatigue, consumer
+  // demand, AI-software re-rate, crypto, China/tariff risk).
+  var SUGGESTIONS = [
+    { tk: 'NVDA', label: 'AI data-center demand keeps accelerating',
+      narrative: "Nvidia's data-center GPU demand keeps accelerating as the AI infrastructure buildout ramps and hyperscaler capex stays elevated." },
+    { tk: 'AMD',  label: 'AI win already priced in',
+      narrative: "AMD's AI momentum is real, but the upside looks already priced in at a stretched valuation." },
+    { tk: 'TSLA', label: 'EV demand is slowing',
+      narrative: "Tesla's delivery growth is slowing as EV demand softens and competition intensifies." },
+    { tk: 'PLTR', label: 'AIP justifies the premium',
+      narrative: "Palantir's AIP platform is driving explosive commercial growth that justifies its premium multiple." },
+    { tk: 'COIN', label: 'Crypto rally tailwind',
+      narrative: "Coinbase benefits as crypto prices rally and trading volumes surge to new highs." },
+    { tk: 'AAPL', label: 'China demand & tariff risk',
+      narrative: "Apple faces softening China demand and tariff risk heading into earnings." }
+  ];
+  (function(){
+    var grid = document.getElementById('suggest-grid');
+    if (!grid) return;
+    SUGGESTIONS.forEach(function(s){
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'suggest-chip';
+      chip.title = s.narrative;
+      var tk = document.createElement('span');
+      tk.className = 'suggest-tk';
+      tk.textContent = s.tk;
+      var tx = document.createElement('span');
+      tx.className = 'suggest-txt';
+      tx.textContent = s.label;
+      chip.appendChild(tk);
+      chip.appendChild(tx);
+      chip.addEventListener('click', function(){
+        inpTk.value = s.tk;
+        inpNarr.value = s.narrative;
+        clearError();
+        submit();
+        try { resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch(_){}
+      });
+      grid.appendChild(chip);
+    });
+  })();
 
   // Focus the ticker input on mount, OR auto-fill + submit from URL params
   // (used by the homepage hand-off: /search?ticker=X&narrative=Y)
