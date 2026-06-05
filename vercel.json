@@ -121,6 +121,10 @@
       "destination": "/api/signal-charts"
     },
     {
+      "source": "/narrative-heatmap",
+      "destination": "/api/narrative-heatmap"
+    },
+    {
       "source": "/casestudy/:slug",
       "destination": "/api/casestudy?slug=:slug"
     },
@@ -183,6 +187,9 @@
     },
     "api/dashboard.js": {
       "includeFiles": "{_template.html,_signal_lab_tab.html,_ticker_tab.html}"
+    },
+    "api/narrative-heatmap.js": {
+      "includeFiles": "_narrative_heatmap.html"
     },
     "api/dashboard-dev.js": {
       "includeFiles": "_template_dev.html"
