@@ -96,8 +96,8 @@
   .nhm-scroll { overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; }
   .nhm-scroll::-webkit-scrollbar { height: 8px; }
   .nhm-scroll::-webkit-scrollbar-thumb { background: var(--nhm-line); border-radius: 4px; }
-  .nhm-rows { position: relative; }
-  .nhm-row { display: flex; align-items: center; height: 17px; margin-bottom: 2px; }
+  .nhm-rows { position: relative; border-top: 1px solid var(--nhm-line); width: max-content; min-width: 100%; }
+  .nhm-row { display: flex; align-items: center; height: 19px; border-bottom: 1px solid var(--nhm-line); }
   .nhm-rowlabel { position: sticky; left: 0; z-index: 2; width: var(--nhm-gutter); min-width: var(--nhm-gutter); padding-right: 10px; font-size: 11px; color: var(--nhm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--nhm-panel); }
   .nhm-rowlabel.nhm-other { color: var(--nhm-dim); font-style: italic; }
   .nhm-track { position: relative; height: 15px; flex: none; }
