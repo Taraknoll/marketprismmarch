@@ -533,6 +533,76 @@
     .main-content { margin-left: 0; padding: 16px; }
     .pattern-cards { grid-template-columns: 1fr; }
   }
+
+  /* ============================================================
+     NARRATIVE HEATMAP — self-contained block (.nhm- scope).
+     Tokens are mapped onto the page's --mp-* palette inside
+     #heatmap-section so it themes with light/dark automatically.
+     ============================================================ */
+  .nhm-card {
+    --nhm-obsidian: #080B11; --nhm-panel: #0E131C; --nhm-line: #1B2330; --nhm-cell0: #121823;
+    --nhm-amber: #FFB800; --nhm-teal: #38C8B8; --nhm-mint: #00DE94; --nhm-ink: #C9D3E0; --nhm-dim: #6B7686;
+    --nhm-gutter: 150px;
+    font-family: var(--font-body); color: var(--nhm-ink);
+  }
+  #heatmap-section .nhm-card {
+    background: transparent; border: none; border-radius: 0; padding: 4px 20px 20px; max-width: none;
+    color: var(--mp-text-primary);
+    --nhm-obsidian: var(--mp-deep); --nhm-panel: var(--mp-surface); --nhm-line: var(--mp-border);
+    --nhm-cell0: var(--mp-surface2); --nhm-ink: var(--mp-text-primary); --nhm-dim: var(--mp-text-secondary);
+  }
+  .nhm-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .nhm-title .nhm-sub { font-size: 12px; font-weight: 400; color: var(--nhm-dim); }
+  .nhm-head-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .nhm-toggle { display: inline-flex; background: var(--nhm-obsidian); border: 1px solid var(--nhm-line); border-radius: 8px; overflow: hidden; }
+  .nhm-toggle button { background: none; border: none; color: var(--nhm-dim); font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 12px; cursor: pointer; transition: all 0.12s; }
+  .nhm-toggle button.active { background: var(--nhm-line); color: var(--nhm-ink); }
+  .nhm-stats { display: flex; flex-wrap: wrap; gap: 22px; padding: 12px 2px 16px; border-bottom: 1px solid var(--nhm-line); margin-bottom: 14px; }
+  .nhm-stat { display: flex; flex-direction: column; gap: 2px; }
+  .nhm-stat-val { font-size: 18px; font-weight: 600; color: var(--nhm-ink); }
+  .nhm-stat-lbl { font-size: 11px; color: var(--nhm-dim); }
+  .nhm-body { display: flex; gap: 16px; align-items: flex-start; }
+  .nhm-left { flex: 1; min-width: 0; }
+  .nhm-scroll { overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; }
+  .nhm-scroll::-webkit-scrollbar { height: 8px; }
+  .nhm-scroll::-webkit-scrollbar-thumb { background: var(--nhm-line); border-radius: 4px; }
+  .nhm-rows { position: relative; }
+  .nhm-row { display: flex; align-items: center; height: 17px; margin-bottom: 2px; }
+  .nhm-rowlabel { position: sticky; left: 0; z-index: 2; width: var(--nhm-gutter); min-width: var(--nhm-gutter); padding-right: 10px; font-size: 11px; color: var(--nhm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--nhm-panel); }
+  .nhm-rowlabel.nhm-other { color: var(--nhm-dim); font-style: italic; }
+  .nhm-track { position: relative; height: 15px; flex: none; }
+  .nhm-cell { position: absolute; top: 0; width: 8px; height: 15px; border-radius: 2px; cursor: pointer; background: var(--nhm-cell0); }
+  .nhm-cell.nhm-filled:hover { outline: 1px solid var(--nhm-ink); outline-offset: 0; }
+  .nhm-cell.nhm-selected { outline: 1.5px solid var(--mp-text-primary); outline-offset: 0; z-index: 3; }
+  .nhm-axis { position: relative; height: 30px; margin-top: 4px; }
+  .nhm-axis-tick { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--nhm-line); }
+  .nhm-axis-label { position: absolute; top: 6px; font-size: 10px; color: var(--nhm-dim); white-space: nowrap; padding-left: 4px; }
+  .nhm-axis-spacer { width: var(--nhm-gutter); min-width: var(--nhm-gutter); }
+  .nhm-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; padding-left: var(--nhm-gutter); }
+  .nhm-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--nhm-dim); }
+  .nhm-swatch { width: 12px; height: 12px; border-radius: 2px; }
+  .nhm-detail { width: 300px; min-width: 300px; align-self: stretch; background: var(--nhm-obsidian); border: 1px solid var(--nhm-line); border-radius: 12px; padding: 16px; min-height: 320px; }
+  .nhm-detail-empty { color: var(--nhm-dim); font-size: 13px; display: flex; align-items: center; justify-content: center; height: 100%; min-height: 280px; text-align: center; }
+  .nhm-detail-theme { font-size: 15px; font-weight: 600; color: var(--nhm-ink); margin-bottom: 2px; }
+  .nhm-detail-date { font-size: 12px; color: var(--nhm-dim); margin-bottom: 12px; }
+  .nhm-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .nhm-tag { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--nhm-line); color: var(--nhm-ink); }
+  .nhm-field { margin-bottom: 12px; }
+  .nhm-field-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--nhm-dim); margin-bottom: 3px; }
+  .nhm-field-val { font-size: 12px; color: var(--nhm-ink); line-height: 1.5; }
+  .nhm-herd-note { font-size: 11px; color: var(--nhm-amber); margin-bottom: 12px; line-height: 1.4; }
+  .nhm-msg { font-size: 13px; color: var(--nhm-dim); padding: 30px 0; text-align: center; }
+  @media (max-width: 820px) {
+    .nhm-body { flex-direction: column; align-items: stretch; }
+    .nhm-left { width: 100%; min-width: 0; }
+    .nhm-detail { width: 100%; min-width: 0; }
+  }
+  @media (max-width: 560px) {
+    #heatmap-section .nhm-card { --nhm-gutter: 96px; padding: 4px 14px 16px; }
+    .nhm-rowlabel { font-size: 10px; }
+    .nhm-stats { gap: 14px; }
+    .nhm-legend { padding-left: 0; }
+  }
 </style>
 
 <script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '' };</script>
@@ -583,6 +653,10 @@
     <a class="side-nav-item active" href="/signal-lab">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
       Signal Lab
+    </a>
+    <a class="side-nav-item" href="/narrative-heatmap">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="2.5" rx="1" fill="currentColor" opacity="0.85"/><rect x="1" y="6.75" width="9" height="2.5" rx="1" fill="currentColor" opacity="0.55"/><rect x="1" y="11.5" width="12" height="2.5" rx="1" fill="currentColor" opacity="0.7"/></svg>
+      Narrative Heatmap
     </a>
   </div>
   <div class="side-nav-bottom">
@@ -704,6 +778,44 @@
           <span class="bear-toggle-icon" id="bear-toggle-icon">&#9662;</span>
         </div>
         <div class="bear-stories-list" id="bear-stories-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Narrative Heatmap (hidden until ticker loaded) -->
+  <div class="section" id="heatmap-section" style="display:none;">
+    <div class="section-label">Narrative Heatmap &mdash; <span id="nhm-ticker-label"></span></div>
+    <div class="section-body">
+      <div class="nhm-card" id="nhm-card">
+        <div class="nhm-head">
+          <div class="nhm-title"><span class="nhm-sub">Macro themes &times; calendar days. Color = narrative strength or crowd size. Gaps mean the story went quiet.</span></div>
+          <div class="nhm-head-controls">
+            <div class="nhm-toggle" id="nhm-mode">
+              <button data-mode="strength" class="active">Strength</button>
+              <button data-mode="crowd">Crowd</button>
+            </div>
+            <div class="nhm-toggle" id="nhm-bucket">
+              <button data-bucket="day" class="active">Daily</button>
+              <button data-bucket="week">Weekly</button>
+            </div>
+          </div>
+        </div>
+        <div class="nhm-stats" id="nhm-stats"></div>
+        <div class="nhm-body">
+          <div class="nhm-left">
+            <div class="nhm-scroll" id="nhm-scroll">
+              <div class="nhm-rows" id="nhm-rows"></div>
+              <div style="display:flex;">
+                <div class="nhm-axis-spacer"></div>
+                <div class="nhm-axis" id="nhm-axis"></div>
+              </div>
+            </div>
+            <div class="nhm-legend" id="nhm-legend"></div>
+          </div>
+          <div class="nhm-detail" id="nhm-detail">
+            <div class="nhm-detail-empty">Click a cell to inspect the narrative chain for that day.</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1139,7 +1251,7 @@ function drawChart(snaps, narrs, drawCandles) {
 
   // Build Narrative Force: (Yellow × 0.6) + ((100 - Blue) × 0.4)
   const blueByDate = {}; ALL_DECAY.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) blueByDate[ds] = d.energy_remaining_pct ?? 0; });
-  const yellowByDate = {}; ALL_PHYSICS.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) { const maxAbs = Math.max(...ALL_PHYSICS.map(x => x.narrative_energy_absolute || 0), 1); yellowByDate[ds] = ((d.narrative_energy_absolute || 0) / maxAbs) * 100; } });
+  const yellowByDate = {}; ALL_PHYSICS.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && d.pe_rank_pct != null) yellowByDate[ds] = d.pe_rank_pct; });
   const allDates = {};
   [ALL_DECAY, ALL_PHYSICS, ALL_PRESSURE].forEach(arr => arr.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && ds >= lo && ds <= hi) allDates[ds] = true; }));
   let forceSeries = Object.keys(allDates).sort().map(ds => {
@@ -1292,11 +1404,12 @@ async function loadChart(ticker) {
     sbFetch('narrative_analyses', { select: 'snapshot_date,narrative_text,source_outlet,article_url,sentiment_score,verdict', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' }),
     sbFetch('v_dash_narrative_health', { select: 'snapshot_date,narrative_trend,sentiment_score', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' }),
     sbFetch('decay_metrics', { select: 'snapshot_date,energy_remaining_pct,day_number', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' }),
-    sbFetch('narrative_scorecard', { select: 'snapshot_date,narrative_energy_absolute,nrs,overreaction_ratio,coordination_score,narrative_energy_t,wks_score,narrative_mass_score', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' })
+    sbFetch('narrative_scorecard', { select: 'snapshot_date,narrative_energy_absolute,nrs,overreaction_ratio,coordination_score,narrative_energy_t,wks_score,narrative_mass_score', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' }),
+    sbFetch('mv_physics_energy_normalized', { select: 'snapshot_date,raw_pe,pe_rank_pct,pe_rolling_q90_norm,full_coverage_day', ticker: 'eq.' + ticker, order: 'snapshot_date.asc', limit: '2000' })
   ]);
   const pick = (i) => settled[i].status === 'fulfilled' && Array.isArray(settled[i].value) ? settled[i].value : [];
   settled.forEach((r, i) => { if (r.status === 'rejected') console.warn('[SL] source', i, 'failed:', r.reason && r.reason.message || r.reason); });
-  const priceRows = pick(0), storyRows = pick(1), healthRows = pick(2), decayRows = pick(3), scorecardRows = pick(4);
+  const priceRows = pick(0), storyRows = pick(1), healthRows = pick(2), decayRows = pick(3), scorecardRows = pick(4), physicsRows = pick(5);
 
   ALL_SNAPS = priceRows.filter(r => r.snapshot_date && r.price_close != null);
 
@@ -1315,7 +1428,19 @@ async function loadChart(ticker) {
   });
 
   ALL_DECAY = decayRows;
-  ALL_PHYSICS = scorecardRows.filter(r => r.snapshot_date && r.narrative_energy_absolute != null);
+  // Physics Energy (Yellow): cross-ticker percentile rank from mv_physics_energy_normalized
+  // (stable across timeframes; universe rank — matches the dashboard Signal Lab tab).
+  // Falls back to raw narrative_energy_absolute from the scorecard, window-min/max normalized,
+  // if the MV has no coverage for this ticker yet. narrative_energy_absolute is kept as an alias.
+  if (physicsRows.length) {
+    ALL_PHYSICS = physicsRows
+      .filter(r => r.snapshot_date && r.pe_rank_pct != null)
+      .map(r => { const raw = r.raw_pe != null ? Number(r.raw_pe) : null; return { snapshot_date: r.snapshot_date, pe_rank_pct: Number(r.pe_rank_pct), narrative_energy_absolute: raw }; });
+  } else {
+    const scRows = scorecardRows.filter(r => r.snapshot_date && r.narrative_energy_absolute != null);
+    const maxAbs = Math.max(...scRows.map(r => r.narrative_energy_absolute || 0), 1);
+    ALL_PHYSICS = scRows.map(r => ({ snapshot_date: r.snapshot_date, pe_rank_pct: ((r.narrative_energy_absolute || 0) / maxAbs) * 100, narrative_energy_absolute: r.narrative_energy_absolute }));
+  }
   ALL_PRESSURE = scorecardRows.filter(r => r.snapshot_date).map(r => {
     const nrs = r.nrs || 0, or = Math.min(r.overreaction_ratio || 0, 50), cs = r.coordination_score || 0;
     return { snapshot_date: r.snapshot_date, pressure: ((nrs / 100) * 0.4 + (or / 50) * 0.4 + (cs / 100) * 0.2) * 100 };
@@ -1333,8 +1458,8 @@ function detectRegime() {
   let blue = 0, yellow = 0, pressure = 0;
   if (ALL_DECAY.length) blue = ALL_DECAY[ALL_DECAY.length - 1].energy_remaining_pct ?? 0;
   if (ALL_PHYSICS.length) {
-    const maxAbs = Math.max(...ALL_PHYSICS.map(d => d.narrative_energy_absolute || 0), 1);
-    yellow = ((ALL_PHYSICS[ALL_PHYSICS.length - 1].narrative_energy_absolute || 0) / maxAbs) * 100;
+    const lp = ALL_PHYSICS[ALL_PHYSICS.length - 1];
+    yellow = lp.pe_rank_pct != null ? lp.pe_rank_pct : 0;
   }
   if (ALL_PRESSURE.length) pressure = ALL_PRESSURE[ALL_PRESSURE.length - 1].pressure;
   const force = (yellow * 0.6) + ((100 - blue) * 0.4);
@@ -1364,6 +1489,13 @@ async function loadSignalLab(ticker) {
   document.title = ticker + ' Signal Lab \u2014 Market Prism';
   document.getElementById('chart-section').style.display = 'block';
   document.getElementById('backtest-section').style.display = 'block';
+  // Narrative heatmap — reacts to the same ticker selection as the chart.
+  const _hmSec = document.getElementById('heatmap-section');
+  if (_hmSec) {
+    _hmSec.style.display = 'block';
+    document.getElementById('nhm-ticker-label').textContent = ticker;
+    if (window.NHM) window.NHM.load(ticker);
+  }
   sbFetch('keyword_price_impact', { ticker: 'eq.' + ticker, select: 'keyword,keyword_type,avg_return_5d,article_count', order: 'abs(avg_return_5d).desc', limit: '10' })
     .then(rows => { if (ticker === CURRENT_TICKER && Array.isArray(rows)) ALL_KEYWORDS = rows; })
     .catch(e => { console.warn('[SL] keywords fetch failed:', e); });
@@ -1415,8 +1547,7 @@ async function interpretChart() {
 
   // Compute Narrative Force + Risk Pressure series
   const blueByDate = {}; ALL_DECAY.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) blueByDate[ds] = d.energy_remaining_pct ?? 0; });
-  const maxAbs = Math.max(...ALL_PHYSICS.map(d => d.narrative_energy_absolute || 0), 1);
-  const yellowByDate = {}; ALL_PHYSICS.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) yellowByDate[ds] = ((d.narrative_energy_absolute || 0) / maxAbs) * 100; });
+  const yellowByDate = {}; ALL_PHYSICS.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && d.pe_rank_pct != null) yellowByDate[ds] = d.pe_rank_pct; });
   const pressureByDate = {}; ALL_PRESSURE.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) pressureByDate[ds] = d.pressure; });
 
   const allDates = {};
@@ -1670,7 +1801,245 @@ document.getElementById('theme-toggle').onclick = () => {
   if (t) {
     document.getElementById('ticker-input').value = t.toUpperCase();
     loadSignalLab(t.toUpperCase());
+    /* heatmap reacts via loadSignalLab's hook */
   }
+})();
+</script>
+
+<!-- ===== NARRATIVE HEATMAP (driven by loadSignalLab -> window.NHM.load) ===== -->
+<script>
+window.NHM = (function () {
+  const URL  = window.__env?.SUPABASE_URL  || '';
+  const ANON = window.__env?.SUPABASE_ANON || '';
+  const START = '2026-02-18';                 // fixed span start (spec)
+  const TOP_N = 14;                            // visible rows before "Other"
+  // px per calendar column. Wider on phones so the 8px cells aren't fiddly to tap.
+  function stepPx() { return (window.matchMedia && window.matchMedia('(max-width: 560px)').matches) ? 16 : 10; }
+  const MS = 86400000;
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function toUTC(s) { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y, m-1, d); }
+  function dayOffset(s) { return Math.round((toUTC(s) - toUTC(START)) / MS); }
+  function fmtDate(s) { const [y,m,d] = s.split('-').map(Number); return MON[m-1] + ' ' + d + ', ' + y; }
+  function weekStart(s) {
+    const t = toUTC(s); const back = (new Date(t).getUTCDay() + 6) % 7; const d = new Date(t - back*MS);
+    return d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0') + '-' + String(d.getUTCDate()).padStart(2,'0');
+  }
+
+  async function sb(table, params) {
+    const qs = Object.entries(params).filter(([,v]) => v !== undefined && v !== '')
+      .map(([k,v]) => encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(URL + '/rest/v1/' + table + (qs ? '?'+qs : ''), {
+        headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, Accept: 'application/json' }, signal: ctrl.signal
+      });
+      if (!res.ok) throw new Error(table + ' ' + res.status);
+      return await res.json();
+    } finally { clearTimeout(t); }
+  }
+
+  function lerp(a, b, t) { return Math.round(a + (b-a)*t); }
+  function mix(c1, c2, t) { return 'rgb(' + lerp(c1[0],c2[0],t) + ',' + lerp(c1[1],c2[1],t) + ',' + lerp(c1[2],c2[2],t) + ')'; }
+  const DEEP_TEAL = [13,74,69], MINT = [0,222,148], AMBER = [255,184,0];
+  function strengthColor(s) {
+    const t = Math.max(0, Math.min(1, (s - 1) / 9));
+    return t <= 0.5 ? mix(DEEP_TEAL, MINT, t/0.5) : mix(MINT, AMBER, (t-0.5)/0.5);
+  }
+  function crowdColor(n) {
+    if (n <= 1) return 'rgb(255,184,0)';   // solo / idiosyncratic
+    if (n <= 5) return 'rgb(0,222,148)';    // small cluster
+    if (n <= 12) return 'rgb(56,200,184)';  // mid
+    return 'rgb(22,90,84)';                  // herd 13+
+  }
+
+  let END = null, MODE = 'strength', BUCKET = 'day', RAW = [], ROWS = [], TICKER = null, selectedEl = null, bound = false;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+  function buildRows(raw) {
+    const byTheme = new Map();
+    for (const r of raw) {
+      if (!byTheme.has(r.theme_key)) byTheme.set(r.theme_key, { key: r.theme_key, label: r.theme_label, count: 0, days: new Map() });
+      const th = byTheme.get(r.theme_key); th.count++;
+      const colKey = BUCKET === 'week' ? weekStart(r.snapshot_date) : r.snapshot_date;
+      const cur = th.days.get(colKey);
+      if (!cur) th.days.set(colKey, { date: colKey, strength: r.chain_strength, size: r.cluster_size, rec: r });
+      else {
+        if (r.chain_strength > cur.strength) cur.strength = r.chain_strength;
+        if (r.cluster_size < cur.size) { cur.size = r.cluster_size; cur.rec = r; } // smallest cluster = most about this name
+      }
+    }
+    let arr = [...byTheme.values()].sort((a,b) => b.count - a.count);
+    let visible = arr.slice(0, TOP_N);
+    const rest = arr.slice(TOP_N);
+    if (rest.length) {
+      const other = { key: '__other__', label: 'Other (' + rest.length + ' narratives)', count: 0, days: new Map(), isOther: true };
+      for (const th of rest) {
+        other.count += th.count;
+        for (const [k,c] of th.days) {
+          const cur = other.days.get(k);
+          if (!cur) other.days.set(k, { ...c });
+          else { if (c.strength > cur.strength) cur.strength = c.strength; if (c.size < cur.size) { cur.size = c.size; cur.rec = c.rec; } }
+        }
+      }
+      visible.push(other);
+    }
+    return visible;
+  }
+
+  function render() {
+    const rowsEl = $('nhm-rows'), axisEl = $('nhm-axis');
+    if (!rowsEl) return;
+    rowsEl.innerHTML = ''; axisEl.innerHTML = ''; selectedEl = null;
+
+    const STEP = stepPx(), CELLW = STEP - 2;
+    const totalDays = dayOffset(END) + 1;
+    const nCols = BUCKET === 'week' ? Math.ceil(totalDays / 7) : totalDays;
+    const trackW = nCols * STEP;
+
+    for (const row of ROWS) {
+      const rowEl = document.createElement('div'); rowEl.className = 'nhm-row';
+      const lbl = document.createElement('div');
+      lbl.className = 'nhm-rowlabel' + (row.isOther ? ' nhm-other' : '');
+      lbl.textContent = row.label; lbl.title = row.label;
+      const track = document.createElement('div'); track.className = 'nhm-track'; track.style.width = trackW + 'px';
+      for (const [colKey, cell] of row.days) {
+        const off = dayOffset(colKey);
+        const col = BUCKET === 'week' ? Math.floor(off / 7) : off;
+        if (col < 0 || col >= nCols) continue;
+        const el = document.createElement('div');
+        el.className = 'nhm-cell nhm-filled';
+        el.style.left = (col * STEP) + 'px';
+        el.style.width = CELLW + 'px';
+        el.style.background = MODE === 'strength' ? strengthColor(cell.strength) : crowdColor(cell.size);
+        el.title = row.label + ' · ' + fmtDate(cell.date) + ' · strength ' + cell.strength + ' · cluster ' + cell.size;
+        el.onclick = () => selectCell(el, row, cell);
+        track.appendChild(el);
+      }
+      rowEl.appendChild(lbl); rowEl.appendChild(track); rowsEl.appendChild(rowEl);
+    }
+
+    // month gridlines + labels (incl. year) along the bottom
+    axisEl.style.width = trackW + 'px';
+    const cur = new Date(toUTC(START)); cur.setUTCDate(1);
+    const endT = toUTC(END);
+    while (cur.getTime() <= endT + MS) {
+      const off = Math.round((cur.getTime() - toUTC(START)) / MS);
+      const col = BUCKET === 'week' ? off / 7 : off;
+      if (col >= -2 && col <= nCols) {
+        const x = Math.max(0, col * STEP);
+        const tick = document.createElement('div'); tick.className = 'nhm-axis-tick'; tick.style.left = x + 'px';
+        const lab = document.createElement('div'); lab.className = 'nhm-axis-label'; lab.style.left = x + 'px';
+        lab.textContent = MON[cur.getUTCMonth()] + ' ' + cur.getUTCFullYear();
+        axisEl.appendChild(tick); axisEl.appendChild(lab);
+      }
+      cur.setUTCMonth(cur.getUTCMonth() + 1);
+    }
+    renderLegend();
+  }
+
+  function renderLegend() {
+    const el = $('nhm-legend'); if (!el) return; el.innerHTML = '';
+    const items = MODE === 'strength'
+      ? [['Low', strengthColor(1)], ['Mid', strengthColor(5)], ['High', strengthColor(10)], ['Quiet day', 'var(--nhm-cell0)']]
+      : [['Solo (1)', crowdColor(1)], ['Small (2-5)', crowdColor(3)], ['Mid (6-12)', crowdColor(8)], ['Herd (13+)', crowdColor(20)], ['Quiet day', 'var(--nhm-cell0)']];
+    el.innerHTML = items.map(([label, color]) =>
+      '<div class="nhm-legend-item"><span class="nhm-swatch" style="background:' + color + ';"></span>' + label + '</div>').join('');
+  }
+
+  function renderStats() {
+    const activeDays = new Set(RAW.map(r => r.snapshot_date)).size;
+    const themes = new Set(RAW.map(r => r.theme_key)).size;
+    const memberships = RAW.length;
+    const solo = RAW.filter(r => r.cluster_size === 1).length;
+    const soloPct = memberships ? Math.round(solo / memberships * 100) : 0;
+    const peak = RAW.reduce((m, r) => Math.max(m, r.chain_strength || 0), 0);
+    const dominant = ROWS.length ? (ROWS[0].isOther ? '—' : ROWS[0].label) : '—';
+    const stats = [
+      [activeDays, 'Active days'], [themes, 'Distinct themes'], [memberships, 'Cluster memberships'],
+      [soloPct + '%', 'Solo share'], [peak, 'Peak strength'], [dominant, 'Dominant narrative'],
+    ];
+    $('nhm-stats').innerHTML = stats.map(([v,l]) => '<div class="nhm-stat"><div class="nhm-stat-val">' + esc(v) + '</div><div class="nhm-stat-lbl">' + l + '</div></div>').join('');
+  }
+
+  function field(lbl, val) {
+    if (!val) return '';
+    return '<div class="nhm-field"><div class="nhm-field-lbl">' + lbl + '</div><div class="nhm-field-val">' + esc(val) + '</div></div>';
+  }
+
+  function selectCell(el, row, cell) {
+    if (selectedEl) selectedEl.classList.remove('nhm-selected');
+    selectedEl = el; el.classList.add('nhm-selected');
+    const r = cell.rec, herd = cell.size >= 13;
+    $('nhm-detail').innerHTML =
+      '<div class="nhm-detail-theme">' + esc(row.label) + '</div>' +
+      '<div class="nhm-detail-date">' + esc(fmtDate(cell.date)) + (BUCKET === 'week' ? ' · week of' : '') + '</div>' +
+      '<div class="nhm-tags">' +
+        '<span class="nhm-tag" style="border-color:' + strengthColor(cell.strength) + ';color:' + strengthColor(cell.strength) + '">Strength ' + cell.strength + '</span>' +
+        '<span class="nhm-tag" style="border-color:' + crowdColor(cell.size) + ';color:' + crowdColor(cell.size) + '">' + (cell.size === 1 ? 'Solo' : 'Herd ' + cell.size) + '</span>' +
+        '<span class="nhm-tag">' + esc(r.cluster_id) + '</span>' +
+      '</div>' +
+      (herd ? '<div class="nhm-herd-note">Large cluster (' + cell.size + ' names): the chain text below describes the whole cohort, not ' + esc(TICKER) + ' specifically.</div>' : '') +
+      field('Anchor event', r.anchor_event) + field('Causal chain', r.chain_description) + field('Contagion direction', r.contagion_direction);
+  }
+
+  async function ensureEnd() {
+    if (END) return;
+    try { const m = await sb('narrative_clusters', { select: 'snapshot_date', order: 'snapshot_date.desc', limit: '1' }); END = (m[0] && m[0].snapshot_date) || START; }
+    catch { END = START; }
+  }
+
+  function bindToggles() {
+    if (bound) return; bound = true;
+    let rtimer; window.addEventListener('resize', () => { clearTimeout(rtimer); rtimer = setTimeout(() => { if (ROWS.length) render(); }, 150); });
+    $('nhm-mode').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      MODE = b.dataset.mode;
+      [...e.currentTarget.children].forEach(x => x.classList.toggle('active', x === b));
+      if (ROWS.length) render();
+    });
+    $('nhm-bucket').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      BUCKET = b.dataset.bucket;
+      [...e.currentTarget.children].forEach(x => x.classList.toggle('active', x === b));
+      if (RAW.length) { ROWS = buildRows(RAW); render(); }
+    });
+  }
+
+  function resetDetail() {
+    const d = $('nhm-detail'); if (d) d.innerHTML = '<div class="nhm-detail-empty">Click a cell to inspect the narrative chain for that day.</div>';
+  }
+
+  async function load(ticker) {
+    if (!ticker || !$('nhm-rows')) return;
+    TICKER = ticker;
+    bindToggles();
+    resetDetail();
+    $('nhm-rows').innerHTML = '<div class="nhm-msg">Loading ' + esc(ticker) + '…</div>';
+    await ensureEnd();
+    try {
+      const rows = await sb('narrative_ticker_clusters', {
+        ticker: 'eq.' + ticker,
+        select: 'snapshot_date,theme_key,theme_label,chain_strength,cluster_size,anchor_event,chain_description,contagion_direction,cluster_id',
+        order: 'snapshot_date.asc', limit: '4000'
+      });
+      if (TICKER !== ticker) return; // a newer load superseded this one
+      RAW = rows;
+      if (!RAW.length) {
+        $('nhm-rows').innerHTML = '<div class="nhm-msg">No narrative clusters recorded for ' + esc(ticker) + '.</div>';
+        $('nhm-stats').innerHTML = ''; $('nhm-axis').innerHTML = '';
+        return;
+      }
+      ROWS = buildRows(RAW); renderStats(); render();
+    } catch (e) {
+      if ($('nhm-rows')) $('nhm-rows').innerHTML = '<div class="nhm-msg" style="color:var(--mp-red,#FF6B4A);">Failed to load: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  return { load };
 })();
 </script>
 </body>

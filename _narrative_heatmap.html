@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Narrative Heatmap — Market Prism | Theme history per ticker</title>
+<meta name="description" content="Visualize a ticker's narrative history: macro themes down the rows, calendar days across, color by narrative strength or crowd size.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://marketprism.co/narrative-heatmap">
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --mp-obsidian: #080B11; --mp-deep: #0C1018; --mp-surface: #111520; --mp-surface2: #1A1F2E;
+    --mp-border: rgba(255,255,255,0.06); --mp-border-mid: rgba(255,255,255,0.10); --mp-border-hover: rgba(255,255,255,0.14);
+    --mp-blue: #00AEFF; --mp-teal: #38C8B8; --mp-green: #00DE94; --mp-red: #FF4D4D; --mp-amber: #FFB800; --mp-violet: #7B61FF;
+    --mp-text-primary: #E8EDF5; --mp-text-secondary: #7A8499; --mp-text-tertiary: #3D4558; --mp-text-muted: rgba(255,255,255,0.3);
+    --font-display: 'Instrument Serif', 'DM Serif Display', Georgia, serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+  }
+  [data-theme="light"] {
+    --mp-obsidian: #F5F7FA; --mp-deep: #FFFFFF; --mp-surface: #EDF0F5; --mp-surface2: #E2E5EB;
+    --mp-border: rgba(0,0,0,0.08); --mp-border-mid: rgba(0,0,0,0.14); --mp-border-hover: rgba(0,0,0,0.18);
+    --mp-text-primary: #111827; --mp-text-secondary: #4B5563; --mp-text-tertiary: #9CA3AF;
+  }
+
+  html { font-size: 16px; }
+  body { font-family: var(--font-body); background: var(--mp-obsidian); color: var(--mp-text-primary); min-height: 100vh; line-height: 1.5; font-weight: 400; overflow-x: hidden; }
+
+  /* ── Sidebar ── */
+  .side-nav { position: fixed; top: 0; left: 0; bottom: 0; width: 200px; background: var(--mp-deep); border-right: 1px solid var(--mp-border); display: flex; flex-direction: column; padding: 16px 12px; z-index: 50; }
+  .side-nav-logo { display: block; margin-bottom: 24px; padding: 0 4px; }
+  .side-nav-logo-img { height: 28px; width: auto; }
+  .logo-light { display: block; } .logo-dark { display: none; }
+  [data-theme="light"] .logo-light { display: none; } [data-theme="light"] .logo-dark { display: block; }
+  .side-nav-items { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .side-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; font-size: 13px; font-weight: 400; color: var(--mp-text-secondary); text-decoration: none; transition: all 0.15s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+  .side-nav-item:hover { background: var(--mp-surface); color: var(--mp-text-primary); }
+  .side-nav-item.active { background: rgba(0,174,255,0.08); color: var(--mp-blue); font-weight: 500; }
+  .side-nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mp-text-tertiary); padding: 16px 10px 6px; font-weight: 500; }
+  .side-nav-bottom { margin-top: auto; display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid var(--mp-border); }
+  .side-nav-bottom a { color: var(--mp-text-tertiary); text-decoration: none; font-size: 12px; display: flex; align-items: center; gap: 6px; padding: 4px 10px; }
+  .side-nav-bottom a:hover { color: var(--mp-text-secondary); }
+  .theme-toggle { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; font-size: 12px; color: var(--mp-text-tertiary); cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+  .theme-toggle:hover { background: var(--mp-surface); color: var(--mp-text-secondary); }
+  .icon-moon { display: none; }
+  [data-theme="light"] .icon-sun { display: none; } [data-theme="light"] .icon-moon { display: block; }
+
+  /* ── Main content ── */
+  .main-content { margin-left: 200px; padding: 24px 32px; max-width: 1200px; }
+  .page-header { margin-bottom: 24px; }
+  .page-title { font-family: var(--font-display); font-size: 32px; font-weight: 400; letter-spacing: -0.025em; margin-bottom: 6px; }
+  .page-subtitle { font-size: 14px; color: var(--mp-text-secondary); max-width: 720px; }
+
+  /* ── Beta gate ── */
+  .beta-gate { position: fixed; inset: 0; background: var(--mp-obsidian); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+  .beta-gate-card { background: var(--mp-surface); border: 1px solid var(--mp-border-mid); border-radius: 16px; padding: 40px 36px; width: 380px; max-width: 90vw; text-align: center; }
+  .beta-gate-title { font-family: var(--font-display); font-size: 24px; font-weight: 400; margin-bottom: 6px; }
+  .beta-gate-sub { font-size: 13px; color: var(--mp-text-secondary); margin-bottom: 24px; }
+  .beta-gate-input { font-family: var(--font-body); font-size: 16px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--mp-border-mid); background: var(--mp-deep); color: var(--mp-text-primary); width: 100%; text-align: center; outline: none; margin-bottom: 12px; }
+  .beta-gate-input:focus { border-color: var(--mp-blue); }
+  .beta-gate-btn { font-family: var(--font-body); font-size: 14px; font-weight: 500; padding: 10px 32px; border-radius: 10px; border: none; cursor: pointer; background: var(--mp-blue); color: #FFFFFF; width: 100%; transition: opacity 0.15s; }
+  .beta-gate-btn:hover { opacity: 0.85; }
+  .beta-gate-error { font-size: 12px; color: var(--mp-red); margin-top: 10px; display: none; }
+
+  /* ============================================================
+     NARRATIVE HEATMAP — self-contained block (.nhm- scope).
+     Tokens mapped onto the page's --mp-* palette so it themes
+     with light/dark automatically.
+     ============================================================ */
+  .nhm-card {
+    --nhm-obsidian: var(--mp-deep); --nhm-panel: var(--mp-surface); --nhm-line: var(--mp-border); --nhm-cell0: var(--mp-surface2);
+    --nhm-amber: #FFB800; --nhm-teal: #38C8B8; --nhm-mint: #00DE94;
+    --nhm-ink: var(--mp-text-primary); --nhm-dim: var(--mp-text-secondary);
+    --nhm-gutter: 150px;
+    font-family: var(--font-body); color: var(--mp-text-primary);
+    background: var(--mp-surface); border: 1px solid var(--mp-border); border-radius: 16px; padding: 20px;
+  }
+  .nhm-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .nhm-title { font-size: 16px; font-weight: 600; color: var(--nhm-ink); }
+  .nhm-title .nhm-sub { font-size: 12px; font-weight: 400; color: var(--nhm-dim); margin-left: 8px; }
+  .nhm-head-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .nhm-select { background: var(--nhm-obsidian); color: var(--nhm-ink); border: 1px solid var(--nhm-line); border-radius: 8px; padding: 6px 10px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; outline: none; }
+  .nhm-select:hover { border-color: var(--mp-border-hover); }
+  .nhm-toggle { display: inline-flex; background: var(--nhm-obsidian); border: 1px solid var(--nhm-line); border-radius: 8px; overflow: hidden; }
+  .nhm-toggle button { background: none; border: none; color: var(--nhm-dim); font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 12px; cursor: pointer; transition: all 0.12s; }
+  .nhm-toggle button.active { background: var(--nhm-line); color: var(--nhm-ink); }
+  .nhm-stats { display: flex; flex-wrap: wrap; gap: 22px; padding: 12px 2px 16px; border-bottom: 1px solid var(--nhm-line); margin-bottom: 14px; }
+  .nhm-stat { display: flex; flex-direction: column; gap: 2px; }
+  .nhm-stat-val { font-size: 18px; font-weight: 600; color: var(--nhm-ink); }
+  .nhm-stat-lbl { font-size: 11px; color: var(--nhm-dim); }
+  .nhm-body { display: flex; gap: 16px; align-items: flex-start; }
+  .nhm-left { flex: 1; min-width: 0; }
+  .nhm-scroll { overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; }
+  .nhm-scroll::-webkit-scrollbar { height: 8px; }
+  .nhm-scroll::-webkit-scrollbar-thumb { background: var(--nhm-line); border-radius: 4px; }
+  .nhm-rows { position: relative; }
+  .nhm-row { display: flex; align-items: center; height: 17px; margin-bottom: 2px; }
+  .nhm-rowlabel { position: sticky; left: 0; z-index: 2; width: var(--nhm-gutter); min-width: var(--nhm-gutter); padding-right: 10px; font-size: 11px; color: var(--nhm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--nhm-panel); }
+  .nhm-rowlabel.nhm-other { color: var(--nhm-dim); font-style: italic; }
+  .nhm-track { position: relative; height: 15px; flex: none; }
+  .nhm-cell { position: absolute; top: 0; width: 8px; height: 15px; border-radius: 2px; cursor: pointer; background: var(--nhm-cell0); }
+  .nhm-cell.nhm-filled:hover { outline: 1px solid var(--nhm-ink); outline-offset: 0; }
+  .nhm-cell.nhm-selected { outline: 1.5px solid var(--mp-text-primary); outline-offset: 0; z-index: 3; }
+  .nhm-axis { position: relative; height: 30px; margin-top: 4px; }
+  .nhm-axis-tick { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--nhm-line); }
+  .nhm-axis-label { position: absolute; top: 6px; font-size: 10px; color: var(--nhm-dim); white-space: nowrap; padding-left: 4px; }
+  .nhm-axis-spacer { width: var(--nhm-gutter); min-width: var(--nhm-gutter); }
+  .nhm-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; padding-left: var(--nhm-gutter); }
+  .nhm-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--nhm-dim); }
+  .nhm-swatch { width: 12px; height: 12px; border-radius: 2px; }
+  .nhm-detail { width: 300px; min-width: 300px; align-self: stretch; background: var(--nhm-obsidian); border: 1px solid var(--nhm-line); border-radius: 12px; padding: 16px; min-height: 320px; }
+  .nhm-detail-empty { color: var(--nhm-dim); font-size: 13px; display: flex; align-items: center; justify-content: center; height: 100%; min-height: 280px; text-align: center; }
+  .nhm-detail-theme { font-size: 15px; font-weight: 600; color: var(--nhm-ink); margin-bottom: 2px; }
+  .nhm-detail-date { font-size: 12px; color: var(--nhm-dim); margin-bottom: 12px; }
+  .nhm-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .nhm-tag { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--nhm-line); color: var(--nhm-ink); }
+  .nhm-field { margin-bottom: 12px; }
+  .nhm-field-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--nhm-dim); margin-bottom: 3px; }
+  .nhm-field-val { font-size: 12px; color: var(--nhm-ink); line-height: 1.5; }
+  .nhm-herd-note { font-size: 11px; color: var(--nhm-amber); margin-bottom: 12px; line-height: 1.4; }
+  .nhm-msg { font-size: 13px; color: var(--nhm-dim); padding: 30px 0; text-align: center; }
+
+  @media (max-width: 820px) {
+    .nhm-body { flex-direction: column; align-items: stretch; }
+    .nhm-left { width: 100%; min-width: 0; }
+    .nhm-detail { width: 100%; min-width: 0; }
+  }
+  @media (max-width: 768px) {
+    .side-nav { display: none; }
+    .main-content { margin-left: 0; padding: 16px; }
+  }
+  @media (max-width: 560px) {
+    .nhm-card { --nhm-gutter: 96px; padding: 16px; }
+    .nhm-rowlabel { font-size: 10px; }
+    .nhm-stats { gap: 14px; }
+    .nhm-legend { padding-left: 0; }
+  }
+</style>
+
+<script id="__env_script">window.__env = {
+  SUPABASE_URL: 'https://kugfvlagaetiqtdwdfmk.supabase.co',
+  SUPABASE_ANON: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1Z2Z2bGFnYWV0aXF0ZHdkZm1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3ODUwMDcsImV4cCI6MjA4NTM2MTAwN30.8wWvrRsHWTU5DwO_JECB0DoomKPo-6kIIMTXboTjoQI'
+};</script>
+<script>(function(){ var t=localStorage.getItem('mp-theme'); if(t==='light') document.documentElement.setAttribute('data-theme','light'); })();</script>
+</head>
+<body>
+
+<!-- Beta Access Gate -->
+<div class="beta-gate" id="beta-gate">
+  <div class="beta-gate-card">
+    <div class="beta-gate-title">Narrative Heatmap</div>
+    <div class="beta-gate-sub">This feature is in beta. Enter your access code to continue.</div>
+    <input class="beta-gate-input" id="beta-code" type="password" placeholder="Access code" autocomplete="off">
+    <button class="beta-gate-btn" id="beta-submit">Enter</button>
+    <div class="beta-gate-error" id="beta-error">Invalid access code. Try again.</div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<nav class="side-nav">
+  <a class="side-nav-logo" href="/">
+    <img class="side-nav-logo-img logo-light" src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+    <img class="side-nav-logo-img logo-dark" src="/assets/Market-Prism-Logo-Dark.png" alt="Market Prism">
+  </a>
+  <div class="side-nav-items">
+    <a class="side-nav-item" href="/dashboard">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
+      Dashboard
+    </a>
+    <a class="side-nav-item" href="/heatmap">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" fill="currentColor" opacity="0.9"/><rect x="6" y="1" width="4" height="4" rx="1" fill="currentColor" opacity="0.6"/><rect x="11" y="1" width="4" height="4" rx="1" fill="currentColor" opacity="0.3"/><rect x="1" y="6" width="4" height="4" rx="1" fill="currentColor" opacity="0.7"/><rect x="6" y="6" width="4" height="4" rx="1" fill="currentColor" opacity="0.4"/><rect x="11" y="6" width="4" height="4" rx="1" fill="currentColor" opacity="0.8"/><rect x="1" y="11" width="4" height="4" rx="1" fill="currentColor" opacity="0.5"/><rect x="6" y="11" width="4" height="4" rx="1" fill="currentColor" opacity="0.9"/><rect x="11" y="11" width="4" height="4" rx="1" fill="currentColor" opacity="0.6"/></svg>
+      Heatmap
+    </a>
+    <div class="side-nav-section">Labs</div>
+    <a class="side-nav-item" href="/signal-lab">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+      Signal Lab
+    </a>
+    <a class="side-nav-item active" href="/narrative-heatmap">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="2.5" rx="1" fill="currentColor" opacity="0.85"/><rect x="1" y="6.75" width="9" height="2.5" rx="1" fill="currentColor" opacity="0.55"/><rect x="1" y="11.5" width="12" height="2.5" rx="1" fill="currentColor" opacity="0.7"/></svg>
+      Narrative Heatmap
+    </a>
+  </div>
+  <div class="side-nav-bottom">
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <span class="theme-label">Light mode</span>
+    </button>
+    <a href="/">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 12L2 8l4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 8h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      Back to Home
+    </a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+  <div class="page-header">
+    <div class="page-title">Narrative Heatmap</div>
+    <div class="page-subtitle">A ticker's narrative history at a glance: macro themes down the rows, calendar days across. Color encodes narrative strength or crowd size, and gaps mean the story genuinely went quiet.</div>
+  </div>
+
+  <!-- ===== NARRATIVE HEATMAP (self-driving) ===== -->
+  <div class="nhm-card" id="nhm-card">
+    <div class="nhm-head">
+      <div class="nhm-title">Theme history <span class="nhm-sub">click any cell for the narrative chain</span></div>
+      <div class="nhm-head-controls">
+        <select class="nhm-select" id="nhm-ticker"></select>
+        <div class="nhm-toggle" id="nhm-mode">
+          <button data-mode="strength" class="active">Strength</button>
+          <button data-mode="crowd">Crowd</button>
+        </div>
+        <div class="nhm-toggle" id="nhm-bucket">
+          <button data-bucket="day" class="active">Daily</button>
+          <button data-bucket="week">Weekly</button>
+        </div>
+      </div>
+    </div>
+    <div class="nhm-stats" id="nhm-stats"></div>
+    <div class="nhm-body">
+      <div class="nhm-left">
+        <div class="nhm-scroll" id="nhm-scroll">
+          <div class="nhm-rows" id="nhm-rows"></div>
+          <div style="display:flex;">
+            <div class="nhm-axis-spacer"></div>
+            <div class="nhm-axis" id="nhm-axis"></div>
+          </div>
+        </div>
+        <div class="nhm-legend" id="nhm-legend"></div>
+      </div>
+      <div class="nhm-detail" id="nhm-detail">
+        <div class="nhm-detail-empty">Click a cell to inspect the narrative chain for that day.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Beta gate + theme toggle -->
+<script>
+(function() {
+  if (sessionStorage.getItem('narrative-heatmap-access') === '1') { document.getElementById('beta-gate').style.display = 'none'; return; }
+  document.getElementById('beta-submit').onclick = checkCode;
+  document.getElementById('beta-code').onkeydown = function(e) { if (e.key === 'Enter') checkCode(); };
+  function checkCode() {
+    var code = document.getElementById('beta-code').value.trim();
+    if (code.toLowerCase() === 'karma') {
+      sessionStorage.setItem('narrative-heatmap-access', '1');
+      document.getElementById('beta-gate').style.display = 'none';
+    } else {
+      document.getElementById('beta-error').style.display = 'block';
+      document.getElementById('beta-code').value = '';
+      document.getElementById('beta-code').focus();
+    }
+  }
+  document.getElementById('beta-code').focus();
+})();
+document.getElementById('theme-toggle').onclick = function() {
+  var isL = document.documentElement.getAttribute('data-theme') === 'light';
+  document.documentElement.setAttribute('data-theme', isL ? 'dark' : 'light');
+  localStorage.setItem('mp-theme', isL ? 'dark' : 'light');
+};
+</script>
+
+<!-- ===== NARRATIVE HEATMAP LOGIC (portable IIFE) ===== -->
+<script>
+window.NHM = (function () {
+  const URL  = window.__env?.SUPABASE_URL  || '';
+  const ANON = window.__env?.SUPABASE_ANON || '';
+  const START = '2026-02-18';
+  const TOP_N = 14;
+  const MS = 86400000;
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // px per calendar column. Wider on phones so the 8px cells aren't fiddly to tap.
+  function stepPx() { return (window.matchMedia && window.matchMedia('(max-width: 560px)').matches) ? 16 : 10; }
+  function toUTC(s) { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y, m-1, d); }
+  function dayOffset(s) { return Math.round((toUTC(s) - toUTC(START)) / MS); }
+  function fmtDate(s) { const [y,m,d] = s.split('-').map(Number); return MON[m-1] + ' ' + d + ', ' + y; }
+  function weekStart(s) {
+    const t = toUTC(s); const back = (new Date(t).getUTCDay() + 6) % 7; const d = new Date(t - back*MS);
+    return d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0') + '-' + String(d.getUTCDate()).padStart(2,'0');
+  }
+
+  async function sb(table, params) {
+    const qs = Object.entries(params).filter(([,v]) => v !== undefined && v !== '')
+      .map(([k,v]) => encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(URL + '/rest/v1/' + table + (qs ? '?'+qs : ''), {
+        headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, Accept: 'application/json' }, signal: ctrl.signal
+      });
+      if (!res.ok) throw new Error(table + ' ' + res.status);
+      return await res.json();
+    } finally { clearTimeout(t); }
+  }
+
+  function lerp(a, b, t) { return Math.round(a + (b-a)*t); }
+  function mix(c1, c2, t) { return 'rgb(' + lerp(c1[0],c2[0],t) + ',' + lerp(c1[1],c2[1],t) + ',' + lerp(c1[2],c2[2],t) + ')'; }
+  const DEEP_TEAL = [13,74,69], MINT = [0,222,148], AMBER = [255,184,0];
+  function strengthColor(s) { const t = Math.max(0, Math.min(1, (s - 1) / 9)); return t <= 0.5 ? mix(DEEP_TEAL, MINT, t/0.5) : mix(MINT, AMBER, (t-0.5)/0.5); }
+  function crowdColor(n) { if (n <= 1) return 'rgb(255,184,0)'; if (n <= 5) return 'rgb(0,222,148)'; if (n <= 12) return 'rgb(56,200,184)'; return 'rgb(22,90,84)'; }
+
+  let END = null, MODE = 'strength', BUCKET = 'day', RAW = [], ROWS = [], TICKER = null, selectedEl = null, bound = false;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+  function buildRows(raw) {
+    const byTheme = new Map();
+    for (const r of raw) {
+      if (!byTheme.has(r.theme_key)) byTheme.set(r.theme_key, { key: r.theme_key, label: r.theme_label, count: 0, days: new Map() });
+      const th = byTheme.get(r.theme_key); th.count++;
+      const colKey = BUCKET === 'week' ? weekStart(r.snapshot_date) : r.snapshot_date;
+      const cur = th.days.get(colKey);
+      if (!cur) th.days.set(colKey, { date: colKey, strength: r.chain_strength, size: r.cluster_size, rec: r });
+      else { if (r.chain_strength > cur.strength) cur.strength = r.chain_strength; if (r.cluster_size < cur.size) { cur.size = r.cluster_size; cur.rec = r; } }
+    }
+    let arr = [...byTheme.values()].sort((a,b) => b.count - a.count);
+    let visible = arr.slice(0, TOP_N);
+    const rest = arr.slice(TOP_N);
+    if (rest.length) {
+      const other = { key: '__other__', label: 'Other (' + rest.length + ' narratives)', count: 0, days: new Map(), isOther: true };
+      for (const th of rest) {
+        other.count += th.count;
+        for (const [k,c] of th.days) {
+          const cur = other.days.get(k);
+          if (!cur) other.days.set(k, { ...c });
+          else { if (c.strength > cur.strength) cur.strength = c.strength; if (c.size < cur.size) { cur.size = c.size; cur.rec = c.rec; } }
+        }
+      }
+      visible.push(other);
+    }
+    return visible;
+  }
+
+  function render() {
+    const rowsEl = $('nhm-rows'), axisEl = $('nhm-axis');
+    if (!rowsEl) return;
+    rowsEl.innerHTML = ''; axisEl.innerHTML = ''; selectedEl = null;
+
+    const STEP = stepPx(), CELLW = STEP - 2;
+    const totalDays = dayOffset(END) + 1;
+    const nCols = BUCKET === 'week' ? Math.ceil(totalDays / 7) : totalDays;
+    const trackW = nCols * STEP;
+
+    for (const row of ROWS) {
+      const rowEl = document.createElement('div'); rowEl.className = 'nhm-row';
+      const lbl = document.createElement('div');
+      lbl.className = 'nhm-rowlabel' + (row.isOther ? ' nhm-other' : '');
+      lbl.textContent = row.label; lbl.title = row.label;
+      const track = document.createElement('div'); track.className = 'nhm-track'; track.style.width = trackW + 'px';
+      for (const [colKey, cell] of row.days) {
+        const off = dayOffset(colKey);
+        const col = BUCKET === 'week' ? Math.floor(off / 7) : off;
+        if (col < 0 || col >= nCols) continue;
+        const el = document.createElement('div');
+        el.className = 'nhm-cell nhm-filled';
+        el.style.left = (col * STEP) + 'px';
+        el.style.width = CELLW + 'px';
+        el.style.background = MODE === 'strength' ? strengthColor(cell.strength) : crowdColor(cell.size);
+        el.title = row.label + ' · ' + fmtDate(cell.date) + ' · strength ' + cell.strength + ' · cluster ' + cell.size;
+        el.onclick = () => selectCell(el, row, cell);
+        track.appendChild(el);
+      }
+      rowEl.appendChild(lbl); rowEl.appendChild(track); rowsEl.appendChild(rowEl);
+    }
+
+    axisEl.style.width = trackW + 'px';
+    const cur = new Date(toUTC(START)); cur.setUTCDate(1);
+    const endT = toUTC(END);
+    while (cur.getTime() <= endT + MS) {
+      const off = Math.round((cur.getTime() - toUTC(START)) / MS);
+      const col = BUCKET === 'week' ? off / 7 : off;
+      if (col >= -2 && col <= nCols) {
+        const x = Math.max(0, col * STEP);
+        const tick = document.createElement('div'); tick.className = 'nhm-axis-tick'; tick.style.left = x + 'px';
+        const lab = document.createElement('div'); lab.className = 'nhm-axis-label'; lab.style.left = x + 'px';
+        lab.textContent = MON[cur.getUTCMonth()] + ' ' + cur.getUTCFullYear();
+        axisEl.appendChild(tick); axisEl.appendChild(lab);
+      }
+      cur.setUTCMonth(cur.getUTCMonth() + 1);
+    }
+    renderLegend();
+  }
+
+  function renderLegend() {
+    const el = $('nhm-legend'); if (!el) return; el.innerHTML = '';
+    const items = MODE === 'strength'
+      ? [['Low', strengthColor(1)], ['Mid', strengthColor(5)], ['High', strengthColor(10)], ['Quiet day', 'var(--nhm-cell0)']]
+      : [['Solo (1)', crowdColor(1)], ['Small (2-5)', crowdColor(3)], ['Mid (6-12)', crowdColor(8)], ['Herd (13+)', crowdColor(20)], ['Quiet day', 'var(--nhm-cell0)']];
+    el.innerHTML = items.map(([label, color]) => '<div class="nhm-legend-item"><span class="nhm-swatch" style="background:' + color + ';"></span>' + label + '</div>').join('');
+  }
+
+  function renderStats() {
+    const activeDays = new Set(RAW.map(r => r.snapshot_date)).size;
+    const themes = new Set(RAW.map(r => r.theme_key)).size;
+    const memberships = RAW.length;
+    const solo = RAW.filter(r => r.cluster_size === 1).length;
+    const soloPct = memberships ? Math.round(solo / memberships * 100) : 0;
+    const peak = RAW.reduce((m, r) => Math.max(m, r.chain_strength || 0), 0);
+    const dominant = ROWS.length ? (ROWS[0].isOther ? '—' : ROWS[0].label) : '—';
+    const stats = [
+      [activeDays, 'Active days'], [themes, 'Distinct themes'], [memberships, 'Cluster memberships'],
+      [soloPct + '%', 'Solo share'], [peak, 'Peak strength'], [dominant, 'Dominant narrative'],
+    ];
+    $('nhm-stats').innerHTML = stats.map(([v,l]) => '<div class="nhm-stat"><div class="nhm-stat-val">' + esc(v) + '</div><div class="nhm-stat-lbl">' + l + '</div></div>').join('');
+  }
+
+  function field(lbl, val) { if (!val) return ''; return '<div class="nhm-field"><div class="nhm-field-lbl">' + lbl + '</div><div class="nhm-field-val">' + esc(val) + '</div></div>'; }
+
+  function selectCell(el, row, cell) {
+    if (selectedEl) selectedEl.classList.remove('nhm-selected');
+    selectedEl = el; el.classList.add('nhm-selected');
+    const r = cell.rec, herd = cell.size >= 13;
+    $('nhm-detail').innerHTML =
+      '<div class="nhm-detail-theme">' + esc(row.label) + '</div>' +
+      '<div class="nhm-detail-date">' + esc(fmtDate(cell.date)) + (BUCKET === 'week' ? ' · week of' : '') + '</div>' +
+      '<div class="nhm-tags">' +
+        '<span class="nhm-tag" style="border-color:' + strengthColor(cell.strength) + ';color:' + strengthColor(cell.strength) + '">Strength ' + cell.strength + '</span>' +
+        '<span class="nhm-tag" style="border-color:' + crowdColor(cell.size) + ';color:' + crowdColor(cell.size) + '">' + (cell.size === 1 ? 'Solo' : 'Herd ' + cell.size) + '</span>' +
+        '<span class="nhm-tag">' + esc(r.cluster_id) + '</span>' +
+      '</div>' +
+      (herd ? '<div class="nhm-herd-note">Large cluster (' + cell.size + ' names): the chain text below describes the whole cohort, not ' + esc(TICKER) + ' specifically.</div>' : '') +
+      field('Anchor event', r.anchor_event) + field('Causal chain', r.chain_description) + field('Contagion direction', r.contagion_direction);
+  }
+
+  async function ensureEnd() {
+    if (END) return;
+    try { const m = await sb('narrative_clusters', { select: 'snapshot_date', order: 'snapshot_date.desc', limit: '1' }); END = (m[0] && m[0].snapshot_date) || START; }
+    catch { END = START; }
+  }
+
+  function bindToggles() {
+    if (bound) return; bound = true;
+    let rtimer; window.addEventListener('resize', () => { clearTimeout(rtimer); rtimer = setTimeout(() => { if (ROWS.length) render(); }, 150); });
+    $('nhm-mode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; MODE = b.dataset.mode; [...e.currentTarget.children].forEach(x => x.classList.toggle('active', x === b)); if (ROWS.length) render(); });
+    $('nhm-bucket').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; BUCKET = b.dataset.bucket; [...e.currentTarget.children].forEach(x => x.classList.toggle('active', x === b)); if (RAW.length) { ROWS = buildRows(RAW); render(); } });
+  }
+
+  function resetDetail() { const d = $('nhm-detail'); if (d) d.innerHTML = '<div class="nhm-detail-empty">Click a cell to inspect the narrative chain for that day.</div>'; }
+
+  async function load(ticker) {
+    if (!ticker || !$('nhm-rows')) return;
+    TICKER = ticker; bindToggles(); resetDetail();
+    $('nhm-rows').innerHTML = '<div class="nhm-msg">Loading ' + esc(ticker) + '…</div>';
+    await ensureEnd();
+    try {
+      const rows = await sb('narrative_ticker_clusters', {
+        ticker: 'eq.' + ticker,
+        select: 'snapshot_date,theme_key,theme_label,chain_strength,cluster_size,anchor_event,chain_description,contagion_direction,cluster_id',
+        order: 'snapshot_date.asc', limit: '4000'
+      });
+      if (TICKER !== ticker) return;
+      RAW = rows;
+      if (!RAW.length) { $('nhm-rows').innerHTML = '<div class="nhm-msg">No narrative clusters recorded for ' + esc(ticker) + '.</div>'; $('nhm-stats').innerHTML = ''; $('nhm-axis').innerHTML = ''; return; }
+      ROWS = buildRows(RAW); renderStats(); render();
+    } catch (e) {
+      if ($('nhm-rows')) $('nhm-rows').innerHTML = '<div class="nhm-msg" style="color:var(--mp-red,#FF6B4A);">Failed to load: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  async function init(defaultTicker) {
+    bindToggles();
+    await ensureEnd();
+    const sel = $('nhm-ticker');
+    if (!sel) { if (defaultTicker) load(defaultTicker); return; }
+    try {
+      const list = await sb('narrative_heatmap_tickers', { select: 'ticker' });
+      const tickers = list.map(r => r.ticker).sort();
+      sel.innerHTML = tickers.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('');
+      const start = tickers.includes(defaultTicker) ? defaultTicker : tickers[0];
+      sel.value = start;
+      sel.addEventListener('change', () => load(sel.value));
+      load(start);
+    } catch (e) {
+      $('nhm-rows').innerHTML = '<div class="nhm-msg" style="color:var(--mp-red,#FF6B4A);">Ticker list failed: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  return { init, load };
+})();
+
+NHM.init('RDDT');
+</script>
+</body>
+</html>
