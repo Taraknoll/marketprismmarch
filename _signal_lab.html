@@ -581,7 +581,7 @@
   .nhm-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; padding-left: var(--nhm-gutter); }
   .nhm-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--nhm-dim); }
   .nhm-swatch { width: 12px; height: 12px; border-radius: 2px; }
-  .nhm-detail { width: 300px; min-width: 300px; align-self: stretch; background: var(--nhm-obsidian); border: 1px solid var(--nhm-line); border-radius: 12px; padding: 16px; min-height: 320px; }
+  .nhm-detail { width: 380px; min-width: 380px; align-self: stretch; background: var(--nhm-obsidian); border: 1px solid var(--nhm-line); border-radius: 12px; padding: 20px; min-height: 320px; }
   .nhm-detail-empty { color: var(--nhm-dim); font-size: 13px; display: flex; align-items: center; justify-content: center; height: 100%; min-height: 280px; text-align: center; }
   .nhm-detail-theme { font-size: 15px; font-weight: 600; color: var(--nhm-ink); margin-bottom: 2px; }
   .nhm-detail-date { font-size: 12px; color: var(--nhm-dim); margin-bottom: 12px; }
@@ -1854,7 +1854,7 @@ window.NHM = (function () {
     return 'rgb(22,90,84)';                  // herd 13+
   }
 
-  let END = null, MODE = 'strength', BUCKET = 'day', RAW = [], ROWS = [], TICKER = null, selectedEl = null, bound = false;
+  let END = null, MODE = 'strength', BUCKET = 'day', RAW = [], ROWS = [], TICKER = null, selectedEl = null, bound = false, _bestEl = null, _selKey = null;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
@@ -1899,6 +1899,7 @@ window.NHM = (function () {
     const totalDays = dayOffset(END) + 1;
     const nCols = BUCKET === 'week' ? Math.ceil(totalDays / 7) : totalDays;
     const trackW = nCols * STEP;
+    let best = null; // strongest, most-recent cell — used for the default detail view
 
     for (const row of ROWS) {
       const rowEl = document.createElement('div'); rowEl.className = 'nhm-row';
@@ -1917,10 +1918,13 @@ window.NHM = (function () {
         el.style.background = MODE === 'strength' ? strengthColor(cell.strength) : crowdColor(cell.size);
         el.title = row.label + ' · ' + fmtDate(cell.date) + ' · strength ' + cell.strength + ' · cluster ' + cell.size;
         el.onclick = () => selectCell(el, row, cell);
+        if (!row.isOther && (!best || cell.strength > best.s || (cell.strength === best.s && cell.date > best.d))) best = { s: cell.strength, d: cell.date, el: el };
+        if (_selKey === row.key + '|' + cell.date) { el.classList.add('nhm-selected'); selectedEl = el; }
         track.appendChild(el);
       }
       rowEl.appendChild(lbl); rowEl.appendChild(track); rowsEl.appendChild(rowEl);
     }
+    _bestEl = best ? best.el : null;
 
     // month gridlines + labels (incl. year) along the bottom
     axisEl.style.width = trackW + 'px';
@@ -1973,6 +1977,7 @@ window.NHM = (function () {
   function selectCell(el, row, cell) {
     if (selectedEl) selectedEl.classList.remove('nhm-selected');
     selectedEl = el; el.classList.add('nhm-selected');
+    _selKey = row.key + '|' + cell.date;
     const r = cell.rec, herd = cell.size >= 13;
     $('nhm-detail').innerHTML =
       '<div class="nhm-detail-theme">' + esc(row.label) + '</div>' +
@@ -2018,6 +2023,7 @@ window.NHM = (function () {
     TICKER = ticker;
     bindToggles();
     resetDetail();
+    _selKey = null;
     $('nhm-rows').innerHTML = '<div class="nhm-msg">Loading ' + esc(ticker) + '…</div>';
     await ensureEnd();
     try {
@@ -2034,6 +2040,7 @@ window.NHM = (function () {
         return;
       }
       ROWS = buildRows(RAW); renderStats(); render();
+      if (_bestEl) _bestEl.click(); // default to the strongest recent narrative so the panel isn't empty
     } catch (e) {
       if ($('nhm-rows')) $('nhm-rows').innerHTML = '<div class="nhm-msg" style="color:var(--mp-red,#FF6B4A);">Failed to load: ' + esc(e.message) + '</div>';
     }
