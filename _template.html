@@ -17461,14 +17461,31 @@ function ini(s){return(s||'').split(/\s+/).slice(0,2).map(function(w){return(w[0
 function lbEsc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
 var BOARDS=[
-  {id:'highest-mass',title:'LOUDEST STORIES',sub:'Who the world won’t shut up about today',color:'#00AEFF',bg:'rgba(0,174,255,0.12)',scoreLabel:'Mass',
-  // Filter: only tickers where the loud chatter ALSO has a directional signal.
-  // Pure-attention rows (DORMANT narrative_state or unclassified) get dropped
-  // so the board doesn't surface things like NVDA-on-DORMANT that are loud
-  // but pointing nowhere. Mass threshold raised from 0.2 -> 0.35 to match.
-  fetch:function(){return scorecardFallback(function(s){var ns=s.narrative_state;return Number(s.narrative_mass_score)>0.35 && ns!=null && ns!=='DORMANT';},function(s){var m=Number(s.narrative_mass_score)||0;var wks=Number(s.wks_score)||0;var wL=wks>10?'bullish':wks<-10?'bearish':'neutral';return{name:s.ticker,link:'/ticker/'+s.ticker,meta:'WKS '+(wks>0?'+':'')+Math.round(wks)+' ('+wL+') \u00b7 NRS '+Math.round(Number(s.nrs)||0),score:m*100,scoreDisplay:m.toFixed(2),_scoreColor:wks>10?'#00DE94':wks<-10?'#FF4D4D':'#00AEFF'};},function(a,b){return(Number(b.narrative_mass_score)||0)-(Number(a.narrative_mass_score)||0);},10);}},
-  {id:'coordination',title:'SPAM ALARM',sub:'Synchronized bot chatter detected',color:'#FF4D4D',bg:'rgba(255,77,77,0.12)',scoreLabel:'Coord Score',
-  fetch:function(){return scorecardFallback(function(s){return Number(s.coordination_score)>30;},function(s){var cs=Number(s.coordination_score)||0;return{name:s.ticker,link:'/ticker/'+s.ticker,meta:(s.coordination_class||'')+' \u00b7 NRS '+Math.round(Number(s.nrs)||0),score:cs,scoreDisplay:Math.round(cs),_scoreColor:cs>70?'#FF4D4D':cs>50?'#FFB800':'#FFD700'};},function(a,b){return(Number(b.coordination_score)||0)-(Number(a.coordination_score)||0);},10);}},
+  {id:'highest-mass',title:'LOUDEST STORIES',sub:'Who the world won’t shut up about today',color:'#00AEFF',bg:'rgba(0,174,255,0.12)',scoreLabel:'Impact',
+  // "Loudest" = volume x impact. Sourced from v_loudest_stories, which
+  // aggregates the article-level narrative_analyses table for the latest day:
+  // a ticker ranks on the sum of positive price-impact across all its distinct
+  // stories, so it needs BOTH many stories AND stories that move price. Unlike
+  // the once-daily narrative_scorecard mass score (thin until the afternoon run
+  // completes), narrative_analyses is written intraday, so this board stays
+  // full all day. Headline = impact; story count + outlets shown in the meta.
+  fetch:async function(){
+    try{
+      var rows=await sq('v_loudest_stories?select=ticker,story_count,sum_impact,avg_impact,outlets,max_coord,avg_sentiment&order=sum_impact.desc&limit=10');
+      if(!rows||!rows.length) return [];
+      return rows.map(function(r){
+        var impact=Number(r.sum_impact)||0;
+        var sent=Number(r.avg_sentiment)||0;
+        var dirColor=sent>10?'#00DE94':sent<-10?'#FF4D4D':'#00AEFF';
+        var stories=Number(r.story_count)||0;
+        var outlets=Number(r.outlets)||0;
+        var coord=Number(r.max_coord)||0;
+        var meta=stories+' '+(stories===1?'story':'stories')+' \u00b7 '+outlets+' outlet'+(outlets===1?'':'s')+' \u00b7 avg impact '+Math.round(Number(r.avg_impact)||0);
+        if(coord>=50) meta='Coordinated \u00b7 '+meta;
+        return{name:r.ticker,link:'/ticker/'+r.ticker,meta:meta,score:impact,scoreDisplay:Math.round(impact),_scoreColor:dirColor};
+      });
+    }catch(e){console.warn('[Leaderboard Loudest Stories] fetch failed:',e);return [];}
+  }},
   {id:'ai-picks',title:'CLAUDE\u2019S CONVICTION LIST',sub:'Claude\u2019s top 10 picks \u2014 synthesized only from Market Prism\u2019s daily signal stack',color:'#A78BFA',bg:'rgba(167,139,250,0.12)',scoreLabel:'Conviction',
   // 30s override \u2014 Claude calls can take 5-15s on a cold Supabase cache miss.
   timeout:30000,
