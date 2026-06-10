@@ -7728,10 +7728,10 @@ async function loadLifecycle() {
   if (!TICKER) return;
   try {
     const rows = await sbFetch('v_dash_narrative_health', {
-      select: 'energy_absolute,energy_regime,narrative_trend,narrative_health,sentiment_delta_1d',
+      select: 'energy_absolute,energy_regime,narrative_trend,narrative_health',
       ticker: `eq.${TICKER}`,
       order:  'snapshot_date.desc',
-      limit:  '1'
+      limit:  '2'
     }).catch(() => []);
 
     if (!rows.length) {
@@ -7755,10 +7755,16 @@ async function loadLifecycle() {
     const activeIdx = stages.indexOf(stage);
     const barPct = pct != null ? Math.max(2, Math.round(pct)) : 0;
 
-    // Sentiment delta direction
-    const delta     = h.sentiment_delta_1d;
-    const deltaStr  = delta != null ? (delta > 0 ? '+' : '') + delta.toFixed(2) + ' today' : '—';
-    const deltaCls  = delta > 0 ? 'color:var(--accent-surging)' : delta < 0 ? 'color:var(--accent-breaking)' : '';
+    // Energy delta: % change in energy_absolute vs the prior snapshot (rows[1]).
+    // ±1% band stays neutral so near-flat days don't read as a signal.
+    const currEnergy = h.energy_absolute != null ? Number(h.energy_absolute) : null;
+    const prevEnergy = rows[1] && rows[1].energy_absolute != null ? Number(rows[1].energy_absolute) : null;
+    let delta = null;
+    if (currEnergy != null && prevEnergy != null && isFinite(currEnergy) && isFinite(prevEnergy) && prevEnergy > 0) {
+      delta = (currEnergy / prevEnergy - 1) * 100;
+    }
+    const deltaStr  = delta != null ? (delta > 0 ? '+' : '') + Math.round(delta) + '% today' : '—';
+    const deltaCls  = delta > 1 ? 'color:var(--accent-surging)' : delta < -1 ? 'color:var(--accent-breaking)' : '';
 
     var lcHTML = `
       <div class="lc-top">
@@ -7779,7 +7785,7 @@ async function loadLifecycle() {
           <div class="lc-stat-val" style="font-size:13px;">${esc(h.narrative_trend || '—')}</div>
         </div>
         <div class="lc-stat">
-          <div class="lc-stat-label">Sentiment Δ</div>
+          <div class="lc-stat-label">Energy Δ</div>
           <div class="lc-stat-val" style="${deltaCls}">${deltaStr}</div>
         </div>
       </div>`;
