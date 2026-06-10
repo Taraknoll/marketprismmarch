@@ -3404,6 +3404,11 @@ body{
   padding:8px 18px 4px;line-height:1.2;
   color:#FFFFFF;
 }
+/* Reserve two lines for the move name so a single-line label ("LOSING STEAM")
+   occupies the same height as a two-line label ("MOMENTUM CONFIRMED", which wraps
+   at the 260px column width). Without this, cards whose label wraps render taller
+   than their row-mates (e.g. the "T" card). 8px+4px padding + 2×(16px×1.2) ≈ 50px. */
+.strat-cards-grid .gc-move-name{min-height:50px;}
 
 /* Direction pill */
 .gc-direction-strip{
