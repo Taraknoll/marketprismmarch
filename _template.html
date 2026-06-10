@@ -4838,7 +4838,7 @@ body{
     /* ── MARKET INSIGHTS ── */
     #tab-insights .mi-section{margin-bottom:42px;}
     .mi-sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
-    .mi-sec-title{font-family:'Instrument Serif','DM Serif Display',Georgia,serif;font-size:24px;font-weight:400;letter-spacing:-0.025em;color:var(--mp-text-primary);line-height:1.2;}
+    .mi-sec-title{font-family:var(--font-body);font-size:18px;font-weight:700;letter-spacing:-0.01em;color:var(--mp-text-primary);line-height:1.2;}
     .mi-sec-sub{font-size:13px;color:var(--mp-text-tertiary);margin-top:4px;line-height:1.5;max-width:560px;}
     .mi-live-pill{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:600;letter-spacing:.08em;color:#00DE94;border:1px solid rgba(0,222,148,0.25);background:rgba(0,222,148,0.08);padding:5px 12px;border-radius:20px;white-space:nowrap;text-transform:uppercase;}
     .mi-live-dot{width:7px;height:7px;border-radius:50%;background:#00DE94;animation:miPulse 2s ease-in-out infinite;}
@@ -4897,7 +4897,7 @@ body{
     .mi-wks-list{display:flex;flex-direction:column;gap:10px;}
     .mi-wks-row{display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;text-decoration:none;transition:border-color .2s,transform .2s;animation:miUp .5s cubic-bezier(0.16,1,0.3,1) both;}
     .mi-wks-row:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-2px);}
-    .mi-wks-rank{font-family:'Instrument Serif','DM Serif Display',Georgia,serif;font-size:24px;width:34px;text-align:center;color:var(--mp-text-muted);flex-shrink:0;line-height:1;}
+    .mi-wks-rank{font-family:var(--font-body);font-size:18px;font-weight:700;width:34px;text-align:center;color:var(--mp-text-muted);flex-shrink:0;line-height:1;}
     .mi-wks-rank.mi-r1{color:#4DC8F0;text-shadow:0 0 14px rgba(77,200,240,0.45);}
     .mi-wks-rank.mi-r2{color:#38C8B8;}
     .mi-wks-rank.mi-r3{color:#00DE94;}
@@ -18292,8 +18292,11 @@ function miTickers(v){
   try{while(typeof x==='string'&&guard++<3){x=JSON.parse(x);}}catch(_){return[];}
   return Array.isArray(x)?x.filter(Boolean).map(String):[];
 }
+// Same chip as Daily Plays' Sector Intelligence — logo + ticker + live
+// price/change spans that liveQuotesRefreshDaily() fills on its cadence.
 function miTickerChips(arr,max){
   return (arr||[]).slice(0,max||8).map(function(t){
+    if(typeof sectorChipHTML==='function') return sectorChipHTML(t);
     return '<a class="mi-tk-chip" href="/ticker/'+encodeURIComponent(t)+'">'+miEsc(t)+'</a>';
   }).join('');
 }
@@ -18366,7 +18369,7 @@ async function miLoadAlerts(){
         +'<span class="mi-alert-group">'+miEsc(miWords(r.watchgroup))+'</span>'
         +'<span class="mi-alert-sev" style="color:'+sev.c+';background:'+miTint(sev.c,0.12)+';">'+miEsc(r.severity||'')+'</span></div>'
         +'<div class="mi-alert-desc" title="'+miEsc(desc)+'">'+miEsc(desc)+'</div>'
-        +'<div class="mi-tk-chips">'+miTickerChips(tks,8)+'</div>'
+        +'<div class="mi-tk-chips">'+miTickerChips(tks,6)+'</div>'
         +'<div class="mi-alert-foot"><span>'+arts+' article'+(arts===1?'':'s')+'</span>'+(breadth?'<span>'+miEsc(breadth)+'</span>':'')+(coord>0?'<span>coordination '+coord+'</span>':'')+'</div>'
       +'</div>';
     }).join('');
@@ -18453,6 +18456,8 @@ async function miLoadWks(){
         +logo
         +'<span class="mi-wks-mid"><span class="mi-wks-narr" style="display:block;">'+miEsc(r.narrative)+'</span>'
         +'<span class="mi-wks-meta"><b style="color:var(--mp-text-secondary);font-weight:700;">'+miEsc(r.ticker)+'</b>'
+        +'<span data-live-price="'+miEsc(r.ticker)+'" style="font-size:11px;color:var(--mp-text-tertiary);font-weight:500;font-family:var(--font-body);"></span>'
+        +'<span data-live-change="'+miEsc(r.ticker)+'" style="font-size:10px;font-family:var(--font-body);"></span>'
         +(r.verdict?miPill(r.verdict,vc):'')
         +(regime?miPill(regime+' energy',rc):'')
         +(r.walsh_regime?'<span>'+miEsc(r.walsh_regime)+' regime</span>':'')
@@ -18520,7 +18525,7 @@ function miRenderStories(){
       +(r.narrative_claim?'<div class="mi-claim-lbl">The claim</div><div class="mi-claim-txt">'+miEsc(r.narrative_claim)+'</div>':'')
       +(r.structural_rebuttal?'<div class="mi-claim-lbl" style="color:'+vc+';">Forensic check</div><div class="mi-claim-txt">'+miEsc(r.structural_rebuttal)+'</div>':'')
       +'<div class="mi-story-meta">'
-        +(r.associated_ticker?'<a class="mi-tk-chip" href="/ticker/'+encodeURIComponent(r.associated_ticker)+'" onclick="event.stopPropagation()">'+miEsc(r.associated_ticker)+'</a>':'')
+        +(r.associated_ticker?'<span onclick="event.stopPropagation()" style="display:inline-flex;">'+miTickerChips([r.associated_ticker],1)+'</span>':'')
         +(r.source?'<span>'+miEsc(r.source)+'</span>':'')
         +(miSector==='__all__'&&r.sector?'<span>'+miEsc(r.sector)+'</span>':'')
         +'<span class="mi-drift" title="Narrative drift — how far the story has wandered from the structural data"><span>Drift</span><span class="mi-drift-track"><span class="mi-drift-fill" style="display:block;background:'+dc+';" data-mi-w="'+drift+'"></span></span><b style="color:'+dc+';font-weight:700;">'+Math.round(drift)+'</b></span>'
