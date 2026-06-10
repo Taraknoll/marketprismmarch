@@ -4832,6 +4832,190 @@ body{
     <!-- TICKER_TAB_INJECT -->
 
     <!-- ══════════════════════════════════════
+         TAB: MARKET INSIGHTS (macro + sector intelligence)
+    ═══════════════════════════════════════ -->
+    <style>
+    /* ── MARKET INSIGHTS ── */
+    #tab-insights .mi-section{margin-bottom:42px;}
+    .mi-sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+    .mi-sec-title{font-family:'Instrument Serif','DM Serif Display',Georgia,serif;font-size:24px;font-weight:400;letter-spacing:-0.025em;color:var(--mp-text-primary);line-height:1.2;}
+    .mi-sec-sub{font-size:13px;color:var(--mp-text-tertiary);margin-top:4px;line-height:1.5;max-width:560px;}
+    .mi-live-pill{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:600;letter-spacing:.08em;color:#00DE94;border:1px solid rgba(0,222,148,0.25);background:rgba(0,222,148,0.08);padding:5px 12px;border-radius:20px;white-space:nowrap;text-transform:uppercase;}
+    .mi-live-dot{width:7px;height:7px;border-radius:50%;background:#00DE94;animation:miPulse 2s ease-in-out infinite;}
+    @keyframes miPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,222,148,0.5);}50%{opacity:.7;box-shadow:0 0 0 5px rgba(0,222,148,0);}}
+    @keyframes miPulseRed{0%,100%{box-shadow:0 0 0 0 rgba(255,77,77,0.5);}50%{box-shadow:0 0 0 5px rgba(255,77,77,0);}}
+    @keyframes miUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes miSkel{0%,100%{opacity:1;}50%{opacity:.45;}}
+    .mi-skel{background:rgba(255,255,255,0.05);border-radius:6px;animation:miSkel 1.4s ease-in-out infinite;}
+    .mi-empty{font-size:13px;color:var(--mp-text-muted);padding:22px;border:1px dashed var(--mp-border);border-radius:14px;text-align:center;line-height:1.5;}
+    .mi-card{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:20px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.4);transition:border-color .25s,transform .25s cubic-bezier(0.16,1,0.3,1),box-shadow .25s;animation:miUp .5s cubic-bezier(0.16,1,0.3,1) both;}
+    .mi-card::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+    .mi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mi-accent,#00AEFF);}
+    .mi-card>*{position:relative;z-index:1;}
+    .mi-card:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.5);}
+    /* Featured alerts rail */
+    .mi-alert-rail{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 14px;scroll-snap-type:x mandatory;}
+    .mi-alert-rail::-webkit-scrollbar{height:5px;}
+    .mi-alert-rail::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px;}
+    .mi-alert-card{min-width:300px;max-width:340px;flex:0 0 auto;scroll-snap-align:start;display:flex;flex-direction:column;}
+    .mi-alert-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+    .mi-alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .mi-alert-dot.sev-high{background:#FF4D4D;animation:miPulseRed 1.6s ease-in-out infinite;}
+    .mi-alert-dot.sev-med{background:#FFB800;}
+    .mi-alert-dot.sev-low{background:#00AEFF;}
+    .mi-alert-group{font-size:13px;font-weight:700;color:var(--mp-text-primary);letter-spacing:.03em;text-transform:uppercase;line-height:1.3;}
+    .mi-alert-sev{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.07em;padding:3px 9px;border-radius:6px;flex-shrink:0;}
+    .mi-alert-desc{font-size:13px;line-height:1.55;color:var(--mp-text-secondary);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+    .mi-tk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+    .mi-tk-chip{font-size:11px;font-weight:600;color:var(--mp-text-secondary);background:rgba(255,255,255,0.05);border:1px solid var(--mp-border);border-radius:6px;padding:3px 8px;text-decoration:none;transition:all .15s;}
+    .mi-tk-chip:hover{color:#FFFFFF;border-color:rgba(0,174,255,0.4);background:rgba(0,174,255,0.10);}
+    .mi-alert-foot{display:flex;gap:14px;font-size:11px;color:var(--mp-text-tertiary);border-top:1px solid var(--mp-border);padding-top:10px;margin-top:auto;}
+    /* Macro band */
+    .mi-macro-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;align-items:start;}
+    @media(max-width:960px){.mi-macro-grid{grid-template-columns:1fr;}}
+    .mi-macro-row{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;padding:16px 18px;margin-bottom:12px;transition:border-color .2s,transform .2s;animation:miUp .5s cubic-bezier(0.16,1,0.3,1) both;}
+    .mi-macro-row:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-2px);}
+    .mi-macro-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+    .mi-macro-name{font-size:16px;font-weight:600;color:var(--mp-text-primary);letter-spacing:-0.01em;}
+    .mi-status{font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 9px;border-radius:6px;text-transform:uppercase;}
+    .mi-macro-body{font-size:13px;line-height:1.6;color:var(--mp-text-secondary);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;}
+    .mi-macro-body.open{-webkit-line-clamp:unset;display:block;}
+    .mi-momentum-wrap{display:flex;align-items:center;gap:10px;margin-top:12px;}
+    .mi-momentum-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);}
+    .mi-momentum-track{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;}
+    .mi-momentum-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#00AEFF,#00DE94);width:0;transition:width .8s cubic-bezier(0.16,1,0.3,1);}
+    .mi-momentum-val{font-size:16px;font-weight:700;color:var(--mp-text-primary);min-width:34px;text-align:right;}
+    .mi-cat-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid var(--mp-border);background:var(--mp-surface);border-radius:14px;margin-bottom:10px;transition:border-color .2s,transform .2s;animation:miUp .5s cubic-bezier(0.16,1,0.3,1) both;}
+    .mi-cat-row:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-2px);}
+    .mi-cat-date{display:flex;flex-direction:column;align-items:center;min-width:48px;padding:7px 8px;border-radius:10px;background:rgba(0,174,255,0.08);border:1px solid rgba(0,174,255,0.18);flex-shrink:0;}
+    .mi-cat-day{font-size:18px;font-weight:700;color:var(--mp-text-primary);line-height:1;}
+    .mi-cat-mon{font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--mp-text-tertiary);text-transform:uppercase;margin-top:3px;}
+    .mi-cat-title{font-size:13px;font-weight:600;color:var(--mp-text-primary);line-height:1.4;}
+    .mi-cat-meta{font-size:11px;color:var(--mp-text-tertiary);margin-top:2px;}
+    .mi-cat-tminus{margin-left:auto;font-size:11px;font-weight:700;padding:4px 10px;border-radius:14px;white-space:nowrap;flex-shrink:0;}
+    /* WKS — most influential narratives */
+    .mi-wks-list{display:flex;flex-direction:column;gap:10px;}
+    .mi-wks-row{display:flex;align-items:center;gap:16px;padding:16px 20px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;text-decoration:none;transition:border-color .2s,transform .2s;animation:miUp .5s cubic-bezier(0.16,1,0.3,1) both;}
+    .mi-wks-row:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-2px);}
+    .mi-wks-rank{font-family:'Instrument Serif','DM Serif Display',Georgia,serif;font-size:24px;width:34px;text-align:center;color:var(--mp-text-muted);flex-shrink:0;line-height:1;}
+    .mi-wks-rank.mi-r1{color:#4DC8F0;text-shadow:0 0 14px rgba(77,200,240,0.45);}
+    .mi-wks-rank.mi-r2{color:#38C8B8;}
+    .mi-wks-rank.mi-r3{color:#00DE94;}
+    .mi-wks-mid{flex:1;min-width:0;}
+    .mi-wks-narr{font-size:14px;font-weight:500;color:var(--mp-text-primary);line-height:1.5;}
+    .mi-wks-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;font-size:11px;color:var(--mp-text-tertiary);}
+    .mi-pill{font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:5px;text-transform:uppercase;}
+    .mi-wks-score{display:flex;flex-direction:column;align-items:flex-end;gap:7px;min-width:92px;flex-shrink:0;}
+    .mi-wks-num{font-size:22px;font-weight:700;color:var(--mp-text-primary);line-height:1;letter-spacing:-0.02em;}
+    .mi-wks-num-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);}
+    .mi-wks-track{width:92px;height:5px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;}
+    .mi-wks-fill{height:100%;background:linear-gradient(90deg,#00AEFF,#00DE94);width:0;transition:width .9s cubic-bezier(0.16,1,0.3,1);}
+    /* Sector stories */
+    .mi-sector-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+    .mi-sector-chips .chip .n{opacity:.55;margin-left:5px;}
+    .mi-story-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+    @media(max-width:980px){.mi-story-grid{grid-template-columns:1fr;}}
+    .mi-story-card{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-left:3px solid var(--mi-accent,#A0A8B0);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;animation:miUp .5s cubic-bezier(0.16,1,0.3,1) both;}
+    .mi-story-card:hover{border-color:rgba(255,255,255,0.14);border-left-color:var(--mi-accent,#A0A8B0);transform:translateY(-3px);box-shadow:0 8px 18px rgba(0,0,0,0.4);}
+    .mi-story-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+    .mi-story-head{font-size:15px;font-weight:600;line-height:1.45;color:var(--mp-text-primary);flex:1;}
+    .mi-claim-lbl{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:4px;}
+    .mi-claim-txt{font-size:13px;line-height:1.55;color:var(--mp-text-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px;}
+    .mi-story-card.open .mi-claim-txt{-webkit-line-clamp:unset;display:block;}
+    .mi-story-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:2px;padding-top:12px;border-top:1px solid var(--mp-border);font-size:11px;color:var(--mp-text-tertiary);}
+    .mi-drift{display:flex;align-items:center;gap:6px;}
+    .mi-drift-track{width:54px;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;}
+    .mi-drift-fill{height:100%;border-radius:2px;width:0;transition:width .7s cubic-bezier(0.16,1,0.3,1);}
+    .mi-show-more{display:block;margin:16px auto 0;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--mp-text-secondary);background:transparent;border:1px solid var(--mp-border);border-radius:8px;padding:8px 22px;cursor:pointer;transition:all .2s;}
+    .mi-show-more:hover{color:var(--mp-text-primary);border-color:rgba(255,255,255,0.14);}
+    /* Light theme */
+    [data-theme="light"] .mi-tk-chip{background:rgba(0,0,0,0.04);}
+    [data-theme="light"] .mi-skel{background:rgba(0,0,0,0.06);}
+    [data-theme="light"] .mi-momentum-track,[data-theme="light"] .mi-wks-track,[data-theme="light"] .mi-drift-track{background:rgba(0,0,0,0.08);}
+    [data-theme="light"] .mi-card{box-shadow:0 2px 10px rgba(0,0,0,0.08);}
+    [data-theme="light"] .mi-card::before{background-image:linear-gradient(rgba(0,0,0,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.025) 1px,transparent 1px);}
+    @media(prefers-reduced-motion:reduce){#tab-insights *{animation:none!important;transition:none!important;}}
+    </style>
+    <div class="tab-panel" id="tab-insights">
+
+      <!-- HERO HEADER -->
+      <div class="page-header" style="margin-bottom:24px;">
+        <div class="ph-eyebrow">Market Prism · Macro &amp; Sector Intelligence</div>
+        <h1>Market Insights.</h1>
+        <span class="ph-italic">The whole tape. One read.</span>
+        <p>Featured alerts, macro currents, and every sector's stories — forensically checked, then ranked by how hard each narrative is pressing on price.</p>
+      </div>
+      <div class="lb-toolbar">
+        <span class="lb-toolbar-date" id="mi-date-tag"></span>
+        <button class="lb-refresh-btn mp-export-hide" id="mi-refresh-btn" onclick="refreshMarketInsights()" title="Refresh market insights">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <!-- 1) FEATURED ALERTS -->
+      <div class="mi-section">
+        <div class="mi-sec-head">
+          <div>
+            <div class="mi-sec-title">Featured Alerts</div>
+            <div class="mi-sec-sub">Cross-ticker narrative surges our scanners flagged in the last 24 hours — the stories big enough to move groups, not just names.</div>
+          </div>
+          <span class="mi-live-pill"><span class="mi-live-dot"></span>Live scan</span>
+        </div>
+        <div class="mi-alert-rail" id="mi-alert-rail"></div>
+      </div>
+
+      <!-- 2) MACRO CURRENTS + UPCOMING CATALYSTS -->
+      <div class="mi-section">
+        <div class="mi-macro-grid">
+          <div>
+            <div class="mi-sec-head">
+              <div>
+                <div class="mi-sec-title">Macro Currents</div>
+                <div class="mi-sec-sub">Market-wide themes ranked by momentum — what's actually steering the tape today.</div>
+              </div>
+            </div>
+            <div id="mi-macro-list"></div>
+          </div>
+          <div>
+            <div class="mi-sec-head">
+              <div>
+                <div class="mi-sec-title">Upcoming Catalysts</div>
+                <div class="mi-sec-sub">Scheduled macro events on the clock.</div>
+              </div>
+            </div>
+            <div id="mi-catalyst-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3) MOST INFLUENTIAL NARRATIVES (WKS) -->
+      <div class="mi-section">
+        <div class="mi-sec-head">
+          <div>
+            <div class="mi-sec-title">Most Influential Narratives</div>
+            <div class="mi-sec-sub">Today's stories with the strongest grip on price, ranked by WKS — the Walsh kinetic score measuring how much force a narrative is exerting right now.</div>
+          </div>
+        </div>
+        <div class="mi-wks-list" id="mi-wks-list"></div>
+      </div>
+
+      <!-- 4) SECTOR STORIES -->
+      <div class="mi-section">
+        <div class="mi-sec-head">
+          <div>
+            <div class="mi-sec-title">Sector Stories</div>
+            <div class="mi-sec-sub">Today's sector headlines, forensically checked — the claim the article makes vs. what the structural data actually says.</div>
+          </div>
+        </div>
+        <div class="mi-sector-chips" id="mi-sector-chips"></div>
+        <div class="mi-story-grid" id="mi-story-grid"></div>
+        <button class="mi-show-more" id="mi-show-more" style="display:none;" onclick="miShowMoreStories()">Show more stories</button>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════
          TAB: DISCOVER (Articles / Stories) — REPLACED BY SIGNAL LAB
     ═══════════════════════════════════════ -->
     <div class="tab-panel" id="tab-discover" style="display:none !important;">
@@ -6339,8 +6523,8 @@ document.querySelectorAll('.page-header p').forEach(function(p,i){
   if(i===0) return;
 });
 // ── Tab switching (hook-based — sections register via onTabSwitch) ────────────
-var TABS = ['daily','leaderboard','prism','cards','calendar','memes','signallab','ticker','sector','scorer','validation','help'];
-var TAB_TITLES = {daily:'Daily Plays',leaderboard:'Leaderboard',prism:'Prism',cards:'Trading Cards',calendar:'Trading Calendar',memes:'Market Sharing',signallab:'Signal Lab',ticker:'Stock Research',sector:'Sector Pulse',scorer:'Score Any Stock',validation:'Track Record',help:'Help & Account'};
+var TABS = ['daily','insights','leaderboard','prism','cards','calendar','memes','signallab','ticker','sector','scorer','validation','help'];
+var TAB_TITLES = {daily:'Daily Plays',insights:'Market Insights',leaderboard:'Leaderboard',prism:'Prism',cards:'Trading Cards',calendar:'Trading Calendar',memes:'Market Sharing',signallab:'Signal Lab',ticker:'Stock Research',sector:'Sector Pulse',scorer:'Score Any Stock',validation:'Track Record',help:'Help & Account'};
 var _tabHooks = [];
 /** Register a callback to run after any tab switch. fn(id) */
 function onTabSwitch(fn){ if(typeof fn==='function') _tabHooks.push(fn); }
@@ -18073,6 +18257,319 @@ window.computeBoardJaccard = function(opts){
   ids.forEach(function(id){tickers[titleById[id]||id]=Array.from(boards[id]);});
   return {tickers:tickers,matrix:matrix,redundant:redundant};
 };
+})();
+
+/* ── MARKET INSIGHTS TAB ──
+   Four independent panels, each backed by an intraday-fresh table:
+     Featured Alerts        ← detected_macro_events (cross-ticker surge scanner)
+     Macro Currents         ← daily_summaries (summary_type=market_wide)
+     Upcoming Catalysts     ← macro_market_events (scheduled FOMC/CPI/OPEX/NFP)
+     Influential Narratives ← narrative_scorecard ordered by wks_score
+     Sector Stories         ← sector_news (claim vs structural rebuttal)
+   Panels load in parallel and fail independently — one dead table never
+   blanks the page. Lazy-boots on first tab switch. */
+(function(){
+var MI_BOOTED=false;
+
+function miHdrs(){return{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};}
+async function miq(path){
+  var r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{headers:miHdrs()});
+  if(!r.ok){
+    var body='';try{body=await r.text();}catch(_){}
+    console.warn('[MI] query failed:',r.status,path.split('?')[0],body.slice(0,200));
+    throw new Error('Supabase '+r.status);
+  }
+  return r.json();
+}
+function miEsc(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;}
+function miWords(s){return String(s||'').replace(/_/g,' ');}
+function miTint(hex,a){var h=String(hex).replace('#','');return 'rgba('+parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16)+','+a+')';}
+function miPill(text,c){return '<span class="mi-pill" style="color:'+c+';background:'+miTint(c,0.12)+';border:1px solid '+miTint(c,0.28)+';">'+miEsc(text)+'</span>';}
+// jsonb columns that arrive stringified (sometimes double-encoded) — same
+// gotcha as narrative_clusters.tickers. Unwrap until we hit a real array.
+function miTickers(v){
+  var x=v,guard=0;
+  try{while(typeof x==='string'&&guard++<3){x=JSON.parse(x);}}catch(_){return[];}
+  return Array.isArray(x)?x.filter(Boolean).map(String):[];
+}
+function miTickerChips(arr,max){
+  return (arr||[]).slice(0,max||8).map(function(t){
+    return '<a class="mi-tk-chip" href="/ticker/'+encodeURIComponent(t)+'">'+miEsc(t)+'</a>';
+  }).join('');
+}
+function miSkels(n,h,w){
+  var out='';for(var i=0;i<n;i++){out+='<div class="mi-skel" style="height:'+h+'px;'+(w?'min-width:'+w+'px;':'')+'border-radius:14px;"></div>';}
+  return out;
+}
+function miEmpty(el,msg){if(el)el.innerHTML='<div class="mi-empty" style="grid-column:1/-1;">'+miEsc(msg)+'</div>';}
+// Bar fills render at width:0, then animate to their data-mi-w target on the
+// next frame so the CSS width transition actually plays. rAF is suspended in
+// hidden/background tabs, so in that case snap straight to the final state —
+// otherwise a user who opens the dashboard in a background tab sees zeros.
+function miAnimateBars(scope){
+  function setAll(){(scope||document).querySelectorAll('[data-mi-w]').forEach(function(el){el.style.width=el.getAttribute('data-mi-w')+'%';});}
+  if(document.hidden){setAll();return;}
+  requestAnimationFrame(function(){requestAnimationFrame(setAll);});
+}
+function miCountUp(scope){
+  (scope||document).querySelectorAll('[data-mi-count]').forEach(function(el){
+    var target=parseFloat(el.getAttribute('data-mi-count'))||0,t0=null;
+    var finalText=target.toFixed(target>=99.95?0:1);
+    if(document.hidden){el.textContent=finalText;return;}
+    function step(ts){
+      if(!t0)t0=ts;
+      var p=Math.min(1,(ts-t0)/700),eased=1-Math.pow(1-p,3);
+      el.textContent=p<1?(target*eased).toFixed(target>=99.95?0:1):finalText;
+      if(p<1)requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+var MI_SEV={HIGH:{c:'#FF4D4D',dot:'sev-high'},MEDIUM:{c:'#FFB800',dot:'sev-med'},LOW:{c:'#00AEFF',dot:'sev-low'}};
+var MI_STATUS={BREAKING:'#FF4D4D',SURGING:'#00DE94',FRAGILE:'#FFB800',COOLING:'#00AEFF',STABLE:'#A0A8B0'};
+var MI_REGIME={EXPLOSIVE:'#FF6B6B',HIGH:'#00DE94',MODERATE:'#FFB800',LOW:'#00AEFF',DORMANT:'#A0A8B0'};
+function miVerdictColor(v){
+  v=String(v||'');
+  if(/trap|short|cascade|exhausted/i.test(v))return '#FF4D4D';
+  if(/risk|uncertain/i.test(v))return '#FFB800';
+  if(/supported|verified/i.test(v))return '#00DE94';
+  if(/monitor/i.test(v))return '#00AEFF';
+  return '#A0A8B0';
+}
+
+/* 1) FEATURED ALERTS — latest detection day, one card per watchgroup */
+async function miLoadAlerts(){
+  var rail=document.getElementById('mi-alert-rail');
+  try{
+    var rows=await miq('detected_macro_events?select=watchgroup,event_type,severity,description,spiking_tickers,total_articles,avg_coordination,tickers_spiking,tickers_in_group,detection_date,detected_at&order=detected_at.desc&limit=40');
+    if(!rows||!rows.length){miEmpty(rail,'No macro surges detected yet today.');return;}
+    var latest=rows[0].detection_date,seen={},alerts=[];
+    rows.forEach(function(r){
+      if(r.detection_date!==latest||seen[r.watchgroup])return;
+      seen[r.watchgroup]=1;alerts.push(r);
+    });
+    var sevRank={HIGH:0,MEDIUM:1,LOW:2};
+    alerts.sort(function(a,b){
+      var d=(sevRank[a.severity]!=null?sevRank[a.severity]:3)-(sevRank[b.severity]!=null?sevRank[b.severity]:3);
+      return d!==0?d:(Number(b.total_articles)||0)-(Number(a.total_articles)||0);
+    });
+    rail.innerHTML=alerts.slice(0,8).map(function(r,i){
+      var sev=MI_SEV[r.severity]||MI_SEV.LOW;
+      var desc=String(r.description||'').replace(/^Auto-detected:\s*/i,'').replace(/\s*Spiking tickers:.*$/i,'');
+      var tks=miTickers(r.spiking_tickers);
+      var arts=Number(r.total_articles)||0;
+      var coord=Math.round(Number(r.avg_coordination)||0);
+      var breadth=(r.tickers_spiking!=null&&r.tickers_in_group)?(r.tickers_spiking+'/'+r.tickers_in_group+' tickers moving'):'';
+      return '<div class="mi-card mi-alert-card" style="--mi-accent:'+sev.c+';animation-delay:'+(i*0.07)+'s;">'
+        +'<div class="mi-alert-head"><span class="mi-alert-dot '+sev.dot+'"></span>'
+        +'<span class="mi-alert-group">'+miEsc(miWords(r.watchgroup))+'</span>'
+        +'<span class="mi-alert-sev" style="color:'+sev.c+';background:'+miTint(sev.c,0.12)+';">'+miEsc(r.severity||'')+'</span></div>'
+        +'<div class="mi-alert-desc" title="'+miEsc(desc)+'">'+miEsc(desc)+'</div>'
+        +'<div class="mi-tk-chips">'+miTickerChips(tks,8)+'</div>'
+        +'<div class="mi-alert-foot"><span>'+arts+' article'+(arts===1?'':'s')+'</span>'+(breadth?'<span>'+miEsc(breadth)+'</span>':'')+(coord>0?'<span>coordination '+coord+'</span>':'')+'</div>'
+      +'</div>';
+    }).join('');
+  }catch(e){miEmpty(rail,'Featured alerts unavailable right now.');}
+}
+
+/* 2a) MACRO CURRENTS — market-wide daily summaries, momentum-ranked */
+async function miLoadMacro(){
+  var list=document.getElementById('mi-macro-list');
+  try{
+    var d=await miq('daily_summaries?select=summary_date&summary_type=eq.market_wide&order=summary_date.desc&limit=1');
+    var day=d&&d[0]&&d[0].summary_date;
+    if(!day){miEmpty(list,'No market-wide read yet today.');return;}
+    var rows=await miq('daily_summaries?select=scope_key,status,body,tickers,momentum_score&summary_type=eq.market_wide&summary_date=eq.'+encodeURIComponent(day)+'&order=momentum_score.desc.nullslast&limit=8');
+    if(!rows||!rows.length){miEmpty(list,'No market-wide read yet today.');return;}
+    list.innerHTML=rows.map(function(r,i){
+      var sc=MI_STATUS[String(r.status||'').toUpperCase()]||'#A0A8B0';
+      var mom=Math.max(0,Math.min(100,Number(r.momentum_score)||0));
+      var tks=miTickers(r.tickers);
+      return '<div class="mi-macro-row" style="animation-delay:'+(i*0.06)+'s;">'
+        +'<div class="mi-macro-top"><span class="mi-macro-name">'+miEsc(miWords(r.scope_key))+'</span>'+(r.status?miPill(r.status,sc):'')+'</div>'
+        +'<div class="mi-macro-body" onclick="this.classList.toggle(\'open\')" title="Click to expand">'+miEsc(r.body||'')+'</div>'
+        +(tks.length?'<div class="mi-tk-chips" style="margin:10px 0 0;">'+miTickerChips(tks,6)+'</div>':'')
+        +'<div class="mi-momentum-wrap"><span class="mi-momentum-lbl">Momentum</span><div class="mi-momentum-track"><div class="mi-momentum-fill" data-mi-w="'+mom+'"></div></div><span class="mi-momentum-val">'+Math.round(mom)+'</span></div>'
+      +'</div>';
+    }).join('');
+    miAnimateBars(list);
+  }catch(e){miEmpty(list,'Macro currents unavailable right now.');}
+}
+
+/* 2b) UPCOMING CATALYSTS — scheduled macro events with countdown */
+async function miLoadCatalysts(){
+  var list=document.getElementById('mi-catalyst-list');
+  try{
+    var today=new Date();today.setHours(0,0,0,0);
+    var iso=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    var rows=await miq('macro_market_events?select=event_date,event_type,title,importance&event_date=gte.'+iso+'&order=event_date.asc&limit=6');
+    if(!rows||!rows.length){miEmpty(list,'No scheduled macro events on the calendar.');return;}
+    var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    list.innerHTML=rows.map(function(r,i){
+      var dt=new Date(r.event_date+'T00:00:00');
+      var days=Math.round((dt-today)/86400000);
+      var tmin=days===0?'Today':days===1?'Tomorrow':'in '+days+' days';
+      var tc=days<=2?'#FF4D4D':days<=7?'#FFB800':'#00AEFF';
+      var imp=String(r.importance||'').toUpperCase();
+      return '<div class="mi-cat-row" style="animation-delay:'+(i*0.06)+'s;">'
+        +'<div class="mi-cat-date"><span class="mi-cat-day">'+dt.getDate()+'</span><span class="mi-cat-mon">'+MONTHS[dt.getMonth()]+'</span></div>'
+        +'<div style="flex:1;min-width:0;"><div class="mi-cat-title">'+miEsc(r.title||'')+'</div>'
+        +'<div class="mi-cat-meta">'+miEsc(r.event_type||'')+(imp?' · '+miEsc(imp)+' importance':'')+'</div></div>'
+        +'<span class="mi-cat-tminus" style="color:'+tc+';background:'+miTint(tc,0.1)+';border:1px solid '+miTint(tc,0.25)+';">'+tmin+'</span>'
+      +'</div>';
+    }).join('');
+  }catch(e){miEmpty(list,'Catalyst calendar unavailable right now.');}
+}
+
+/* 3) MOST INFLUENTIAL NARRATIVES — narrative_scorecard by wks_score */
+async function miLoadWks(){
+  var list=document.getElementById('mi-wks-list');
+  try{
+    var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
+    var day=d&&d[0]&&d[0].snapshot_date;
+    if(!day){miEmpty(list,'No scorecard snapshot yet today.');return;}
+    var rows=await miq('narrative_scorecard?select=ticker,narrative,wks_score,walsh_regime,narrative_energy_absolute,narrative_energy_regime,verdict,nrs,narrative_mass_score&snapshot_date=eq.'+encodeURIComponent(day)+'&wks_score=not.is.null&narrative=not.is.null&order=wks_score.desc&limit=40');
+    if(!rows||!rows.length){miEmpty(list,'No WKS-scored narratives yet today.');return;}
+    var seen={},out=[];
+    rows.forEach(function(r){
+      // wrong-scale scorer rows (mass on 0-100 + nrs 0) are broken end-to-end
+      if(Number(r.narrative_mass_score)>1&&(r.nrs==null||Number(r.nrs)===0))return;
+      // scorer fallback template "XYZ narrative: ..." isn't a real story
+      if(/^[A-Z][A-Z.\-]{0,7}\s+narrative\s*:/i.test(String(r.narrative||'')))return;
+      if(seen[r.ticker])return;
+      seen[r.ticker]=1;out.push(r);
+    });
+    if(!out.length){miEmpty(list,'No WKS-scored narratives yet today.');return;}
+    list.innerHTML=out.slice(0,10).map(function(r,i){
+      var wks=Math.max(0,Math.min(100,Number(r.wks_score)||0));
+      var regime=String(r.narrative_energy_regime||'').toUpperCase();
+      var rc=MI_REGIME[regime]||'#A0A8B0';
+      var vc=miVerdictColor(r.verdict);
+      var energy=Math.round(Number(r.narrative_energy_absolute)||0);
+      var logo=(typeof logoHTML==='function')?logoHTML(r.ticker,'sm'):'';
+      return '<a class="mi-wks-row" href="/ticker/'+encodeURIComponent(r.ticker)+'" style="animation-delay:'+(i*0.05)+'s;">'
+        +'<span class="mi-wks-rank'+(i===0?' mi-r1':i===1?' mi-r2':i===2?' mi-r3':'')+'">'+(i+1)+'</span>'
+        +logo
+        +'<span class="mi-wks-mid"><span class="mi-wks-narr" style="display:block;">'+miEsc(r.narrative)+'</span>'
+        +'<span class="mi-wks-meta"><b style="color:var(--mp-text-secondary);font-weight:700;">'+miEsc(r.ticker)+'</b>'
+        +(r.verdict?miPill(r.verdict,vc):'')
+        +(regime?miPill(regime+' energy',rc):'')
+        +(r.walsh_regime?'<span>'+miEsc(r.walsh_regime)+' regime</span>':'')
+        +(energy?'<span>E '+energy+'</span>':'')
+        +'</span></span>'
+        +'<span class="mi-wks-score"><span class="mi-wks-num" data-mi-count="'+wks.toFixed(1)+'">0</span><span class="mi-wks-num-lbl">WKS</span><span class="mi-wks-track" style="display:block;"><span class="mi-wks-fill" style="display:block;" data-mi-w="'+wks+'"></span></span></span>'
+      +'</a>';
+    }).join('');
+    miAnimateBars(list);miCountUp(list);
+  }catch(e){miEmpty(list,'Influential narratives unavailable right now.');}
+}
+
+/* 4) SECTOR STORIES — sector_news, claim vs structural rebuttal */
+var miStories=[],miSector='__all__',miStoryCap=12;
+async function miLoadStories(){
+  var grid=document.getElementById('mi-story-grid');
+  var chips=document.getElementById('mi-sector-chips');
+  try{
+    var d=await miq('sector_news?select=snapshot_date&order=snapshot_date.desc&limit=1');
+    var day=d&&d[0]&&d[0].snapshot_date;
+    if(!day){miEmpty(grid,'No sector stories yet today.');return;}
+    var rows=await miq('sector_news?select=sector,subsector,headline,source,published_at,associated_ticker,narrative_claim,structural_rebuttal,drift_score,coordination_flag,verdict,sector_trap_active&snapshot_date=eq.'+encodeURIComponent(day)+'&order=published_at.desc.nullslast&limit=240');
+    if(!rows||!rows.length){miEmpty(grid,'No sector stories yet today.');return;}
+    miStories=rows;miSector='__all__';miStoryCap=12;
+    miRenderSectorChips();miRenderStories();
+  }catch(e){miEmpty(grid,'Sector stories unavailable right now.');if(chips)chips.innerHTML='';}
+}
+function miRenderSectorChips(){
+  var chips=document.getElementById('mi-sector-chips');if(!chips)return;
+  var counts={};
+  miStories.forEach(function(r){var s=r.sector||'Other';counts[s]=(counts[s]||0)+1;});
+  var sectors=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});
+  var html='<button class="chip'+(miSector==='__all__'?' active':'')+'" data-mi-sector="__all__">All sectors<span class="n">'+miStories.length+'</span></button>';
+  sectors.forEach(function(s){
+    html+='<button class="chip'+(miSector===s?' active':'')+'" data-mi-sector="'+miEsc(s)+'">'+miEsc(s)+'<span class="n">'+counts[s]+'</span></button>';
+  });
+  chips.innerHTML=html;
+  if(!chips._miHooked){
+    chips.addEventListener('click',function(e){
+      var b=e.target.closest('[data-mi-sector]');if(!b)return;
+      miSector=b.getAttribute('data-mi-sector');miStoryCap=12;
+      miRenderSectorChips();miRenderStories();
+    });
+    chips._miHooked=true;
+  }
+}
+function miRenderStories(){
+  var grid=document.getElementById('mi-story-grid');if(!grid)return;
+  var more=document.getElementById('mi-show-more');
+  var rows=miStories.filter(function(r){return miSector==='__all__'||(r.sector||'Other')===miSector;});
+  if(!rows.length){miEmpty(grid,'No stories for this sector today.');if(more)more.style.display='none';return;}
+  var shown=rows.slice(0,miStoryCap);
+  grid.innerHTML=shown.map(function(r,i){
+    var vc=miVerdictColor(r.verdict);
+    var drift=Math.max(0,Math.min(100,Number(r.drift_score)||0));
+    var dc=drift>=60?'#FF4D4D':drift>=30?'#FFB800':'#00DE94';
+    var when='';
+    if(r.published_at){
+      var pd=new Date(r.published_at),now=new Date();
+      when=(pd.toDateString()===now.toDateString())?pd.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):pd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    }
+    return '<div class="mi-story-card" style="--mi-accent:'+vc+';animation-delay:'+(Math.min(i,8)*0.05)+'s;" onclick="this.classList.toggle(\'open\')">'
+      +'<div class="mi-story-top"><div class="mi-story-head">'+miEsc(r.headline||'')+'</div>'
+      +(r.verdict?miPill(r.verdict,vc):'')+'</div>'
+      +(r.narrative_claim?'<div class="mi-claim-lbl">The claim</div><div class="mi-claim-txt">'+miEsc(r.narrative_claim)+'</div>':'')
+      +(r.structural_rebuttal?'<div class="mi-claim-lbl" style="color:'+vc+';">Forensic check</div><div class="mi-claim-txt">'+miEsc(r.structural_rebuttal)+'</div>':'')
+      +'<div class="mi-story-meta">'
+        +(r.associated_ticker?'<a class="mi-tk-chip" href="/ticker/'+encodeURIComponent(r.associated_ticker)+'" onclick="event.stopPropagation()">'+miEsc(r.associated_ticker)+'</a>':'')
+        +(r.source?'<span>'+miEsc(r.source)+'</span>':'')
+        +(miSector==='__all__'&&r.sector?'<span>'+miEsc(r.sector)+'</span>':'')
+        +'<span class="mi-drift" title="Narrative drift — how far the story has wandered from the structural data"><span>Drift</span><span class="mi-drift-track"><span class="mi-drift-fill" style="display:block;background:'+dc+';" data-mi-w="'+drift+'"></span></span><b style="color:'+dc+';font-weight:700;">'+Math.round(drift)+'</b></span>'
+        +(r.coordination_flag?miPill('Coordinated','#FFB800'):'')
+        +(r.sector_trap_active?miPill('Sector trap','#FF4D4D'):'')
+        +(when?'<span style="margin-left:auto;">'+miEsc(when)+'</span>':'')
+      +'</div>'
+    +'</div>';
+  }).join('');
+  if(more){
+    if(rows.length>miStoryCap){more.style.display='block';more.textContent='Show more stories ('+(rows.length-miStoryCap)+' remaining)';}
+    else more.style.display='none';
+  }
+  miAnimateBars(grid);
+}
+window.miShowMoreStories=function(){miStoryCap+=12;miRenderStories();};
+
+function miSkeleton(){
+  var rail=document.getElementById('mi-alert-rail');
+  if(rail)rail.innerHTML=miSkels(4,150,300);
+  var ml=document.getElementById('mi-macro-list');
+  if(ml)ml.innerHTML=miSkels(4,120);
+  var cl=document.getElementById('mi-catalyst-list');
+  if(cl)cl.innerHTML=miSkels(4,64);
+  var wl=document.getElementById('mi-wks-list');
+  if(wl)wl.innerHTML=miSkels(6,76);
+  var sg=document.getElementById('mi-story-grid');
+  if(sg)sg.innerHTML=miSkels(6,170);
+}
+function miDate(){
+  var el=document.getElementById('mi-date-tag');
+  if(el)el.textContent='Last updated: '+new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+async function loadMarketInsights(){
+  if(!SUPABASE_URL||!SUPABASE_ANON){
+    ['mi-alert-rail','mi-macro-list','mi-catalyst-list','mi-wks-list','mi-story-grid'].forEach(function(id){miEmpty(document.getElementById(id),'Live data unavailable — Supabase not configured.');});
+    return;
+  }
+  miSkeleton();miDate();
+  await Promise.all([miLoadAlerts(),miLoadMacro(),miLoadCatalysts(),miLoadWks(),miLoadStories()]);
+}
+window.refreshMarketInsights=async function(){
+  var btn=document.getElementById('mi-refresh-btn');
+  if(btn)btn.classList.add('spinning');
+  try{await loadMarketInsights();}finally{if(btn)btn.classList.remove('spinning');}
+};
+onTabSwitch(function(id){
+  if(id==='insights'&&!MI_BOOTED){MI_BOOTED=true;setTimeout(loadMarketInsights,50);}
+});
 })();
 
 // ── Info tooltip hover handler ──
