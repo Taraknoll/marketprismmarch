@@ -58,7 +58,7 @@
     // was producing the duplicate-sidebar layout. Keeps tab:'ticker' so the
     // active-state highlight still matches when the ticker page mounts the
     // sidebar with activeTab:'ticker'.
-    { type:'item',    tab:'ticker',      href:'/ticker/AAPL', label:'★ Stock Forensics', icon:ICONS.ticker },
+    { type:'item',    tab:'ticker',      href:'/ticker/AAPL', label:'Stock Forensics', icon:ICONS.ticker },
     { type:'item',    tab:'insights',    label:'Market Insights', icon:ICONS.insights,  badge:{ style:BADGE_NEW_GREEN, text:'NEW' } },
     { type:'item',    tab:'leaderboard', label:'Leaderboard',    icon:ICONS.leaderboard },
 
