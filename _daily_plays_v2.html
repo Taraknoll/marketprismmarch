@@ -114,6 +114,26 @@ a{color:inherit;}
   .dp-prices{grid-row:2;grid-column:3/5;flex-direction:row;align-items:baseline;gap:8px;justify-content:flex-end;}
 }
 
+/* ── Earnings on deck (horizontal rail under the slate) ── */
+.earn-rail{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;}
+.earn-rail::-webkit-scrollbar{height:5px;}
+.earn-rail::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px;}
+.earn-card{flex:0 0 auto;display:flex;align-items:center;gap:11px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;padding:11px 14px;text-decoration:none;min-width:178px;transition:border-color .2s,transform .2s;animation:dpUp .45s cubic-bezier(0.16,1,0.3,1) both;}
+.earn-card:hover{border-color:var(--mp-border-hover);transform:translateY(-2px);}
+.earn-dte{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:46px;padding:6px 7px;border-radius:9px;background:var(--mp-surface2);border:1px solid var(--mp-border);gap:1px;}
+.earn-dte b{font-size:14px;font-weight:700;line-height:1.1;}
+.earn-dte span{font-size:10px;color:var(--mp-text-tertiary);letter-spacing:.02em;}
+.earn-dte.today{border-color:rgba(255,184,0,0.4);background:rgba(255,184,0,0.08);}
+.earn-dte.today b{color:var(--mp-amber);}
+.earn-txt{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.earn-tk{font-size:14px;font-weight:700;line-height:1;}
+.earn-sec{font-size:11px;color:var(--mp-text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+
+/* ── Sector momentum movers strip ── */
+.movers{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.mover-pill{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--mp-text-secondary);border:1px solid var(--mp-border);background:var(--mp-surface);border-radius:999px;padding:7px 14px;animation:dpUp .45s cubic-bezier(0.16,1,0.3,1) both;}
+.mover-pill b{font-size:12px;font-weight:700;}
+
 /* ── Sector cards (FULL WIDTH grid) ── */
 .sec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
 .sec-card{position:relative;overflow:hidden;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:18px 20px;transition:border-color .2s,transform .2s;animation:dpUp .45s cubic-bezier(0.16,1,0.3,1) both;}
@@ -171,15 +191,28 @@ a{color:inherit;}
     </div>
   </div>
 
+  <!-- ── EARNINGS ON DECK ── -->
+  <div class="v2-section" id="earn-section">
+    <div class="v2-sec-head">
+      <div>
+        <div class="v2-sec-title">Earnings On Deck</div>
+        <div class="v2-sec-sub">Upcoming prints across the tracked universe — the catalysts most likely to re-rate a narrative.</div>
+      </div>
+      <span class="v2-sec-meta" id="earn-meta"></span>
+    </div>
+    <div class="earn-rail" id="earn-rail"><div class="skel" style="height:56px;min-width:178px;"></div><div class="skel" style="height:56px;min-width:178px;"></div><div class="skel" style="height:56px;min-width:178px;"></div><div class="skel" style="height:56px;min-width:178px;"></div></div>
+  </div>
+
   <!-- ── SECTOR INTELLIGENCE ── -->
   <div class="v2-section">
     <div class="v2-sec-head">
       <div>
         <div class="v2-sec-title">Sector Intelligence</div>
-        <div class="v2-sec-sub">Every sector's story summarized and ranked by momentum — what's building, what's breaking, and the tickers carrying it. Click a summary to expand.</div>
+        <div class="v2-sec-sub">Live sector momentum up top, then every sector's story summarized and ranked — what's building, what's breaking, and the tickers carrying it. Click a summary to expand.</div>
       </div>
       <span class="v2-sec-meta" id="sec-meta"></span>
     </div>
+    <div class="movers" id="sec-movers"></div>
     <div class="sec-grid" id="sec-grid"><div class="skel" style="height:170px;"></div><div class="skel" style="height:170px;"></div><div class="skel" style="height:170px;"></div></div>
   </div>
 </div>
@@ -442,13 +475,114 @@ async function loadSectors(){
   }
 }
 
+/* ── Old right-rail content, now full-width: sector momentum movers strip
+   (top of Sector Intelligence) + earnings-on-deck rail (under the slate).
+   Momentum = avg daily move per dashboard_sector, ranked by activity —
+   same math as the dashboard's renderSectorMomentumRail. ── */
+async function loadExtras(){
+  // v_ticker_sector_membership is multi-membership — one row per
+  // ticker-per-theme — so movers aggregate a ticker into EVERY sector it
+  // belongs to (same as the dashboard rail), while labels use the ticker's
+  // most frequent membership. (Don't use v_ticker_canonical_sector here:
+  // under the anon role its RLS-filtered joins mislabel tickers.)
+  var secAll={},secPrimary={};
+  try{
+    var cs=await sb('v_ticker_sector_membership?select=ticker,sector&limit=3000');
+    // Source table has near-duplicate names ("Electric Vehicles & Auto" vs
+    // "Electric Vehicles & Autonomous Transport") — fold prefix-dupes into
+    // the longest variant before aggregating.
+    var names={};
+    (cs||[]).forEach(function(r){if(r.sector)names[r.sector.trim()]=1;});
+    var nameList=Object.keys(names);
+    var canon={};
+    nameList.forEach(function(a){
+      canon[a]=a;
+      nameList.forEach(function(b){
+        if(b!==a&&a.length>=12&&b.length>canon[a].length&&b.toLowerCase().indexOf(a.toLowerCase())===0)canon[a]=b;
+      });
+    });
+    var freq={};
+    (cs||[]).forEach(function(r){
+      if(!r.sector)return;
+      var s=canon[r.sector.trim()]||r.sector.trim();
+      secAll[r.ticker]=secAll[r.ticker]||[];
+      if(secAll[r.ticker].indexOf(s)<0)secAll[r.ticker].push(s);
+      var k=r.ticker+'|'+s;freq[k]=(freq[k]||0)+1;
+      if(!secPrimary[r.ticker]||freq[k]>(freq[r.ticker+'|'+secPrimary[r.ticker]]||0))secPrimary[r.ticker]=s;
+    });
+  }catch(_){ }
+  loadMovers(secAll);loadEarnings(secPrimary);
+}
+async function loadMovers(secMap){
+  var el=document.getElementById('sec-movers');if(!el)return;
+  try{
+    var d=await sb('daily_trade_labels?select=snapshot_date&order=snapshot_date.desc&limit=1');
+    var day=d&&d[0]&&d[0].snapshot_date;
+    if(!day){el.style.display='none';return;}
+    var rows=await sb('daily_trade_labels?select=ticker,price_change_pct&snapshot_date=eq.'+encodeURIComponent(day)+'&limit=1000');
+    var agg={};
+    (rows||[]).forEach(function(r){
+      var chg=Number(r.price_change_pct)||0;
+      (secMap[r.ticker]||[]).forEach(function(s){
+        agg[s]=agg[s]||{sum:0,act:0,n:0};
+        agg[s].sum+=chg;agg[s].act+=Math.abs(chg);agg[s].n++;
+      });
+    });
+    var arr=Object.keys(agg).map(function(s){return {name:s,avg:agg[s].sum/agg[s].n,act:agg[s].act/agg[s].n,n:agg[s].n};})
+      .filter(function(s){return s.n>=2;})
+      .sort(function(a,b){return b.act-a.act;});
+    if(!arr.length){el.style.display='none';return;}
+    el.innerHTML=arr.slice(0,12).map(function(s,i){
+      var up=s.avg>=0,c=up?'var(--mp-green)':'var(--mp-red)';
+      return '<span class="mover-pill" style="animation-delay:'+(Math.min(i,10)*0.03)+'s;">'+esc(s.name)+'<b style="color:'+c+';">'+(up?'▲':'▼')+Math.abs(s.avg).toFixed(2)+'%</b></span>';
+    }).join('');
+  }catch(_){el.style.display='none';}
+}
+async function loadEarnings(secMap){
+  var rail=document.getElementById('earn-rail');
+  var section=document.getElementById('earn-section');
+  if(!rail)return;
+  try{
+    var d=await sb('earnings_context?select=snapshot_date&order=snapshot_date.desc&limit=1');
+    var day=d&&d[0]&&d[0].snapshot_date;
+    if(!day){if(section)section.style.display='none';return;}
+    var rows=await sb('earnings_context?select=ticker,days_to_earnings,next_earnings_date&snapshot_date=eq.'+encodeURIComponent(day)+'&ticker='+MP_EXCLUDED+'&next_earnings_date=not.is.null&limit=500');
+    var seen={},list=[];
+    (rows||[]).forEach(function(r){
+      if(seen[r.ticker])return;seen[r.ticker]=1;
+      var dte=liveDTE(r);
+      if(dte==null||dte<0||dte>30)return;
+      list.push({ticker:r.ticker,dte:dte,date:r.next_earnings_date});
+    });
+    list.sort(function(a,b){return a.dte-b.dte;});
+    if(!list.length){if(section)section.style.display='none';return;}
+    var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    rail.innerHTML=list.slice(0,12).map(function(r,i){
+      var today=r.dte===0;
+      var p=String(r.date).split('-');
+      var dateTxt=MONTHS[Number(p[1])-1]+' '+Number(p[2]);
+      var sec=secMap[r.ticker]||(NAMES[r.ticker]||{}).sector||'';
+      return '<a class="earn-card" href="/ticker/'+encodeURIComponent(r.ticker)+'" style="animation-delay:'+(Math.min(i,10)*0.04)+'s;">'
+        +'<span class="earn-dte'+(today?' today':'')+'"><b>'+(today?'Today':r.dte+'d')+'</b><span>'+dateTxt+'</span></span>'
+        +logoHTML(r.ticker,20)
+        +'<span class="earn-txt"><span class="earn-tk">'+esc(r.ticker)+'</span>'+(sec?'<span class="earn-sec">'+esc(sec)+'</span>':'')+'</span>'
+      +'</a>';
+    }).join('');
+    var meta=document.getElementById('earn-meta');
+    if(meta){
+      var wk=list.filter(function(r){return r.dte<=7;}).length;
+      meta.textContent=list.length+' in the next 30 days · '+wk+' this week';
+    }
+  }catch(_){if(section)section.style.display='none';}
+}
+
 (async function(){
   // names first so slate rows can show company · sector immediately
   try{
     var uni=await sb('v_ticker_universe_search?select=ticker,name,sector&limit=500');
     (uni||[]).forEach(function(u){NAMES[u.ticker]={name:u.name,sector:u.sector};});
   }catch(_){ }
-  loadSlate();loadSectors();
+  loadSlate();loadSectors();loadExtras();
 })();
 </script>
 </body>
