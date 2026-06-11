@@ -81,7 +81,10 @@ a{color:inherit;}
 .dp-lane.ai{color:#9B87FF;border-color:rgba(123,97,255,0.35);background:rgba(123,97,255,0.10);}
 .dp-id{display:flex;align-items:center;gap:11px;min-width:0;}
 .dp-id-txt{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.dp-tk-row{display:flex;align-items:baseline;gap:7px;min-width:0;}
 .dp-tk{font-size:16px;font-weight:700;letter-spacing:.01em;line-height:1;}
+.dp-tk-px{font-size:13px;font-weight:500;color:var(--mp-text-secondary);white-space:nowrap;}
+.dp-tk-chg{font-size:11px;font-weight:600;white-space:nowrap;}
 .dp-name{font-size:12px;color:var(--mp-text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dp-est{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right;}
 .dp-est-l{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:rgba(0,174,255,0.55);}
@@ -145,6 +148,8 @@ a{color:inherit;}
 .sec-body.open{-webkit-line-clamp:unset;display:block;}
 .sec-chips{display:flex;flex-wrap:wrap;gap:6px;}
 .sec-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--mp-text-secondary);background:rgba(255,255,255,0.05);border:1px solid var(--mp-border);border-radius:6px;padding:4px 9px;text-decoration:none;transition:all .15s;}
+.sec-chip-px{font-size:11px;font-weight:500;color:var(--mp-text-tertiary);white-space:nowrap;}
+.sec-chip-chg{font-size:10px;font-weight:600;white-space:nowrap;}
 [data-theme="light"] .sec-chip{background:rgba(0,0,0,0.04);}
 .sec-chip:hover{color:var(--mp-text-primary);border-color:rgba(0,174,255,0.4);background:rgba(0,174,255,0.10);}
 .mp-logo-img{width:16px;height:16px;border-radius:3px;object-fit:contain;flex-shrink:0;display:block;}
@@ -377,7 +382,11 @@ function renderSlate(){
     var titleAttr=r._thesis?' title="'+esc(r._thesis)+'"':(stop!=null?' title="Stop: $'+fmtPrice(stop)+'"':'');
     return '<a class="dp-row '+rowCls+'" href="/ticker/'+encodeURIComponent(r.ticker)+'?lane='+encodeURIComponent(r.lane)+'" style="animation-delay:'+(Math.min(i,8)*0.05)+'s;"'+titleAttr+'>'
       +'<span class="dp-lane '+lane.cls+'">'+esc(lane.label)+'</span>'
-      +'<span class="dp-id">'+logoHTML(r.ticker)+'<span class="dp-id-txt"><span class="dp-tk">'+esc(r.ticker)+'</span>'+(sub?'<span class="dp-name">'+esc(sub)+'</span>':'')+'</span></span>'
+      +'<span class="dp-id">'+logoHTML(r.ticker)+'<span class="dp-id-txt">'
+        +'<span class="dp-tk-row"><span class="dp-tk">'+esc(r.ticker)+'</span>'
+        +'<span class="dp-tk-px" data-live-price="'+esc(r.ticker)+'">'+(r.price!=null?'$'+fmtPrice(Number(r.price)):'')+'</span>'
+        +'<span class="dp-tk-chg" data-live-change="'+esc(r.ticker)+'"></span></span>'
+        +(sub?'<span class="dp-name">'+esc(sub)+'</span>':'')+'</span></span>'
       +'<span class="dp-est">'+(est.txt?'<span class="dp-est-l">Prism Est.</span><span class="dp-est-v" style="color:'+(est.v>0?'var(--mp-green)':est.v<0?'var(--mp-red)':'var(--mp-text-secondary)')+';">'+esc(est.txt)+'</span>':'')+'</span>'
       +'<span class="dp-prices">'+(priceTxt?'<span class="dp-price-l">'+priceLbl+'</span><span class="dp-price-v">'+esc(priceTxt)+'</span>':'')+'</span>'
       +'<span class="dp-bias '+(isFyi?'fyi':short?'short':'long')+'">'+(isFyi?'FYI':short?'Short':'Long')+'</span>'
@@ -387,6 +396,7 @@ function renderSlate(){
   var more=document.getElementById('slate-more');
   if(rows.length>CAP){foot.style.display='flex';more.textContent='Show '+(rows.length-CAP)+' more';}
   else foot.style.display='none';
+  if(typeof liveQuotesKick==='function')liveQuotesKick();
   var total=SLATE.filter(function(r){return r.lane!=='VALUE_PICK'&&r.lane!=='AI_PICK';}).length;
   document.getElementById('slate-meta').textContent=shown.length+' of '+total+' picks shown';
 }
@@ -513,7 +523,9 @@ async function loadSectors(){
       var nTick=Number(s.ticker_count)||tks.length;
       var cagr=SEC_CAGR[s.scope_key];
       var chips=tks.slice(0,6).map(function(t){
-        return '<a class="sec-chip" href="/ticker/'+encodeURIComponent(t)+'">'+logoHTML(t,16)+esc(t)+'</a>';
+        return '<a class="sec-chip" href="/ticker/'+encodeURIComponent(t)+'">'+logoHTML(t,16)+esc(t)
+          +'<span class="sec-chip-px" data-live-price="'+esc(t)+'"></span>'
+          +'<span class="sec-chip-chg" data-live-change="'+esc(t)+'"></span></a>';
       }).join('');
       return '<div class="sec-card" style="--sec-accent:'+ac+';animation-delay:'+(Math.min(i,8)*0.05)+'s;">'
         +'<div class="sec-head"><div><div class="sec-name">'+esc(s.scope_key)+'</div>'+(tks.length?'<div class="sec-count">'+esc(tks.slice(0,3).join(', '))+'</div>':'')+'</div>'
@@ -526,6 +538,7 @@ async function loadSectors(){
     }).join('');
     var dt=new Date(day+'T00:00:00');
     document.getElementById('sec-meta').textContent=rows.length+' sectors · '+dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    if(typeof liveQuotesKick==='function')liveQuotesKick();
     // animate momentum bars (snap in hidden tabs — rAF suspended in background)
     function setBars(){document.querySelectorAll('[data-w]').forEach(function(el){el.style.width=el.getAttribute('data-w')+'%';});}
     if(document.hidden)setBars();
@@ -591,6 +604,67 @@ async function loadEarnings(secMap){
   }catch(_){if(section)section.style.display='none';}
 }
 
+/* ── Live quotes (Massive via /api/live-quotes-batch) — same DOM contract as
+   the dashboard: every [data-live-price]/[data-live-change] span is patched
+   in place from ONE batch call. 30s cadence during market hours (ET), 120s
+   off-hours, short retry while spans are still empty. Where /api is absent
+   (local static preview) it fails silently and snapshot prices remain. ── */
+var _lqTimer=null,_lqInFlight=false,_lqRetry=null;
+function fmtLivePrice(p){
+  if(p==null)return'';
+  if(p>=1000)return'$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(p>=100)return'$'+p.toFixed(2);
+  return'$'+p.toFixed(3);
+}
+async function liveQuotesRefresh(){
+  if(_lqInFlight)return;
+  var els=document.querySelectorAll('[data-live-price]');
+  if(!els.length)return;
+  var set={};
+  els.forEach(function(el){var t=el.getAttribute('data-live-price');if(t)set[t]=1;});
+  var list=Object.keys(set);
+  if(!list.length)return;
+  _lqInFlight=true;var ok=false;
+  try{
+    var res=await fetch('/api/live-quotes-batch?tickers='+encodeURIComponent(list.join(',')));
+    if(res.ok){
+      var data=await res.json();
+      var quotes=(data&&data.quotes)||{};
+      ok=Object.keys(quotes).length>0;
+      window.__LIVE_QUOTES_CACHE=quotes;
+      document.querySelectorAll('[data-live-price]').forEach(function(el){
+        var q=quotes[el.getAttribute('data-live-price')];
+        if(q&&q.price!=null)el.textContent=fmtLivePrice(q.price);
+      });
+      document.querySelectorAll('[data-live-change]').forEach(function(el){
+        var q=quotes[el.getAttribute('data-live-change')];
+        if(!q||q.changePct==null)return;
+        var pct=q.changePct;
+        el.textContent=(pct>0?'+':'')+pct.toFixed(2)+'%';
+        el.style.color=pct>=0?'#00DE94':'#FF4D4D';
+      });
+    }
+  }catch(_){ }
+  finally{_lqInFlight=false;}
+  // Some spans still empty (late render / partial quote set) — quick retry.
+  if(ok){
+    var anyEmpty=false;
+    document.querySelectorAll('[data-live-change]').forEach(function(el){if(!el.textContent)anyEmpty=true;});
+    if(anyEmpty){clearTimeout(_lqRetry);_lqRetry=setTimeout(liveQuotesRefresh,3000);}
+  }
+}
+function liveQuotesSchedule(){
+  if(_lqTimer)clearTimeout(_lqTimer);
+  var et=new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+  var mins=et.getHours()*60+et.getMinutes(),day=et.getDay();
+  var active=day>=1&&day<=5&&mins>=240&&mins<1200;
+  _lqTimer=setTimeout(function(){liveQuotesRefresh().then(liveQuotesSchedule);},active?30000:120000);
+}
+// Renders call this so prices appear ~300ms after rows/chips hit the DOM.
+function liveQuotesKick(){clearTimeout(_lqRetry);_lqRetry=setTimeout(liveQuotesRefresh,300);}
+// Warm the serverless function early so cold-start doesn't cost the user.
+try{fetch('/api/live-quotes-batch?tickers=SPY',{cache:'no-store'}).catch(function(){});}catch(_){ }
+
 (async function(){
   // names first so slate rows can show company · sector immediately
   try{
@@ -598,6 +672,7 @@ async function loadEarnings(secMap){
     (uni||[]).forEach(function(u){NAMES[u.ticker]={name:u.name,sector:u.sector};});
   }catch(_){ }
   loadSlate();loadSectors();loadExtras();
+  liveQuotesSchedule();
 })();
 </script>
 </body>
