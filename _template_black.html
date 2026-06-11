@@ -16340,15 +16340,19 @@ function _liveQuotesInstallObserver(){
   _liveQuotesObserver.observe(document.body,{childList:true,subtree:true});
 }
 
-// Initial kick — runs once on page load to populate prices with the latest
-// quote (typically the morning pre-market value). Intraday auto-refresh is
-// disabled by request: no liveQuotesSchedule(), no visibilitychange refresh.
-// The MutationObserver still kicks for late-rendering cards during initial
-// hydration, but each kick is a single fetch — no repeating cadence.
+// Initial kick + repeating cadence (re-enabled 2026-06-11). After the first
+// fill, liveQuotesSchedule() keeps prices ticking: 30s during market hours
+// (ET Mon-Fri 4:00-20:00), 2min otherwise. Each tick is one batch call; the
+// endpoint's 15s edge cache means concurrent viewers share upstream requests.
+// Background tabs are throttled by the browser; the visibilitychange handler
+// refreshes immediately when the user returns so prices never look stale.
 setTimeout(function(){
   _liveQuotesInstallObserver();
-  liveQuotesRefreshDaily();
+  liveQuotesRefreshDaily().then(liveQuotesSchedule);
 },400);
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden)liveQuotesRefreshDaily();
+});
 // ── Dismiss page loader ──
 function dismissPageLoader(){
   var el = document.getElementById('mp-page-loader');
