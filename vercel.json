@@ -181,6 +181,10 @@
       "destination": "/api/home-v2"
     },
     {
+      "source": "/home-v3",
+      "destination": "/api/home-v3"
+    },
+    {
       "source": "/daily-v2",
       "destination": "/api/daily-plays-v2"
     },
@@ -277,6 +281,9 @@
     },
     "api/home-v2.js": {
       "includeFiles": "_home_v2.html"
+    },
+    "api/home-v3.js": {
+      "includeFiles": "_home_v3.html"
     },
     "api/seo-why-down.js": {
       "includeFiles": "{_seo_ticker.html,lib/**}"

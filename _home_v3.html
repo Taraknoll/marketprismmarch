@@ -1,0 +1,2752 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
+<!-- Vercel Web Analytics -->
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Market Prism — Forensic intelligence for equity markets</title>
+<meta name="description" content="Forensic scoring for equity markets — coordination, decay, drift, source authority, narrative traps. 3.5M historical observations. Six scores a chatbot can't reproduce.">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<link rel="canonical" href="https://marketprism.co">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Market Prism">
+<meta property="og:title" content="Market Prism — Forensic intelligence for equity markets">
+<meta property="og:description" content="Anyone can quote a 10-K. We score the narrative around it — coordination, decay, drift, source authority, narrative traps. 3.5M historical observations. Things a chatbot can't do.">
+<meta property="og:url" content="https://marketprism.co">
+<meta property="og:image" content="https://marketprism.co/og-default.png">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@marketprism">
+<meta name="twitter:title" content="Market Prism — Forensic intelligence for equity markets">
+<meta name="twitter:description" content="Quantitative forensic scoring — coordination, decay, drift, traps. 3.5M historical observations. Things a chatbot can't do.">
+<meta name="twitter:image" content="https://marketprism.co/og-default.png">
+<meta name="keywords" content="forensic equity intelligence, narrative decay scoring, coordinated coverage detection, narrative trap classification, source authority scoring, equity research AI, stock thesis validation, narrative intelligence, AI trading signals, sell-side independent research, deterministic narrative scoring">
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"Organization",
+  "name":"Market Prism",
+  "alternateName":"Market Prism AI",
+  "url":"https://marketprism.co",
+  "logo":"https://marketprism.co/assets/Market-Prism-Favicon.png",
+  "description":"Enterprise-grade narrative intelligence platform for equity markets. Validates any stock thesis against 3.5M historical observations using deterministic, reproducible vector search.",
+  "sameAs":[
+    "https://x.com/market_prism",
+    "https://www.instagram.com/marketprismai",
+    "https://www.tiktok.com/@marketprism",
+    "https://www.youtube.com/@MarketPrismAi",
+    "https://www.reddit.com/r/marketprism/"
+  ],
+  "foundingDate":"2024",
+  "knowsAbout":["narrative intelligence","equity research","AI stock analysis","trading signals","sentiment analysis","vector search"],
+  "slogan":"Validate any narrative. Reproducible to the hash."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"WebSite",
+  "name":"Market Prism",
+  "url":"https://marketprism.co",
+  "description":"Enterprise narrative intelligence platform",
+  "potentialAction":{
+    "@type":"SearchAction",
+    "target":{"@type":"EntryPoint","urlTemplate":"https://marketprism.co/?ticker={search_term_string}"},
+    "query-input":"required name=search_term_string"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"SoftwareApplication",
+  "name":"Market Prism",
+  "applicationCategory":"FinanceApplication",
+  "operatingSystem":"Web",
+  "description":"Enterprise narrative intelligence platform. Pattern-match any stock thesis against 3.5M historical observations.",
+  "url":"https://marketprism.co",
+  "offers":{
+    "@type":"Offer",
+    "price":"25.00",
+    "priceCurrency":"USD",
+    "url":"https://marketprism.co/pricing"
+  },
+  "featureList":[
+    "Narrative validation against 3.5M historical observations",
+    "Deterministic narrative hit-rate scoring",
+    "Average 5/10/20-day moves of the nearest historical analogues",
+    "Daily intelligence brief",
+    "Sector heatmap",
+    "Forensic ticker pages"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {
+      "@type":"Question",
+      "name":"What is Market Prism?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Market Prism is a forensic narrative intelligence platform for equity markets — built for traders who got tired of being the exit liquidity on stories that did not match the filings. Submit any stock thesis (a sentence, a headline, or an investment memo) and Market Prism pattern-matches it against 3.5 million historical observations: every earnings call, 10-K, 10-Q, 8-K, news headline, and social post we have embedded across 150+ tickers. In under 250 milliseconds it returns a deterministic narrative hit-rate, the average move of similar past narratives over the following 5/10/20 days, and the closest historical analogues — anchored to the SEC filings the narrative is allegedly tracking, weighted by source authority, and flagged when the same framing has been coordinated across multiple outlets in a tight time window. Same input always produces the same output, so you can show your work — and audit ours."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"How does narrative intelligence work?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Every earnings call, SEC filing, news headline, and social post about a tracked ticker is converted into a 384-dimensional embedding plus seven forensic scores (Narrative Force, Risk Pressure, Coordination, Decay, Drift, Reversal, and Mass). When you submit a new thesis, Market Prism finds its 200 nearest neighbors in vector space and aggregates what actually happened next."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"What is a narrative hit-rate?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"The narrative hit-rate is the percentage of historical analogues to your thesis that resolved in the thesis direction within a given holding period. A 72% hit-rate over 10 days means 72% of the 200 closest historical narratives moved with the thesis over the following 10 trading days."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"Is Market Prism free to use?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Yes — narrative validation is free on the homepage with no login required. The full platform (dashboard, ticker pages, daily brief, sector heatmap, methodology, paper portfolio) is $25/month billed annually."
+      }
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"HowTo",
+  "name":"How Market Prism's forensic narrative pipeline works",
+  "description":"Seven-step forensic pipeline that grounds every narrative claim in a real source — SEC filings, earnings call transcripts and company guidance — then runs multi-signal scoring across source authority, drift, VMS, coordination, decay and mass before classifying narrative traps and delivering a forensic scorecard.",
+  "totalTime":"PT1S",
+  "step":[
+    {
+      "@type":"HowToStep",
+      "position":1,
+      "name":"Multi-source ingest",
+      "text":"SEC filings (10-K, 10-Q, 8-K), earnings call transcripts, company guidance, news and social posts are ingested as the source-of-truth corpus for every tracked ticker."
+    },
+    {
+      "@type":"HowToStep",
+      "position":2,
+      "name":"Narrative extraction",
+      "text":"Claims are extracted from filings, transcripts, guidance, news and social at the claim level — not the headline level."
+    },
+    {
+      "@type":"HowToStep",
+      "position":3,
+      "name":"Source-authority scoring",
+      "text":"Every source is domain-weighted by an in-house Source Rating, not volume-weighted. A verified analyst's call counts more than a content farm's."
+    },
+    {
+      "@type":"HowToStep",
+      "position":4,
+      "name":"Multi-signal scoring",
+      "text":"Each claim is scored across drift (claim vs source), VMS, coordination, decay, mass, reversal and risk pressure — multi-signal forensic scoring, not a single confidence number."
+    },
+    {
+      "@type":"HowToStep",
+      "position":5,
+      "name":"Coordination and spam detection",
+      "text":"Claims are clustered in 60-minute windows to flag coordinated-coverage campaigns and spam before they reach the tape."
+    },
+    {
+      "@type":"HowToStep",
+      "position":6,
+      "name":"Narrative trap classification",
+      "text":"Exhaustion and hype-bubble flags identify narratives that have run out of room — historically the moment the price reverses."
+    },
+    {
+      "@type":"HowToStep",
+      "position":7,
+      "name":"Forensic scorecard",
+      "text":"The output — bias, conviction, hype score, fundamental disconnect, fair value, and 1D/5D/30D/90D projections — is delivered to the dashboard, ticker page and Daily Plays slate."
+    }
+  ]
+}
+</script>
+
+<script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '' };</script>
+<script>try{var t=localStorage.getItem('mp-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --mp-obsidian:#080B11;
+  --mp-deep:#0A0D14;
+  --mp-surface:#0C1018;
+  --mp-surface2:#111927;
+  --mp-border:rgba(255,255,255,0.06);
+  --mp-border-hover:rgba(255,255,255,0.14);
+  --mp-text-primary:#FFFFFF;
+  --mp-text-secondary:rgba(255,255,255,0.72);
+  --mp-text-tertiary:#A0A8B0;
+  --mp-text-muted:rgba(255,255,255,0.32);
+  --mp-cyan:#00AEFF;
+  --mp-cyan-soft:#4DC8F0;
+  --mp-teal:#38C8B8;
+  --mp-green:#00DE94;
+  --mp-red:#FF4D4D;
+  --mp-amber:#FFB800;
+  --mp-violet:#7B61FF;
+  --mp-card-shadow:0 4px 12px rgba(0,0,0,0.4);
+  --font-body:'Inter','DM Sans',system-ui,sans-serif;
+}
+[data-theme="light"]{
+  --mp-obsidian:#FFFFFF;
+  --mp-deep:#FFFFFF;
+  --mp-surface:#FAFBFC;
+  --mp-surface2:#F0F2F5;
+  --mp-border:rgba(0,0,0,0.08);
+  --mp-border-hover:rgba(0,0,0,0.18);
+  --mp-text-primary:#1A1F2E;
+  --mp-text-secondary:rgba(0,0,0,0.68);
+  --mp-text-tertiary:#6B7280;
+  --mp-text-muted:rgba(0,0,0,0.38);
+  --mp-card-shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 12px rgba(0,0,0,0.04);
+}
+html{font-size:16px;}
+body{
+  font-family:var(--font-body);
+  background:
+    radial-gradient(circle at 22% -8%, rgba(0,174,255,0.10), transparent 38%),
+    radial-gradient(circle at 110% 20%, rgba(56,200,184,0.08), transparent 40%),
+    radial-gradient(circle at 50% 110%, rgba(123,97,255,0.06), transparent 50%),
+    var(--mp-obsidian);
+  background-attachment:fixed;
+  color:var(--mp-text-primary);
+  line-height:1.6;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  opacity:0;transition:opacity .25s ease;
+}
+body.ready{opacity:1;}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size:48px 48px;opacity:.4;z-index:0;
+}
+[data-theme="light"] body::before{
+  background-image:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+}
+
+/* ── Full-page constellation canvas ─────────────────────────────────── */
+#bg-constellation{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+}
+/* Lift content above the canvas (canvas is at z-index:0 and the body grid ::before is also z-index:0) */
+.prism-bar,.tk-strip,nav.topnav,.hero,section.below,footer,.mobile-menu,#sticky-cta-bar{
+  position:relative;z-index:1;
+}
+nav.topnav{z-index:40;}
+.tk-strip{z-index:5;}
+
+/* ── PRISM SPECTRUM BAR ───────────────────────────────────────────────── */
+.prism-bar{
+  position:relative;height:2px;width:100%;
+  background:linear-gradient(90deg,
+    transparent 0%, rgba(255,77,77,0.0) 4%, rgba(255,77,77,0.85) 14%,
+    rgba(255,184,0,0.85) 26%, rgba(0,222,148,0.95) 40%,
+    rgba(77,200,240,0.95) 54%, rgba(0,174,255,0.95) 68%,
+    rgba(123,97,255,0.85) 82%, rgba(255,77,77,0.0) 96%, transparent 100%);
+  background-size:240% 100%;animation:prism-sweep 14s linear infinite;
+  box-shadow:0 0 18px rgba(0,174,255,0.35),0 0 38px rgba(123,97,255,0.18);
+  z-index:30;
+}
+@keyframes prism-sweep{0%{background-position:0% 50%;}100%{background-position:240% 50%;}}
+
+/* ── LIVE TICKER STRIP ────────────────────────────────────────────────── */
+.tk-strip{
+  position:relative;z-index:5;height:34px;
+  display:flex;align-items:center;
+  background:var(--mp-deep);border-bottom:1px solid var(--mp-border);overflow:hidden;
+}
+.tk-strip-live{
+  flex-shrink:0;display:inline-flex;align-items:center;gap:6px;
+  position:relative;z-index:2;background:var(--mp-deep);
+  padding:0 14px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--mp-text-tertiary);border-right:1px solid var(--mp-border);height:100%;
+}
+.tk-dot{width:6px;height:6px;border-radius:50%;background:var(--mp-green);box-shadow:0 0 8px rgba(0,222,148,0.6);animation:dot-pulse 2s infinite;}
+@keyframes dot-pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.tk-track{display:flex;gap:0;animation:tk-marquee 80s linear infinite;flex-shrink:0;}
+.tk{display:inline-flex;align-items:center;gap:8px;padding:0 18px;border-right:1px solid var(--mp-border);height:34px;white-space:nowrap;}
+.tk-s{font-size:11px;font-weight:600;color:var(--mp-text-primary);}
+.tk-v{font-size:11px;font-weight:500;color:var(--mp-text-secondary);font-variant-numeric:tabular-nums;}
+.tk-u{font-size:10px;font-weight:600;color:var(--mp-text-tertiary);}
+.tk-d{font-size:10px;font-weight:600;color:var(--mp-text-tertiary);}
+.tk-flat{font-size:10px;font-weight:600;color:var(--mp-text-muted);}
+@keyframes tk-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── NAV ──────────────────────────────────────────────────────────────── */
+nav.topnav{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;
+  background-color:transparent;
+  border-bottom:1px solid transparent;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  transition:background-color .25s ease, border-bottom-color .25s ease;
+}
+nav.topnav.scrolled{
+  background-color:rgba(8,11,17,0.85);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom-color:var(--mp-border);
+}
+[data-theme="light"] nav.topnav.scrolled{background-color:rgba(255,255,255,0.85);}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--mp-text-primary);}
+.nav-brand-img{height:26px;width:auto;display:block;}
+.nav-brand-img.logo-light{display:block;}
+.nav-brand-img.logo-dark{display:none;}
+[data-theme="light"] .nav-brand-img.logo-light{display:none;}
+[data-theme="light"] .nav-brand-img.logo-dark{display:block;}
+.nav-mid{
+  display:flex;align-items:center;gap:4px;
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%, -50%);
+}
+.nav-mid .nav-link{
+  transition:color .15s, background .15s;
+}
+@media(max-width:880px){.nav-mid{display:none;}}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.nav-hamburger{
+  display:none;background:none;border:1px solid var(--mp-border);border-radius:8px;
+  width:38px;height:38px;color:var(--mp-text-secondary);font-size:18px;cursor:pointer;
+  align-items:center;justify-content:center;
+}
+@media(max-width:880px){
+  .nav-hamburger{display:inline-flex;}
+  .nav-right .btn-ghost,.nav-right .btn-theme{display:none;}
+}
+
+/* Mobile flyout */
+.mobile-menu{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:var(--mp-obsidian);padding:20px 24px;flex-direction:column;
+}
+.mobile-menu.open{display:flex;}
+.mobile-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.mobile-menu-close{background:none;border:none;color:var(--mp-text-secondary);font-size:28px;cursor:pointer;}
+.mobile-menu-links{display:flex;flex-direction:column;gap:6px;}
+.mobile-menu-link{
+  padding:14px 16px;border-radius:10px;
+  background:var(--mp-surface);border:1px solid var(--mp-border);
+  font-size:15px;font-weight:500;color:var(--mp-text-primary);text-decoration:none;
+}
+.mobile-menu-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:24px;}
+.nav-link{
+  padding:8px 14px;border-radius:8px;
+  font-family:var(--font-body);font-size:13px;font-weight:500;
+  color:var(--mp-text-secondary);text-decoration:none;
+  transition:color .15s, background .15s;
+}
+.nav-link:hover{color:var(--mp-text-primary);background:var(--mp-surface2);}
+.btn-ghost{
+  padding:9px 16px;border-radius:9px;
+  background:transparent;border:1px solid var(--mp-border);
+  font-family:var(--font-body);font-size:13px;font-weight:500;
+  color:var(--mp-text-secondary);text-decoration:none;cursor:pointer;
+  transition:all .15s;
+}
+.btn-ghost:hover{color:var(--mp-text-primary);border-color:var(--mp-border-hover);}
+.btn-primary{
+  padding:9px 18px;border-radius:9px;
+  background:linear-gradient(135deg, #00DE94, #00AEFF);
+  color:#FFFFFF;font-family:var(--font-body);font-size:13px;font-weight:600;
+  text-decoration:none;border:none;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,174,255,0.25);
+  transition:transform .15s, box-shadow .15s;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,174,255,0.35);}
+.btn-theme{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:9px;
+  background:transparent;border:1px solid var(--mp-border);
+  color:var(--mp-text-tertiary);cursor:pointer;transition:all .15s;
+}
+.btn-theme:hover{color:var(--mp-text-primary);border-color:var(--mp-border-hover);}
+.btn-theme svg{width:16px;height:16px;}
+
+/* ── CONTAINER ────────────────────────────────────────────────────────── */
+.container{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 24px;}
+.container-narrow{max-width:780px;margin:0 auto;padding:0 24px;}
+
+/* ── HERO (Google-style centered) ─────────────────────────────────────── */
+.hero{
+  position:relative;
+  padding:72px 0 56px;
+  overflow:hidden;
+  text-align:center;
+}
+.hero-prism{position:absolute;pointer-events:none;z-index:0;inset:0;}
+.hero-prism::before,.hero-prism::after{
+  content:'';position:absolute;border-radius:50%;filter:blur(70px);opacity:.50;
+  animation:prism-float 18s ease-in-out infinite;
+}
+.hero-prism::before{
+  width:480px;height:480px;left:50%;top:-120px;transform:translateX(-90%);
+  background:radial-gradient(circle, rgba(0,174,255,0.55), rgba(56,200,184,0.22) 50%, transparent 75%);
+}
+.hero-prism::after{
+  width:540px;height:540px;left:50%;top:-60px;transform:translateX(0%);
+  background:radial-gradient(circle, rgba(123,97,255,0.45), rgba(0,222,148,0.18) 50%, transparent 75%);
+  animation-delay:-9s;
+}
+[data-theme="light"] .hero-prism::before,[data-theme="light"] .hero-prism::after{opacity:.30;}
+@keyframes prism-float{0%,100%{transform:translateX(-90%) scale(1);}50%{transform:translateX(-70%) scale(1.08);}}
+
+.hero-eyebrow{
+  display:inline-flex;align-items:center;
+  padding:4px 11px;border-radius:99px;
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.10);
+  font-size:11px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;
+  color:rgba(255,255,255,0.55);margin-bottom:24px;
+  white-space:nowrap;max-width:100%;
+}
+[data-theme="light"] .hero-eyebrow{
+  border-color:rgba(0,0,0,0.12);
+  color:rgba(0,0,0,0.55);
+}
+@media (max-width:520px){
+  .hero-eyebrow{font-size:10px;letter-spacing:.06em;padding:3px 9px;}
+}
+
+.hero-h{
+  font-family:var(--font-body);
+  font-size:clamp(38px,5vw,62px);
+  font-weight:800;line-height:1.04;letter-spacing:-0.035em;
+  color:var(--mp-text-primary);margin-bottom:14px;
+}
+.hero-h em{
+  font-style:italic;font-family:var(--font-body);font-weight:700;letter-spacing:-0.04em;
+  background:linear-gradient(110deg,#00AEFF 0%,#00DE94 50%,#00AEFF 100%);
+  background-size:240% 240%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:hero-grad 12s linear infinite;
+}
+@keyframes hero-grad{0%{background-position:0% 50%;}100%{background-position:240% 50%;}}
+
+.hero-lead{
+  max-width:680px;margin:0 auto 36px;
+  font-size:16px;line-height:1.55;color:var(--mp-text-tertiary);
+}
+.hero-lead strong{color:var(--mp-text-primary);font-weight:600;}
+
+/* ── No-login micro-line (right above the search panel) ──────────────── */
+.no-login-line{
+  display:block;margin:0 auto 12px;
+  font-size:11px;font-weight:400;letter-spacing:.02em;
+  color:rgba(255,255,255,0.55);
+}
+[data-theme="light"] .no-login-line{color:rgba(0,0,0,0.50);}
+
+
+/* ── SEARCH PANEL (centered Google-style) ─────────────────────────────── */
+.search-panel{
+  position:relative;
+  max-width:680px;margin:0 auto;
+  background:var(--mp-surface);border:1px solid var(--mp-border);
+  border-radius:18px;padding:22px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.35);
+  overflow:hidden;text-align:left;
+}
+.search-panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, var(--mp-cyan), var(--mp-teal), var(--mp-green));
+  opacity:.7;
+}
+.search-form{display:flex;flex-direction:column;gap:12px;}
+.search-row{display:grid;grid-template-columns:160px 1fr;gap:12px;}
+@media(max-width:640px){.search-row{grid-template-columns:1fr;}}
+.search-field{display:flex;flex-direction:column;gap:6px;}
+.search-field-label{
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--mp-text-muted);
+}
+.search-field input,.search-field textarea{
+  width:100%;padding:12px 14px;
+  background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:10px;
+  font-family:var(--font-body);font-size:14px;color:var(--mp-text-primary);
+  outline:none;transition:border-color .15s, box-shadow .15s;
+}
+[data-theme="light"] .search-field input,[data-theme="light"] .search-field textarea{background:#FFFFFF;}
+.search-field input:focus,.search-field textarea:focus{
+  border-color:var(--mp-cyan);box-shadow:0 0 0 3px rgba(0,174,255,0.14);
+}
+.search-field input::placeholder,.search-field textarea::placeholder{color:var(--mp-text-muted);}
+.search-field-ticker{text-transform:uppercase;font-weight:700;letter-spacing:.05em;font-size:16px;text-align:center;}
+.search-field-narrative{resize:vertical;min-height:84px;line-height:1.5;font-family:var(--font-body);}
+.search-btn{
+  width:100%;padding:14px 18px;border-radius:11px;border:none;cursor:pointer;
+  background:linear-gradient(135deg, #00DE94, #00AEFF);
+  color:#FFFFFF;font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:.02em;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 4px 14px rgba(0,174,255,0.25);
+  transition:transform .15s, box-shadow .15s, filter .15s;
+}
+.search-btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.05);box-shadow:0 6px 20px rgba(0,174,255,0.4);}
+.search-btn:active:not(:disabled){transform:translateY(0);}
+.search-btn:disabled{opacity:.6;cursor:not-allowed;}
+.search-spinner{
+  display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);
+  border-top-color:#FFFFFF;border-radius:50%;animation:spin .7s linear infinite;
+}
+.search-btn.is-loading .search-spinner{display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.search-meta-row{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  margin-top:6px;font-size:11px;color:var(--mp-text-muted);
+}
+.search-meta-row span strong{color:var(--mp-text-secondary);font-weight:600;}
+@media(max-width:640px){
+  .search-meta-row{justify-content:center;text-align:center;gap:4px 12px;}
+}
+.search-chips{
+  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:18px auto 0;max-width:680px;
+}
+.search-chip{
+  font-family:var(--font-body);font-size:11px;font-weight:500;
+  padding:7px 12px;border-radius:99px;
+  background:rgba(0,174,255,0.04);border:1px solid var(--mp-border);
+  color:var(--mp-text-tertiary);cursor:pointer;
+  transition:all .15s;
+}
+.search-chip:hover{color:var(--mp-text-primary);border-color:var(--mp-border-hover);background:var(--mp-surface2);}
+.search-chip strong{color:var(--mp-cyan);font-weight:600;margin-right:4px;}
+.search-error{
+  display:none;margin-top:14px;max-width:680px;margin-left:auto;margin-right:auto;
+  padding:12px 14px;border-radius:10px;
+  background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.25);
+  font-size:13px;color:var(--mp-red);line-height:1.5;text-align:center;
+}
+.search-error.show{display:block;}
+
+/* ── RESULTS (full inline) ────────────────────────────────────────────── */
+.results{
+  display:none;max-width:780px;margin:32px auto 0;padding:0 24px;
+}
+.results.show{display:block;animation:resultIn .4s ease both;}
+@keyframes resultIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.r-disclaimer{
+  margin:0 0 12px;padding:10px 16px;
+  border:1px solid var(--mp-border);border-radius:10px;
+  background:var(--mp-surface);
+  font-size:13px;line-height:1.5;color:var(--mp-text-tertiary);text-align:center;
+}
+
+.r-card{
+  background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;
+  padding:24px;box-shadow:var(--mp-card-shadow);position:relative;overflow:hidden;
+  margin-bottom:14px;
+}
+.r-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--mp-cyan);opacity:.5;
+}
+.r-card.high::before{background:var(--mp-green);}
+.r-card.med::before{background:var(--mp-amber);}
+.r-card.low::before{background:var(--mp-red);}
+
+/* ── DECISION CARD (top of report — consumer-decision label) ──────────── */
+.r-decision{
+  background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;
+  padding:22px 24px;margin-bottom:12px;box-shadow:var(--mp-card-shadow);
+  position:relative;overflow:hidden;
+}
+.r-decision::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--mp-text-muted);
+}
+.r-decision.bull::before{background:var(--mp-green);}
+.r-decision.bear::before{background:var(--mp-red);}
+.r-decision.warn::before, .r-decision.neutral::before{background:var(--mp-amber);}
+.r-decision.bull{background:linear-gradient(180deg,rgba(0,222,148,0.06),var(--mp-surface) 60%);}
+.r-decision.bear{background:linear-gradient(180deg,rgba(255,77,77,0.07),var(--mp-surface) 60%);}
+.r-decision.warn,.r-decision.neutral{background:linear-gradient(180deg,rgba(255,184,0,0.06),var(--mp-surface) 60%);}
+.r-dc-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:99px;
+  font-size:11px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;
+  background:rgba(255,255,255,0.04);color:var(--mp-text-tertiary);
+  border:1px solid var(--mp-border);margin-bottom:12px;
+}
+.r-dc-tag::before{content:'';width:6px;height:6px;border-radius:99px;background:var(--mp-text-muted);}
+.r-decision.bull .r-dc-tag::before{background:var(--mp-green);}
+.r-decision.bear .r-dc-tag::before{background:var(--mp-red);}
+.r-decision.warn .r-dc-tag::before, .r-decision.neutral .r-dc-tag::before{background:var(--mp-amber);}
+.r-dc-label{
+  font-family:var(--font-body);
+  font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-0.025em;
+  line-height:1.2;color:var(--mp-text-primary);margin-bottom:8px;
+}
+.r-decision.bull .r-dc-label{color:var(--mp-green);}
+.r-decision.bear .r-dc-label{color:var(--mp-red);}
+.r-decision.warn .r-dc-label, .r-decision.neutral .r-dc-label{color:var(--mp-amber);}
+.r-dc-summary{font-size:14px;color:var(--mp-text-secondary);line-height:1.55;}
+
+/* ── PLAIN-ENGLISH TAKEAWAY ──────────────────────────────────────────── */
+.r-takeaway{
+  background:var(--mp-surface2);border:1px solid var(--mp-border);border-radius:12px;
+  padding:16px 18px;margin-bottom:14px;
+}
+.r-tk-eyebrow{
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.10em;
+  color:var(--mp-text-muted);margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;
+}
+.r-tk-eyebrow::before{content:'';width:18px;height:1px;background:var(--mp-cyan);}
+.r-tk-body{font-size:14px;color:var(--mp-text-primary);line-height:1.6;}
+.r-tk-body strong{font-weight:600;}
+
+/* ── EDGE-SCORE INTERPRETATION (replaces old r-tag plain-text) ───────── */
+.r-edge-interp{
+  display:inline-block;margin-top:8px;font-size:13px;font-weight:600;
+  letter-spacing:.02em;color:var(--mp-text-secondary);
+}
+.r-edge-interp.up{color:var(--mp-green);}
+.r-edge-interp.warn{color:var(--mp-amber);}
+.r-edge-interp.dn{color:var(--mp-red);}
+.r-edge-interp.flat{color:var(--mp-text-tertiary);}
+
+/* ── PRED CELL SUB-LABEL (noise / moderate / meaningful) ─────────────── */
+.r-pred-sub{
+  margin-top:6px;font-size:11px;font-weight:500;letter-spacing:.02em;
+  color:var(--mp-text-tertiary);line-height:1.4;
+}
+.r-pred-sub.up{color:var(--mp-green);}
+.r-pred-sub.warn{color:var(--mp-amber);}
+.r-pred-sub.dn{color:var(--mp-red);}
+.r-pred-sub .r-pred-conf{
+  display:block;margin-top:2px;font-size:10px;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--mp-amber);font-weight:600;
+}
+
+/* ── ANALOGUE INTRO ──────────────────────────────────────────────────── */
+.r-analogue-intro{margin:24px 0 14px;}
+@media(max-width:540px){.r-analogue-intro{text-align:center;}}
+.r-ai-h{
+  font-family:var(--font-body);
+  font-size:22px;font-weight:700;letter-spacing:-0.025em;
+  color:var(--mp-text-primary);line-height:1.25;
+}
+.r-ai-sub{
+  margin-top:6px;font-size:13px;color:var(--mp-text-tertiary);line-height:1.55;
+  max-width:620px;
+}
+@media(max-width:540px){.r-ai-sub{margin-left:auto;margin-right:auto;}}
+
+/* ── ANALOGUE OUTCOME BADGE + REASON ─────────────────────────────────── */
+.r-nb-outcome{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:3px 8px;border-radius:5px;
+  font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  margin-left:6px;
+}
+.r-nb-outcome.win {background:rgba(0,222,148,0.12);color:var(--mp-green);border:1px solid rgba(0,222,148,0.30);}
+.r-nb-outcome.lose{background:rgba(255,77,77,0.12);color:var(--mp-red);  border:1px solid rgba(255,77,77,0.30);}
+.r-nb-outcome.flat{background:rgba(255,255,255,0.04);color:var(--mp-text-tertiary);border:1px solid var(--mp-border);}
+.r-nb-reason{
+  margin-top:8px;font-size:12px;color:var(--mp-text-tertiary);
+  line-height:1.5;font-style:italic;
+}
+
+.r-hero{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  margin-bottom:6px;
+}
+@media(max-width:540px){
+  .r-hero{flex-direction:column;align-items:center;text-align:center;}
+}
+.r-hero-l{display:flex;flex-direction:column;}
+@media(max-width:540px){.r-hero-l{align-items:center;}}
+.r-eyebrow{font-size:10px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:6px;}
+.r-eyebrow strong{color:var(--mp-cyan);font-weight:700;letter-spacing:.05em;}
+.r-num{
+  font-family:var(--font-body);font-size:64px;font-weight:800;
+  letter-spacing:-0.04em;line-height:1;color:var(--mp-text-primary);
+  font-variant-numeric:tabular-nums;
+}
+.r-num.high{color:var(--mp-green);}
+.r-num.med{color:var(--mp-amber);}
+.r-num.low{color:var(--mp-red);}
+.r-hero-r{
+  text-align:right;font-size:12px;color:var(--mp-text-tertiary);line-height:1.5;
+}
+@media(max-width:540px){.r-hero-r{text-align:center;width:100%;}}
+.r-hero-r strong{color:var(--mp-text-primary);font-weight:600;}
+
+.r-tag{
+  display:inline-block;margin-top:10px;font-size:11px;font-weight:600;
+  letter-spacing:.04em;padding:4px 10px;border-radius:99px;
+}
+.r-tag.high{background:rgba(0,222,148,0.10);color:var(--mp-green);border:1px solid rgba(0,222,148,0.22);}
+.r-tag.med{background:rgba(255,184,0,0.10);color:var(--mp-amber);border:1px solid rgba(255,184,0,0.22);}
+.r-tag.low{background:rgba(255,77,77,0.10);color:var(--mp-red);border:1px solid rgba(255,77,77,0.22);}
+
+.r-preds{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;
+}
+@media(max-width:540px){.r-preds{grid-template-columns:1fr;}}
+.r-pred{
+  background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:10px;
+  padding:12px 14px;text-align:center;
+}
+[data-theme="light"] .r-pred{background:#FFFFFF;}
+.r-pred-l{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-muted);}
+.r-pred-v{font-family:var(--font-body);font-size:22px;font-weight:700;letter-spacing:-0.025em;margin-top:4px;color:var(--mp-text-primary);font-variant-numeric:tabular-nums;}
+.r-pred-v.up{color:var(--mp-green);}
+.r-pred-v.dn{color:var(--mp-red);}
+.r-pred-v.flat{color:var(--mp-text-tertiary);}
+
+.r-section-title{
+  font-size:12px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;
+  color:var(--mp-text-tertiary);margin:24px 0 14px;
+}
+@media(max-width:540px){.r-section-title{text-align:center;}}
+
+.r-neighbor{
+  background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;
+  padding:16px 18px;margin-bottom:10px;
+}
+.r-nb-top{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;
+}
+.r-nb-l{display:inline-flex;align-items:baseline;gap:8px;}
+.r-nb-tk{font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:.02em;color:var(--mp-text-primary);}
+.r-nb-date{font-size:11px;color:var(--mp-text-muted);}
+.r-nb-sim{
+  font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;
+  background:rgba(0,174,255,0.08);color:var(--mp-cyan);border:1px solid rgba(0,174,255,0.18);
+}
+.r-nb-narr{font-size:13px;color:var(--mp-text-secondary);line-height:1.55;margin-bottom:8px;}
+.r-nb-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;color:var(--mp-text-tertiary);padding-top:8px;
+  border-top:1px solid var(--mp-border);
+}
+.r-nb-ret{font-family:var(--font-body);font-weight:700;font-variant-numeric:tabular-nums;}
+.r-nb-ret.up{color:var(--mp-green);}
+.r-nb-ret.dn{color:var(--mp-red);}
+.r-nb-ret.flat{color:var(--mp-text-tertiary);}
+
+.r-cta{
+  margin-top:18px;padding:18px;
+  background:linear-gradient(135deg, rgba(0,174,255,0.06), rgba(0,222,148,0.06));
+  border:1px solid var(--mp-border);border-radius:12px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+}
+@media(max-width:540px){.r-cta{flex-direction:column;text-align:center;}.r-cta-btns{justify-content:center;}}
+.r-cta-text{font-size:13px;color:var(--mp-text-secondary);line-height:1.5;flex:1;min-width:200px;}
+.r-cta-text strong{color:var(--mp-text-primary);font-weight:600;}
+.r-cta-btns{display:flex;gap:10px;flex-wrap:wrap;}
+.r-cta-primary,.r-cta-secondary{
+  padding:10px 16px;border-radius:9px;font-family:var(--font-body);font-size:13px;font-weight:600;
+  text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .15s;
+}
+.r-cta-primary{background:linear-gradient(135deg,#00DE94,#00AEFF);color:#FFFFFF;box-shadow:0 4px 14px rgba(0,174,255,0.20);}
+.r-cta-primary:hover{transform:translateY(-1px);}
+.r-cta-secondary{background:transparent;border:1px solid var(--mp-border);color:var(--mp-text-secondary);}
+.r-cta-secondary:hover{border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+
+/* ── BELOW-THE-FOLD SECTIONS ──────────────────────────────────────────── */
+section.below{padding:64px 0;}
+@media(max-width:640px){section.below{padding:44px 0;}}
+.section-eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--mp-cyan);margin-bottom:14px;
+}
+.section-eyebrow::before{content:'';width:24px;height:1px;background:var(--mp-cyan);opacity:.6;}
+.section-title{
+  font-family:var(--font-body);
+  font-size:clamp(28px,3.4vw,42px);font-weight:700;
+  letter-spacing:-0.025em;line-height:1.1;
+  color:var(--mp-text-primary);margin-bottom:14px;
+}
+.section-title em{
+  font-style:italic;font-family:var(--font-body);font-weight:600;
+  background:linear-gradient(135deg,#4DC8F0 0%,#00DE94 50%,#7B61FF 100%);
+  background-size:200% 200%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:hero-grad 8s ease-in-out infinite;
+}
+.section-sub{
+  max-width:88%;font-size:15px;line-height:1.6;color:var(--mp-text-tertiary);
+  margin-bottom:36px;
+}
+
+.trust-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border-top:1px solid var(--mp-border);border-bottom:1px solid var(--mp-border);
+  padding:24px 0;
+}
+@media(max-width:780px){.trust-grid{grid-template-columns:repeat(2,1fr);gap:18px;}}
+.trust-cell{padding:0 18px;}
+.trust-cell:not(:last-child){border-right:1px solid var(--mp-border);}
+@media(max-width:780px){.trust-cell:not(:last-child){border-right:none;}}
+.trust-v{
+  font-family:var(--font-body);font-size:clamp(26px,2.6vw,34px);font-weight:700;
+  letter-spacing:-0.030em;line-height:1;color:var(--mp-text-primary);
+  font-variant-numeric:tabular-nums;margin-bottom:6px;
+}
+.trust-l{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:6px;}
+.trust-d{font-size:12px;color:var(--mp-text-tertiary);line-height:1.5;}
+
+.how-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:32px;
+}
+@media(max-width:880px){.how-grid{grid-template-columns:1fr;}}
+.how-step{
+  position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);
+  border-radius:14px;padding:24px;overflow:hidden;
+}
+.how-step::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--mp-cyan);opacity:.4;
+}
+.how-step-num{
+  font-family:var(--font-body);font-size:36px;font-weight:800;letter-spacing:-0.04em;
+  color:var(--mp-cyan-soft);line-height:1;margin-bottom:14px;font-variant-numeric:tabular-nums;
+}
+.how-step-h{font-family:var(--font-body);font-size:20px;font-weight:700;letter-spacing:-0.025em;color:var(--mp-text-primary);margin-bottom:8px;line-height:1.2;}
+.how-step-p{font-size:13px;line-height:1.6;color:var(--mp-text-tertiary);}
+
+/* ── DEFINITIONAL INTRO (AEO) ─────────────────────────────────────────── */
+.about-intro{
+  max-width:780px;margin:24px auto 0;padding:24px 28px;
+  background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;
+  font-size:15px;line-height:1.7;color:var(--mp-text-secondary);
+}
+.about-intro strong{color:var(--mp-text-primary);font-weight:600;}
+
+/* ── LIVE MINI TICKER ─────────────────────────────────────────────────── */
+.minit{position:relative;margin-top:32px;}
+.minit-frame{
+  position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);
+  border-radius:18px;padding:24px;overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,0.35);
+}
+@media(max-width:520px){.minit-frame{padding:18px;border-radius:14px;}}
+.minit-frame::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(110deg,#FF4D4D,#FFB800,#00DE94,#00AEFF,#7B61FF);
+  opacity:.6;
+}
+.minit-livepill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--mp-text-tertiary);margin-bottom:12px;
+}
+.minit-livepill::before{
+  content:'';width:7px;height:7px;border-radius:50%;
+  background:#00DE94;box-shadow:0 0 8px rgba(0,222,148,.6);
+  animation:minit-blink 1.6s ease-in-out infinite;
+}
+@keyframes minit-blink{0%,100%{opacity:1;}50%{opacity:.35;}}
+.minit-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:18px;
+  padding-bottom:14px;border-bottom:1px solid var(--mp-border);
+  flex-wrap:wrap;
+}
+.minit-id{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.minit-ticker{
+  font-family:var(--font-body);font-size:clamp(22px,5vw,28px);font-weight:800;
+  letter-spacing:-0.025em;color:var(--mp-text-primary);line-height:1;
+}
+.minit-name{font-size:12px;color:var(--mp-text-tertiary);letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+.minit-pricewrap{text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
+.minit-price{
+  font-family:var(--font-body);font-size:clamp(20px,5vw,26px);font-weight:700;
+  letter-spacing:-0.020em;color:var(--mp-text-primary);line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.minit-delta{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
+.minit-delta.is-up{color:#00DE94;}
+.minit-delta.is-down{color:#FF4D4D;}
+.minit-delta.is-flat{color:var(--mp-text-tertiary);}
+.minit-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+.minit-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 10px;border-radius:99px;
+  border:1px solid var(--mp-border);color:var(--mp-text-secondary);
+  background:rgba(255,255,255,0.02);
+}
+.minit-tag.t-bull{border-color:rgba(0,222,148,.45);color:#00DE94;background:rgba(0,222,148,.06);}
+.minit-tag.t-bear{border-color:rgba(255,77,77,.45);color:#FF4D4D;background:rgba(255,77,77,.06);}
+.minit-tag.t-neutral{border-color:rgba(0,174,255,.45);color:#00AEFF;background:rgba(0,174,255,.06);}
+.minit-claim{
+  margin-top:14px;font-size:14px;line-height:1.55;color:var(--mp-text-secondary);
+  font-style:italic;
+}
+.minit-claim::before{content:'\201C';margin-right:2px;}
+.minit-claim::after{content:'\201D';margin-left:2px;}
+.minit-chart-wrap{
+  position:relative;margin-top:18px;border-radius:12px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0));
+  border:1px solid rgba(255,255,255,0.05);
+}
+.minit-chart{display:block;width:100%;height:280px;cursor:crosshair;}
+@media(max-width:520px){.minit-chart{height:220px;}}
+.minit-chart-loading{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--mp-text-muted);letter-spacing:.06em;
+}
+.minit-tooltip{
+  position:absolute;pointer-events:none;
+  background:rgba(8,11,17,0.96);border:1px solid var(--mp-border-hover);
+  border-radius:10px;padding:10px 12px;max-width:280px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.6);
+  font-size:12px;color:var(--mp-text-secondary);line-height:1.45;
+  opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;
+  z-index:5;
+}
+.minit-tooltip.is-on{opacity:1;transform:translateY(0);}
+.minit-tooltip-meta{
+  display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;
+  font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--mp-text-muted);
+}
+.minit-tooltip-meta .src{color:var(--mp-cyan);}
+.minit-tooltip-text{color:var(--mp-text-primary);font-size:12px;line-height:1.5;}
+.minit-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin-top:18px;flex-wrap:wrap;
+}
+@media(max-width:520px){.minit-foot{flex-direction:column;align-items:stretch;}.minit-foot .minit-cta{justify-content:center;}}
+.minit-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--mp-text-tertiary);}
+.minit-legend-item{display:inline-flex;align-items:center;gap:6px;}
+.minit-legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.minit-cta{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:var(--mp-cyan);text-decoration:none;
+  padding:8px 14px;border:1px solid rgba(0,174,255,0.35);border-radius:9px;
+  transition:background .15s,border-color .15s;
+}
+.minit-cta:hover{background:rgba(0,174,255,0.08);border-color:rgba(0,174,255,0.6);}
+.minit-foot-meta{font-size:11px;color:var(--mp-text-muted);letter-spacing:.04em;}
+
+/* ── Verdict panel (mirrors ticker dashboard) ─────────────────────────── */
+.tt-row{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-top:18px;padding-bottom:14px;border-bottom:1px solid var(--mp-border);
+  margin-bottom:16px;
+}
+.tt-verdict{
+  font-family:var(--font-body);font-weight:700;font-size:18px;letter-spacing:.01em;
+  line-height:1.2;text-transform:uppercase;
+}
+.tt-sev{
+  font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:5px 10px;border-radius:5px;color:#0B0F17;
+}
+.tt-class{
+  font-family:var(--font-body);font-size:10px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;padding:4px 9px;border-radius:5px;
+  color:var(--mp-text-tertiary);background:rgba(255,255,255,0.025);
+  border:1px solid var(--mp-border);
+}
+.tt-sector{font-size:12px;color:var(--mp-text-tertiary);}
+.tt-fresh{
+  font-family:var(--font-body);font-size:11px;color:var(--mp-text-muted);
+  white-space:nowrap;margin-left:auto;
+}
+.tt-headline{
+  font-family:var(--font-body);font-size:14px;color:var(--mp-text-secondary);
+  line-height:1.55;margin-bottom:18px;
+}
+.tt-headline:empty{display:none;}
+.tt-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border:1px solid var(--mp-border);border-radius:10px;overflow:hidden;
+  margin-bottom:18px;background:rgba(255,255,255,0.015);
+}
+.tt-cell{
+  padding:14px 16px;border-right:1px solid var(--mp-border);
+  display:flex;flex-direction:column;gap:5px;min-width:0;
+}
+.tt-cell:last-child{border-right:none;}
+.tt-cell-label{
+  font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--mp-text-muted);
+}
+.tt-cell-val{
+  font-family:var(--font-body);font-size:16px;font-weight:600;
+  color:var(--mp-text-primary);line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tt-cell-sub{
+  font-family:var(--font-body);font-size:11px;color:var(--mp-text-tertiary);
+  line-height:1.2;
+}
+.tt-conv-row{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:var(--font-body);font-size:13px;color:var(--mp-text-secondary);
+  margin-bottom:6px;
+}
+.tt-conv-dots{letter-spacing:1px;font-size:14px;}
+.tt-conv-note{
+  font-family:var(--font-body);font-size:11px;font-style:italic;line-height:1.5;
+  color:var(--mp-text-muted);margin-bottom:6px;
+}
+.tt-pos{color:#00DE94;}
+.tt-neg{color:#FF4D4D;}
+.tt-neu{color:var(--mp-text-secondary);}
+@media(max-width:720px){
+  .tt-grid{grid-template-columns:repeat(2,1fr);}
+  .tt-cell{border-right:none;border-bottom:1px solid var(--mp-border);}
+  .tt-cell:nth-child(odd){border-right:1px solid var(--mp-border);}
+  .tt-cell:nth-last-child(-n+2){border-bottom:none;}
+  .tt-fresh{margin-left:0;}
+}
+
+/* P/E bubble (mirrors ticker page) */
+.pe-bubble{
+  display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:99px;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+  font-family:var(--font-body);line-height:1.2;white-space:nowrap;
+}
+.pe-bubble.bull{background:rgba(0,222,148,0.06);border-color:rgba(0,222,148,0.22);}
+.pe-bubble.bear{background:rgba(255,77,77,0.06);border-color:rgba(255,77,77,0.22);}
+.pe-bubble.neutral{background:rgba(0,174,255,0.05);border-color:rgba(0,174,255,0.18);}
+.pe-bubble-lbl{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mp-text-tertiary);}
+.pe-bubble-val{font-size:13px;font-weight:600;color:var(--mp-text-primary);}
+.pe-bubble-vs{font-size:11px;color:var(--mp-text-tertiary);}
+.pe-bubble-sec{font-size:13px;font-weight:500;color:var(--mp-text-secondary);}
+.pe-bubble-delta{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:2px;}
+.pe-bubble-delta.bull{background:rgba(0,222,148,0.14);color:#5fe7b4;}
+.pe-bubble-delta.bear{background:rgba(255,77,77,0.14);color:#ff7f7f;}
+.pe-bubble-delta.neutral{background:rgba(0,174,255,0.14);color:#5fc8ff;}
+
+/* ── FAQ ──────────────────────────────────────────────────────────────── */
+/* ── HERO CTA ROW (v2) ───────────────────────────────────────────────── */
+.hero-cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px;margin-bottom:8px;}
+.hero-cta-primary{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-body);font-size:15px;font-weight:600;color:#FFFFFF;background:linear-gradient(135deg,var(--mp-green),var(--mp-cyan));padding:14px 26px;border-radius:11px;text-decoration:none;border:none;cursor:pointer;transition:transform .15s,box-shadow .15s,filter .15s;box-shadow:0 8px 24px rgba(0,174,255,0.25);}
+.hero-cta-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,174,255,0.35);filter:brightness(1.06);}
+.hero-cta-secondary{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-body);font-size:15px;font-weight:500;color:var(--mp-text-primary);background:rgba(255,255,255,0.04);border:1px solid var(--mp-border);padding:14px 26px;border-radius:11px;text-decoration:none;transition:background .15s,border-color .15s;}
+.hero-cta-secondary:hover{background:rgba(255,255,255,0.08);border-color:var(--mp-border-hover);}
+
+/* ── PIPELINE (Not-an-LLM section, v2) ───────────────────────────────── */
+.callout-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
+@media(max-width:900px){.callout-grid{grid-template-columns:1fr;gap:32px;}}
+.callout-copy h2{font-family:var(--font-body);font-size:clamp(28px,3.4vw,42px);font-weight:700;letter-spacing:-0.025em;line-height:1.15;color:var(--mp-text-primary);}
+.callout-copy h2 em{font-style:italic;color:var(--mp-cyan);}
+.callout-copy p{font-size:15px;line-height:1.75;color:var(--mp-text-secondary);margin-top:16px;}
+.callout-copy p strong{color:var(--mp-text-primary);font-weight:600;}
+.pipeline{display:flex;flex-direction:column;gap:10px;list-style:none;padding:0;margin:0;}
+.pipeline li{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;position:relative;}
+.pipeline li::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--mp-cyan),var(--mp-teal));border-radius:12px 12px 0 0;}
+.pipe-num{font-family:var(--font-body);font-size:11px;font-weight:600;color:var(--mp-cyan);letter-spacing:.08em;background:rgba(0,174,255,0.10);border:1px solid rgba(0,174,255,0.25);padding:4px 9px;border-radius:6px;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.pipe-label{font-size:14px;color:var(--mp-text-primary);font-weight:500;}
+.pipe-desc{font-size:12px;color:var(--mp-text-tertiary);margin-left:auto;font-weight:400;text-align:right;}
+@media(max-width:480px){.pipe-desc{display:none;}.pipeline li{padding:12px 14px;gap:10px;}}
+
+/* ── SCREENSHOT TOUR (v2) ────────────────────────────────────────────── */
+.screens-stack > * + *{margin-top:56px;}
+@media(max-width:600px){.screens-stack > * + *{margin-top:40px;}}
+.screen-row{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:center;}
+.screen-row.flip{grid-template-columns:1fr 1.15fr;}
+.screen-row.flip .screen-shot{order:2;}
+.screen-row.flip .screen-copy{order:1;}
+@media(max-width:900px){.screen-row,.screen-row.flip{grid-template-columns:1fr;gap:28px;}.screen-row.flip .screen-shot,.screen-row.flip .screen-copy{order:initial;}}
+.screen-shot{position:relative;border-radius:16px;overflow:hidden;background:var(--mp-surface);border:1px solid var(--mp-border);box-shadow:0 24px 60px rgba(0,0,0,0.5),0 4px 12px rgba(0,0,0,0.4);transition:transform .25s,box-shadow .25s;}
+.screen-shot::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--mp-cyan),var(--mp-teal),var(--mp-green));z-index:2;}
+.screen-shot:hover{transform:translateY(-4px);box-shadow:0 32px 72px rgba(0,0,0,0.55),0 6px 16px rgba(0,0,0,0.45);}
+.screen-shot img{width:100%;height:auto;display:block;}
+.screen-tag{position:absolute;top:14px;right:14px;z-index:3;font-family:var(--font-body);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#001019;background:linear-gradient(90deg,var(--mp-green),var(--mp-teal));padding:5px 10px;border-radius:6px;box-shadow:0 4px 12px rgba(0,222,148,0.25);}
+.screen-copy .meta{font-family:var(--font-body);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mp-cyan);font-weight:600;margin-bottom:10px;}
+.screen-copy h3{font-family:var(--font-body);font-size:26px;font-weight:700;letter-spacing:-0.020em;line-height:1.2;margin-bottom:12px;color:var(--mp-text-primary);}
+.screen-copy h3 em{font-style:italic;color:var(--mp-teal);}
+.screen-copy p{font-size:15px;line-height:1.7;color:var(--mp-text-secondary);font-weight:400;}
+.screen-copy p strong{color:var(--mp-text-primary);font-weight:600;}
+.screen-cta{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--font-body);font-size:13px;font-weight:600;color:#FFFFFF;background:linear-gradient(135deg,var(--mp-green),var(--mp-cyan));padding:11px 20px;border-radius:9px;text-decoration:none;transition:transform .15s,box-shadow .15s,filter .15s;box-shadow:0 4px 14px rgba(0,174,255,0.22);}
+.screen-cta:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,174,255,0.32);filter:brightness(1.06);}
+
+/* ── COMPARISON TEASER (v2) ──────────────────────────────────────────── */
+.compare-wrap{margin-top:32px;border:1px solid var(--mp-border);border-radius:16px;overflow:hidden;background:var(--mp-surface);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.compare-table{width:100%;border-collapse:collapse;font-family:var(--font-body);}
+.compare-table thead th{background:linear-gradient(180deg,rgba(17,25,39,0.9),rgba(17,25,39,0.6));font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--mp-text-secondary);text-transform:uppercase;padding:20px 16px;text-align:left;border-bottom:1px solid var(--mp-border);vertical-align:bottom;}
+.compare-table thead th.us{color:var(--mp-text-primary);background:linear-gradient(180deg,rgba(0,174,255,0.18),rgba(0,174,255,0.06));border-bottom:2px solid var(--mp-cyan);position:relative;}
+.compare-table thead th.us::after{content:'OURS';position:absolute;top:6px;right:10px;font-size:9px;letter-spacing:.16em;color:var(--mp-cyan);font-weight:700;}
+.compare-table tbody td{padding:16px;font-size:13px;border-bottom:1px solid var(--mp-border);color:var(--mp-text-secondary);font-weight:400;vertical-align:top;line-height:1.5;}
+.compare-table tbody tr:last-child td{border-bottom:none;}
+.compare-table tbody tr:hover td{background:rgba(255,255,255,0.02);}
+.compare-table .row-label{color:var(--mp-text-primary);font-weight:600;font-size:13px;}
+.compare-table td.us{background:rgba(0,174,255,0.05);color:var(--mp-text-primary);font-weight:500;border-left:1px solid rgba(0,174,255,0.18);border-right:1px solid rgba(0,174,255,0.18);}
+.cmp-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle;flex-shrink:0;}
+.cmp-dot.yes{background:var(--mp-green);box-shadow:0 0 8px rgba(0,222,148,0.5);}
+.cmp-dot.partial{background:var(--mp-amber);box-shadow:0 0 8px rgba(255,184,0,0.5);}
+.cmp-dot.no{background:var(--mp-red);box-shadow:0 0 8px rgba(255,77,77,0.4);}
+.cmp-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-top:18px;}
+.cmp-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--mp-text-tertiary);}
+.cmp-legend span{display:inline-flex;align-items:center;gap:6px;}
+.cmp-link{font-size:13px;font-weight:600;color:var(--mp-cyan);text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.cmp-link:hover{text-decoration:underline;}
+
+/* ── DIFF CARDS (v3 — replaces homepage comparison table) ─────────────── */
+.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px;}
+@media(max-width:860px){.diff-grid{grid-template-columns:1fr;}}
+.diff-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.diff-h{font-family:var(--font-body);font-size:16px;font-weight:700;color:var(--mp-text-primary);margin-bottom:10px;letter-spacing:-0.01em;}
+.diff-p{font-size:13px;line-height:1.6;color:var(--mp-text-secondary);margin:0;}
+@media(max-width:780px){.compare-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}.compare-table{min-width:640px;}}
+
+/* ── STATIC TICKER PREVIEW (v2 fallback) ─────────────────────────────── */
+.preview-frame{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:18px;padding:24px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.35);margin-top:32px;}
+@media(max-width:520px){.preview-frame{padding:18px;border-radius:14px;}}
+.preview-frame::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(110deg,#FF4D4D,#FFB800,#00DE94,#00AEFF,#7B61FF);opacity:.6;}
+.preview-livepill{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-text-tertiary);margin-bottom:14px;}
+.preview-livepill::before{content:'';width:7px;height:7px;border-radius:50%;background:#00DE94;box-shadow:0 0 8px rgba(0,222,148,.6);animation:minit-blink 1.6s ease-in-out infinite;}
+.preview-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--mp-border);flex-wrap:wrap;}
+.preview-id{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.preview-ticker{font-family:var(--font-body);font-size:clamp(22px,5vw,28px);font-weight:800;letter-spacing:-0.025em;color:var(--mp-text-primary);line-height:1;}
+.preview-name{font-size:12px;color:var(--mp-text-tertiary);letter-spacing:.02em;}
+.preview-pricewrap{text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
+.preview-price{font-family:var(--font-body);font-size:clamp(20px,5vw,26px);font-weight:700;letter-spacing:-0.020em;color:var(--mp-text-primary);line-height:1;font-variant-numeric:tabular-nums;}
+.preview-delta{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
+.preview-delta.up{color:var(--mp-green);}
+.preview-delta.dn{color:var(--mp-red);}
+.preview-verdict{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;padding-bottom:14px;border-bottom:1px solid var(--mp-border);margin-bottom:16px;}
+.preview-verdict-tag{font-family:var(--font-body);font-weight:700;font-size:16px;letter-spacing:.01em;line-height:1.2;text-transform:uppercase;color:var(--mp-green);}
+.preview-verdict-sev{font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:5px;color:#0B0F17;background:var(--mp-green);}
+.preview-verdict-class{font-family:var(--font-body);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:5px;color:var(--mp-text-tertiary);background:rgba(255,255,255,0.025);border:1px solid var(--mp-border);}
+.preview-verdict-fresh{font-family:var(--font-body);font-size:11px;color:var(--mp-text-muted);white-space:nowrap;margin-left:auto;}
+.preview-headline{font-family:var(--font-body);font-size:14px;color:var(--mp-text-secondary);line-height:1.55;margin-bottom:18px;}
+.preview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--mp-border);border-radius:10px;overflow:hidden;margin-bottom:18px;background:rgba(255,255,255,0.015);}
+.preview-grid .pcell{padding:14px 16px;border-right:1px solid var(--mp-border);display:flex;flex-direction:column;gap:5px;min-width:0;}
+.preview-grid .pcell:last-child{border-right:none;}
+.pcell-l{font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);}
+.pcell-v{font-family:var(--font-body);font-size:16px;font-weight:600;color:var(--mp-text-primary);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcell-v.up{color:var(--mp-green);}
+.pcell-v.dn{color:var(--mp-red);}
+.pcell-s{font-family:var(--font-body);font-size:11px;color:var(--mp-text-tertiary);line-height:1.2;}
+@media(max-width:720px){.preview-grid{grid-template-columns:repeat(2,1fr);}.preview-grid .pcell{border-right:none;border-bottom:1px solid var(--mp-border);}.preview-grid .pcell:nth-child(odd){border-right:1px solid var(--mp-border);}.preview-grid .pcell:nth-last-child(-n+2){border-bottom:none;}.preview-verdict-fresh{margin-left:0;}}
+.preview-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:6px;}
+.preview-foot-meta{font-size:11px;color:var(--mp-text-muted);letter-spacing:.04em;}
+.preview-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--mp-cyan);text-decoration:none;padding:8px 14px;border:1px solid rgba(0,174,255,0.35);border-radius:9px;transition:background .15s,border-color .15s;}
+.preview-cta:hover{background:rgba(0,174,255,0.08);border-color:rgba(0,174,255,0.6);}
+@media(max-width:520px){.preview-foot{flex-direction:column;align-items:stretch;}.preview-foot .preview-cta{justify-content:center;}}
+
+/* ── BLURRED DAILY PLAYS TEASER (v2) ─────────────────────────────────── */
+.dp-frame{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:18px;padding:24px;margin-top:32px;box-shadow:0 12px 40px rgba(0,0,0,0.35);overflow:hidden;}
+@media(max-width:520px){.dp-frame{padding:18px;border-radius:14px;}}
+.dp-frame::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(110deg,#FF4D4D,#FFB800,#00DE94,#00AEFF,#7B61FF);opacity:.6;}
+.dp-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--mp-border);margin-bottom:14px;}
+.dp-head-l{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.dp-livepill{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-text-tertiary);}
+.dp-livepill::before{content:'';width:7px;height:7px;border-radius:50%;background:#00DE94;box-shadow:0 0 8px rgba(0,222,148,.6);animation:minit-blink 1.6s ease-in-out infinite;}
+.dp-livepill.sample::before{background:var(--mp-amber);box-shadow:none;animation:none;}
+.dp-head-title{font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--mp-text-primary);letter-spacing:-.005em;}
+.dp-head-meta{font-size:11px;color:var(--mp-text-muted);letter-spacing:.04em;}
+.dp-list{display:flex;flex-direction:column;gap:10px;position:relative;}
+.dp-row{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:14px;align-items:center;padding:14px 16px;background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:12px;}
+[data-theme="light"] .dp-row{background:#FFFFFF;}
+.dp-row.bull{border-left:3px solid var(--mp-green);}
+.dp-row.bear{border-left:3px solid var(--mp-red);}
+.dp-row.neutral{border-left:3px solid var(--mp-cyan);}
+.dp-lane{font-size:10px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;padding:5px 9px;border-radius:5px;background:rgba(255,255,255,0.04);color:var(--mp-text-tertiary);border:1px solid var(--mp-border);white-space:nowrap;}
+.dp-lane.day{color:var(--mp-cyan);border-color:rgba(0,174,255,0.30);background:rgba(0,174,255,0.06);}
+.dp-lane.swing{color:var(--mp-teal);border-color:rgba(56,200,184,0.30);background:rgba(56,200,184,0.06);}
+.dp-lane.momentum{color:var(--mp-amber);border-color:rgba(255,184,0,0.30);background:rgba(255,184,0,0.06);}
+.dp-lane.value{color:var(--mp-violet);border-color:rgba(123,97,255,0.30);background:rgba(123,97,255,0.06);}
+.dp-lane.trap{color:var(--mp-red);border-color:rgba(255,77,77,0.30);background:rgba(255,77,77,0.06);}
+.dp-id{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.dp-tk{font-family:var(--font-body);font-size:18px;font-weight:700;letter-spacing:-.02em;color:var(--mp-text-primary);line-height:1;}
+.dp-name{font-size:12px;color:var(--mp-text-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dp-prices{display:flex;flex-direction:column;gap:2px;text-align:right;}
+.dp-price-l{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);}
+.dp-price-v{font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--mp-text-primary);font-variant-numeric:tabular-nums;}
+.dp-conv{display:flex;flex-direction:column;gap:3px;align-items:center;min-width:54px;}
+.dp-conv-v{font-family:var(--font-body);font-size:18px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1;}
+.dp-conv-v.up{color:var(--mp-green);}
+.dp-conv-v.warn{color:var(--mp-amber);}
+.dp-conv-v.dn{color:var(--mp-red);}
+.dp-conv-l{font-size:9px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-muted);}
+.dp-bias{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.04em;padding:5px 10px;border-radius:99px;white-space:nowrap;}
+.dp-bias.long{background:rgba(0,222,148,0.10);color:var(--mp-green);border:1px solid rgba(0,222,148,0.30);}
+.dp-bias.short{background:rgba(255,77,77,0.10);color:var(--mp-red);border:1px solid rgba(255,77,77,0.30);}
+.dp-bias.watch{background:rgba(0,174,255,0.10);color:var(--mp-cyan);border:1px solid rgba(0,174,255,0.30);}
+@media(max-width:720px){
+  .dp-row{grid-template-columns:auto 1fr auto;gap:10px;padding:12px 14px;}
+  .dp-prices,.dp-bias{display:none;}
+}
+
+/* Locked/blurred picks */
+.dp-locked-wrap{position:relative;margin-top:10px;}
+.dp-locked{display:flex;flex-direction:column;gap:10px;filter:blur(5px) saturate(0.6);pointer-events:none;user-select:none;-webkit-user-select:none;opacity:.85;}
+.dp-locked .dp-row{opacity:.85;}
+.dp-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:24px;background:linear-gradient(180deg,rgba(8,11,17,0) 0%,rgba(8,11,17,0.55) 35%,rgba(8,11,17,0.85) 100%);border-radius:12px;}
+[data-theme="light"] .dp-overlay{background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0.65) 35%,rgba(255,255,255,0.92) 100%);}
+.dp-overlay-lock{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:rgba(0,174,255,0.10);border:1px solid rgba(0,174,255,0.30);color:var(--mp-cyan);}
+.dp-overlay-lock svg{width:20px;height:20px;}
+.dp-overlay-h{font-family:var(--font-body);font-size:18px;font-weight:700;letter-spacing:-.02em;color:var(--mp-text-primary);line-height:1.2;max-width:420px;}
+.dp-overlay-p{font-size:13px;color:var(--mp-text-secondary);line-height:1.5;max-width:460px;}
+.dp-overlay-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
+.dp-overlay-cta{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-body);font-size:13px;font-weight:600;color:#FFFFFF;background:linear-gradient(135deg,var(--mp-green),var(--mp-cyan));padding:11px 20px;border-radius:9px;text-decoration:none;transition:transform .15s,box-shadow .15s,filter .15s;box-shadow:0 4px 14px rgba(0,174,255,0.22);}
+.dp-overlay-cta:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,174,255,0.32);filter:brightness(1.06);}
+.dp-overlay-ghost{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--mp-text-secondary);background:transparent;border:1px solid var(--mp-border-hover);padding:11px 18px;border-radius:9px;text-decoration:none;transition:background .15s,border-color .15s;}
+.dp-overlay-ghost:hover{background:rgba(255,255,255,0.04);color:var(--mp-text-primary);}
+.dp-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--mp-border);}
+.dp-foot-meta{font-size:11px;color:var(--mp-text-muted);letter-spacing:.04em;}
+@media(max-width:520px){
+  .dp-overlay-h{font-size:16px;}
+  .dp-overlay-p{font-size:12px;}
+}
+
+/* ── TRY-IT META ROW (v2) ────────────────────────────────────────────── */
+.try-meta-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 24px;margin-top:18px;font-size:11px;color:var(--mp-text-muted);letter-spacing:.02em;}
+.try-meta-row strong{color:var(--mp-text-secondary);font-weight:600;}
+
+.faq-wrap{display:flex;flex-direction:column;gap:10px;margin-top:32px;max-width:880px;margin-left:auto;margin-right:auto;}
+.faq-item{
+  background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;
+  padding:18px 22px;transition:border-color .15s;
+}
+.faq-item:hover{border-color:var(--mp-border-hover);}
+.faq-q{
+  font-family:var(--font-body);font-size:16px;font-weight:600;color:var(--mp-text-primary);
+  letter-spacing:-0.015em;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  list-style:none;
+}
+.faq-q::-webkit-details-marker{display:none;}
+.faq-q::after{content:'+';font-size:22px;font-weight:300;color:var(--mp-text-tertiary);transition:transform .2s;}
+details[open] .faq-q::after{content:'−';}
+.faq-a{font-size:14px;line-height:1.65;color:var(--mp-text-tertiary);margin-top:14px;padding-top:14px;border-top:1px solid var(--mp-border);}
+
+/* ── BLOG / LATEST REPORTS ────────────────────────────────────────────── */
+.blog-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  margin-top:32px;margin-bottom:24px;
+}
+.blog-head-l{flex:1;min-width:240px;}
+.blog-all{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:600;color:var(--mp-cyan);text-decoration:none;
+  padding:8px 14px;border-radius:9px;border:1px solid rgba(0,174,255,0.22);
+  background:rgba(0,174,255,0.04);transition:all .15s;
+}
+.blog-all:hover{border-color:rgba(0,174,255,0.45);background:rgba(0,174,255,0.10);transform:translateY(-1px);}
+/* Featured (book-style) editorial card */
+.blog-featured{
+  display:grid;grid-template-columns:1.15fr 1fr;gap:0;
+  background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;
+  margin-bottom:18px;overflow:hidden;text-decoration:none;color:inherit;
+  position:relative;transition:transform .2s, border-color .2s, box-shadow .2s;
+}
+@media(max-width:780px){.blog-featured{grid-template-columns:1fr;}}
+.blog-featured::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, #FF4D4D, #FFB800, #00DE94, #00AEFF, #7B61FF);
+  opacity:.7;
+}
+.blog-featured:hover{transform:translateY(-3px);border-color:var(--mp-border-hover);box-shadow:0 16px 40px rgba(0,0,0,0.4);}
+.blog-featured-l{
+  padding:36px 36px 32px;display:flex;flex-direction:column;gap:12px;
+  border-right:1px solid var(--mp-border);
+}
+@media(max-width:780px){.blog-featured-l{border-right:none;border-bottom:1px solid var(--mp-border);padding:28px;}}
+.blog-featured-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:10px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;
+  color:var(--mp-cyan);
+}
+.blog-featured-eyebrow::before{
+  content:'';width:18px;height:1px;background:var(--mp-cyan);opacity:.6;
+}
+.blog-featured-title{
+  font-family:var(--font-body);
+  font-size:clamp(22px,2.4vw,30px);font-weight:700;
+  letter-spacing:-0.025em;line-height:1.18;
+  color:var(--mp-text-primary);
+}
+.blog-featured-excerpt{
+  font-size:14px;line-height:1.65;color:var(--mp-text-tertiary);
+  display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;
+}
+.blog-featured-foot{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  margin-top:auto;padding-top:14px;border-top:1px solid var(--mp-border);
+  font-size:11px;color:var(--mp-text-muted);
+}
+.blog-featured-foot strong{color:var(--mp-text-secondary);font-weight:600;}
+.blog-featured-r{
+  position:relative;padding:36px 32px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(0,174,255,0.18), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(255,77,77,0.14), transparent 55%),
+    var(--mp-surface);
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px;
+  overflow:hidden;
+}
+@media(max-width:780px){.blog-featured-r{padding:24px 28px;}}
+.blog-featured-tag{
+  font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 10px;border-radius:99px;
+  background:rgba(255,77,77,0.10);color:var(--mp-red);border:1px solid rgba(255,77,77,0.22);
+}
+.blog-featured-ticker{
+  font-family:var(--font-body);font-size:42px;font-weight:800;
+  letter-spacing:-0.04em;line-height:1;color:var(--mp-text-primary);
+}
+.blog-featured-pull{
+  font-family:var(--font-body);font-style:italic;font-weight:600;
+  font-size:15px;line-height:1.5;color:var(--mp-text-secondary);
+  border-left:2px solid var(--mp-cyan);padding-left:12px;margin-top:6px;max-width:340px;
+}
+.blog-featured-cta{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:var(--mp-cyan);
+  padding-top:8px;
+}
+
+.blog-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+}
+@media(max-width:980px){.blog-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.blog-grid{grid-template-columns:1fr;}}
+.blog-card{
+  display:flex;flex-direction:column;
+  background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;
+  padding:20px;text-decoration:none;color:inherit;
+  transition:transform .2s, border-color .2s, box-shadow .2s;
+  position:relative;overflow:hidden;min-height:200px;
+}
+.blog-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--mp-cyan);opacity:.4;
+}
+.blog-card.t-earnings::before{background:var(--mp-amber);}
+.blog-card.t-research::before{background:var(--mp-violet);}
+.blog-card.t-market::before{background:var(--mp-green);}
+.blog-card:hover{transform:translateY(-3px);border-color:var(--mp-border-hover);box-shadow:0 12px 28px rgba(0,0,0,0.3);}
+.blog-meta{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.blog-tag{
+  font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;
+  background:rgba(0,174,255,0.10);color:var(--mp-cyan);border:1px solid rgba(0,174,255,0.20);
+}
+.blog-card.t-earnings .blog-tag{background:rgba(255,184,0,0.10);color:var(--mp-amber);border-color:rgba(255,184,0,0.20);}
+.blog-card.t-research .blog-tag{background:rgba(123,97,255,0.10);color:var(--mp-violet);border-color:rgba(123,97,255,0.20);}
+.blog-card.t-market   .blog-tag{background:rgba(0,222,148,0.10);color:var(--mp-green);border-color:rgba(0,222,148,0.20);}
+.blog-ticker{font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--mp-text-tertiary);}
+.blog-title{
+  font-family:var(--font-body);font-size:17px;font-weight:700;
+  letter-spacing:-0.02em;line-height:1.3;
+  color:var(--mp-text-primary);margin-bottom:8px;
+}
+.blog-excerpt{
+  font-size:13px;line-height:1.55;color:var(--mp-text-tertiary);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.blog-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:auto;padding-top:14px;
+  font-size:11px;color:var(--mp-text-muted);
+}
+.blog-author{color:var(--mp-text-tertiary);}
+.blog-loading,.blog-empty{
+  text-align:center;padding:40px 20px;
+  font-size:13px;color:var(--mp-text-tertiary);
+}
+
+.pricing-card{
+  max-width:760px;margin:32px auto 0;
+  display:grid;grid-template-columns:1.2fr 1fr;gap:0;
+  background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:18px;
+  overflow:hidden;position:relative;
+}
+@media(max-width:780px){.pricing-card{grid-template-columns:1fr;}}
+.pricing-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--mp-green),var(--mp-cyan));opacity:.6;
+}
+.pricing-l{padding:32px;border-right:1px solid var(--mp-border);}
+@media(max-width:780px){.pricing-l{border-right:none;border-bottom:1px solid var(--mp-border);}}
+.pricing-tier{font-family:var(--font-body);font-size:24px;font-weight:700;letter-spacing:-0.025em;color:var(--mp-text-primary);margin-bottom:6px;}
+.pricing-price{display:flex;align-items:baseline;gap:6px;margin-bottom:14px;}
+.pricing-price-old{font-size:18px;color:var(--mp-text-muted);text-decoration:line-through;font-weight:400;}
+.pricing-price-new{font-family:var(--font-body);font-size:38px;font-weight:800;letter-spacing:-0.035em;line-height:1;color:var(--mp-text-primary);font-variant-numeric:tabular-nums;}
+.pricing-price-per{font-size:13px;color:var(--mp-text-tertiary);font-weight:500;}
+.pricing-tag{font-size:13px;color:var(--mp-text-tertiary);line-height:1.5;margin-bottom:18px;}
+.pricing-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:13px 18px;border-radius:10px;
+  background:linear-gradient(135deg,#00DE94,#00AEFF);color:#FFFFFF;
+  font-family:var(--font-body);font-size:14px;font-weight:600;text-decoration:none;
+  box-shadow:0 4px 14px rgba(0,174,255,0.25);
+  transition:transform .15s, box-shadow .15s;
+}
+.pricing-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,174,255,0.35);}
+.pricing-r{padding:32px;}
+.pricing-features{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.pricing-feature{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--mp-text-secondary);line-height:1.5;}
+.pricing-feature svg{width:14px;height:14px;flex-shrink:0;margin-top:3px;color:var(--mp-green);}
+
+/* ── FOOTER ───────────────────────────────────────────────────────────── */
+footer{
+  position:relative;z-index:1;
+  margin-top:32px;padding:48px 0 32px;
+  border-top:1px solid var(--mp-border);background:var(--mp-deep);
+}
+.footer-grid{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px;
+}
+@media(max-width:780px){.footer-grid{grid-template-columns:1fr 1fr;gap:24px;}}
+.footer-socials{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.footer-social{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:9px;
+  background:var(--mp-surface);border:1px solid var(--mp-border);
+  color:var(--mp-text-tertiary);text-decoration:none;transition:all .15s;
+}
+.footer-social:hover{color:var(--mp-cyan);border-color:var(--mp-cyan);transform:translateY(-1px);}
+.footer-social svg{width:16px;height:16px;}
+.footer-brand-name{font-family:var(--font-body);font-size:16px;font-weight:700;letter-spacing:-0.02em;color:var(--mp-text-primary);}
+.footer-tag{font-size:12px;line-height:1.6;color:var(--mp-text-tertiary);max-width:280px;margin-top:8px;}
+.footer-col-lbl{font-size:10px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:14px;}
+.footer-links{display:flex;flex-direction:column;gap:8px;}
+.footer-links a{font-size:13px;color:var(--mp-text-secondary);text-decoration:none;transition:color .15s;}
+.footer-links a:hover{color:var(--mp-text-primary);}
+.footer-bot{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;
+  padding-top:24px;border-top:1px solid var(--mp-border);
+  font-size:11px;color:var(--mp-text-muted);letter-spacing:.04em;
+}
+.footer-bot a{color:var(--mp-text-tertiary);text-decoration:none;}
+.footer-bot a:hover{color:var(--mp-text-primary);}
+.footer-disclaimer{
+  margin-top:18px;padding:14px;border-radius:10px;
+  background:rgba(255,255,255,0.02);border:1px solid var(--mp-border);
+  font-size:11px;line-height:1.6;color:var(--mp-text-muted);
+}
+</style>
+</head>
+<body>
+
+<!-- ── FULL-PAGE CONSTELLATION CANVAS ── -->
+<canvas id="bg-constellation" aria-hidden="true"></canvas>
+
+<!-- ── PRISM SPECTRUM BAR ── -->
+<div class="prism-bar" aria-hidden="true"></div>
+
+<!-- ── LIVE TICKER STRIP ── -->
+<div class="tk-strip">
+  <div class="tk-strip-live"><span class="tk-dot"></span> Live</div>
+  <div class="tk-track" id="tk-track">
+    <div class="tk"><span class="tk-s">Loading…</span></div>
+  </div>
+</div>
+
+<!-- ── NAV ── -->
+<nav class="topnav">
+  <a href="/" class="nav-brand" aria-label="Market Prism home">
+    <img class="nav-brand-img logo-light" src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+    <img class="nav-brand-img logo-dark" src="/assets/Market-Prism-Logo-Dark.png" alt="Market Prism">
+  </a>
+  <div class="nav-mid">
+    <a href="/features" class="nav-link">Product</a>
+    <a href="#blog-section" class="nav-link">News</a>
+    <a href="/about" class="nav-link">About</a>
+    <a href="/pricing" class="nav-link">Pricing</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-theme" aria-label="Toggle theme" onclick="toggleTheme()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="/login" class="btn-ghost" data-track="nav_sign_in">Sign in</a>
+    <a href="/login#register" class="btn-primary" data-track="nav_get_started">Get started</a>
+    <button class="nav-hamburger" aria-label="Open menu" onclick="document.getElementById('mobile-menu').classList.add('open')">&#9776;</button>
+  </div>
+</nav>
+
+<!-- ── MOBILE MENU ── -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu-head">
+    <a href="/" class="nav-brand">
+      <img class="nav-brand-img logo-light" src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+      <img class="nav-brand-img logo-dark" src="/assets/Market-Prism-Logo-Dark.png" alt="Market Prism">
+    </a>
+    <button class="mobile-menu-close" aria-label="Close menu" onclick="document.getElementById('mobile-menu').classList.remove('open')">&times;</button>
+  </div>
+  <div class="mobile-menu-links">
+    <a href="/features" class="mobile-menu-link">Product</a>
+    <a href="#blog-section" class="mobile-menu-link" onclick="document.getElementById('mobile-menu').classList.remove('open')">News</a>
+    <a href="/about" class="mobile-menu-link">About</a>
+    <a href="/pricing" class="mobile-menu-link">Pricing</a>
+  </div>
+  <div class="mobile-menu-foot">
+    <a href="/login#register" class="btn-primary" data-track="nav_get_started" style="text-align:center;padding:14px 18px;font-size:15px;border-radius:10px;">Get started</a>
+    <a href="/login" class="mobile-menu-signin" style="text-align:center;padding:14px 16px;border-radius:10px;background:var(--mp-surface);border:1px solid var(--mp-cyan);font-size:15px;font-weight:600;color:var(--mp-text-primary);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Sign in to dashboard
+    </a>
+  </div>
+</div>
+
+<!-- ── HERO (v3 — demo-in-hero: form + chips render the report inline) ── -->
+<section class="hero" id="try-it">
+  <div class="hero-prism" aria-hidden="true"></div>
+  <div class="container-narrow">
+    <div class="hero-eyebrow">
+      Forensic Market Intelligence
+    </div>
+    <h1 class="hero-h">
+      Buy the signal,<br><em>not the trap.</em>
+    </h1>
+    <p class="hero-lead">
+      Paste any stock story — a headline, a tweet, a thesis. We check it against <strong>3.5M documented narratives</strong> and show you how similar stories actually played out. <strong>Free. No login.</strong>
+    </p>
+
+    <div style="text-align:left;margin-top:4px;">
+      <div class="search-panel">
+        <form class="search-form" id="search-form" onsubmit="return false;">
+          <div class="search-row">
+            <div class="search-field">
+              <label class="search-field-label" for="f-ticker">Ticker</label>
+              <input id="f-ticker" class="search-field-ticker" type="text" autocomplete="off" spellcheck="false" placeholder="NVDA" maxlength="10" aria-label="Ticker symbol">
+            </div>
+            <div class="search-field">
+              <label class="search-field-label" for="f-narrative">Narrative</label>
+              <textarea id="f-narrative" class="search-field-narrative" rows="2" spellcheck="true" placeholder="e.g. NVDA's data-center growth is peaking as hyperscaler capex normalizes."></textarea>
+            </div>
+          </div>
+          <button class="search-btn" id="search-btn" type="button">
+            <span class="search-spinner"></span>
+            <span id="search-btn-label">Generate report</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="search-chips">
+        <span style="font-size:11px;color:var(--mp-text-muted);align-self:center;">Try one:</span>
+        <button class="search-chip" data-tk="TSLA" data-narr="Tesla stock is considered outrageously cheap with potential for 100% upside."><strong>TSLA</strong> outrageously cheap</button>
+        <button class="search-chip" data-tk="INTC" data-narr="Intel's stock is experiencing a speculative bubble, showing valuation extremes more severe than Cisco during the dot-com peak, indicating a potential significant correction."><strong>INTC</strong> dot-com redux</button>
+        <button class="search-chip" data-tk="MP" data-narr="Pentagon backing and attention from Jim Cramer could alter the strategic narrative and future trajectory of MP Materials."><strong>MP</strong> Pentagon halo</button>
+        <button class="search-chip" data-tk="LRCX" data-narr="Lam Research is positioned as a top AI stock with the potential to rise 1000 percent, indicating extreme bullish sentiment due to its role in AI infrastructure."><strong>LRCX</strong> 1000% AI moonshot</button>
+      </div>
+
+      <div class="try-meta-row">
+        <span><strong>3.5M</strong> documented narratives</span>
+        <span>Deterministic — same input, same answer</span>
+        <span>Results in <strong>under a second</strong></span>
+      </div>
+
+      <div class="search-error" id="search-error"></div>
+    </div>
+
+    <div style="margin-top:22px;">
+      <a href="/features" class="hero-cta-secondary" data-track="hero_how_it_works">How it works <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+
+  <!-- Results render here, full inline -->
+  <div class="results" id="results" style="text-align:left;"></div>
+</section>
+
+<!-- ── TRUST STRIP ── -->
+<section class="below" style="padding-top:0;">
+  <div class="container">
+    <div class="trust-grid">
+      <div class="trust-cell">
+        <div class="trust-v">3.5M</div>
+        <div class="trust-l">Historical narratives</div>
+        <div class="trust-d">Earnings calls, filings, news, X — all embedded.</div>
+      </div>
+      <div class="trust-cell">
+        <div class="trust-v">7</div>
+        <div class="trust-l">Forensic layers</div>
+        <div class="trust-d">Force, mass, decay, coordination, risk, drift, reversal.</div>
+      </div>
+      <div class="trust-cell">
+        <div class="trust-v">Daily</div>
+        <div class="trust-l">Auditable runs</div>
+        <div class="trust-d">Every score reproducible to the hash.</div>
+      </div>
+      <div class="trust-cell">
+        <div class="trust-v">$1.5M</div>
+        <div class="trust-l">Public paper book</div>
+        <div class="trust-d">Every pick logged — entry, exit, alpha vs SPY.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 3 · THREE-SCREENSHOT TOUR (replaces "What you get with Pro") ── -->
+<section class="below" id="product-section">
+  <div class="container">
+    <div class="section-eyebrow">What you'd actually see</div>
+    <h2 class="section-title">Real screens, <em>pulled from the live dashboard.</em></h2>
+    <p class="section-sub">Every panel below is a live view from the same forensic pipeline that anchors narrative claims to SEC filings. No mockups. No lorem ipsum.</p>
+
+    <div class="screens-stack">
+
+      <div class="screen-row">
+        <div class="screen-shot">
+          <div class="screen-tag">Live data</div>
+          <img src="/assets/screenshots/new/Daily-Plays-Market-Prism.png" alt="Market Prism Daily Plays dashboard: Day Trade, Swing Trade and Momentum lanes with active picks and signal summary" loading="lazy">
+        </div>
+        <div class="screen-copy">
+          <div class="meta">/dashboard · updated each session</div>
+          <h3>Your market briefing. <em>Every morning.</em></h3>
+          <p>Conviction-ranked picks across day trade, swing, momentum, value and narrative-trap lanes — refreshed every 15 minutes during market hours. Every play is auto-tracked through entry, exit and alpha-vs-SPY.</p>
+        </div>
+      </div>
+
+      <div class="screen-row flip">
+        <div class="screen-shot">
+          <div class="screen-tag">SEC anchored</div>
+          <img src="/assets/screenshots/new/Amazon-Ticker-Forensics.png" alt="Market Prism Amazon (AMZN) ticker forensics page: hype score, fundamental disconnect, conviction tier and multi-horizon projections" loading="lazy">
+        </div>
+        <div class="screen-copy">
+          <div class="meta">/ticker/:symbol</div>
+          <h3>Per-ticker, <em>filing-anchored</em>, non-negotiable.</h3>
+          <p>Open any ticker and the forensic read shows up first: hype score, fundamental disconnect, narrative bias, conviction tier. Toggle the horizon to see <strong>1D, 5D, 30D and 90D</strong> projections side by side — every claim mapped back to the 10-K.</p>
+        </div>
+      </div>
+
+      <div class="screen-row">
+        <div class="screen-shot">
+          <div class="screen-tag">15 live boards</div>
+          <img src="/assets/screenshots/new/Leaderboards-Market-Prism.png" alt="Market Prism Leaderboard: 15 ranked boards covering loudest stories, spam alarm, conviction list, narrative traps, whale tracks, hidden bargains and more" loading="lazy">
+        </div>
+        <div class="screen-copy">
+          <div class="meta">/leaderboard</div>
+          <h3>Forensic edge. <em>Every signal ranked.</em></h3>
+          <p>15 live boards in one screen — from Loudest Stories and Spam Alarm to Whale Tracks, Hidden Bargains, and Today's Verdicts. Coordination alerts and manipulation risk surfaced before they reach the tape.</p>
+          <a href="/features" class="screen-cta" data-track="screens_see_features">See every screen <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 3 · WHY IT'S DIFFERENT (3 cards; full table lives on /features) ── -->
+<section class="below" id="compare-teaser">
+  <div class="container">
+    <div class="section-eyebrow">Why this matters</div>
+    <h2 class="section-title">A different stack <em>from the rest of the field.</em></h2>
+    <p class="section-sub">Bloomberg gives you data. The new wave of AI-stock apps gives you confident text. Market Prism gives you a forensic chain.</p>
+
+    <div class="diff-grid">
+      <div class="diff-card">
+        <div class="diff-h">Not an LLM wrapper</div>
+        <p class="diff-p">A seven-step forensic pipeline anchors every narrative claim to an actual SEC filing. The language model is one tool inside it — not the product.</p>
+      </div>
+      <div class="diff-card">
+        <div class="diff-h">Deterministic, not generative</div>
+        <p class="diff-p">Same input always returns the same answer, reproducible to the hash. Zero sell-side, broker, or PR feeds inside the system.</p>
+      </div>
+      <div class="diff-card">
+        <div class="diff-h">Accountable in public</div>
+        <p class="diff-p">Every daily pick is logged through entry, exit, and alpha-vs-SPY — hits and misses both — in a $1.5M public paper book.</p>
+      </div>
+    </div>
+    <div class="cmp-foot" style="justify-content:center;">
+      <a href="/features#compare" class="cmp-link" data-track="compare_see_full">See the full comparison vs Bloomberg &amp; AI stock apps <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ── LATEST REPORTS (blog teaser) ── -->
+<section class="below" id="blog-section">
+  <div class="container">
+    <div class="blog-head">
+      <div class="blog-head-l">
+        <div class="section-eyebrow">Latest reports</div>
+        <h2 class="section-title">Forensic intelligence, <em>published.</em></h2>
+        <p class="section-sub">Earnings forensics, narrative case studies, and market intel — the reports traders have been quoting. Free to read.</p>
+      </div>
+      <a class="blog-all" href="/blog" data-track="blog_all_reports">All reports <span aria-hidden="true">→</span></a>
+    </div>
+    <div id="blog-featured-slot">
+      <a class="blog-featured" href="/blog/2026-05-04-rddt-q1-2026-forensic-ai-fuel-thesis" data-track="blog_featured_click">
+        <div class="blog-featured-l">
+          <div class="blog-featured-eyebrow">Featured report</div>
+          <div class="blog-featured-title">RDDT Q1 2026 Forensic: The AI Fuel Thesis Just Got Its Print</div>
+          <div class="blog-featured-excerpt">Reddit (NYSE: RDDT) reported Q1 2026 earnings after the close on Thursday, April 30. The print did what the pre-earnings forensic flagged as the bull-case violent-squeeze scenario.</div>
+          <div class="blog-featured-foot">
+            <span><strong>Market Prism Research</strong></span>
+            <span>May 4, 2026 &middot; Free to read</span>
+          </div>
+        </div>
+        <div class="blog-featured-r">
+          <span class="blog-featured-tag">Post-Earnings</span>
+          <div class="blog-featured-ticker">RDDT</div>
+          <div class="blog-featured-pull">"Reddit (NYSE: RDDT) reported Q1 2026 earnings after the close on Thursday, April 30."</div>
+          <span class="blog-featured-cta">Read the full report &rarr;</span>
+        </div>
+      </a>
+    </div>
+    <div class="blog-grid" id="blog-grid">
+      <div class="blog-loading" id="blog-loading">Loading latest reports…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section class="below" id="faq-section">
+  <div class="container">
+    <div style="text-align:center;">
+      <div class="section-eyebrow" style="display:inline-flex;">Frequently asked</div>
+    </div>
+    <h2 class="section-title" style="text-align:center;">Common questions about <em>narrative intelligence.</em></h2>
+    <div class="faq-wrap">
+      <details class="faq-item">
+        <summary class="faq-q">What is Market Prism?</summary>
+        <div class="faq-a">Market Prism is a forensic narrative intelligence platform for equity markets — built for traders who got tired of being the exit liquidity on stories that didn't match the filings. Submit any stock thesis (a sentence, a headline, or an investment memo) and Market Prism pattern-matches it against 3.5 million historical observations: every earnings call, 10-K, 10-Q, 8-K, news headline, and social post we've embedded across 150+ tickers. In under 250 milliseconds it returns a deterministic narrative hit-rate, the average move of similar past narratives over the following 5/10/20 days, and the closest historical analogues — anchored to the SEC filings the narrative is allegedly tracking, weighted by source authority, and flagged when the same framing has been coordinated across multiple outlets in a tight time window. Same input always produces the same output, so you can show your work — and audit ours.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">How does narrative intelligence work?</summary>
+        <div class="faq-a">Every earnings call, SEC filing, news headline, and social post about a tracked ticker is converted into a 384-dimensional embedding plus seven forensic scores (Narrative Force, Risk Pressure, Coordination, Decay, Drift, Reversal, and Mass). When you submit a new thesis, Market Prism finds its 200 nearest neighbors in vector space and aggregates what actually happened next.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">What is a narrative hit-rate?</summary>
+        <div class="faq-a">The narrative hit-rate is the percentage of historical analogues to your thesis that resolved in the thesis direction within a given holding period. A 72% hit-rate over 10 days means 72% of the 200 closest historical narratives moved with the thesis over the following 10 trading days.</div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">Is Market Prism free to use?</summary>
+        <div class="faq-a">Yes — narrative validation is free on the homepage with no login required. The full platform (dashboard, ticker pages, daily brief, sector heatmap, methodology, paper portfolio) is $25/month billed annually.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICING ── -->
+<section class="below">
+  <div class="container">
+    <div style="text-align:center;">
+      <div class="section-eyebrow" style="display:inline-flex;">Pricing</div>
+    </div>
+    <h2 class="section-title" style="text-align:center;">One price. <em>Full platform.</em></h2>
+    <p class="section-sub" style="text-align:center;margin-left:auto;margin-right:auto;">Validate any narrative free, right here on the homepage. Subscribe to unlock the dashboard, ticker pages, daily brief, heatmap, and methodology.</p>
+    <div class="pricing-card">
+      <div class="pricing-l">
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-price">
+          <span class="pricing-price-new">$25</span>
+          <span class="pricing-price-per">/mo</span>
+        </div>
+        <div class="pricing-tag">Early-access pricing, locked in for 12 months. Billed annually.</div>
+        <a href="/login#register" class="pricing-btn" data-track="pricing_start_pro">Start with Pro <span aria-hidden="true">→</span></a>
+      </div>
+      <div class="pricing-r">
+        <ul class="pricing-features">
+          <li class="pricing-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Full pattern match — sparkline, microstructure, and 200 neighbors</li>
+          <li class="pricing-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Daily plays, paper portfolio, and live track record</li>
+          <li class="pricing-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Forensic ticker pages on every tracked symbol</li>
+          <li class="pricing-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Sector heatmap, signal lab, and trading calendar</li>
+          <li class="pricing-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Market Scholar AI for natural-language analysis</li>
+          <li class="pricing-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> All future features included</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand-name">Market Prism</div>
+        <div class="footer-tag">Enterprise narrative intelligence for equity markets. Reproducible to the hash. Three patents pending.</div>
+      </div>
+      <div>
+        <div class="footer-col-lbl">Product</div>
+        <div class="footer-links">
+          <a href="/dashboard">Dashboard</a>
+          <a href="/heatmap">Heatmap</a>
+          <a href="/methodology">Methodology</a>
+          <a href="/casestudies">Case Studies</a>
+          <a href="/pricing">Pricing</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-lbl">Company</div>
+        <div class="footer-links">
+          <a href="/about">About</a>
+          <a href="/blog">Blog</a>
+          <a href="#faq-section">FAQ</a>
+          <a href="mailto:founder@marketprism.co">Contact</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-lbl">Legal</div>
+        <div class="footer-links">
+          <a href="/terms">Terms</a>
+          <a href="/privacy">Privacy</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-lbl">Follow</div>
+        <div class="footer-socials">
+          <a class="footer-social" href="https://x.com/market_prism" target="_blank" rel="noopener" aria-label="Market Prism on X">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a class="footer-social" href="https://www.instagram.com/marketprismai" target="_blank" rel="noopener" aria-label="Market Prism on Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a class="footer-social" href="https://www.tiktok.com/@marketprism" target="_blank" rel="noopener" aria-label="Market Prism on TikTok">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.86a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.29z"/></svg>
+          </a>
+          <a class="footer-social" href="https://www.youtube.com/@MarketPrismAi" target="_blank" rel="noopener" aria-label="Market Prism on YouTube">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </a>
+          <a class="footer-social" href="https://www.reddit.com/r/marketprism/" target="_blank" rel="noopener" aria-label="Market Prism on Reddit">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12.07c0-1.21-.99-2.19-2.21-2.19-.59 0-1.13.23-1.52.61-1.51-1.04-3.55-1.71-5.83-1.79l1.18-3.7 3.18.75c.04.99.86 1.78 1.86 1.78 1.03 0 1.86-.83 1.86-1.86 0-1.03-.83-1.86-1.86-1.86-.75 0-1.4.45-1.69 1.09l-3.55-.84a.55.55 0 0 0-.65.37l-1.34 4.21c-2.32.06-4.4.73-5.93 1.79a2.18 2.18 0 0 0-1.51-.61C2.99 9.88 2 10.86 2 12.07c0 .85.49 1.58 1.21 1.94-.03.21-.05.42-.05.64 0 3.31 3.97 6 8.85 6s8.85-2.69 8.85-6c0-.22-.02-.43-.05-.64.71-.36 1.19-1.09 1.19-1.94zM7 13.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5S7 14.33 7 13.5zm8.71 4.05c-1.06 1.06-3.09 1.14-3.71 1.14s-2.65-.08-3.71-1.14a.4.4 0 0 1 0-.57.4.4 0 0 1 .57 0c.67.67 2.1.91 3.14.91s2.47-.24 3.14-.91a.4.4 0 0 1 .57 0c.16.16.16.41 0 .57zm-.21-2.55c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bot">
+      <span>Patent Pending: 63/971,470 · 63/971,478 · 63/974,154</span>
+      <span>© 2026 Market Prism. All rights reserved.</span>
+    </div>
+    <div class="footer-disclaimer">
+      Market Prism is a research and analytics platform. All content, signals, and scores are generated using proprietary models and historical data and are provided for informational and educational purposes only. Nothing on this platform constitutes investment advice. Past results are not indicative of future performance. Users should conduct their own due diligence and consult a licensed financial advisor before making investment decisions.
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  document.body.classList.add('ready');
+
+  window.toggleTheme = function(){
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('mp-theme', next); } catch(_){}
+  };
+
+  function esc(s){
+    return s == null ? '' : (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtPct(v){
+    if (v == null || isNaN(v)) return '—';
+    var n = Number(v) * 100;
+    return (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
+  }
+  function dirClass(v){
+    if (v == null || isNaN(v)) return 'flat';
+    return v > 0 ? 'up' : (v < 0 ? 'dn' : 'flat');
+  }
+  function fmtPrice(v){
+    if (v == null || isNaN(v)) return '—';
+    return '$' + Number(v).toFixed(2);
+  }
+  function fmtDate(d){
+    if (!d) return '—';
+    try { return new Date(d).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}); }
+    catch(_){ return String(d); }
+  }
+
+  // ── Live ticker via /api/live-quotes-batch ───────────────────────────
+  (function liveTicker(){
+    var TKS = ['NVDA','TSLA','AAPL','MSFT','META','GOOGL','AMZN','PLTR','AMD','SPY','QQQ','TSM'];
+    var track = document.getElementById('tk-track');
+    if (!track) return;
+    fetch('/api/live-quotes-batch?tickers=' + TKS.join(','))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if (!data) return;
+        var quotes = data.quotes || data;
+        var rows = TKS.map(function(t){
+          var q = quotes[t];
+          if (!q || q.price == null) return '';
+          var pct = (q.changePct != null) ? Number(q.changePct) : null;
+          var pctTxt = pct == null ? '' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+          var cls = pct == null ? 'tk-flat' : (pct > 0 ? 'tk-u' : (pct < 0 ? 'tk-d' : 'tk-flat'));
+          return '<div class="tk"><span class="tk-s">'+esc(t)+'</span>' +
+                 '<span class="tk-v">'+fmtPrice(q.price)+'</span>' +
+                 (pctTxt ? '<span class="'+cls+'">'+pctTxt+'</span>' : '') +
+                 '</div>';
+        }).filter(Boolean).join('');
+        if (!rows) return;
+        track.innerHTML = rows + rows;
+      })
+      .catch(function(){});
+  })();
+
+  // ── Search form ──────────────────────────────────────────────────────
+  var btn      = document.getElementById('search-btn');
+  var btnLbl   = document.getElementById('search-btn-label');
+  var errorEl  = document.getElementById('search-error');
+  var inpTk    = document.getElementById('f-ticker');
+  var inpNarr  = document.getElementById('f-narrative');
+  var resultsEl= document.getElementById('results');
+
+  function setLoading(on){
+    btn.classList.toggle('is-loading', on);
+    btn.disabled = on;
+    btnLbl.textContent = on ? 'Searching 3.5M observations…' : 'Generate report';
+  }
+  function showError(msg){
+    errorEl.textContent = msg;
+    errorEl.classList.add('show');
+    resultsEl.classList.remove('show');
+  }
+  function clearError(){
+    errorEl.textContent = '';
+    errorEl.classList.remove('show');
+  }
+
+  // ── GA4 funnel events ────────────────────────────────────────────────
+  // Every CTA carries a data-track attribute; one delegated listener fires
+  // the event so injected HTML (demo results, blog cards) is covered too.
+  function track(name, params){
+    try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch(_){}
+  }
+  document.addEventListener('click', function(e){
+    var el = e.target && e.target.closest ? e.target.closest('[data-track]') : null;
+    if (!el) return;
+    track(el.getAttribute('data-track'), { link_url: el.getAttribute('href') || '' });
+  });
+
+  inpTk.addEventListener('input', function(){
+    inpTk.value = inpTk.value.toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
+  });
+  inpTk.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); inpNarr.focus(); }
+  });
+  inpNarr.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); }
+  });
+  btn.addEventListener('click', submit);
+
+  Array.prototype.forEach.call(document.querySelectorAll('.search-chip'), function(chip){
+    chip.addEventListener('click', function(){
+      inpTk.value = chip.getAttribute('data-tk') || '';
+      inpNarr.value = chip.getAttribute('data-narr') || '';
+      track('demo_chip_click', { ticker: inpTk.value });
+      submit();
+    });
+  });
+
+  // ── Consumer-decision helpers ────────────────────────────────────────
+  // hitRatePct / confPct are 0–100 numbers (or null). p5/p10/p20 are
+  // fractions (0.06 == +6%) — same shape /api/dots-predict returns.
+  function computeDecision(hitRatePct, confPct, p5, p10, p20){
+    var p5p  = (p5  == null || isNaN(p5))  ? null : Number(p5)  * 100;
+    var p10p = (p10 == null || isNaN(p10)) ? null : Number(p10) * 100;
+    var p20p = (p20 == null || isNaN(p20)) ? null : Number(p20) * 100;
+    if ((p5p != null && p5p < -2) || (p10p != null && p10p < -3) || (p20p != null && p20p < -5)) {
+      return { tone:'bear', label:'SIMILAR STORIES SKEWED DOWNWARD',
+               summary:'Most similar past narratives resolved to the downside.' };
+    }
+    if ((confPct != null && confPct < 35) || (hitRatePct != null && hitRatePct < 52)) {
+      return { tone:'warn', label:'LOW CONSENSUS — SIMILAR STORIES WENT BOTH WAYS',
+               summary:'Similar past narratives resolved inconsistently — no clear historical pattern.' };
+    }
+    if (hitRatePct != null && hitRatePct < 60) {
+      return { tone:'neutral', label:'MIXED — SIMILAR STORIES SPLIT ROUGHLY EVEN',
+               summary:'Similar narratives produced inconsistent outcomes.' };
+    }
+    if (hitRatePct != null && hitRatePct >= 60 && confPct != null && confPct >= 40) {
+      return { tone:'bull', label:'HIGH CONSENSUS AMONG SIMILAR NARRATIVES',
+               summary:'Most similar past narratives resolved to the upside.' };
+    }
+    return { tone:'warn', label:'LOW CONSENSUS — SIMILAR STORIES WENT BOTH WAYS',
+             summary:'Similar past narratives resolved inconsistently — no clear historical pattern.' };
+  }
+
+  function edgeInterp(hitRatePct){
+    if (hitRatePct == null || isNaN(hitRatePct)) return { text:'Insufficient data', cls:'flat' };
+    if (hitRatePct >= 70) return { text:'High consensus',     cls:'up'   };
+    if (hitRatePct >= 60) return { text:'Moderate consensus', cls:'up'   };
+    if (hitRatePct >= 52) return { text:'Weak consensus',     cls:'warn' };
+    return                       { text:'Mixed outcomes',     cls:'dn'   };
+  }
+
+  function moveLabel(p, confPct){
+    if (p == null || isNaN(p)) return { text:'no data', cls:'' };
+    var pct = Number(p) * 100;
+    var abs = Math.abs(pct);
+    var base, cls;
+    if (abs < 2) {
+      base = pct === 0 ? 'no clear move' : 'mixed — no clear pattern';
+      cls = '';
+    } else if (abs <= 5) {
+      base = pct > 0 ? 'moderate upside move' : 'moderate downside move';
+      cls = pct > 0 ? 'up' : 'dn';
+    } else {
+      base = pct > 0 ? 'meaningful upside move' : 'meaningful downside move';
+      cls = pct > 0 ? 'up' : 'dn';
+    }
+    return { text:base, cls:cls, lowConf:(confPct != null && confPct < 35) };
+  }
+
+  function genTakeaway(ticker, narrative, hitRatePct, confPct, p5, p10, p20){
+    var tk = ticker || 'this ticker';
+    var narr = (narrative || '').trim();
+    var snippet = narr.length > 120 ? narr.slice(0, 117).replace(/\s+\S*$/, '') + '…' : narr;
+    var p20p = (p20 == null || isNaN(p20)) ? null : Number(p20) * 100;
+    var p5p  = (p5  == null || isNaN(p5))  ? null : Number(p5)  * 100;
+    var p10p = (p10 == null || isNaN(p10)) ? null : Number(p10) * 100;
+
+    var bearish = (p5p != null && p5p < -2) || (p10p != null && p10p < -3) || (p20p != null && p20p < -5);
+    var weak = (confPct != null && confPct < 35) || (hitRatePct != null && hitRatePct < 52);
+    var mixed = hitRatePct != null && hitRatePct >= 52 && hitRatePct < 60;
+    var bullish = hitRatePct != null && hitRatePct >= 60 && confPct != null && confPct >= 40;
+
+    var head = '<strong>' + esc(tk) + '</strong>'
+      + (snippet ? '’s narrative — “' + esc(snippet) + '” — ' : ' — ');
+    var body;
+    if (bearish) {
+      body = 'mostly resolved to the downside in the closest historical analogues. This is a record of how similar stories played out — not a prediction.';
+    } else if (weak) {
+      body = 'resolved inconsistently across our match set — similar stories went both ways, with no clear historical pattern.';
+    } else if (mixed) {
+      var hint = (p20p != null && p20p > 5)  ? 'has some longer-term upside analogues, but the current match set is mixed.' :
+                 (p20p != null && p20p < -5) ? 'has some longer-term downside analogues, but the current match set is mixed.' :
+                                                'produced inconsistent outcomes in similar past setups.';
+      body = hint + ' Similar stories split roughly even.';
+    } else if (bullish) {
+      body = 'mostly resolved to the upside in similar past setups. This describes how comparable narratives played out — not a forecast.';
+    } else {
+      body = 'has few resolved historical analogues so far — treat the comparison as thin.';
+    }
+    return head + body;
+  }
+
+  function neighborHTML(n){
+    var dt = n.observed_at ? fmtDate(n.observed_at) : '—';
+    var simPct = n.similarity != null ? Math.round(Number(n.similarity) * 100) + '% similar' : '';
+    var r10 = n.return_10d;
+    var narr = n.narrative || '—';
+    if (narr.length > 240) narr = narr.slice(0, 240) + '…';
+    var oc, reason;
+    if (r10 == null || isNaN(r10)) {
+      oc = { cls:'flat', text:'Unresolved' };
+      reason = 'Similar story, outcome not yet resolved.';
+    } else {
+      var pct = Number(r10) * 100;
+      if (pct >= 2)       { oc = { cls:'win',  text:'Winner' }; reason = 'Similar story, market followed through to the upside.'; }
+      else if (pct <= -2) { oc = { cls:'lose', text:'Loser'  }; reason = 'Similar story, market faded the narrative.'; }
+      else                { oc = { cls:'flat', text:'Flat'   }; reason = 'Similar story, no meaningful follow-through.'; }
+    }
+    return '<div class="r-neighbor">' +
+      '<div class="r-nb-top">' +
+        '<div class="r-nb-l"><span class="r-nb-tk">'+esc(n.ticker || '—')+'</span><span class="r-nb-date">'+esc(dt)+'</span></div>' +
+        '<div>' +
+          (simPct ? '<span class="r-nb-sim">'+esc(simPct)+'</span>' : '') +
+          '<span class="r-nb-outcome '+oc.cls+'">'+esc(oc.text)+'</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="r-nb-narr">'+esc(narr)+'</div>' +
+      '<div class="r-nb-foot">' +
+        '<span>Source: '+esc(n.speaker || '—')+'</span>' +
+        '<span>10d return <span class="r-nb-ret '+dirClass(r10)+'">'+fmtPct(r10)+'</span></span>' +
+      '</div>' +
+      '<div class="r-nb-reason">'+esc(reason)+'</div>' +
+    '</div>';
+  }
+
+  function renderResult(data){
+    var ticker = data.ticker || (inpTk.value || '').trim().toUpperCase();
+    var narrInput = (inpNarr && inpNarr.value) || '';
+
+    var hr = (data.narrative_hit_rate_5d == null) ? null : Number(data.narrative_hit_rate_5d);
+    var bucket = '', hrTxt = '—';
+    var hrPctNum = null;
+    if (hr != null && !isNaN(hr)) {
+      hrPctNum = Math.round(hr * 100);
+      hrTxt = hrPctNum + '%';
+      bucket = hr >= 0.60 ? 'high' : (hr >= 0.40 ? 'med' : 'low');
+    }
+    var hrN   = data.narrative_hit_rate_n_resolved || 0;
+    var hrConf= Math.round(((data.narrative_hit_rate_confidence || 0) * 100));
+    var nSim  = data.n_similar_dots || 0;
+    var p5  = data.predicted_5d_return,
+        p10 = data.predicted_10d_return,
+        p20 = data.predicted_20d_return;
+
+    var decision = computeDecision(hrPctNum, hrConf, p5, p10, p20);
+    var ei = edgeInterp(hrPctNum);
+
+    function predHTML(label, v){
+      var m = moveLabel(v, hrConf);
+      var subHTML = esc(m.text) + (m.lowConf && m.text !== 'no data' ? '<span class="r-pred-conf">low confidence</span>' : '');
+      return '<div class="r-pred">' +
+               '<div class="r-pred-l">'+label+'</div>' +
+               '<div class="r-pred-v '+dirClass(v)+'">'+fmtPct(v)+'</div>' +
+               '<div class="r-pred-sub '+(m.cls||'')+'">'+subHTML+'</div>' +
+             '</div>';
+    }
+
+    var nbs = (data.neighbor_examples || []).slice(0, 3);
+
+    var html =
+      // 0. Honest-framing disclaimer — historical comparison, not a prediction
+      '<div class="r-disclaimer">This is a historical comparison of similar narratives — not a prediction or trade recommendation. Similar stories often resolve differently.</div>' +
+      // 1. Outcome card — how the closest analogues resolved
+      '<div class="r-decision '+decision.tone+'">' +
+        '<div class="r-dc-tag">How similar narratives resolved</div>' +
+        '<div class="r-dc-label">'+esc(decision.label)+'</div>' +
+        '<div class="r-dc-summary">'+esc(decision.summary)+'</div>' +
+      '</div>' +
+      // 2. Plain-English takeaway
+      '<div class="r-takeaway">' +
+        '<div class="r-tk-eyebrow">Plain-English takeaway</div>' +
+        '<div class="r-tk-body">'+genTakeaway(ticker, narrInput, hrPctNum, hrConf, p5, p10, p20)+'</div>' +
+      '</div>' +
+      // 3. Analogue Consensus
+      '<div class="r-card '+bucket+'">' +
+        '<div class="r-hero">' +
+          '<div class="r-hero-l">' +
+            '<div class="r-eyebrow">Analogue Consensus · <strong>'+esc(ticker)+'</strong></div>' +
+            '<div class="r-num '+bucket+'">'+hrTxt+'</div>' +
+            '<span class="r-edge-interp '+ei.cls+'">'+esc(ei.text)+'</span>' +
+          '</div>' +
+          '<div class="r-hero-r">' +
+            'Confidence <strong>'+hrConf+'%</strong><br>' +
+            '<strong>'+hrN+'</strong> directional of <strong>'+nSim+'</strong> similar narratives' +
+          '</div>' +
+        '</div>' +
+        // 4. How similar narratives moved, with sub-labels
+        '<div class="r-preds">' +
+          predHTML('5d avg move of similar narratives',  p5) +
+          predHTML('10d avg move of similar narratives', p10) +
+          predHTML('20d avg move of similar narratives', p20) +
+        '</div>' +
+      '</div>';
+
+    // 5. Analogues — the closest historical narratives and how they resolved
+    if (nbs.length) {
+      html += '<div class="r-analogue-intro">' +
+                '<div class="r-ai-h">The closest historical analogues</div>' +
+                '<div class="r-ai-sub">Past narratives that were semantically similar to yours — and how each one actually resolved.</div>' +
+              '</div>';
+      html += nbs.map(neighborHTML).join('');
+    }
+
+    // 6. Upsell CTA
+    html +=
+      '<div class="r-cta">' +
+        '<div class="r-cta-text">Want the <strong>full match set</strong>? Unlock all 200 analogues, confidence drivers, microstructure detail, and saved alerts.</div>' +
+        '<div class="r-cta-btns">' +
+          '<a class="r-cta-primary" href="/login#register" data-track="demo_unlock_full">Unlock full report →</a>' +
+          '<a class="r-cta-secondary" href="/login" data-track="demo_sign_in">Sign in</a>' +
+        '</div>' +
+      '</div>';
+
+    resultsEl.innerHTML = html;
+    resultsEl.classList.add('show');
+    track('demo_result', { ticker: ticker });
+    resultsEl.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  // Persistent anonymous session ID — survives page reloads, resets on
+  // localStorage clear. Used server-side to group anonymous searches.
+  function getAnonSessionId(){
+    var KEY = 'mp_anon_sid';
+    try {
+      var existing = localStorage.getItem(KEY);
+      if (existing) return existing;
+      var id = 'anon-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+      localStorage.setItem(KEY, id);
+      return id;
+    } catch(_){ return null; }
+  }
+
+  function submit(){
+    clearError();
+
+    var ticker = (inpTk.value || '').trim().toUpperCase();
+    var narrative = (inpNarr.value || '').trim();
+    if (!ticker) { showError('Enter a ticker symbol.'); inpTk.focus(); return; }
+    if (!narrative) { showError('Paste the narrative or headline you want to validate.'); inpNarr.focus(); return; }
+    if (narrative.length < 10) { showError('Narrative is too short — give us at least a sentence to work with.'); inpNarr.focus(); return; }
+
+    track('demo_submit', { ticker: ticker });
+    setLoading(true);
+    fetch('/api/dots-predict', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ticker: ticker, narrativeText: narrative, anonymousSessionId: getAnonSessionId() })
+    })
+    .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, status:r.status, body:j }; }); })
+    .then(function(res){
+      setLoading(false);
+      if (!res.ok) {
+        track('demo_error', { reason: 'http_' + res.status });
+        showError((res.body && res.body.error) || ('Request failed (HTTP '+res.status+').'));
+        return;
+      }
+      if (res.body.warning === 'no_similar_dots') {
+        track('demo_error', { reason: 'no_similar_dots' });
+        showError('No similar narratives found in the corpus. Try a less specific phrasing.');
+        return;
+      }
+      renderResult(res.body);
+    })
+    .catch(function(err){
+      setLoading(false);
+      track('demo_error', { reason: 'network' });
+      showError('Network error: ' + (err && err.message || 'unknown'));
+    });
+  }
+
+  // Auto-fill from URL params (?ticker=X&narrative=Y) — useful for share links
+  try {
+    var qs = new URLSearchParams(window.location.search);
+    var qt = (qs.get('ticker') || '').trim().toUpperCase();
+    var qn = (qs.get('narrative') || '').trim();
+    if (qt) inpTk.value = qt;
+    if (qn) inpNarr.value = qn;
+    if (qt && qn && qn.length >= 10) setTimeout(submit, 80);
+  } catch(_){}
+
+  // ── Solidify the nav once the user starts scrolling ─────────────────
+  (function navOnScroll(){
+    var nav = document.querySelector('nav.topnav');
+    if (!nav) return;
+    function check(){
+      if (window.scrollY > 24) nav.classList.add('scrolled');
+      else nav.classList.remove('scrolled');
+    }
+    window.addEventListener('scroll', check, { passive: true });
+    check();
+  })();
+
+  // ── Latest reports (homepage blog teaser) ────────────────────────────
+  (function loadBlogTeaser(){
+    var grid = document.getElementById('blog-grid');
+    var featuredSlot = document.getElementById('blog-featured-slot');
+    var loading = document.getElementById('blog-loading');
+    if (!grid) return;
+    var env = window.__env || {};
+    var SUPABASE_URL  = env.SUPABASE_URL  || '';
+    var SUPABASE_ANON = env.SUPABASE_ANON || '';
+    if (!SUPABASE_URL || !SUPABASE_ANON) {
+      if (loading) loading.textContent = 'Reports loading…';
+      return;
+    }
+    // Pull a wider window so we can find an RDDT post if it exists.
+    var url = SUPABASE_URL + '/rest/v1/blog_posts'
+      + '?select=ticker,slug,title,excerpt,tag,author,published_at'
+      + '&status=eq.published'
+      + '&order=published_at.desc'
+      + '&limit=20';
+    fetch(url, {
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
+    })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(posts){
+        if (!posts || !posts.length) {
+          if (loading) loading.textContent = 'No reports published yet.';
+          return;
+        }
+
+        function tagSlug(t){
+          var s = (t || '').toLowerCase();
+          if (s.indexOf('earning') >= 0) return 't-earnings';
+          if (s.indexOf('research') >= 0) return 't-research';
+          if (s.indexOf('market')  >= 0) return 't-market';
+          return '';
+        }
+        function fmtDate(d){
+          if (!d) return '';
+          try { return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+          catch(_){ return ''; }
+        }
+
+        // Featured slot is hardcoded (frozen RDDT card). Still strip any matching
+        // RDDT post from the grid below so it doesn't appear twice.
+        var FROZEN_FEATURED_SLUG = '2026-05-04-rddt-q1-2026-forensic-ai-fuel-thesis';
+        var featured = null;
+        for (var i = 0; i < posts.length; i++) {
+          if ((posts[i].slug || '') === FROZEN_FEATURED_SLUG ||
+              (posts[i].ticker || '').toUpperCase() === 'RDDT') {
+            posts.splice(i, 1);
+            i--;
+          }
+        }
+        var hasStaticFeatured = !!(featuredSlot && featuredSlot.firstElementChild);
+        if (!hasStaticFeatured) featured = posts.shift();
+
+        if (featured && featuredSlot && !hasStaticFeatured) {
+          var fSlug = encodeURIComponent(featured.slug || '');
+          var fTitle = esc(featured.title || 'Untitled');
+          var fEx = esc(featured.excerpt || '');
+          var fTag = esc(featured.tag || 'Featured Report');
+          var fTk = featured.ticker ? esc(featured.ticker) : '';
+          var fAuthor = featured.author ? esc(featured.author) : 'Market Prism';
+          var fDate = esc(fmtDate(featured.published_at));
+          // Pull-quote: first sentence of excerpt, capped.
+          var pull = (featured.excerpt || '').split(/(?<=[.!?])\s/)[0] || '';
+          if (pull.length > 160) pull = pull.slice(0, 157) + '…';
+          featuredSlot.innerHTML =
+            '<a class="blog-featured" href="/blog/'+fSlug+'" data-track="blog_featured_click">' +
+              '<div class="blog-featured-l">' +
+                '<div class="blog-featured-eyebrow">Featured report</div>' +
+                '<div class="blog-featured-title">'+fTitle+'</div>' +
+                '<div class="blog-featured-excerpt">'+fEx+'</div>' +
+                '<div class="blog-featured-foot">' +
+                  '<span><strong>'+fAuthor+'</strong></span>' +
+                  '<span>'+fDate+' &middot; Free to read</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="blog-featured-r">' +
+                '<span class="blog-featured-tag">'+fTag+'</span>' +
+                (fTk ? '<div class="blog-featured-ticker">'+fTk+'</div>' : '') +
+                (pull ? '<div class="blog-featured-pull">"'+esc(pull)+'"</div>' : '') +
+                '<span class="blog-featured-cta">Read the full report &rarr;</span>' +
+              '</div>' +
+            '</a>';
+        }
+
+        // Remaining six in the grid.
+        var rest = posts.slice(0, 6);
+        if (!rest.length) { grid.style.display = 'none'; return; }
+        grid.innerHTML = rest.map(function(p){
+          var slug = encodeURIComponent(p.slug || '');
+          var title = esc(p.title || 'Untitled');
+          var ex = esc(p.excerpt || '');
+          var tagTxt = esc(p.tag || 'Report');
+          var tk = p.ticker ? esc(p.ticker) : '';
+          var author = p.author ? esc(p.author) : 'Market Prism';
+          var dt = esc(fmtDate(p.published_at));
+          return '<a class="blog-card '+tagSlug(p.tag)+'" href="/blog/'+slug+'" data-track="blog_card_click">' +
+            '<div class="blog-meta">' +
+              '<span class="blog-tag">'+tagTxt+'</span>' +
+              (tk ? '<span class="blog-ticker">'+tk+'</span>' : '') +
+            '</div>' +
+            '<div class="blog-title">'+title+'</div>' +
+            '<div class="blog-excerpt">'+ex+'</div>' +
+            '<div class="blog-foot">' +
+              '<span class="blog-author">'+author+'</span>' +
+              '<span>'+dt+'</span>' +
+            '</div>' +
+          '</a>';
+        }).join('');
+      })
+      .catch(function(){
+        if (loading) loading.textContent = 'Reports unavailable right now.';
+      });
+  })();
+
+  // ── Live mini ticker — picks today's strongest forecast and renders
+  // the dashboard verdict panel against that ticker. Falls back to NVDA
+  // if the picker query fails or returns nothing usable.
+  (function miniTicker(){
+    var root = document.getElementById('minit'); if (!root) return;
+    var env = window.__env || {};
+    var SUPABASE_URL  = env.SUPABASE_URL  || '';
+    var SUPABASE_ANON = env.SUPABASE_ANON || '';
+    var FALLBACK_TICKER = 'NVDA';
+    if (!SUPABASE_URL || !SUPABASE_ANON) return;
+
+    var elLivepill = document.getElementById('minit-livepill');
+    var elTicker = document.getElementById('minit-ticker');
+    var elName   = document.getElementById('minit-name');
+    var elCta    = document.getElementById('minit-cta');
+    var elPrice  = document.getElementById('minit-price');
+    var elDelta  = document.getElementById('minit-delta');
+    var elRow    = document.getElementById('minit-verdict-row');
+    var elHL     = document.getElementById('minit-headline');
+    var elBV = document.getElementById('mc-bias-val'), elBS = document.getElementById('mc-bias-sub');
+    var elHV = document.getElementById('mc-hor-val'),  elHS = document.getElementById('mc-hor-sub');
+    var elIV = document.getElementById('mc-inv-val'),  elIS = document.getElementById('mc-inv-sub');
+    var elFV = document.getElementById('mc-fv-val'),   elFS = document.getElementById('mc-fv-sub');
+    var elConvRow  = document.getElementById('minit-conv-row');
+    var elConvNote = document.getElementById('minit-conv-note');
+
+    function get(path){
+      return fetch(SUPABASE_URL + '/rest/v1/' + path, {
+        headers: { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + SUPABASE_ANON }
+      }).then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; });
+    }
+    function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    function fmtUsd(p){ if (p == null || isNaN(p)) return '—'; var n = Number(p); return Math.abs(n) >= 100 ? '$' + n.toFixed(0) : '$' + n.toFixed(2); }
+    function fmtPct(p, dp){ if (p == null || isNaN(p)) return '—'; dp = dp == null ? 1 : dp; var s = p > 0 ? '+' : ''; return s + Number(p).toFixed(dp) + '%'; }
+    function pctClass(p){ if (p == null || isNaN(p)) return 'tt-neu'; return p > 0 ? 'tt-pos' : (p < 0 ? 'tt-neg' : 'tt-neu'); }
+    function ttColor(name){
+      switch ((name||'').toLowerCase()){
+        case 'red': return '#FF4D4D'; case 'green': return '#00DE94'; case 'amber': return '#FFB800';
+        case 'blue': return '#00AEFF'; case 'gray': case 'grey': return '#A0A8B0';
+        default: return '#A0A8B0';
+      }
+    }
+    function ttBiasLabel(b){
+      switch ((b||'').toLowerCase()){
+        case 'short': return 'Short / Avoid Long'; case 'long': return 'Long / Buy Setup';
+        case 'watch_short': return 'Watch — Short Bias'; case 'watch_long': return 'Watch — Long Bias';
+        case 'neutral': return 'Neutral'; default: return b || '—';
+      }
+    }
+    function ttRelative(iso){
+      if (!iso) return ''; var t = new Date(iso).getTime(); if (!isFinite(t)) return '';
+      var s = Math.max(0, Math.floor((Date.now() - t) / 1000));
+      if (s < 60) return 'Updated just now';
+      if (s < 3600) return 'Updated ' + Math.floor(s/60) + 'm ago';
+      if (s < 86400) return 'Updated ' + Math.floor(s/3600) + 'h ago';
+      if (s < 86400*7) return 'Updated ' + Math.floor(s/86400) + 'd ago';
+      if (s < 86400*30) return 'Updated ' + Math.floor(s/(86400*7)) + 'w ago';
+      return 'Updated ' + Math.floor(s/(86400*30)) + 'mo ago';
+    }
+
+    // 1) Pick today's strongest directional forecast. Pull a small pool of
+    //    candidates ordered by conviction and cull client-side — server-side
+    //    `severity_label=not.is.null` proved too strict and dumped us back to
+    //    the NVDA fallback even when good picks existed. We just want a row
+    //    with a real directional bias, healthy conviction, and a non-INSUFFICIENT
+    //    verdict.
+    var qPick = 'ticker_forecast'
+      + '?select=ticker,bias,conviction_5d,severity_label,directional_verdict,classification_label,heavy_refreshed_at'
+      + '&bias=in.(long,short,watch_long,watch_short)'
+      + '&order=conviction_5d.desc.nullslast,heavy_refreshed_at.desc'
+      + '&limit=20';
+
+    get(qPick).then(function(picks){
+      function viable(row){
+        if (!row || !row.ticker) return false;
+        if (row.classification_label === 'INSUFFICIENT') return false;
+        var v = String(row.directional_verdict || '');
+        if (/insufficient/i.test(v)) return false;
+        var conv = Number(row.conviction_5d);
+        if (!isFinite(conv) || conv < 30) return false;
+        return true;
+      }
+      var pick = (picks || []).find(viable);
+      var TICKER = pick ? pick.ticker : FALLBACK_TICKER;
+
+      // Reflect the picked ticker in the chrome immediately so the user
+      // doesn't see "—" while the panel queries are in flight.
+      if (elTicker) elTicker.textContent = TICKER;
+      if (elLivepill) elLivepill.textContent = 'Live · ' + TICKER;
+      if (elCta) elCta.href = '/ticker/' + encodeURIComponent(TICKER);
+
+      var qHead = 'v_dash_daily_story?select=snapshot_date,price,price_change_pct,story_claim,prism_verdict,narrative_state,sector_name,pe_ratio,company_name&ticker=eq.'+TICKER+'&order=snapshot_date.desc&limit=1';
+      var qSnap = 'ticker_snapshots?select=snapshot_date,price_close&ticker=eq.'+TICKER+'&order=snapshot_date.desc&limit=1';
+      var qFc   = 'ticker_forecast?select=*&ticker=eq.'+TICKER+'&limit=1';
+      var qFv   = 'daily_fair_value?select=fair_value,fv_low,fv_high,verdict,premium_pct,snapshot_date,computed_at&ticker=eq.'+TICKER+'&order=snapshot_date.desc&limit=1';
+
+      Promise.all([get(qHead), get(qSnap), get(qFc), get(qFv)]).then(function(res){
+      var head = (res[0]||[])[0] || null;
+      var snap = (res[1]||[])[0] || null;
+      var f    = (res[2]||[])[0] || null;
+      var fv   = (res[3]||[])[0] || null;
+
+      // Company name — fall back to ticker if v_dash_daily_story doesn't have one.
+      if (elName) elName.textContent = (head && head.company_name) ? head.company_name : TICKER;
+
+      // Price / delta — prefer freshest ticker_snapshots row.
+      var price = (snap && snap.price_close != null) ? Number(snap.price_close)
+                : (head && head.price != null) ? Number(head.price) : null;
+      var delta = head && head.price_change_pct != null ? Number(head.price_change_pct) : null;
+      elPrice.textContent = price != null ? '$' + price.toFixed(2) : '—';
+      if (delta != null){
+        var sign = delta > 0 ? '+' : '';
+        elDelta.textContent = sign + delta.toFixed(2) + '%';
+        elDelta.className = 'minit-delta ' + (delta > 0.05 ? 'is-up' : delta < -0.05 ? 'is-down' : 'is-flat');
+      }
+
+      // Verdict / severity / classification / sector / fresh
+      var color = ttColor(f && f.color);
+      var verdict = (f && f.directional_verdict) || (head && head.prism_verdict) || 'Monitoring';
+      var sev = f && f.severity_label, cls = f && f.classification_label;
+      var fresh = f && f.heavy_refreshed_at ? ttRelative(f.heavy_refreshed_at) : '';
+      var sector = head && head.sector_name ? esc(head.sector_name) : '';
+      var rowHtml = '<span class="tt-verdict" style="color:'+color+';">'+ esc(verdict) +'</span>';
+      if (sev) rowHtml += '<span class="tt-sev" style="background:'+color+';">'+ esc(sev) +'</span>';
+      if (cls && cls !== 'STANDARD') rowHtml += '<span class="tt-class">'+ esc(cls) +'</span>';
+      if (sector) rowHtml += '<span class="tt-sector">'+ sector +'</span>';
+      rowHtml += '<span id="minit-pe-bubble"></span>';
+      if (fresh) rowHtml += '<span class="tt-fresh">'+ esc(fresh) +'</span>';
+      elRow.innerHTML = rowHtml; elRow.hidden = false;
+
+      // Headline
+      var headline = (f && f.one_line_headline && String(f.one_line_headline).trim())
+                  || (head && head.story_claim) || '';
+      elHL.textContent = headline || 'Live narrative summary updates pre-bell each trading day.';
+
+      // Bias / Horizon / Invalidation cells
+      if (f) {
+        elBV.textContent = ttBiasLabel(f.bias);
+        elBV.style.color = color;
+
+        var primary = (f.primary_horizon || '5d').toLowerCase();
+        var primPct = f['predicted_'+primary+'_pct'];
+        var primPrice = f['predicted_'+primary+'_price'];
+        var primLo = f['predicted_'+primary+'_low'];
+        var primHi = f['predicted_'+primary+'_high'];
+        elHV.textContent = primary.toUpperCase() + ' move';
+        var bandPct = (primLo != null && primHi != null && f.current_price)
+          ? (((primHi - primLo)/2) / Number(f.current_price) * 100) : null;
+        var hsub = '<span class="'+pctClass(primPct)+'">'+ fmtPct(primPct) +'</span>';
+        if (primPrice != null) hsub += ' &middot; ' + fmtUsd(primPrice);
+        if (bandPct != null)   hsub += ' &middot; ± ' + bandPct.toFixed(1) + '%';
+        elHS.innerHTML = hsub;
+
+        if (f.invalidation_price != null){
+          var biasIsShort = (f.bias === 'short' || f.bias === 'watch_short');
+          elIV.textContent = (biasIsShort ? 'Above ' : 'Below ') + fmtUsd(f.invalidation_price);
+          elIS.textContent = 'Stop level';
+        } else {
+          elIV.textContent = '—';
+          elIV.style.color = 'var(--mp-text-tertiary)';
+          elIS.textContent = 'Neutral bias';
+        }
+
+        // Conviction
+        var primConv = f['conviction_'+primary];
+        if (primConv != null){
+          var filled = Math.max(0, Math.min(10, Math.round(Number(primConv)/10)));
+          var dotsF = '●'.repeat(filled), dotsE = '○'.repeat(10 - filled);
+          elConvRow.innerHTML = '<span>Conviction ' + Math.round(Number(primConv)) + '%</span>'
+            + '<span class="tt-conv-dots" style="color:'+color+';">'+ dotsF +'</span>'
+            + '<span class="tt-conv-dots" style="color:var(--mp-text-muted);">'+ dotsE +'</span>';
+          elConvRow.hidden = false; elConvNote.hidden = false;
+        }
+      } else {
+        elBV.textContent = 'Neutral';
+        elHV.textContent = '—'; elHS.textContent = 'Awaiting forecast';
+        elIV.textContent = '—'; elIV.style.color = 'var(--mp-text-tertiary)'; elIS.textContent = 'Neutral bias';
+      }
+
+      // Fair Value — central daily_fair_value, % vs current price.
+      var fvPrice = fv && fv.fair_value != null ? Number(fv.fair_value) : null;
+      var ref = price != null ? price : (f && f.current_price != null ? Number(f.current_price) : null);
+      var fvPct = (fvPrice != null && ref != null && ref > 0) ? (fvPrice - ref) / ref * 100 : null;
+      if (fvPrice != null && fvPct != null){
+        elFV.textContent = fmtUsd(fvPrice);
+        elFS.innerHTML = '<span class="'+pctClass(fvPct)+'">'+ fmtPct(fvPct) +'</span>';
+      } else {
+        elFV.textContent = '—'; elFV.style.color = 'var(--mp-text-tertiary)';
+        elFS.textContent = 'Not available';
+      }
+
+      // P/E bubble (uses sector benchmarks for vs-sector delta).
+      loadPe(head);
+    });
+    });
+
+    function loadPe(head){
+      var el = document.getElementById('minit-pe-bubble');
+      if (!el || !head || head.pe_ratio == null) return;
+      var tPe = Number(head.pe_ratio);
+      if (!isFinite(tPe) || tPe <= 0) return;
+      var solo = '<span class="pe-bubble neutral" title="Trailing P/E ratio">'
+               + '<span class="pe-bubble-lbl">P/E</span> '
+               + '<span class="pe-bubble-val">'+ tPe.toFixed(1) +'x</span></span>';
+      if (!head.sector_name){ el.outerHTML = solo; return; }
+      get('sector_pe_benchmarks?select=median_pe,avg_pe,ticker_count_pe&sector=eq.'+encodeURIComponent(head.sector_name)+'&keyword=is.null').then(function(rows){
+        var num = 0, den = 0;
+        (rows||[]).forEach(function(row){
+          var m = row.median_pe != null ? Number(row.median_pe) : null;
+          var w = row.ticker_count_pe != null ? Number(row.ticker_count_pe) : 0;
+          if (m != null && isFinite(m) && w > 0){ num += m*w; den += w; }
+        });
+        if (den === 0){ el.outerHTML = solo; return; }
+        var sectorPe = num/den;
+        if (!isFinite(sectorPe) || sectorPe <= 0){ el.outerHTML = solo; return; }
+        var deltaPct = ((tPe - sectorPe) / sectorPe) * 100;
+        var tone = deltaPct > 5 ? 'bear' : deltaPct < -5 ? 'bull' : 'neutral';
+        var arrow = deltaPct > 0 ? '↑' : deltaPct < 0 ? '↓' : '→';
+        var sign = deltaPct > 0 ? '+' : '';
+        el.outerHTML = '<span class="pe-bubble '+tone+'" title="P/E vs sector median">'
+          + '<span class="pe-bubble-lbl">P/E</span> '
+          + '<span class="pe-bubble-val">'+ tPe.toFixed(1) +'x</span> '
+          + '<span class="pe-bubble-vs">vs Sector</span> '
+          + '<span class="pe-bubble-sec">'+ sectorPe.toFixed(1) +'x</span> '
+          + '<span class="pe-bubble-delta '+tone+'">'+ arrow +' '+ sign + deltaPct.toFixed(0) +'%</span>'
+          + '</span>';
+      }).catch(function(){ el.outerHTML = solo; });
+    }
+  })();
+})();
+</script>
+
+<!-- ── Full-page constellation network (mouse-aware) ── -->
+<script>
+(function(){
+  var canvas = document.getElementById('bg-constellation');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W, H, nodes = [], pulses = [], flares = [];
+  var NODE_COUNT = 50;
+  var LINK_DIST = 145;
+  var MOUSE = { x: -9999, y: -9999 };
+  var MOUSE_RADIUS = 220;
+  var scrollPct = 0;
+  var raf, now = 0;
+  var lastPulse = 0;
+
+  // Neuron-style monochrome — single warm-white tone for everything
+  var WHITE = '255,255,255';
+
+  function lerp(a,b,t){ return a+(b-a)*t; }
+
+  function resize(){
+    W=window.innerWidth; H=window.innerHeight;
+    canvas.width=W*dpr; canvas.height=H*dpr;
+    canvas.style.width=W+'px'; canvas.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function init(){
+    resize(); nodes=[]; pulses=[]; flares=[];
+    if(window.innerWidth<768) NODE_COUNT=28;
+    for(var i=0;i<NODE_COUNT;i++){
+      nodes.push({
+        x:Math.random()*W, y:Math.random()*H,
+        vx:(Math.random()-0.5)*0.03, vy:(Math.random()-0.5)*0.03,
+        r:Math.random()*1.4+0.6, phase:Math.random(),
+        baseAlpha:Math.random()*0.20+0.18
+      });
+    }
+  }
+
+  function spawnPulse(a,b){
+    pulses.push({ ax:a.x,ay:a.y, bx:b.x,by:b.y, t:0, speed:0.0025+Math.random()*0.003 });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+
+    // Synapse-like links: thin, white, only between nearer neighbors
+    for(var i=0;i<nodes.length;i++){
+      var ni=nodes[i];
+      for(var j=i+1;j<nodes.length;j++){
+        var nj=nodes[j];
+        var dx=ni.x-nj.x, dy=ni.y-nj.y, dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<LINK_DIST){
+          var fade=1-dist/LINK_DIST;
+          var alpha=fade*fade*0.10;
+          var mx=(ni.x+nj.x)/2, my=(ni.y+nj.y)/2;
+          var mdx=mx-MOUSE.x, mdy=my-MOUSE.y, mDist=Math.sqrt(mdx*mdx+mdy*mdy);
+          if(mDist<MOUSE_RADIUS) alpha+=((1-mDist/MOUSE_RADIUS)*0.10);
+          ctx.beginPath();
+          ctx.moveTo(ni.x,ni.y); ctx.lineTo(nj.x,nj.y);
+          ctx.strokeStyle='rgba('+WHITE+','+alpha+')';
+          ctx.lineWidth=fade*0.7;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Synaptic pulses — thin white travelers along axons
+    for(var p=pulses.length-1;p>=0;p--){
+      var pl=pulses[p];
+      pl.t+=pl.speed;
+      if(pl.t>1){ pulses.splice(p,1); continue; }
+      var px=lerp(pl.ax,pl.bx,pl.t), py=lerp(pl.ay,pl.by,pl.t);
+      var pa=Math.sin(pl.t*Math.PI);
+      var grd=ctx.createRadialGradient(px,py,0,px,py,6);
+      grd.addColorStop(0,'rgba('+WHITE+','+pa*0.35+')');
+      grd.addColorStop(1,'rgba('+WHITE+',0)');
+      ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2);
+      ctx.fillStyle=grd; ctx.fill();
+      ctx.beginPath(); ctx.arc(px,py,1.1,0,Math.PI*2);
+      ctx.fillStyle='rgba('+WHITE+','+pa*0.7+')';
+      ctx.fill();
+    }
+
+    // Neuron cell bodies — soft white with gentle halo
+    for(var k=0;k<nodes.length;k++){
+      var n=nodes[k];
+      var pulse=n.baseAlpha+Math.sin(now*0.0004+n.phase*6.28)*0.08;
+      var ndx=n.x-MOUSE.x, ndy=n.y-MOUSE.y, nDist=Math.sqrt(ndx*ndx+ndy*ndy);
+      var mouseBoost=0, sizeBoost=0;
+      if(nDist<MOUSE_RADIUS){
+        var prox=1-nDist/MOUSE_RADIUS;
+        mouseBoost=prox*0.25;
+        sizeBoost=prox*1.8;
+        var pushF=prox*0.05;
+        n.vx+=ndx/nDist*pushF*0.02;
+        n.vy+=ndy/nDist*pushF*0.02;
+      }
+      var haloR=n.r+7+sizeBoost;
+      var hgrd=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,haloR);
+      hgrd.addColorStop(0,'rgba('+WHITE+','+(pulse*0.18+mouseBoost*0.18)+')');
+      hgrd.addColorStop(1,'rgba('+WHITE+',0)');
+      ctx.beginPath(); ctx.arc(n.x,n.y,haloR,0,Math.PI*2);
+      ctx.fillStyle=hgrd; ctx.fill();
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r+sizeBoost*0.3,0,Math.PI*2);
+      ctx.fillStyle='rgba('+WHITE+','+Math.min(0.85,pulse*0.9+mouseBoost)+')';
+      ctx.fill();
+    }
+  }
+
+  function update(){
+    now=Date.now();
+    for(var i=0;i<nodes.length;i++){
+      var n=nodes[i];
+      n.vx*=0.995; n.vy*=0.995;
+      n.x+=n.vx; n.y+=n.vy;
+      if(n.x<-30)n.x=W+30; if(n.x>W+30)n.x=-30;
+      if(n.y<-30)n.y=H+30; if(n.y>H+30)n.y=-30;
+    }
+    // Synaptic firing — rare, slow white travelers between connected neurons
+    if(now-lastPulse>2200 && pulses.length<3){
+      lastPulse=now;
+      var a=nodes[Math.floor(Math.random()*nodes.length)];
+      var candidates=[];
+      for(var q=0;q<nodes.length;q++){
+        if(nodes[q]===a) continue;
+        var ddx=a.x-nodes[q].x, ddy=a.y-nodes[q].y;
+        if(ddx*ddx+ddy*ddy < LINK_DIST*LINK_DIST) candidates.push(nodes[q]);
+      }
+      if(candidates.length){
+        var b=candidates[Math.floor(Math.random()*candidates.length)];
+        spawnPulse(a,b);
+      }
+    }
+  }
+
+  function loop(){ update(); draw(); raf=requestAnimationFrame(loop); }
+
+  document.addEventListener('mousemove',function(e){ MOUSE.x=e.clientX; MOUSE.y=e.clientY; },{passive:true});
+  document.addEventListener('mouseleave',function(){ MOUSE.x=-9999; MOUSE.y=-9999; });
+  window.addEventListener('scroll',function(){
+    var docH=document.documentElement.scrollHeight-window.innerHeight;
+    scrollPct=docH>0?window.scrollY/docH:0;
+  },{passive:true});
+  window.addEventListener('resize',resize);
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){ if(raf) cancelAnimationFrame(raf); }
+    else { raf=requestAnimationFrame(loop); }
+  });
+
+  init(); loop();
+})();
+</script>
+
+</body>
+</html>
