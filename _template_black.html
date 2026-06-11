@@ -8056,6 +8056,7 @@ async function loadData(){
           return '<div class="dr-earn-row">'
             +'<div class="dr-earn-date">'+(r._dte===0?'Today':r._dte+'d')+'</div>'
             +'<div class="dr-earn-main"><div class="dr-earn-ticker">'+esc(r.ticker)+'</div><div class="dr-earn-name">'+esc(r.sector_name||'')+'</div></div>'
+            +'<div style="margin-left:auto;text-align:right;white-space:nowrap;"><span data-live-price="'+esc(r.ticker)+'" style="font-size:11px;color:var(--mp-text-tertiary);font-family:var(--font-body);font-weight:500;"></span> <span data-live-change="'+esc(r.ticker)+'" style="font-size:10px;font-family:var(--font-body);"></span></div>'
           +'</div>';
         }).join('');
       } else {
@@ -8291,13 +8292,12 @@ function nfBuildRow(dir, logoHtml, ticker, sector, headline, verdict, href, extr
   var pct=extra.pricePct||0;
   var chgCls=pct>0?'nc-change-up':pct<0?'nc-change-dn':'nc-change-flat';
   var chgTxt=pct===0?'\u2014':(pct>0?'+':'')+pct.toFixed(2)+'%';
-  var priceHTML='';
-  if(extra.price!=null){
-    priceHTML='<div class="nc-price-group" data-ticker="'+esc(ticker)+'">'
-      +'<span class="nc-price" data-live-price="'+esc(ticker)+'">$'+fmtPrice(extra.price)+'</span>'
-      +'<span class="nc-change '+chgCls+'" data-live-change="'+esc(ticker)+'">'+chgTxt+'</span>'
-    +'</div>';
-  }
+  // Always emit the price group (even when the pipeline row has no price)
+  // so liveQuotesRefreshDaily() can fill it from the quote batch.
+  var priceHTML='<div class="nc-price-group" data-ticker="'+esc(ticker)+'">'
+    +'<span class="nc-price" data-live-price="'+esc(ticker)+'">'+(extra.price!=null?'$'+fmtPrice(extra.price):'')+'</span>'
+    +'<span class="nc-change '+chgCls+'" data-live-change="'+esc(ticker)+'">'+(extra.price!=null?chgTxt:'')+'</span>'
+  +'</div>';
 
   // ── SECTION 2: IS IT TRUE? ──
   var sc=extra._scorecard||{};
@@ -10221,7 +10221,7 @@ function renderCoordinationCards(){
     var pricePct=dataRow.price_change_pct?parseFloat(dataRow.price_change_pct):0;
     var priceCls=pricePct>0?'nc-change-up':pricePct<0?'nc-change-dn':'nc-change-flat';
     var priceSign=pricePct>0?'+':'';
-    var priceHTML=price?'<div class="nc-price-group"><span class="nc-price">$'+price.toFixed(2)+'</span><span class="nc-change '+priceCls+'">'+priceSign+pricePct.toFixed(2)+'%</span></div>':'';
+    var priceHTML='<div class="nc-price-group"><span class="nc-price" data-live-price="'+esc(r.ticker)+'">'+(price?'$'+price.toFixed(2):'')+'</span><span class="nc-change '+priceCls+'" data-live-change="'+esc(r.ticker)+'">'+(price?priceSign+pricePct.toFixed(2)+'%':'')+'</span></div>';
 
     // Verdict badge
     var verdict=(r.verdict||'').toLowerCase();
@@ -11490,7 +11490,7 @@ function renderSnap(){
     var prismHTML='<span style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;background:'+(prismCls==='stable'?'#00DE94':prismCls==='monitoring'?'#FFB800':'#FF4D4D')+'"></span><span style="font-size:12px;">'+esc(prism.split(' ')[0]||'\u2014')+'</span>';
     return '<tr onclick="window.location.href=\'/ticker/'+encodeURIComponent(r.ticker)+'\'" style="cursor:pointer;">'
       +'<td><div style="display:flex;align-items:center;gap:8px;">'+logoHTML(r.ticker,'sm')+'<div><span class="snap-sym">'+r.ticker+'</span></div></div></td>'
-      +'<td class="r"><div class="snap-price">$'+fmtPrice(r.price)+'</div></td>'
+      +'<td class="r"><div class="snap-price" data-live-price="'+encodeURIComponent(r.ticker)+'">$'+fmtPrice(r.price)+'</div><div data-live-change="'+encodeURIComponent(r.ticker)+'" style="font-size:10px;font-family:var(--font-body);"></div></td>'
       +'<td><span class="snap-verdict '+sc+'">'+esc(r.verdict||r.prism_verdict||'\u2014')+'</span></td>'
       +'<td><div class="snap-tags">'+tagsHTML+'</div></td>'
       +'<td>'+fvdHTML+'</td>'
@@ -13235,8 +13235,8 @@ function buildCardFrontHTML(c,i,dateStr,prefix,showActions){
             +'</div>'
             // 2. Price row
             +'<div class="tc-price-row">'
-              +'<span class="tc-price">$'+fmtPrice(c.price)+'</span>'
-              +'<span class="tc-change" style="color:'+(isBull?'#00DE94':'#FF4D4D')+';">'+(isBull?'\u25B2':'\u25BC')+' '+Math.abs(c.price_change_pct||0).toFixed(2)+'%</span>'
+              +'<span class="tc-price" data-live-price="'+encodeURIComponent(c.ticker)+'">$'+fmtPrice(c.price)+'</span>'
+              +'<span class="tc-change" data-live-change="'+encodeURIComponent(c.ticker)+'" style="color:'+(isBull?'#00DE94':'#FF4D4D')+';">'+(isBull?'\u25B2':'\u25BC')+' '+Math.abs(c.price_change_pct||0).toFixed(2)+'%</span>'
             +'</div>'
             // 3. Command (pill badge)
             +'<div class="tc-command" style="border-color:'+hexToRgba(cmdColor,0.2)+';background:'+hexToRgba(cmdColor,0.06)+';color:'+cmdColor+';">'+(c.biasText||'Signal').toUpperCase()+'</div>'
@@ -13464,8 +13464,8 @@ function buildStratCard(d){
         +'<div class="gc-ticker">'+gcEsc(d.ticker)+'</div>'
       +'</div>'
       +'<div class="gc-price-col">'
-        +'<div class="gc-price">$'+fmtPrice(price)+'</div>'
-        +'<div class="gc-change '+chClass+'">'+chSign+' '+Math.abs(chPct).toFixed(2)+'%</div>'
+        +'<div class="gc-price" data-live-price="'+gcEsc(d.ticker)+'">$'+fmtPrice(price)+'</div>'
+        +'<div class="gc-change '+chClass+'" data-live-change="'+gcEsc(d.ticker)+'">'+chSign+' '+Math.abs(chPct).toFixed(2)+'%</div>'
       +'</div>'
     +'</div>'
     +'<div class="gc-move-name">'+gcEsc(moveName)+'</div>'
@@ -14219,8 +14219,8 @@ function tcRenderCards(){
             +'<span class="tc-rarity" style="color:'+tierColor+';border-color:'+tierColor+'33;background:'+tierColor+'14;">'+tierIcon+' '+(s.tier||'SIGNAL')+(s.winRate?' \u00B7 '+s.winRate:'')+'</span>'
           +'</div>'
           +'<div class="tc-price-row">'
-            +'<span class="tc-price">'+s.price+'</span>'
-            +'<span class="tc-change" style="color:'+deltaColor+';">'+s.change+'</span>'
+            +'<span class="tc-price" data-live-price="'+encodeURIComponent(s.ticker)+'">'+s.price+'</span>'
+            +'<span class="tc-change" data-live-change="'+encodeURIComponent(s.ticker)+'" style="color:'+deltaColor+';">'+s.change+'</span>'
           +'</div>'
           +'<div class="tc-command" style="color:'+dirColor+';">'+(s.moveName||s.bias||'SIGNAL')+'</div>'
           +'<div style="padding:2px 14px 6px;display:flex;align-items:center;gap:6px;">'
