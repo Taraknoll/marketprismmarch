@@ -195,7 +195,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "includeFiles": "_home_v2.html"
+      "includeFiles": "_home_v3.html"
     },
     "api/dashboard.js": {
       "includeFiles": "{_template.html,_signal_lab_tab.html,_ticker_tab.html}"

@@ -5,7 +5,7 @@ module.exports = (req, res) => {
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseAnon = process.env.SUPABASE_ANON || '';
 
-    let html = resolveTemplate('_home_v2.html');
+    let html = resolveTemplate('_home_v3.html');
 
     html = html.replace(
       "window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '' };",
