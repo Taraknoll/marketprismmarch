@@ -18,9 +18,22 @@ module.exports = async (req, res) => {
 
     let html = resolveTemplate('_template_black.html');
 
+    // Neutralize the shared partials' blue-tinted obsidian hardcodes for the
+    // black test page only — the partial files themselves stay untouched
+    // because the live /dashboard injects them too.
+    const neutralize = (s) => s
+      .replace(/#0C1018/g, '#121212')
+      .replace(/#111927/g, '#1A1A1A')
+      .replace(/#080B11/g, '#0A0A0A')
+      .replace(/#0A0E1A/g, '#121212')
+      .replace(/#0C0D14/g, '#101010')
+      .replace(/rgba\(12,16,24/g, 'rgba(18,18,18')
+      .replace(/rgba\(17,25,39/g, 'rgba(26,26,26')
+      .replace(/rgba\(8,11,17/g, 'rgba(10,10,10');
+
     // Inject Signal Lab tab partial
     try {
-      const slTab = resolveTemplate('_signal_lab_tab.html');
+      const slTab = neutralize(resolveTemplate('_signal_lab_tab.html'));
       html = html.replace('<!-- SIGNAL_LAB_INJECT -->', function() { return slTab; });
     } catch (e) {
       console.warn('Signal Lab tab not found:', e.message);
@@ -28,7 +41,7 @@ module.exports = async (req, res) => {
 
     // Inject Ticker Research tab partial
     try {
-      const trTab = resolveTemplate('_ticker_tab.html');
+      const trTab = neutralize(resolveTemplate('_ticker_tab.html'));
       html = html.replace('<!-- TICKER_TAB_INJECT -->', function() { return trTab; });
     } catch (e) {
       console.warn('Ticker tab not found:', e.message);
