@@ -4325,6 +4325,24 @@ body{
 .lb-arr{font-size:11px;color:var(--mp-text-tertiary);flex-shrink:0;margin-left:2px;}
 .lb-row:hover .lb-arr{color:#00AEFF;}
 .lb-empty{padding:20px 16px;font-size:13px;color:var(--mp-text-tertiary);}
+/* Full-width table board (renderAs:'table' — Most Influential Market Movers).
+   Spans the whole grid row; on mobile the grid is single-column anyway and
+   the wrapper scrolls horizontally. */
+.lb-section-table{grid-column:1 / -1;}
+.lb-table-wrap{position:relative;z-index:2;overflow-x:auto;}
+.lb-table{width:100%;border-collapse:collapse;}
+.lb-table .lb-th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mp-text-tertiary);text-align:left;padding:10px 16px;border-bottom:1px solid var(--mp-border);white-space:nowrap;}
+.lb-table .lb-td{font-size:13px;color:var(--mp-text-secondary);padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);white-space:nowrap;vertical-align:middle;}
+.lb-table tbody tr:last-child .lb-td{border-bottom:none;}
+.lb-table tbody tr:hover{background:rgba(255,255,255,0.03);}
+.lb-td-num{text-align:right;}
+.lb-th-rank{width:34px;text-align:center;}
+.lb-td-rank{font-size:12px;font-weight:700;color:rgba(255,255,255,0.25);text-align:center;}
+.lb-td-name{min-width:200px;}
+.lb-td-namewrap{display:flex;align-items:center;gap:10px;}
+.lb-td-name .lb-td-namewrap span{font-size:13px;font-weight:500;color:var(--mp-text-primary);}
+.lb-td-link{color:#00AEFF;text-decoration:none;font-weight:600;}
+.lb-td-link:hover{text-decoration:underline;}
 /* Skeleton rows shown while a board's data loads — pulse softly so the page
    feels alive without distracting from the real content as it pops in. */
 .lb-row-skeleton{cursor:default;}
@@ -17920,35 +17938,6 @@ var BOARDS=[
       });
     }catch(e){console.warn('[Leaderboard Loudest Stories] fetch failed:',e);return [];}
   }},
-  {id:'influential-movers',title:'MOST INFLUENTIAL MARKET MOVERS',sub:'The people whose bullish calls actually land',color:'#FFB800',bg:'rgba(255,184,0,0.12)',scoreLabel:'Hit Rate',
-  // Top 10 people by bullish hit rate, from v_influential_movers, which
-  // collapses the per-(analyst, ticker) rows of analyst_ticker_scores into
-  // one row per person: hit rate weighted by bullish article count across
-  // every ticker they cover. Guardrails live in the view, same rule-based
-  // philosophy as this file's constants: >= 30 bullish articles (no 3-call
-  // wonders at 100%), >= 2 tickers covered, and corporate-token name
-  // filtering so PR feeds / research shops / law firms filed under
-  // analyst_name ("Verified Market Research") never rank as people.
-  fetch:async function(){
-    try{
-      var rows=await sq('v_influential_movers?select=analyst_name,tickers_covered,total_articles,bullish_articles,hit_rate,avg_return_5d,top_ticker,top_publication&order=hit_rate.desc&limit=10');
-      if(!rows||!rows.length) return [];
-      return rows.map(function(r){
-        var hit=(Number(r.hit_rate)||0)*100;
-        var col=hit>=80?'#00DE94':hit>=65?'#FFB800':'#00AEFF';
-        var nTick=Number(r.tickers_covered)||0;
-        var meta=(r.top_ticker?'Mostly '+r.top_ticker+' \u00b7 ':'')
-          +(Number(r.bullish_articles)||0)+' bullish calls \u00b7 '
-          +nTick+' ticker'+(nTick===1?'':'s');
-        if(r.avg_return_5d!=null){
-          var ret=Number(r.avg_return_5d);
-          meta+=' \u00b7 avg '+(ret>=0?'+':'')+ret.toFixed(1)+'% 5d';
-        }
-        if(r.top_publication) meta+=' \u00b7 '+r.top_publication;
-        return{name:r.analyst_name,meta:meta,score:hit,scoreDisplay:Math.round(hit)+'%',_scoreColor:col};
-      });
-    }catch(e){console.warn('[Leaderboard Influential Movers] fetch failed:',e);return [];}
-  }},
   {id:'ai-picks',title:'CLAUDE\u2019S CONVICTION LIST',sub:'Claude\u2019s top 10 picks \u2014 synthesized only from Market Prism\u2019s daily signal stack',color:'#A78BFA',bg:'rgba(167,139,250,0.12)',scoreLabel:'Conviction',
   // 30s override \u2014 Claude calls can take 5-15s on a cold Supabase cache miss.
   timeout:30000,
@@ -18097,6 +18086,42 @@ var BOARDS=[
       });
     }catch(e){console.warn('[Leaderboard Growth-at-Discount] fetch failed:',e);return [];}
   }},
+  {id:'influential-movers',title:'MOST INFLUENTIAL MARKET MOVERS',sub:'The people whose bullish calls actually land',color:'#FFB800',bg:'rgba(255,184,0,0.12)',scoreLabel:'Hit Rate',
+  // Deliberately last in BOARDS: renders as a full-width table spanning the
+  // grid (renderAs:'table'), so it anchors the bottom of the page instead of
+  // sitting mid-grid as a card. tableHead[0] is the name column; each row's
+  // cells[] aligns with tableHead[1..].
+  // Top 10 people by bullish hit rate, from v_influential_movers, which
+  // collapses the per-(analyst, ticker) rows of analyst_ticker_scores into
+  // one row per person: hit rate weighted by bullish article count across
+  // every ticker they cover. Guardrails live in the view, same rule-based
+  // philosophy as this file's constants: >= 30 bullish articles (no 3-call
+  // wonders at 100%), >= 2 tickers covered, and corporate-token name
+  // filtering so PR feeds / research shops / law firms filed under
+  // analyst_name ("Verified Market Research") never rank as people.
+  renderAs:'table',
+  tableHead:[{label:'Analyst'},{label:'Hit Rate',num:true},{label:'Bullish Calls',num:true},{label:'Tickers',num:true},{label:'Avg 5d Return',num:true},{label:'Top Ticker'},{label:'Top Publication'}],
+  fetch:async function(){
+    try{
+      var rows=await sq('v_influential_movers?select=analyst_name,tickers_covered,total_articles,bullish_articles,hit_rate,avg_return_5d,top_ticker,top_publication&order=hit_rate.desc&limit=10');
+      if(!rows||!rows.length) return [];
+      return rows.map(function(r){
+        var hit=(Number(r.hit_rate)||0)*100;
+        var col=hit>=80?'#00DE94':hit>=65?'#FFB800':'#00AEFF';
+        var nTick=Number(r.tickers_covered)||0;
+        var ret=r.avg_return_5d!=null?Number(r.avg_return_5d):null;
+        return{name:r.analyst_name,score:hit,scoreDisplay:Math.round(hit)+'%',_scoreColor:col,
+          cells:[
+            {text:Math.round(hit)+'%',color:col,strong:true},
+            {text:String(Number(r.bullish_articles)||0)},
+            {text:String(nTick)},
+            {text:ret!=null?((ret>=0?'+':'')+ret.toFixed(1)+'%'):'—',color:ret!=null?(ret>=0?'#00DE94':'#FF4D4D'):null},
+            {text:r.top_ticker||'—',link:r.top_ticker?'/ticker/'+r.top_ticker:null},
+            {text:r.top_publication||'—'}
+          ]};
+      });
+    }catch(e){console.warn('[Leaderboard Influential Movers] fetch failed:',e);return [];}
+  }},
 ];
 
 
@@ -18118,6 +18143,7 @@ function scoreColor(id,score){
   return null;
 }
 function renderBoard(b,rows){
+  if(b.renderAs==='table') return renderBoardTable(b,rows);
   var max=rows.reduce(function(m,r){return Math.max(m,r.score);},1);
   var rowsHtml=rows.map(function(r,i){
     var pct=Math.round(r.score/max*100);
@@ -18164,6 +18190,43 @@ function renderBoard(b,rows){
     +'<div class="lb-rows">'+rowsHtml+'</div>'
   +'</div>';
 }
+// Full-width table renderer for boards flagged renderAs:'table'. The board
+// defines tableHead ([{label,num}] — entry 0 is the name column) and each row
+// carries cells ([{text,color,strong,link}]) aligned with tableHead[1..].
+// Same section shell as renderBoard (accent, header, download button) so
+// exportBoardImage and the grid click hook work unchanged.
+function renderBoardTable(b,rows){
+  var heads=b.tableHead||[];
+  var headHtml='<tr><th class="lb-th lb-th-rank">#</th>'
+    +heads.map(function(h){return '<th class="lb-th'+(h.num?' lb-td-num':'')+'">'+lbEsc(h.label)+'</th>';}).join('')
+    +'</tr>';
+  var bodyHtml=rows.map(function(r,i){
+    var cells=(r.cells||[]).map(function(c,ci){
+      var h=heads[ci+1]||{};
+      var style=(c.color?'color:'+c.color+';':'')+(c.strong?'font-size:16px;font-weight:700;':'');
+      var inner=c.link?'<a href="'+lbEsc(c.link)+'" class="lb-td-link">'+lbEsc(c.text)+'</a>':lbEsc(c.text);
+      return '<td class="lb-td'+(h.num?' lb-td-num':'')+'"'+(style?' style="'+style+'"':'')+'>'+inner+'</td>';
+    }).join('');
+    return '<tr>'
+      +'<td class="lb-td lb-td-rank'+rankClass(i)+'">'+(i+1)+'</td>'
+      +'<td class="lb-td lb-td-name"><div class="lb-td-namewrap"><div class="lb-av" style="background:rgba(255,255,255,0.05);color:var(--mp-text-tertiary);">'+lbEsc(ini(r.name))+'</div><span>'+lbEsc(r.name)+'</span></div></td>'
+      +cells
+    +'</tr>';
+  }).join('');
+  return '<div class="lb-section lb-section-table" data-board-id="'+lbEsc(b.id)+'">'
+    +'<div class="lb-accent"></div>'
+    +'<div class="lb-head">'
+      +'<div class="lb-icon" style="background:'+b.bg+';">'
+        +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+b.color+'" stroke-width="2" stroke-linecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>'
+      +'</div>'
+      +'<div><div class="lb-htitle">'+lbEsc(b.title)+'</div><div class="lb-hsub">'+lbEsc(b.sub)+'</div></div>'
+      +'<button class="lb-download" data-download-board="'+lbEsc(b.id)+'" aria-label="Download '+lbEsc(b.title)+' as image" title="Download as image">'
+        +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+      +'</button>'
+    +'</div>'
+    +'<div class="lb-table-wrap"><table class="lb-table"><thead>'+headHtml+'</thead><tbody>'+bodyHtml+'</tbody></table></div>'
+  +'</div>';
+}
 function renderEmpty(b){
   var subtitle='No data available';
   var emptyMsg='No rankings data in this table yet.';
@@ -18171,7 +18234,7 @@ function renderEmpty(b){
     subtitle='Error';
     emptyMsg='AI picks unavailable: '+lbEsc(window.__lbAiPicksError);
   }
-  return '<div class="lb-section" data-board-id="'+lbEsc(b.id)+'">'
+  return '<div class="lb-section'+(b.renderAs==='table'?' lb-section-table':'')+'" data-board-id="'+lbEsc(b.id)+'">'
     +'<div class="lb-accent" style="background:'+b.color+';opacity:.4;"></div>'
     +'<div class="lb-head"><div class="lb-icon" style="background:'+b.bg+';">'
       +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+b.color+'" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>'
@@ -18201,7 +18264,7 @@ function renderBoardSkeleton(b){
       +'</div>'
     +'</div>';
   }
-  return '<div class="lb-section lb-section-loading" data-board-id="'+lbEsc(b.id)+'">'
+  return '<div class="lb-section lb-section-loading'+(b.renderAs==='table'?' lb-section-table':'')+'" data-board-id="'+lbEsc(b.id)+'">'
     +'<div class="lb-accent" style="background:'+b.color+';opacity:.5;"></div>'
     +'<div class="lb-head">'
       +'<div class="lb-icon" style="background:'+b.bg+';">'
