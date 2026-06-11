@@ -7,7 +7,7 @@
 <title>Daily Plays V2 — Design Test · Market Prism</title>
 <link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --mp-obsidian:#080B11;
@@ -21,7 +21,6 @@
   --mp-text-tertiary:#A0A8B0;
   --mp-text-muted:rgba(255,255,255,0.3);
   --mp-cyan:#00AEFF;--mp-teal:#38C8B8;--mp-green:#00DE94;--mp-red:#FF4D4D;--mp-amber:#FFB800;--mp-violet:#7B61FF;
-  --font-display:'Instrument Serif','DM Serif Display',Georgia,serif;
   --font-body:'Inter','DM Sans',system-ui,sans-serif;
 }
 [data-theme="light"]{
@@ -32,14 +31,13 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--mp-obsidian);color:var(--mp-text-primary);font-family:var(--font-body);min-height:100vh;}
 a{color:inherit;}
-.main{padding:28px 32px 64px;max-width:1320px;}
+.main{padding:28px 32px 64px;width:100%;}
 @media(max-width:767px){.main{padding:20px 16px 48px;}}
 
-/* ── Hero ── */
+/* ── Hero (Inter — no serif on dashboard views) ── */
 .ph-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-tertiary);margin-bottom:10px;}
-.page-header h1{font-family:var(--font-display);font-weight:400;font-size:clamp(28px,3.2vw,42px);letter-spacing:-0.025em;line-height:1.05;}
-.ph-italic{font-family:var(--font-display);font-style:italic;font-weight:400;color:#4DC8F0;font-size:clamp(24px,2.6vw,34px);letter-spacing:-0.02em;display:block;margin-top:2px;}
-.page-header p{font-size:14px;line-height:1.6;color:var(--mp-text-secondary);max-width:640px;margin-top:12px;}
+.page-header h1{font-family:var(--font-body);font-weight:700;font-size:clamp(24px,2.4vw,32px);letter-spacing:-0.02em;line-height:1.15;}
+.page-header p{font-size:14px;line-height:1.6;color:var(--mp-text-secondary);max-width:640px;margin-top:10px;}
 .test-tag{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-amber);border:1px solid rgba(255,184,0,0.3);background:rgba(255,184,0,0.08);padding:5px 12px;border-radius:20px;margin-bottom:14px;}
 
 /* ── Section header (Inter, no serif — dashboard pattern) ── */
@@ -117,7 +115,7 @@ a{color:inherit;}
 }
 
 /* ── Sector cards (FULL WIDTH grid) ── */
-.sec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;}
+.sec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
 .sec-card{position:relative;overflow:hidden;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:18px 20px;transition:border-color .2s,transform .2s;animation:dpUp .45s cubic-bezier(0.16,1,0.3,1) both;}
 .sec-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sec-accent,var(--mp-cyan));}
 .sec-card:hover{border-color:var(--mp-border-hover);transform:translateY(-3px);}
@@ -131,8 +129,8 @@ a{color:inherit;}
 [data-theme="light"] .sec-force-track{background:rgba(0,0,0,0.08);}
 .sec-force-fill{height:100%;border-radius:3px;background:var(--sec-accent,var(--mp-cyan));width:0;transition:width .8s cubic-bezier(0.16,1,0.3,1);}
 .sec-force-v{font-size:16px;font-weight:700;min-width:30px;text-align:right;}
-.sec-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mp-text-tertiary);padding-top:12px;border-top:1px solid var(--mp-border);margin-bottom:12px;}
-.sec-stats b{color:var(--mp-text-secondary);font-weight:600;}
+.sec-body{font-size:13px;line-height:1.6;color:var(--mp-text-secondary);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;margin-bottom:12px;}
+.sec-body.open{-webkit-line-clamp:unset;display:block;}
 .sec-chips{display:flex;flex-wrap:wrap;gap:6px;}
 .sec-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--mp-text-secondary);background:rgba(255,255,255,0.05);border:1px solid var(--mp-border);border-radius:6px;padding:4px 9px;text-decoration:none;transition:all .15s;}
 [data-theme="light"] .sec-chip{background:rgba(0,0,0,0.04);}
@@ -154,8 +152,7 @@ a{color:inherit;}
   <div class="page-header">
     <span class="test-tag">Design test · V2 layout</span>
     <div class="ph-eyebrow">Market Prism · Daily Intelligence</div>
-    <h1>Daily Plays.</h1>
-    <span class="ph-italic">Fewer picks. Clearer reads.</span>
+    <h1>Daily Plays</h1>
     <p>One conviction-ranked slate instead of six side-by-side columns, and sector intelligence at full width. Same engine, same data — redesigned for scanning.</p>
   </div>
 
@@ -179,7 +176,7 @@ a{color:inherit;}
     <div class="v2-sec-head">
       <div>
         <div class="v2-sec-title">Sector Intelligence</div>
-        <div class="v2-sec-sub">Narrative regime and force across every tracked sector — full width, ranked by how hard each sector's stories are pressing.</div>
+        <div class="v2-sec-sub">Every sector's story summarized and ranked by momentum — what's building, what's breaking, and the tickers carrying it. Click a summary to expand.</div>
       </div>
       <span class="v2-sec-meta" id="sec-meta"></span>
     </div>
@@ -401,45 +398,42 @@ async function loadSlate(){
   }
 }
 
-/* ── Sectors (t_sectors_today) ── */
-var REGIME_COLORS={BULL:'var(--mp-green)',BEAR:'var(--mp-red)',NEUTRAL:'var(--mp-cyan)',MIXED:'var(--mp-amber)'};
+/* ── Sectors (daily_summaries · summary_type=sector — per-sector narrative
+   summaries with status, momentum, and the tickers carrying the story) ── */
+var SEC_STATUS={BREAKING:'#FF4D4D',SURGING:'#00DE94',FRAGILE:'#FFB800',COOLING:'#00AEFF',STABLE:'#A0A8B0'};
+/* tickers is usually a proper jsonb array here, but unwrap defensively
+   (same gotcha as narrative_clusters elsewhere). */
+function secTickers(v){
+  var x=v,guard=0;
+  try{while(typeof x==='string'&&guard++<3){x=JSON.parse(x);}}catch(_){return[];}
+  return Array.isArray(x)?x.filter(Boolean).map(String):[];
+}
 async function loadSectors(){
   try{
-    var rows=await sb('t_sectors_today?select=sector,narrative_regime,regime_confidence,avg_force,avg_risk_pressure,avg_nrs,building_count,pressure_count,ticker_count,date&order=date.desc,avg_force.desc&limit=40');
+    var d=await sb('daily_summaries?select=summary_date&summary_type=eq.sector&order=summary_date.desc&limit=1');
+    var day=d&&d[0]&&d[0].summary_date;
+    if(!day){document.getElementById('sec-grid').innerHTML='<div class="dp-empty" style="grid-column:1/-1;">No sector data right now.</div>';return;}
+    var rows=await sb('daily_summaries?select=scope_key,status,body,tickers,momentum_score&summary_type=eq.sector&summary_date=eq.'+encodeURIComponent(day)+'&order=momentum_score.desc.nullslast&limit=40');
     if(!rows||!rows.length){document.getElementById('sec-grid').innerHTML='<div class="dp-empty" style="grid-column:1/-1;">No sector data right now.</div>';return;}
-    var day=rows[0].date;
-    rows=rows.filter(function(r){return r.date===day;});
-    var uni=[];
-    try{uni=await sb('v_ticker_universe_search?select=ticker,name,sector,nrs&limit=500');}catch(_){ }
-    var bySector={};
-    (uni||[]).forEach(function(u){
-      NAMES[u.ticker]=NAMES[u.ticker]||{name:u.name,sector:u.sector};
-      if(!u.sector)return;
-      (bySector[u.sector]=bySector[u.sector]||[]).push(u);
-    });
-    Object.keys(bySector).forEach(function(k){bySector[k].sort(function(a,b){return(Number(b.nrs)||0)-(Number(a.nrs)||0);});});
     document.getElementById('sec-grid').innerHTML=rows.map(function(s,i){
-      var regime=String(s.narrative_regime||'').toUpperCase();
-      var ac=REGIME_COLORS[regime]||'var(--mp-cyan)';
-      var force=Math.max(0,Math.min(100,Number(s.avg_force)||0));
-      var confPct=Math.round((Number(s.regime_confidence)||0)*100);
-      var chips=(bySector[s.sector]||[]).slice(0,5).map(function(u){
-        return '<a class="sec-chip" href="/ticker/'+encodeURIComponent(u.ticker)+'">'+logoHTML(u.ticker,16)+esc(u.ticker)+'</a>';
+      var status=String(s.status||'').toUpperCase();
+      var ac=SEC_STATUS[status]||'#A0A8B0';
+      var mom=Math.max(0,Math.min(100,Number(s.momentum_score)||0));
+      var tks=secTickers(s.tickers);
+      var chips=tks.slice(0,6).map(function(t){
+        return '<a class="sec-chip" href="/ticker/'+encodeURIComponent(t)+'">'+logoHTML(t,16)+esc(t)+'</a>';
       }).join('');
       return '<div class="sec-card" style="--sec-accent:'+ac+';animation-delay:'+(Math.min(i,8)*0.05)+'s;">'
-        +'<div class="sec-head"><div><div class="sec-name">'+esc(s.sector)+'</div><div class="sec-count">'+(Number(s.ticker_count)||0)+' tickers tracked</div></div>'
-        +'<span class="sec-regime" style="color:'+ac+';border-color:'+ac+';background:transparent;opacity:.95;">'+esc(regime||'—')+(confPct?' · '+confPct+'%':'')+'</span></div>'
-        +'<div class="sec-force"><span class="sec-force-l">Force</span><span class="sec-force-track"><span class="sec-force-fill" data-w="'+force+'"></span></span><span class="sec-force-v">'+Math.round(force)+'</span></div>'
-        +'<div class="sec-stats"><span>NRS <b>'+(s.avg_nrs!=null?Math.round(Number(s.avg_nrs)):'—')+'</b></span>'
-        +'<span>Building <b style="color:var(--mp-green);">'+(Number(s.building_count)||0)+'</b></span>'
-        +'<span>Pressure <b style="color:var(--mp-red);">'+(Number(s.pressure_count)||0)+'</b></span>'
-        +'<span>Risk <b>'+(s.avg_risk_pressure!=null?Math.round(Number(s.avg_risk_pressure)):'—')+'</b></span></div>'
+        +'<div class="sec-head"><div><div class="sec-name">'+esc(s.scope_key)+'</div>'+(tks.length?'<div class="sec-count">'+tks.length+' tickers in the story</div>':'')+'</div>'
+        +(status?'<span class="sec-regime" style="color:'+ac+';border-color:'+ac+';background:transparent;opacity:.95;">'+esc(status)+'</span>':'')+'</div>'
+        +(s.body?'<div class="sec-body" onclick="this.classList.toggle(\'open\')" title="Click to expand">'+esc(s.body)+'</div>':'')
+        +'<div class="sec-force"><span class="sec-force-l">Momentum</span><span class="sec-force-track"><span class="sec-force-fill" data-w="'+mom+'"></span></span><span class="sec-force-v">'+Math.round(mom)+'</span></div>'
         +(chips?'<div class="sec-chips">'+chips+'</div>':'')
       +'</div>';
     }).join('');
     var dt=new Date(day+'T00:00:00');
     document.getElementById('sec-meta').textContent=rows.length+' sectors · '+dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    // animate force bars (snap in hidden tabs — rAF suspended in background)
+    // animate momentum bars (snap in hidden tabs — rAF suspended in background)
     function setBars(){document.querySelectorAll('[data-w]').forEach(function(el){el.style.width=el.getAttribute('data-w')+'%';});}
     if(document.hidden)setBars();
     else requestAnimationFrame(function(){requestAnimationFrame(setBars);});
