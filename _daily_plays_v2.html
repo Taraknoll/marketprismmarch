@@ -185,7 +185,7 @@ a{color:inherit;}
       <div class="dp-filters" id="slate-filters"></div>
       <div class="dp-list" id="slate-list"><div class="skel" style="height:64px;"></div><div class="skel" style="height:64px;"></div><div class="skel" style="height:64px;"></div><div class="skel" style="height:64px;"></div></div>
       <div class="dp-foot" id="slate-foot" style="display:none;"><button class="dp-more" id="slate-more" onclick="dpShowMore()">Show more</button></div>
-      <div class="dp-note">Conviction = direction-aligned model probability for each lane's horizon. Value Picks are FYI ideas, not tracked trades. Click any row for the full analysis.</div>
+      <div class="dp-note">Conviction = direction-aligned model probability for each lane's horizon. Value Picks are FYI ideas, not tracked trades; Claude's AI picks live under their own tab. Click any row for the full analysis.</div>
     </div>
   </div>
 
@@ -274,7 +274,7 @@ var LANES={
   VALUE_PICK:{label:'Value · FYI',cls:'value'},
   NARRATIVE_TRAP:{label:'Trap',cls:'trap'}
 };
-var LANE_ORDER=['AI_PICK','DAY_TRADE','SWING_TRADE','MOMENTUM','EARNINGS_PLAY','NARRATIVE_TRAP','VALUE_PICK'];
+var LANE_ORDER=['DAY_TRADE','SWING_TRADE','MOMENTUM','EARNINGS_PLAY','NARRATIVE_TRAP','VALUE_PICK','AI_PICK'];
 
 /* Conviction: direction-aligned model probability for the lane's horizon. */
 function convFor(r){
@@ -329,8 +329,10 @@ var TOP_CAP=8,TOP_PER_LANE=2;
 
 function slateRows(){
   if(FILTER==='top'){
+    // Top picks = tracked trade lanes only — Value Picks are FYI and
+    // Claude's AI picks live under their own tab at the end.
     var perLane={},out=[];
-    SLATE.filter(function(r){return r.lane!=='VALUE_PICK';})
+    SLATE.filter(function(r){return r.lane!=='VALUE_PICK'&&r.lane!=='AI_PICK';})
       .slice().sort(function(a,b){return(b._conv||0)-(a._conv||0);})
       .forEach(function(r){
         if(out.length>=999)return;
@@ -393,7 +395,7 @@ function renderSlate(){
   var more=document.getElementById('slate-more');
   if(rows.length>CAP){foot.style.display='flex';more.textContent='Show '+(rows.length-CAP)+' more';}
   else foot.style.display='none';
-  var total=SLATE.filter(function(r){return r.lane!=='VALUE_PICK';}).length;
+  var total=SLATE.filter(function(r){return r.lane!=='VALUE_PICK'&&r.lane!=='AI_PICK';}).length;
   document.getElementById('slate-meta').textContent=shown.length+' of '+total+' picks shown';
 }
 window.dpShowMore=function(){CAP+=8;renderSlate();};
