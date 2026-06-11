@@ -857,12 +857,20 @@ body{
 .tls-empty{font-size:13px;color:var(--mp-text-muted);padding:26px;border:1px dashed var(--mp-border);border-radius:12px;text-align:center;line-height:1.5;}
 .tls-note{font-size:11px;color:var(--mp-text-muted);margin-top:12px;line-height:1.5;}
 @media(max-width:900px){
-  .tls-row{display:flex;flex-wrap:wrap;gap:8px 12px;padding:12px 14px;}
-  .tls-lane{flex:0 0 auto;padding:5px 10px;}
-  .tls-id{flex:1 1 0;min-width:0;}
-  .tls-bias{flex:0 0 auto;padding:5px 10px;}
-  .tls-est{flex:1 1 40%;flex-direction:row;align-items:baseline;gap:8px;justify-content:flex-start;text-align:left;}
-  .tls-prices{flex:1 1 40%;flex-direction:row;align-items:baseline;gap:8px;justify-content:flex-end;}
+  /* Mobile: reflow each row into a clean 3-line card —
+     line 1 = lane (left) + bias (right), line 2 = ticker identity (full width),
+     line 3 = Prism Est. (left) + Entry/Target (right). Order props let the
+     full-width identity break the line so it never gets crushed. */
+  .tls-row{display:flex;flex-wrap:wrap;align-items:center;gap:9px 10px;padding:14px;}
+  .tls-lane{order:1;flex:0 0 auto;padding:5px 11px;}
+  .tls-bias{order:2;flex:0 0 auto;margin-left:auto;padding:5px 11px;}
+  .tl-row-hit{order:3;flex:0 0 auto;}
+  .tls-id{order:4;flex:1 1 100%;min-width:0;}
+  /* est + prices sit side by side as two tidy stat blocks (label over value) */
+  .tls-est{order:5;flex:1 1 0;min-width:0;align-items:flex-start;text-align:left;}
+  .tls-prices{order:6;flex:1 1 0;min-width:0;align-items:flex-end;text-align:right;}
+  /* let long values (e.g. "+2.8% · Day 1/10") wrap instead of spilling the cell */
+  .tls-est-v,.tls-price-v{white-space:normal;}
 }
 /* ── Earnings On Deck rail ── */
 .tls-earn-rail{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;}
@@ -5015,6 +5023,15 @@ body{
     .mi-wks-num-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);}
     .mi-wks-track{width:92px;height:5px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;}
     .mi-wks-fill{height:100%;background:linear-gradient(90deg,#00AEFF,#00DE94);width:0;transition:width .9s cubic-bezier(0.16,1,0.3,1);}
+    @media(max-width:600px){
+      /* Mobile: give the narrative the full row width by dropping the WKS
+         score onto its own line as a horizontal bar (number · WKS · track). */
+      .mi-wks-row{flex-wrap:wrap;align-items:flex-start;gap:10px 12px;padding:16px;}
+      .mi-wks-mid{flex:1 1 60%;}
+      .mi-wks-score{flex:1 1 100%;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;min-width:0;margin-top:12px;padding-top:12px;border-top:1px solid var(--mp-border);}
+      .mi-wks-num{font-size:20px;}
+      .mi-wks-track{width:auto;flex:1 1 auto;}
+    }
     /* Sector stories */
     .mi-sector-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
     .mi-sector-chips .chip .n{opacity:.55;margin-left:5px;}
