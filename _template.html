@@ -18261,13 +18261,19 @@ window.computeBoardJaccard = function(opts){
 
 /* ── MARKET INSIGHTS TAB ──
    Four independent panels, each backed by an intraday-fresh table:
-     Featured Alerts        ← detected_macro_events (cross-ticker surge scanner)
+     Featured Alerts        ← detected_macro_events, rolling 24h window
+                              (the scanner writes once/day ~2-7 PM ET, so a
+                              fixed "latest day" read shows stale mornings)
      Macro Currents         ← daily_summaries (summary_type=market_wide)
      Upcoming Catalysts     ← macro_market_events (scheduled FOMC/CPI/OPEX/NFP)
      Influential Narratives ← narrative_scorecard ordered by wks_score
-     Sector Stories         ← sector_news (claim vs structural rebuttal)
-   Panels load in parallel and fail independently — one dead table never
-   blanks the page. Lazy-boots on first tab switch. */
+     Sector Stories         ← sector_news (claim vs structural rebuttal);
+                              rows that were never forensically enriched
+                              (~20%/day stay bare forever) are excluded
+   Panels load in parallel and fail independently. An empty, failed, or
+   stale panel collapses its whole section — never a blank box. Snapshot
+   panels tolerate 3-day-old data (weekends/holidays) before collapsing.
+   Lazy-boots on first tab switch. */
 (function(){
 var MI_BOOTED=false;
 
@@ -18305,6 +18311,50 @@ function miSkels(n,h,w){
   return out;
 }
 function miEmpty(el,msg){if(el)el.innerHTML='<div class="mi-empty" style="grid-column:1/-1;">'+miEsc(msg)+'</div>';}
+// A snapshot older than this is a dead pipeline, not a slow morning —
+// 3 days clears weekends/holidays without resurrecting genuinely stale reads.
+function miFreshDay(day,maxDays){
+  if(!day)return false;
+  var dt=new Date(day+'T00:00:00');
+  return !isNaN(dt)&&(new Date()-dt)/86400000<=(maxDays||3);
+}
+// Empty/failed/stale panels are eliminated, not placeholdered: hide the
+// half-column when the panel shares the Macro/Catalysts grid (the survivor
+// goes full-width), otherwise hide the whole .mi-section.
+function miDropPanel(id){
+  var el=document.getElementById(id);if(!el)return;
+  var half=el.closest('.mi-macro-grid > div');
+  var sec=el.closest('.mi-section');
+  if(half){
+    half.style.display='none';
+    var grid=half.parentElement,alive=false;
+    for(var i=0;i<grid.children.length;i++){if(grid.children[i].style.display!=='none')alive=true;}
+    if(!alive){if(sec)sec.style.display='none';}
+    else grid.style.gridTemplateColumns='1fr';
+  }else if(sec){sec.style.display='none';}
+}
+function miRestorePanels(){
+  var tab=document.getElementById('tab-insights');if(!tab)return;
+  tab.querySelectorAll('.mi-section').forEach(function(s){s.style.display='';});
+  tab.querySelectorAll('.mi-macro-grid').forEach(function(g){
+    g.style.gridTemplateColumns='';
+    for(var i=0;i<g.children.length;i++)g.children[i].style.display='';
+  });
+  var note=document.getElementById('mi-all-quiet');if(note)note.remove();
+}
+// If every panel collapsed (Supabase down, holiday-week pipeline gap), show
+// one quiet note instead of a bare hero.
+function miQuietNote(){
+  var tab=document.getElementById('tab-insights');if(!tab)return;
+  var any=false;
+  tab.querySelectorAll('.mi-section').forEach(function(s){if(s.style.display!=='none')any=true;});
+  if(any)return;
+  var note=document.createElement('div');
+  note.id='mi-all-quiet';note.className='mi-empty';
+  note.textContent='No fresh market insights right now — panels return as today’s scans land.';
+  var tb=tab.querySelector('.lb-toolbar');
+  if(tb)tb.insertAdjacentElement('afterend',note);else tab.appendChild(note);
+}
 // Bar fills render at width:0, then animate to their data-mi-w target on the
 // next frame so the CSS width transition actually plays. rAF is suspended in
 // hidden/background tabs, so in that case snap straight to the final state —
@@ -18341,15 +18391,16 @@ function miVerdictColor(v){
   return '#A0A8B0';
 }
 
-/* 1) FEATURED ALERTS — latest detection day, one card per watchgroup */
+/* 1) FEATURED ALERTS — rolling 24h window, one card per watchgroup */
 async function miLoadAlerts(){
   var rail=document.getElementById('mi-alert-rail');
   try{
-    var rows=await miq('detected_macro_events?select=watchgroup,event_type,severity,description,spiking_tickers,total_articles,avg_coordination,tickers_spiking,tickers_in_group,detection_date,detected_at&order=detected_at.desc&limit=40');
-    if(!rows||!rows.length){miEmpty(rail,'No macro surges detected yet today.');return;}
-    var latest=rows[0].detection_date,seen={},alerts=[];
+    var since=new Date(Date.now()-86400000).toISOString();
+    var rows=await miq('detected_macro_events?select=watchgroup,event_type,severity,description,spiking_tickers,total_articles,avg_coordination,tickers_spiking,tickers_in_group,detection_date,detected_at&detected_at=gte.'+encodeURIComponent(since)+'&order=detected_at.desc&limit=40');
+    if(!rows||!rows.length){miDropPanel('mi-alert-rail');return;}
+    var seen={},alerts=[];
     rows.forEach(function(r){
-      if(r.detection_date!==latest||seen[r.watchgroup])return;
+      if(seen[r.watchgroup])return;
       seen[r.watchgroup]=1;alerts.push(r);
     });
     var sevRank={HIGH:0,MEDIUM:1,LOW:2};
@@ -18373,7 +18424,7 @@ async function miLoadAlerts(){
         +'<div class="mi-alert-foot"><span>'+arts+' article'+(arts===1?'':'s')+'</span>'+(breadth?'<span>'+miEsc(breadth)+'</span>':'')+(coord>0?'<span>coordination '+coord+'</span>':'')+'</div>'
       +'</div>';
     }).join('');
-  }catch(e){miEmpty(rail,'Featured alerts unavailable right now.');}
+  }catch(e){miDropPanel('mi-alert-rail');}
 }
 
 /* 2a) MACRO CURRENTS — market-wide daily summaries, momentum-ranked */
@@ -18382,9 +18433,9 @@ async function miLoadMacro(){
   try{
     var d=await miq('daily_summaries?select=summary_date&summary_type=eq.market_wide&order=summary_date.desc&limit=1');
     var day=d&&d[0]&&d[0].summary_date;
-    if(!day){miEmpty(list,'No market-wide read yet today.');return;}
+    if(!miFreshDay(day,3)){miDropPanel('mi-macro-list');return;}
     var rows=await miq('daily_summaries?select=scope_key,status,body,tickers,momentum_score&summary_type=eq.market_wide&summary_date=eq.'+encodeURIComponent(day)+'&order=momentum_score.desc.nullslast&limit=8');
-    if(!rows||!rows.length){miEmpty(list,'No market-wide read yet today.');return;}
+    if(!rows||!rows.length){miDropPanel('mi-macro-list');return;}
     list.innerHTML=rows.map(function(r,i){
       var sc=MI_STATUS[String(r.status||'').toUpperCase()]||'#A0A8B0';
       var mom=Math.max(0,Math.min(100,Number(r.momentum_score)||0));
@@ -18397,7 +18448,7 @@ async function miLoadMacro(){
       +'</div>';
     }).join('');
     miAnimateBars(list);
-  }catch(e){miEmpty(list,'Macro currents unavailable right now.');}
+  }catch(e){miDropPanel('mi-macro-list');}
 }
 
 /* 2b) UPCOMING CATALYSTS — scheduled macro events with countdown */
@@ -18407,7 +18458,7 @@ async function miLoadCatalysts(){
     var today=new Date();today.setHours(0,0,0,0);
     var iso=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
     var rows=await miq('macro_market_events?select=event_date,event_type,title,importance&event_date=gte.'+iso+'&order=event_date.asc&limit=6');
-    if(!rows||!rows.length){miEmpty(list,'No scheduled macro events on the calendar.');return;}
+    if(!rows||!rows.length){miDropPanel('mi-catalyst-list');return;}
     var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     list.innerHTML=rows.map(function(r,i){
       var dt=new Date(r.event_date+'T00:00:00');
@@ -18422,7 +18473,7 @@ async function miLoadCatalysts(){
         +'<span class="mi-cat-tminus" style="color:'+tc+';background:'+miTint(tc,0.1)+';border:1px solid '+miTint(tc,0.25)+';">'+tmin+'</span>'
       +'</div>';
     }).join('');
-  }catch(e){miEmpty(list,'Catalyst calendar unavailable right now.');}
+  }catch(e){miDropPanel('mi-catalyst-list');}
 }
 
 /* 3) MOST INFLUENTIAL NARRATIVES — narrative_scorecard by wks_score */
@@ -18431,9 +18482,9 @@ async function miLoadWks(){
   try{
     var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
-    if(!day){miEmpty(list,'No scorecard snapshot yet today.');return;}
+    if(!miFreshDay(day,3)){miDropPanel('mi-wks-list');return;}
     var rows=await miq('narrative_scorecard?select=ticker,narrative,wks_score,walsh_regime,narrative_energy_absolute,narrative_energy_regime,verdict,nrs,narrative_mass_score&snapshot_date=eq.'+encodeURIComponent(day)+'&wks_score=not.is.null&narrative=not.is.null&order=wks_score.desc&limit=40');
-    if(!rows||!rows.length){miEmpty(list,'No WKS-scored narratives yet today.');return;}
+    if(!rows||!rows.length){miDropPanel('mi-wks-list');return;}
     var seen={},out=[];
     rows.forEach(function(r){
       // wrong-scale scorer rows (mass on 0-100 + nrs 0) are broken end-to-end
@@ -18443,7 +18494,7 @@ async function miLoadWks(){
       if(seen[r.ticker])return;
       seen[r.ticker]=1;out.push(r);
     });
-    if(!out.length){miEmpty(list,'No WKS-scored narratives yet today.');return;}
+    if(!out.length){miDropPanel('mi-wks-list');return;}
     list.innerHTML=out.slice(0,10).map(function(r,i){
       var wks=Math.max(0,Math.min(100,Number(r.wks_score)||0));
       var regime=String(r.narrative_energy_regime||'').toUpperCase();
@@ -18467,7 +18518,7 @@ async function miLoadWks(){
       +'</a>';
     }).join('');
     miAnimateBars(list);miCountUp(list);
-  }catch(e){miEmpty(list,'Influential narratives unavailable right now.');}
+  }catch(e){miDropPanel('mi-wks-list');}
 }
 
 /* 4) SECTOR STORIES — sector_news, claim vs structural rebuttal */
@@ -18478,12 +18529,16 @@ async function miLoadStories(){
   try{
     var d=await miq('sector_news?select=snapshot_date&order=snapshot_date.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
-    if(!day){miEmpty(grid,'No sector stories yet today.');return;}
-    var rows=await miq('sector_news?select=sector,subsector,headline,source,published_at,associated_ticker,narrative_claim,structural_rebuttal,drift_score,coordination_flag,verdict,sector_trap_active&snapshot_date=eq.'+encodeURIComponent(day)+'&order=published_at.desc.nullslast&limit=240');
-    if(!rows||!rows.length){miEmpty(grid,'No sector stories yet today.');return;}
+    if(!miFreshDay(day,3)){miDropPanel('mi-story-grid');if(chips)chips.innerHTML='';return;}
+    // narrative_claim/structural_rebuttal filters: ~20% of rows land as bare
+    // headlines and never get enriched — without the forensic check they're
+    // just half-empty cards, so they're excluded outright.
+    var rows=await miq('sector_news?select=sector,subsector,headline,source,published_at,associated_ticker,narrative_claim,structural_rebuttal,drift_score,coordination_flag,verdict,sector_trap_active&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative_claim=not.is.null&structural_rebuttal=not.is.null&order=published_at.desc.nullslast&limit=240');
+    rows=(rows||[]).filter(function(r){return String(r.narrative_claim||'').trim()&&String(r.structural_rebuttal||'').trim();});
+    if(!rows.length){miDropPanel('mi-story-grid');if(chips)chips.innerHTML='';return;}
     miStories=rows;miSector='__all__';miStoryCap=12;
     miRenderSectorChips();miRenderStories();
-  }catch(e){miEmpty(grid,'Sector stories unavailable right now.');if(chips)chips.innerHTML='';}
+  }catch(e){miDropPanel('mi-story-grid');if(chips)chips.innerHTML='';}
 }
 function miRenderSectorChips(){
   var chips=document.getElementById('mi-sector-chips');if(!chips)return;
@@ -18560,12 +18615,15 @@ function miDate(){
   if(el)el.textContent='Last updated: '+new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
 async function loadMarketInsights(){
+  miRestorePanels();
   if(!SUPABASE_URL||!SUPABASE_ANON){
-    ['mi-alert-rail','mi-macro-list','mi-catalyst-list','mi-wks-list','mi-story-grid'].forEach(function(id){miEmpty(document.getElementById(id),'Live data unavailable — Supabase not configured.');});
+    ['mi-alert-rail','mi-macro-list','mi-catalyst-list','mi-wks-list','mi-story-grid'].forEach(function(id){miDropPanel(id);});
+    miQuietNote();
     return;
   }
   miSkeleton();miDate();
   await Promise.all([miLoadAlerts(),miLoadMacro(),miLoadCatalysts(),miLoadWks(),miLoadStories()]);
+  miQuietNote();
 }
 window.refreshMarketInsights=async function(){
   var btn=document.getElementById('mi-refresh-btn');
