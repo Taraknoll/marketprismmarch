@@ -50,34 +50,42 @@
   var BADGE_TESTING_AMBER = 'background:rgba(255,184,0,0.15);color:#FFB800;border-color:rgba(255,184,0,0.3);font-size:10px;letter-spacing:.06em;';
 
   // ── Nav definition. Edit this list to add/hide/rename items site-wide.
+  // Sections are grouped by user intent (2026-06-11 IA reorg):
+  //   Today            — daily-refreshed content feeds, passively consumed
+  //   Research a stock — interactive tools the user drives
+  //   Performance      — proof / validation of past picks
+  // Badge policy: at most ONE green NEW badge across the nav at a time;
+  // retire it after ~2-3 weeks. New capabilities should land as sections
+  // inside existing tabs, not as new nav rows.
   var NAV_CONFIG = [
-    { type:'section', label:'Daily Overview' },
+    { type:'section', label:'Today' },
     { type:'item',    tab:'daily',       label:'Daily Plays',    icon:ICONS.daily },
+    { type:'item',    tab:'insights',    label:'Market Insights', icon:ICONS.insights,  badge:{ style:BADGE_NEW_GREEN, text:'NEW' } },
+    { type:'item',    tab:'leaderboard', label:'Leaderboard',    icon:ICONS.leaderboard },
+    { type:'item',    tab:'cards',       label:'Trading Cards',  icon:ICONS.cards },
+
+    { type:'section', label:'Research a stock' },
     // Stock Prism opens the standalone /ticker/:ticker page (served by api/ticker.js
     // per vercel.json). Bypasses the dashboard's iframe-based ticker tab, which
     // was producing the duplicate-sidebar layout. Keeps tab:'ticker' so the
     // active-state highlight still matches when the ticker page mounts the
     // sidebar with activeTab:'ticker'.
-    { type:'item',    tab:'ticker',      href:'/ticker/AAPL', label:'Stock Forensics', icon:ICONS.ticker },
-    { type:'item',    tab:'insights',    label:'Market Insights', icon:ICONS.insights,  badge:{ style:BADGE_NEW_GREEN, text:'NEW' } },
-    { type:'item',    tab:'leaderboard', label:'Leaderboard',    icon:ICONS.leaderboard },
-
-    { type:'section', label:'Labs' },
-    { type:'item',    tab:'prism',       label:'Market Physics', icon:ICONS.prism,       badge:{ style:BADGE_NEW_GREEN, text:'NEW' } },
-    { type:'item',    tab:'signallab',   label:'Signal Lab',     icon:ICONS.signallab },
+    { type:'item',    tab:'ticker',      href:'/ticker/AAPL', label:'Stock Forensics', icon:ICONS.ticker,
+                      subtitle:'Deep-dive one ticker' },
     { type:'item',    href:'/search',    label:'Narrative Lab',  icon:ICONS.sparkleFeature,
                       subtitle:'Any ticker. Any claim.',
-                      badge:{ style:BADGE_NEW_GREEN, text:'NEW' },
                       tooltip:'Validate any narrative against 3.5M historical analogues — works on any US-listed ticker, not just our tracked universe.' },
-    { type:'item',    tab:'cards',       label:'Trading Cards',  icon:ICONS.cards },
+    { type:'item',    tab:'signallab',   label:'Signal Lab',     icon:ICONS.signallab,
+                      subtitle:'Forces & regime, one ticker' },
+    { type:'item',    tab:'prism',       label:'Market Physics', icon:ICONS.prism,
+                      subtitle:'Every tracked ticker, one map' },
 
     // Research section hidden 2026-05-01 — to restore, uncomment:
-    // { type:'section', label:'Research' },
     // { type:'item', tab:'calendar', label:'Trading Calendar', icon:ICONS.calendar, badge:{ cls:'teal', text:'New', id:'nav-badge-calendar' } },
     // { type:'item', tab:'memes',    label:'Market Sharing',   icon:ICONS.memes,    badge:{ cls:'teal', text:'New', id:'nav-badge-memes' } },
     // { type:'item', tab:'scorer',   label:'Score Any Stock',  icon:ICONS.scorer,   badge:{ style:BADGE_TESTING_AMBER, text:'TESTING' } },
 
-    { type:'section', label:'testing:' },
+    { type:'section', label:'Performance' },
     { type:'item',    tab:'validation',  label:'Track Record',   icon:ICONS.validation,
                       badge:{ style:BADGE_TESTING_AMBER, text:'TESTING' },
                       tooltip:'Still in active development — expect bugs in progress as we build out the analytics.' }
