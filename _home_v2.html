@@ -82,7 +82,7 @@
   "featureList":[
     "Narrative validation against 3.5M historical observations",
     "Deterministic narrative hit-rate scoring",
-    "Predicted 5/10/20-day returns from nearest analogues",
+    "Average 5/10/20-day moves of the nearest historical analogues",
     "Daily intelligence brief",
     "Sector heatmap",
     "Forensic ticker pages"
@@ -99,7 +99,7 @@
       "name":"What is Market Prism?",
       "acceptedAnswer":{
         "@type":"Answer",
-        "text":"Market Prism is a forensic narrative intelligence platform for equity markets — built for traders who got tired of being the exit liquidity on stories that did not match the filings. Submit any stock thesis (a sentence, a headline, or an investment memo) and Market Prism pattern-matches it against 3.5 million historical observations: every earnings call, 10-K, 10-Q, 8-K, news headline, and social post we have embedded across 150+ tickers. In under 250 milliseconds it returns a deterministic narrative hit-rate, predicted 5/10/20-day returns, and the closest historical analogues — anchored to the SEC filings the narrative is allegedly tracking, weighted by source authority, and flagged when the same framing has been coordinated across multiple outlets in a tight time window. Same input always produces the same output, so you can show your work — and audit ours."
+        "text":"Market Prism is a forensic narrative intelligence platform for equity markets — built for traders who got tired of being the exit liquidity on stories that did not match the filings. Submit any stock thesis (a sentence, a headline, or an investment memo) and Market Prism pattern-matches it against 3.5 million historical observations: every earnings call, 10-K, 10-Q, 8-K, news headline, and social post we have embedded across 150+ tickers. In under 250 milliseconds it returns a deterministic narrative hit-rate, the average move of similar past narratives over the following 5/10/20 days, and the closest historical analogues — anchored to the SEC filings the narrative is allegedly tracking, weighted by source authority, and flagged when the same framing has been coordinated across multiple outlets in a tight time window. Same input always produces the same output, so you can show your work — and audit ours."
       }
     },
     {
@@ -115,7 +115,7 @@
       "name":"What is a narrative hit-rate?",
       "acceptedAnswer":{
         "@type":"Answer",
-        "text":"The narrative hit-rate is the percentage of historical analogues to your thesis that resolved in the predicted direction within a given holding period. A 72% hit-rate over 10 days means 72% of the 200 closest historical narratives moved with the thesis over the following 10 trading days."
+        "text":"The narrative hit-rate is the percentage of historical analogues to your thesis that resolved in the thesis direction within a given holding period. A 72% hit-rate over 10 days means 72% of the 200 closest historical narratives moved with the thesis over the following 10 trading days."
       }
     },
     {
@@ -555,6 +555,12 @@ nav.topnav.scrolled{
 }
 .results.show{display:block;animation:resultIn .4s ease both;}
 @keyframes resultIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.r-disclaimer{
+  margin:0 0 12px;padding:10px 16px;
+  border:1px solid var(--mp-border);border-radius:10px;
+  background:var(--mp-surface);
+  font-size:13px;line-height:1.5;color:var(--mp-text-tertiary);text-align:center;
+}
 
 .r-card{
   background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;
@@ -1152,6 +1158,7 @@ section.below{padding:64px 0;}
 .dp-head-l{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
 .dp-livepill{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-text-tertiary);}
 .dp-livepill::before{content:'';width:7px;height:7px;border-radius:50%;background:#00DE94;box-shadow:0 0 8px rgba(0,222,148,.6);animation:minit-blink 1.6s ease-in-out infinite;}
+.dp-livepill.sample::before{background:var(--mp-amber);box-shadow:none;animation:none;}
 .dp-head-title{font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--mp-text-primary);letter-spacing:-.005em;}
 .dp-head-meta{font-size:11px;color:var(--mp-text-muted);letter-spacing:.04em;}
 .dp-list{display:flex;flex-direction:column;gap:10px;position:relative;}
@@ -1470,8 +1477,8 @@ footer{
     <button class="btn-theme" aria-label="Toggle theme" onclick="toggleTheme()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
-    <a href="/login" class="btn-ghost">Sign in</a>
-    <a href="/login#register" class="btn-primary">Get started</a>
+    <a href="/login" class="btn-ghost" data-track="nav_sign_in">Sign in</a>
+    <a href="/login#register" class="btn-primary" data-track="nav_get_started">Get started</a>
     <button class="nav-hamburger" aria-label="Open menu" onclick="document.getElementById('mobile-menu').classList.add('open')">&#9776;</button>
   </div>
 </nav>
@@ -1492,7 +1499,7 @@ footer{
     <a href="/pricing" class="mobile-menu-link">Pricing</a>
   </div>
   <div class="mobile-menu-foot">
-    <a href="/login#register" class="btn-primary" style="text-align:center;padding:14px 18px;font-size:15px;border-radius:10px;">Get started</a>
+    <a href="/login#register" class="btn-primary" data-track="nav_get_started" style="text-align:center;padding:14px 18px;font-size:15px;border-radius:10px;">Get started</a>
     <a href="/login" class="mobile-menu-signin" style="text-align:center;padding:14px 16px;border-radius:10px;background:var(--mp-surface);border:1px solid var(--mp-cyan);font-size:15px;font-weight:600;color:var(--mp-text-primary);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
       Sign in to dashboard
@@ -1515,8 +1522,8 @@ footer{
     </p>
 
     <div class="hero-cta-row">
-      <a href="#try-it" class="hero-cta-primary">Try it now <span aria-hidden="true">→</span></a>
-      <a href="/features" class="hero-cta-secondary">How it works</a>
+      <a href="#try-it" class="hero-cta-primary" data-track="hero_try_it">Try it now <span aria-hidden="true">→</span></a>
+      <a href="/features" class="hero-cta-secondary" data-track="hero_how_it_works">How it works</a>
     </div>
   </div>
 </section>
@@ -1615,7 +1622,7 @@ footer{
           <div class="meta">/leaderboard</div>
           <h3>Forensic edge. <em>Every signal ranked.</em></h3>
           <p>15 live boards in one screen — from Loudest Stories and Spam Alarm to Whale Tracks, Hidden Bargains, and Today's Verdicts. Coordination alerts and manipulation risk surfaced before they reach the tape.</p>
-          <a href="/features" class="screen-cta">See every screen <span aria-hidden="true">→</span></a>
+          <a href="/features" class="screen-cta" data-track="screens_see_features">See every screen <span aria-hidden="true">→</span></a>
         </div>
       </div>
 
@@ -1674,7 +1681,7 @@ footer{
         <span><span class="cmp-dot partial" aria-hidden="true"></span>Partial</span>
         <span><span class="cmp-dot no" aria-hidden="true"></span>Missing</span>
       </div>
-      <a href="/features#compare" class="cmp-link">See full comparison <span aria-hidden="true">→</span></a>
+      <a href="/features#compare" class="cmp-link" data-track="compare_see_full">See full comparison <span aria-hidden="true">→</span></a>
     </div>
   </div>
 </section>
@@ -1682,17 +1689,17 @@ footer{
 <!-- ── SECTION 5 · DAILY PLAYS TEASER (2 visible + 4 blurred) ── -->
 <section class="below" id="ticker-preview">
   <div class="container">
-    <div class="section-eyebrow">Today's slate · Live demo</div>
+    <div class="section-eyebrow">Today's slate · Sample preview</div>
     <h2 class="section-title">The Daily Plays, <em>scored and ranked.</em></h2>
     <p class="section-sub">Every morning, conviction-ranked picks across day trade, swing, momentum, value and narrative-trap lanes — refreshed every 15 minutes during market hours, every play tracked through entry, exit and alpha-vs-SPY.</p>
 
     <div class="dp-frame" aria-label="Today's Daily Plays preview">
       <div class="dp-head">
         <div class="dp-head-l">
-          <span class="dp-livepill">Live · Today's slate</span>
+          <span class="dp-livepill sample">Sample slate</span>
           <span class="dp-head-title">Top picks · ranked by conviction</span>
         </div>
-        <span class="dp-head-meta">6 of 24 shown &middot; updated 9:31 ET</span>
+        <span class="dp-head-meta">6 of 24 shown &middot; illustrative prices</span>
       </div>
 
       <!-- Visible picks (2) -->
@@ -1808,15 +1815,15 @@ footer{
           <div class="dp-overlay-h">Unlock the full daily slate — free trial.</div>
           <div class="dp-overlay-p">22 more conviction-ranked picks, live refresh every 15 minutes, full entry / target / invalidation prices, and the forensic rationale behind every call.</div>
           <div class="dp-overlay-btns">
-            <a href="/login#register" class="dp-overlay-cta">Start free trial <span aria-hidden="true">→</span></a>
-            <a href="/pricing" class="dp-overlay-ghost">See pricing</a>
+            <a href="/login#register" class="dp-overlay-cta" data-track="daily_plays_start_trial">Start free trial <span aria-hidden="true">→</span></a>
+            <a href="/pricing" class="dp-overlay-ghost" data-track="daily_plays_see_pricing">See pricing</a>
           </div>
         </div>
       </div>
 
       <div class="dp-foot">
         <span class="dp-foot-meta">Sample slate &middot; subscribers see all 24 picks live</span>
-        <a class="preview-cta" href="/features">See every feature <span aria-hidden="true">→</span></a>
+        <a class="preview-cta" href="/features" data-track="daily_plays_see_features">See every feature <span aria-hidden="true">→</span></a>
       </div>
     </div>
   </div>
@@ -1858,9 +1865,9 @@ footer{
     </div>
 
     <div class="try-meta-row">
-      <span><strong>LM · cosine search</strong></span>
-      <span>384-d embeddings · pgvector</span>
-      <span><strong>~250ms</strong> median query</span>
+      <span><strong>3.5M</strong> documented narratives</span>
+      <span>Deterministic — same input, same answer</span>
+      <span>Results in <strong>under a second</strong></span>
     </div>
 
     <div class="search-error" id="search-error"></div>
@@ -1879,10 +1886,10 @@ footer{
         <h2 class="section-title">Forensic intelligence, <em>published.</em></h2>
         <p class="section-sub">Earnings forensics, narrative case studies, and market intel — the reports traders have been quoting. Free to read.</p>
       </div>
-      <a class="blog-all" href="/blog">All reports <span aria-hidden="true">→</span></a>
+      <a class="blog-all" href="/blog" data-track="blog_all_reports">All reports <span aria-hidden="true">→</span></a>
     </div>
     <div id="blog-featured-slot">
-      <a class="blog-featured" href="/blog/2026-05-04-rddt-q1-2026-forensic-ai-fuel-thesis">
+      <a class="blog-featured" href="/blog/2026-05-04-rddt-q1-2026-forensic-ai-fuel-thesis" data-track="blog_featured_click">
         <div class="blog-featured-l">
           <div class="blog-featured-eyebrow">Featured report</div>
           <div class="blog-featured-title">RDDT Q1 2026 Forensic: The AI Fuel Thesis Just Got Its Print</div>
@@ -1916,7 +1923,7 @@ footer{
     <div class="faq-wrap">
       <details class="faq-item">
         <summary class="faq-q">What is Market Prism?</summary>
-        <div class="faq-a">Market Prism is a forensic narrative intelligence platform for equity markets — built for traders who got tired of being the exit liquidity on stories that didn't match the filings. Submit any stock thesis (a sentence, a headline, or an investment memo) and Market Prism pattern-matches it against 3.5 million historical observations: every earnings call, 10-K, 10-Q, 8-K, news headline, and social post we've embedded across 150+ tickers. In under 250 milliseconds it returns a deterministic narrative hit-rate, predicted 5/10/20-day returns, and the closest historical analogues — anchored to the SEC filings the narrative is allegedly tracking, weighted by source authority, and flagged when the same framing has been coordinated across multiple outlets in a tight time window. Same input always produces the same output, so you can show your work — and audit ours.</div>
+        <div class="faq-a">Market Prism is a forensic narrative intelligence platform for equity markets — built for traders who got tired of being the exit liquidity on stories that didn't match the filings. Submit any stock thesis (a sentence, a headline, or an investment memo) and Market Prism pattern-matches it against 3.5 million historical observations: every earnings call, 10-K, 10-Q, 8-K, news headline, and social post we've embedded across 150+ tickers. In under 250 milliseconds it returns a deterministic narrative hit-rate, the average move of similar past narratives over the following 5/10/20 days, and the closest historical analogues — anchored to the SEC filings the narrative is allegedly tracking, weighted by source authority, and flagged when the same framing has been coordinated across multiple outlets in a tight time window. Same input always produces the same output, so you can show your work — and audit ours.</div>
       </details>
       <details class="faq-item">
         <summary class="faq-q">How does narrative intelligence work?</summary>
@@ -1924,7 +1931,7 @@ footer{
       </details>
       <details class="faq-item">
         <summary class="faq-q">What is a narrative hit-rate?</summary>
-        <div class="faq-a">The narrative hit-rate is the percentage of historical analogues to your thesis that resolved in the predicted direction within a given holding period. A 72% hit-rate over 10 days means 72% of the 200 closest historical narratives moved with the thesis over the following 10 trading days.</div>
+        <div class="faq-a">The narrative hit-rate is the percentage of historical analogues to your thesis that resolved in the thesis direction within a given holding period. A 72% hit-rate over 10 days means 72% of the 200 closest historical narratives moved with the thesis over the following 10 trading days.</div>
       </details>
       <details class="faq-item">
         <summary class="faq-q">Is Market Prism free to use?</summary>
@@ -1946,12 +1953,11 @@ footer{
       <div class="pricing-l">
         <div class="pricing-tier">Pro</div>
         <div class="pricing-price">
-          <span class="pricing-price-old">$68</span>
           <span class="pricing-price-new">$25</span>
           <span class="pricing-price-per">/mo</span>
         </div>
-        <div class="pricing-tag">Billed annually. Locked for 12 months.</div>
-        <a href="/login#register" class="pricing-btn">Start with Pro <span aria-hidden="true">→</span></a>
+        <div class="pricing-tag">Early-access pricing, locked in for 12 months. Billed annually.</div>
+        <a href="/login#register" class="pricing-btn" data-track="pricing_start_pro">Start with Pro <span aria-hidden="true">→</span></a>
       </div>
       <div class="pricing-r">
         <ul class="pricing-features">
@@ -2117,6 +2123,18 @@ footer{
     errorEl.classList.remove('show');
   }
 
+  // ── GA4 funnel events ────────────────────────────────────────────────
+  // Every CTA carries a data-track attribute; one delegated listener fires
+  // the event so injected HTML (demo results, blog cards) is covered too.
+  function track(name, params){
+    try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch(_){}
+  }
+  document.addEventListener('click', function(e){
+    var el = e.target && e.target.closest ? e.target.closest('[data-track]') : null;
+    if (!el) return;
+    track(el.getAttribute('data-track'), { link_url: el.getAttribute('href') || '' });
+  });
+
   inpTk.addEventListener('input', function(){
     inpTk.value = inpTk.value.toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
   });
@@ -2132,6 +2150,7 @@ footer{
     chip.addEventListener('click', function(){
       inpTk.value = chip.getAttribute('data-tk') || '';
       inpNarr.value = chip.getAttribute('data-narr') || '';
+      track('demo_chip_click', { ticker: inpTk.value });
       submit();
     });
   });
@@ -2144,31 +2163,31 @@ footer{
     var p10p = (p10 == null || isNaN(p10)) ? null : Number(p10) * 100;
     var p20p = (p20 == null || isNaN(p20)) ? null : Number(p20) * 100;
     if ((p5p != null && p5p < -2) || (p10p != null && p10p < -3) || (p20p != null && p20p < -5)) {
-      return { tone:'bear', label:'BEARISH RISK — AVOID LONG',
-               summary:'Historical analogues suggest downside risk.' };
+      return { tone:'bear', label:'SIMILAR STORIES SKEWED DOWNWARD',
+               summary:'Most similar past narratives resolved to the downside.' };
     }
     if ((confPct != null && confPct < 35) || (hitRatePct != null && hitRatePct < 52)) {
-      return { tone:'warn', label:'WEAK SIGNAL — AVOID OR SMALL POSITION',
-               summary:'This narrative does not show a strong historical edge.' };
+      return { tone:'warn', label:'LOW CONSENSUS — SIMILAR STORIES WENT BOTH WAYS',
+               summary:'Similar past narratives resolved inconsistently — no clear historical pattern.' };
     }
     if (hitRatePct != null && hitRatePct < 60) {
-      return { tone:'neutral', label:'MIXED SIGNAL — WAIT FOR CONFIRMATION',
-               summary:'Similar narratives have produced inconsistent outcomes.' };
+      return { tone:'neutral', label:'MIXED — SIMILAR STORIES SPLIT ROUGHLY EVEN',
+               summary:'Similar narratives produced inconsistent outcomes.' };
     }
     if (hitRatePct != null && hitRatePct >= 60 && confPct != null && confPct >= 40) {
-      return { tone:'bull', label:'BULLISH EDGE — WATCH FOR ENTRY',
-               summary:'Similar narratives have historically shown positive follow-through.' };
+      return { tone:'bull', label:'HIGH CONSENSUS AMONG SIMILAR NARRATIVES',
+               summary:'Most similar past narratives resolved to the upside.' };
     }
-    return { tone:'warn', label:'WEAK SIGNAL — AVOID OR SMALL POSITION',
-             summary:'This narrative does not show a strong historical edge.' };
+    return { tone:'warn', label:'LOW CONSENSUS — SIMILAR STORIES WENT BOTH WAYS',
+             summary:'Similar past narratives resolved inconsistently — no clear historical pattern.' };
   }
 
   function edgeInterp(hitRatePct){
     if (hitRatePct == null || isNaN(hitRatePct)) return { text:'Insufficient data', cls:'flat' };
-    if (hitRatePct >= 70) return { text:'Strong edge',   cls:'up'   };
-    if (hitRatePct >= 60) return { text:'Positive edge', cls:'up'   };
-    if (hitRatePct >= 52) return { text:'Mixed edge',    cls:'warn' };
-    return                       { text:'No clear edge', cls:'dn'   };
+    if (hitRatePct >= 70) return { text:'High consensus',     cls:'up'   };
+    if (hitRatePct >= 60) return { text:'Moderate consensus', cls:'up'   };
+    if (hitRatePct >= 52) return { text:'Weak consensus',     cls:'warn' };
+    return                       { text:'Mixed outcomes',     cls:'dn'   };
   }
 
   function moveLabel(p, confPct){
@@ -2177,7 +2196,7 @@ footer{
     var abs = Math.abs(pct);
     var base, cls;
     if (abs < 2) {
-      base = pct === 0 ? 'no edge' : 'noise / not actionable';
+      base = pct === 0 ? 'no clear move' : 'mixed — no clear pattern';
       cls = '';
     } else if (abs <= 5) {
       base = pct > 0 ? 'moderate upside move' : 'moderate downside move';
@@ -2206,18 +2225,18 @@ footer{
       + (snippet ? '’s narrative — “' + esc(snippet) + '” — ' : ' — ');
     var body;
     if (bearish) {
-      body = 'shows clearly negative follow-through in the historical analogues. The system flags downside risk; this is not a long setup.';
+      body = 'mostly resolved to the downside in the closest historical analogues. This is a record of how similar stories played out — not a prediction.';
     } else if (weak) {
-      body = 'does not have a strong historical edge in our match set. The system does not show enough confidence for an aggressive trade.';
+      body = 'resolved inconsistently across our match set — similar stories went both ways, with no clear historical pattern.';
     } else if (mixed) {
-      var hint = (p20p != null && p20p > 5)  ? ' has some longer-term upside analogues, but the current match set is mixed.' :
-                 (p20p != null && p20p < -5) ? ' has some longer-term downside analogues, but the current match set is mixed.' :
-                                                ' has historically produced inconsistent outcomes in similar setups.';
-      body = hint + ' Wait for confirmation before sizing up.';
+      var hint = (p20p != null && p20p > 5)  ? 'has some longer-term upside analogues, but the current match set is mixed.' :
+                 (p20p != null && p20p < -5) ? 'has some longer-term downside analogues, but the current match set is mixed.' :
+                                                'produced inconsistent outcomes in similar past setups.';
+      body = hint + ' Similar stories split roughly even.';
     } else if (bullish) {
-      body = 'has historically shown positive follow-through in similar setups. Watch for an entry, but size to the confidence on display.';
+      body = 'mostly resolved to the upside in similar past setups. This describes how comparable narratives played out — not a forecast.';
     } else {
-      body = 'has limited historical signal at present. Treat the metrics as directional, not actionable.';
+      body = 'has few resolved historical analogues so far — treat the comparison as thin.';
     }
     return head + body;
   }
@@ -2290,9 +2309,11 @@ footer{
     var nbs = (data.neighbor_examples || []).slice(0, 3);
 
     var html =
-      // 1. Decision card
+      // 0. Honest-framing disclaimer — historical comparison, not a prediction
+      '<div class="r-disclaimer">This is a historical comparison of similar narratives — not a prediction or trade recommendation. Similar stories often resolve differently.</div>' +
+      // 1. Outcome card — how the closest analogues resolved
       '<div class="r-decision '+decision.tone+'">' +
-        '<div class="r-dc-tag">Trade decision</div>' +
+        '<div class="r-dc-tag">How similar narratives resolved</div>' +
         '<div class="r-dc-label">'+esc(decision.label)+'</div>' +
         '<div class="r-dc-summary">'+esc(decision.summary)+'</div>' +
       '</div>' +
@@ -2301,11 +2322,11 @@ footer{
         '<div class="r-tk-eyebrow">Plain-English takeaway</div>' +
         '<div class="r-tk-body">'+genTakeaway(ticker, narrInput, hrPctNum, hrConf, p5, p10, p20)+'</div>' +
       '</div>' +
-      // 3. Historical Edge Score (renamed)
+      // 3. Analogue Consensus
       '<div class="r-card '+bucket+'">' +
         '<div class="r-hero">' +
           '<div class="r-hero-l">' +
-            '<div class="r-eyebrow">Historical Edge Score · <strong>'+esc(ticker)+'</strong></div>' +
+            '<div class="r-eyebrow">Analogue Consensus · <strong>'+esc(ticker)+'</strong></div>' +
             '<div class="r-num '+bucket+'">'+hrTxt+'</div>' +
             '<span class="r-edge-interp '+ei.cls+'">'+esc(ei.text)+'</span>' +
           '</div>' +
@@ -2314,19 +2335,19 @@ footer{
             '<strong>'+hrN+'</strong> directional of <strong>'+nSim+'</strong> similar narratives' +
           '</div>' +
         '</div>' +
-        // 4. Expected moves with sub-labels
+        // 4. How similar narratives moved, with sub-labels
         '<div class="r-preds">' +
-          predHTML('5d expected move',  p5) +
-          predHTML('10d expected move', p10) +
-          predHTML('20d expected move', p20) +
+          predHTML('5d avg move of similar narratives',  p5) +
+          predHTML('10d avg move of similar narratives', p10) +
+          predHTML('20d avg move of similar narratives', p20) +
         '</div>' +
       '</div>';
 
-    // 5. Analogues — reframed as "Why the signal is mixed"
+    // 5. Analogues — the closest historical narratives and how they resolved
     if (nbs.length) {
       html += '<div class="r-analogue-intro">' +
-                '<div class="r-ai-h">Why the signal is mixed</div>' +
-                '<div class="r-ai-sub">These are past narratives that were semantically similar. Similar stories produced both winners and losers, which lowers conviction.</div>' +
+                '<div class="r-ai-h">The closest historical analogues</div>' +
+                '<div class="r-ai-sub">Past narratives that were semantically similar to yours — and how each one actually resolved.</div>' +
               '</div>';
       html += nbs.map(neighborHTML).join('');
     }
@@ -2334,15 +2355,16 @@ footer{
     // 6. Upsell CTA
     html +=
       '<div class="r-cta">' +
-        '<div class="r-cta-text">Want to see whether this signal <strong>improves or breaks down</strong>? Unlock the full report — all 200 analogues, confidence drivers, microstructure, and saved alerts.</div>' +
+        '<div class="r-cta-text">Want the <strong>full match set</strong>? Unlock all 200 analogues, confidence drivers, microstructure detail, and saved alerts.</div>' +
         '<div class="r-cta-btns">' +
-          '<a class="r-cta-primary" href="/login#register">Unlock full report →</a>' +
-          '<a class="r-cta-secondary" href="/login">Sign in</a>' +
+          '<a class="r-cta-primary" href="/login#register" data-track="demo_unlock_full">Unlock full report →</a>' +
+          '<a class="r-cta-secondary" href="/login" data-track="demo_sign_in">Sign in</a>' +
         '</div>' +
       '</div>';
 
     resultsEl.innerHTML = html;
     resultsEl.classList.add('show');
+    track('demo_result', { ticker: ticker });
     resultsEl.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
@@ -2368,6 +2390,7 @@ footer{
     if (!narrative) { showError('Paste the narrative or headline you want to validate.'); inpNarr.focus(); return; }
     if (narrative.length < 10) { showError('Narrative is too short — give us at least a sentence to work with.'); inpNarr.focus(); return; }
 
+    track('demo_submit', { ticker: ticker });
     setLoading(true);
     fetch('/api/dots-predict', {
       method:'POST',
@@ -2378,10 +2401,12 @@ footer{
     .then(function(res){
       setLoading(false);
       if (!res.ok) {
+        track('demo_error', { reason: 'http_' + res.status });
         showError((res.body && res.body.error) || ('Request failed (HTTP '+res.status+').'));
         return;
       }
       if (res.body.warning === 'no_similar_dots') {
+        track('demo_error', { reason: 'no_similar_dots' });
         showError('No similar narratives found in the corpus. Try a less specific phrasing.');
         return;
       }
@@ -2389,6 +2414,7 @@ footer{
     })
     .catch(function(err){
       setLoading(false);
+      track('demo_error', { reason: 'network' });
       showError('Network error: ' + (err && err.message || 'unknown'));
     });
   }
@@ -2483,7 +2509,7 @@ footer{
           var pull = (featured.excerpt || '').split(/(?<=[.!?])\s/)[0] || '';
           if (pull.length > 160) pull = pull.slice(0, 157) + '…';
           featuredSlot.innerHTML =
-            '<a class="blog-featured" href="/blog/'+fSlug+'">' +
+            '<a class="blog-featured" href="/blog/'+fSlug+'" data-track="blog_featured_click">' +
               '<div class="blog-featured-l">' +
                 '<div class="blog-featured-eyebrow">Featured report</div>' +
                 '<div class="blog-featured-title">'+fTitle+'</div>' +
@@ -2513,7 +2539,7 @@ footer{
           var tk = p.ticker ? esc(p.ticker) : '';
           var author = p.author ? esc(p.author) : 'Market Prism';
           var dt = esc(fmtDate(p.published_at));
-          return '<a class="blog-card '+tagSlug(p.tag)+'" href="/blog/'+slug+'">' +
+          return '<a class="blog-card '+tagSlug(p.tag)+'" href="/blog/'+slug+'" data-track="blog_card_click">' +
             '<div class="blog-meta">' +
               '<span class="blog-tag">'+tagTxt+'</span>' +
               (tk ? '<span class="blog-ticker">'+tk+'</span>' : '') +
