@@ -112,7 +112,7 @@ section.feat.alt{background:rgba(17,25,39,0.35);}
 .screen-shot::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,var(--blue),var(--teal),var(--green));z-index:2;}
 .screen-shot:hover{transform:translateY(-4px);box-shadow:0 32px 72px rgba(0,0,0,0.55),0 6px 16px rgba(0,0,0,0.45);}
-.screen-shot img{width:100%;height:auto;display:block;}
+.screen-shot img,.screen-shot video{width:100%;height:auto;display:block;}
 .screen-tag{position:absolute;top:14px;right:14px;z-index:3;
   font-family:var(--font-b);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
   color:#001019;background:linear-gradient(90deg,var(--green),var(--teal));
@@ -294,7 +294,7 @@ section.feat.alt{background:rgba(17,25,39,0.35);}
     <div class="screen-row">
       <div class="screen-shot">
         <div class="screen-tag">Live data</div>
-        <img src="/assets/screenshots/ScreenShot%20Tool%20-20260505132509.png" alt="Market Prism Daily Plays dashboard: Day Trade, Swing Trade and Momentum lanes with active picks and signal summary">
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/daily-plays-poster.jpg" aria-label="Market Prism Daily Plays dashboard: Day Trade, Swing Trade and Momentum lanes with active picks and signal summary"><source src="/assets/video/daily-plays.mp4" type="video/mp4"></video>
       </div>
       <div class="screen-copy">
         <div class="meta">/dashboard · updated each session</div>
@@ -320,7 +320,7 @@ section.feat.alt{background:rgba(17,25,39,0.35);}
     <div class="screen-row flip">
       <div class="screen-shot">
         <div class="screen-tag">Source anchored</div>
-        <img src="/assets/screenshots/ScreenShot%20Tool%20-20260505132529.png" alt="Market Prism AAPL stock forensics page with Hype Trap badge, fundamental disconnect score and conviction rating">
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/stock-forensics-poster.jpg" aria-label="Market Prism stock forensics page with hype score, fundamental disconnect and conviction rating"><source src="/assets/video/stock-forensics.mp4" type="video/mp4"></video>
       </div>
       <div class="screen-copy">
         <div class="meta">/ticker/:symbol</div>
@@ -348,7 +348,7 @@ section.feat.alt{background:rgba(17,25,39,0.35);}
     <div class="screen-row">
       <div class="screen-shot">
         <div class="screen-tag">15 live boards</div>
-        <img src="/assets/screenshots/ScreenShot%20Tool%20-20260505132550.png" alt="Market Prism Leaderboard: 15 ranked boards covering loudest stories, spam alarm, conviction list, narrative traps, whale tracks, hidden bargains and more">
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/leaderboards-poster.jpg" aria-label="Market Prism Leaderboard: 15 ranked boards covering loudest stories, spam alarm, conviction list, narrative traps, whale tracks, hidden bargains and more"><source src="/assets/video/leaderboards.mp4" type="video/mp4"></video>
       </div>
       <div class="screen-copy">
         <div class="meta">/leaderboard</div>
@@ -400,7 +400,7 @@ section.feat.alt{background:rgba(17,25,39,0.35);}
     <div class="screen-row">
       <div class="screen-shot">
         <div class="screen-tag">Live picks</div>
-        <img src="/assets/screenshots/ScreenShot%20Tool%20-20260505132820.png" alt="Market Prism trading cards: Peak Narrative, Momentum Confirmed and Losing Steam cards across DASH, UNH, TSN, SNPS, INTC">
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/trading-cards-poster.jpg" aria-label="Market Prism trading cards: daily picks rendered as collectible cards with rarity, bias and context"><source src="/assets/video/trading-cards.mp4" type="video/mp4"></video>
       </div>
       <div class="screen-copy">
         <div class="meta">/cards · live signals</div>
@@ -426,7 +426,7 @@ section.feat.alt{background:rgba(17,25,39,0.35);}
     <div class="screen-row">
       <div class="screen-shot">
         <div class="screen-tag">Narrative overlay</div>
-        <img src="/assets/screenshots/ScreenShot%20Tool%20-20260505132726.png" alt="Market Prism Signal Lab: NVDA price overlaid with narrative force, risk pressure and meme cycle lines">
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/signal-lab-poster.jpg" aria-label="Market Prism Signal Lab: price overlaid with narrative force, risk pressure and meme cycle lines"><source src="/assets/video/signal-lab.mp4" type="video/mp4"></video>
       </div>
       <div class="screen-copy">
         <div class="meta">/signal-lab · per ticker</div>
@@ -452,7 +452,7 @@ section.feat.alt{background:rgba(17,25,39,0.35);}
     <div class="screen-row flip">
       <div class="screen-shot">
         <div class="screen-tag">5.5M observations</div>
-        <img src="/assets/screenshots/ScreenShot%20Tool%20-20260505132736.png" alt="Market Prism Narrative Lab: paste a claim, search 5.5M historical narrative observations for analogues">
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/narrative-lab-poster.jpg" aria-label="Market Prism Narrative Lab: paste a claim, search millions of historical narrative observations for analogues"><source src="/assets/video/narrative-lab.mp4" type="video/mp4"></video>
       </div>
       <div class="screen-copy">
         <div class="meta">/narrative-lab</div>
@@ -697,6 +697,28 @@ section.feat.alt{background:rgba(17,25,39,0.35);}
     <a href="/privacy">Privacy</a>
   </div>
 </div>
+
+<script>
+/* Demo videos: play only while their section is on screen, pause when it
+   leaves — avoids every loop moving at once. Honors prefers-reduced-motion
+   (poster frame only). */
+(function(){
+  var vids = [].slice.call(document.querySelectorAll('video[data-scrollplay]'));
+  if (!vids.length) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!('IntersectionObserver' in window)){
+    vids.forEach(function(v){ v.play().catch(function(){}); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.isIntersecting) en.target.play().catch(function(){});
+      else en.target.pause();
+    });
+  }, { threshold: 0.35 });
+  vids.forEach(function(v){ io.observe(v); });
+})();
+</script>
 
 </body>
 </html>
