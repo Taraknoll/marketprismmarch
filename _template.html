@@ -877,6 +877,16 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 .tls-more:hover{color:var(--mp-text-primary);border-color:var(--mp-border-hover);}
 .tls-empty{font-size:13px;color:var(--mp-text-muted);padding:26px;border:1px dashed var(--mp-border);border-radius:12px;text-align:center;line-height:1.5;}
 .tls-note{font-size:11px;color:var(--mp-text-muted);margin-top:12px;line-height:1.5;}
+/* ── Teaser blur for free / non-paying users. Paying subscribers, beta users and the
+   admin email all pass BILLING.hasAccess() and NEVER see this (see mpRecomputeTeaser,
+   fail-open). Cosmetic layer only — real protection is server-side withholding. ── */
+.teaser-blur{filter:blur(6px);opacity:.85;pointer-events:none;user-select:none;-webkit-user-select:none;}
+.tls-cta{display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:14px;padding:22px 18px;border:1px solid rgba(0,174,255,0.25);border-radius:14px;background:linear-gradient(180deg,rgba(0,174,255,0.07),rgba(0,174,255,0.02));text-align:center;}
+.tls-cta-lock{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#00AEFF;}
+.tls-cta-h{font-size:15px;font-weight:600;color:var(--mp-text-primary);font-family:var(--font-body);}
+.tls-cta-sub{font-size:12px;color:var(--mp-text-tertiary);max-width:440px;line-height:1.5;}
+.tls-cta-btn{margin-top:4px;font-family:var(--font-body);font-size:13px;font-weight:700;letter-spacing:.02em;color:#06121f;background:#00AEFF;border:none;border-radius:9px;padding:11px 26px;cursor:pointer;transition:filter .2s,transform .2s;}
+.tls-cta-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
 @media(max-width:900px){
   /* Mobile: reflow each row into a clean 3-line card —
      line 1 = lane (left) + bias (right), line 2 = ticker identity (full width),
@@ -5259,24 +5269,12 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
         <button class="load-more-btn" id="discover-load-more-btn">Load more</button>
       </div>
 
-      <!-- ── Heatmap ── -->
-      <div style="margin-bottom:28px;margin-top:24px;">
-        <div class="discover-heatmap-wrap" id="discover-heatmap-wrap">
-          <div class="dhm-header">
-            <h3>Narrative Health Map</h3>
-            <a href="/heatmap">Full heatmap →</a>
-          </div>
-          <div class="dhm-grid" id="dhm-grid">
-            <div class="loading-skeleton skel-hm-grid" style="grid-column:1/-1;padding:8px 0;">
-              <div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div>
-              <div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div>
-              <div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div>
-              <div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div><div class="skel skel-hm-cell"></div>
-            </div>
-          </div>
-          <div class="dhm-summary" id="dhm-summary"></div>
-        </div>
-      </div>
+      <!-- Narrative Health Map widget removed 2026-06-12 per request (dashboard had
+           enough views). The separate Narrative Map + Macro Currents sections in
+           Market Insights are UNRELATED and remain. Standalone /heatmap page retained.
+           Dead-but-harmless: CSS .dhm-*/.discover-heatmap-wrap and JS DHM_FALLBACK/
+           renderDhmGrid/loadDiscoverHeatmap are now unused; left in place to keep the
+           diff minimal. -->
     </div>
 
     <!-- ══════════════════════════════════════
@@ -7398,6 +7396,8 @@ function applyPlanAccessGating(subscription){
   if(note){
     note.style.display = hasAnyLocks ? '' : 'none';
   }
+  // Drive the Daily Plays teaser blur from the same resolved subscription.
+  mpRecomputeTeaser(subscription);
 }
 
 function renderSubscriptionOverview(subscription){
@@ -7498,6 +7498,7 @@ async function loadSubscriptionStatus(){
   try {
     renderSubscriptionOverview(null);
     var subscription = await getSubscription();
+    MP_SUB_RESOLVED = true; // subscription positively resolved (null = free user, still valid)
     renderSubscriptionOverview(subscription);
   } catch(err){
     console.error('Subscription load error:', err);
@@ -8259,7 +8260,6 @@ async function loadData(){
     // Sectors render after DB fetch — see loadSectorsFromSummaries() below
     MEME_DATA=MEME_SEED.slice(); // reset so renderMemes re-merges from CARD_DATA
     renderMemes();
-    loadDiscoverHeatmap();
     renderTradingCards();
     renderDailySignalCards();
     renderLeaderboardCards();
@@ -8972,6 +8972,10 @@ var TLS_LANES={
 };
 var TLS_ORDER=['DAY_TRADE','SWING_TRADE','MOMENTUM','EARNINGS_PLAY','NARRATIVE_TRAP','VALUE_PICK','AI_PICK'];
 var TLS_ROWS=[],TLS_FILTER='top',TLS_CAP=8;
+// Teaser-blur state for non-paying users. FAIL-OPEN: both stay false (no blur) until a
+// subscription has positively resolved as "no access". Paying subscribers, beta users
+// and the admin email all pass BILLING.hasAccess() → never locked. See mpRecomputeTeaser().
+var MP_TEASER_LOCKED=false, MP_SUB_RESOLVED=false;
 // Conviction: direction-aligned model probability for the lane's horizon.
 // Used for RANKING only — deliberately not displayed (a ~55 probability
 // reads as a weak score and confused users).
@@ -9066,6 +9070,55 @@ function tlsRenderSlate(){
     var total=TLS_ROWS.filter(function(r){return r.lane!=='VALUE_PICK'&&r.lane!=='AI_PICK';}).length;
     meta.textContent=shown.length+' of '+total+' picks shown'+(window._TLS_DATE?' · '+window._TLS_DATE:'');
   }
+  tlsApplyTeaser();
+}
+// Free/non-paying users: keep the #1 conviction pick fully visible as a taste, blur the
+// actionable numbers (Prism forecast + Entry/Target) on every pick after it, and swap the
+// "Show more" control for an upgrade CTA. No-op for paying/beta/admin (MP_TEASER_LOCKED
+// stays false for them). list.innerHTML is rebuilt each render, so blur classes never go
+// stale; only the CTA lives outside the list and is added/removed here.
+function tlsApplyTeaser(){
+  var existingCta=document.getElementById('tls-cta');
+  if(!MP_TEASER_LOCKED){ if(existingCta) existingCta.remove(); return; }
+  var list=document.getElementById('tls-list'); if(!list) return;
+  var rowsEls=list.querySelectorAll('.tls-row');
+  rowsEls.forEach(function(el,i){
+    if(i===0) return; // taste: top conviction pick stays fully visible
+    el.classList.add('tls-locked');
+    el.querySelectorAll('.tls-est,.tls-prices').forEach(function(c){c.classList.add('teaser-blur');});
+    el.addEventListener('click',tlsTeaserIntercept); // don't navigate to the (also-premium) ticker page
+  });
+  var foot=document.getElementById('tls-foot'); if(foot) foot.style.display='none';
+  if(!existingCta && rowsEls.length){
+    var total=TLS_ROWS.filter(function(r){return r.lane!=='VALUE_PICK'&&r.lane!=='AI_PICK';}).length;
+    var hidden=Math.max(0,total-1);
+    var cta=document.createElement('div');
+    cta.className='tls-cta'; cta.id='tls-cta';
+    cta.innerHTML='<span class="tls-cta-lock">🔒 Pro</span>'
+      +'<span class="tls-cta-h">Unlock '+hidden+' more plays — with entry, target &amp; stop</span>'
+      +'<span class="tls-cta-sub">You’re seeing today’s #1 conviction pick. Go Pro for every play’s exact entry, target and stop, the Prism forecast, and the full conviction-ranked slate.</span>'
+      +'<button class="tls-cta-btn" type="button" onclick="mpTeaserUpgrade()">Unlock with Pro — $25/mo</button>';
+    list.parentNode.insertBefore(cta, list.nextSibling);
+  }
+}
+function tlsTeaserIntercept(e){ e.preventDefault(); e.stopPropagation(); mpTeaserUpgrade(); }
+function mpTeaserUpgrade(){
+  if(typeof openUpgrade==='function'){ try{ openUpgrade(); return; }catch(e){} }
+  window.location.href='/pricing';
+}
+// Recompute lock state from the resolved subscription and re-render the slate. FAIL-OPEN:
+// only locks when the subscription has positively resolved AND billing-config loaded AND
+// hasAccess() returned false. Any error / unresolved / missing-billing state → no blur,
+// so a transient hiccup can never blur a paying subscriber.
+function mpRecomputeTeaser(subscription){
+  var billingOk=!!(window.MP_BILLING && typeof window.MP_BILLING.hasAccess==='function');
+  var locked=false;
+  if(MP_SUB_RESOLVED && billingOk){
+    try{ locked=!window.MP_BILLING.hasAccess(subscription,'pro'); }
+    catch(e){ locked=false; }
+  }
+  MP_TEASER_LOCKED=locked;
+  if(typeof tlsRenderSlate==='function') tlsRenderSlate();
 }
 window.tlsShowMore=function(){TLS_CAP+=8;tlsRenderSlate();};
 function tlsSetRows(buckets){
