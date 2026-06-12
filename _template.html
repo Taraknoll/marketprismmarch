@@ -887,6 +887,35 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 .tls-cta-sub{font-size:12px;color:var(--mp-text-tertiary);max-width:440px;line-height:1.5;}
 .tls-cta-btn{margin-top:4px;font-family:var(--font-body);font-size:13px;font-weight:700;letter-spacing:.02em;color:#06121f;background:#00AEFF;border:none;border-radius:9px;padding:11px 26px;cursor:pointer;transition:filter .2s,transform .2s;}
 .tls-cta-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+/* ── Section-wide Pro teaser (free users). body.mp-teaser-locked is toggled by
+   mpRecomputeTeaser() — same fail-open gate as the Daily Plays blur. CSS does
+   the blurring so dynamically re-rendered lists re-lock automatically; the
+   .mp-tcta banners are static HTML, display:none unless locked. Inter only —
+   no serif anywhere in teaser UI. ── */
+.mp-tcta{display:none;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 20px;padding:14px 18px;border:1px solid rgba(0,174,255,0.25);border-radius:14px;background:linear-gradient(180deg,rgba(0,174,255,0.07),rgba(0,174,255,0.02));}
+body.mp-teaser-locked .mp-tcta{display:flex;}
+.mp-tcta-text{flex:1;min-width:220px;font-family:var(--font-body);font-size:13px;color:var(--mp-text-secondary);line-height:1.5;}
+.mp-tcta-text strong{color:var(--mp-text-primary);font-weight:600;}
+.mp-tcta-lock{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#00AEFF;margin-right:10px;}
+.mp-tcta-btn{font-family:var(--font-body);font-size:13px;font-weight:700;letter-spacing:.02em;color:#06121f;background:#00AEFF;border:none;border-radius:9px;padding:11px 22px;cursor:pointer;transition:filter .2s,transform .2s;white-space:nowrap;}
+.mp-tcta-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+/* What free users keep per section: Leaderboard top 3 per board, first featured
+   alert, top 2 macro currents, top influential narrative, first 2 sector
+   stories, first trading card. Signal Lab + Market Physics are fully Pro. */
+body.mp-teaser-locked #lb-grid .lb-rows .lb-row:nth-child(n+4),
+body.mp-teaser-locked #lb-grid .lb-table tbody tr:nth-child(n+4) .lb-td,
+body.mp-teaser-locked #mi-alert-rail>*:nth-child(n+2),
+body.mp-teaser-locked #mi-nmap-mosaic,
+body.mp-teaser-locked #mi-macro-list>*:nth-child(n+3),
+body.mp-teaser-locked #mi-wks-list>*:nth-child(n+2),
+body.mp-teaser-locked #mi-story-grid>*:nth-child(n+3),
+body.mp-teaser-locked #tcg-grid>*:nth-child(n+2),
+body.mp-teaser-locked #tab-signallab .sl-search,
+body.mp-teaser-locked #tab-signallab .sl-card,
+body.mp-teaser-locked #tab-prism .prism-kpis,
+body.mp-teaser-locked #tab-prism .prism-controls,
+body.mp-teaser-locked #tab-prism .prism-plot-wrap{filter:blur(6px);opacity:.85;pointer-events:none;user-select:none;-webkit-user-select:none;}
+body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{display:none!important;}
 @media(max-width:900px){
   /* Mobile: reflow each row into a clean 3-line card —
      line 1 = lane (left) + bias (right), line 2 = ticker identity (full width),
@@ -5138,6 +5167,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
         </button>
       </div>
 
+      <div class="mp-tcta">
+        <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>The full tape is a Pro view.</strong> Free preview shows the top alert and leading stories — Pro unlocks every alert, the narrative map, macro currents, and all sector stories.</div>
+        <button class="mp-tcta-btn" type="button" onclick="mpTeaserUpgrade()">Unlock with Pro — $25/mo</button>
+      </div>
+
       <!-- 1) FEATURED ALERTS -->
       <div class="mi-section">
         <div class="mi-sec-head">
@@ -5505,6 +5539,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
         <p>High-conviction trade signals powered by narrative forensics + live market data</p>
       </div>
 
+      <div class="mp-tcta">
+        <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>Today's top card is on us.</strong> Pro unlocks the full deck — every Unicorn, Platinum and Gold signal, with live prices and win rates.</div>
+        <button class="mp-tcta-btn" type="button" onclick="mpTeaserUpgrade()">Unlock with Pro — $25/mo</button>
+      </div>
+
       <div class="strat-filter-bar" id="strat-filter-bar">
         <span class="strat-filter-label">Filter:</span>
         <div class="strat-filter-chip active" data-filter="all">All Cards</div>
@@ -5684,6 +5723,10 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           <span>Refresh</span>
         </button>
+      </div>
+      <div class="mp-tcta">
+        <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>Top 3 of every board, free.</strong> Pro unlocks the full rankings on every live leaderboard — every ticker, every score, every download.</div>
+        <button class="mp-tcta-btn" type="button" onclick="mpTeaserUpgrade()">Unlock with Pro — $25/mo</button>
       </div>
       <!-- Leaderboard data error banner (shown when board fetches fail — e.g. RLS lockdown, dashboard-data 500, missing keys) -->
       <div id="lb-error-banner" style="display:none;background:rgba(255,77,77,0.10);border:1px solid rgba(255,77,77,0.32);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#FF8B8B;line-height:1.55;">
@@ -5918,6 +5961,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
           <h1>Every ticker, every catalyst.</h1>
           <span class="ph-italic">One field.</span>
           <p>Distance to earnings on the horizon, narrative mass on the vertical, WKS sentiment in color. Click any dot for the full read.</p>
+        </div>
+
+        <div class="mp-tcta">
+          <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>Market Physics is a Pro view.</strong> Every tracked ticker on one earnings field — narrative mass, sentiment and timing in a single map.</div>
+          <button class="mp-tcta-btn" type="button" onclick="mpTeaserUpgrade()">Unlock with Pro — $25/mo</button>
         </div>
 
         <div class="prism-kpis">
@@ -9118,6 +9166,10 @@ function mpRecomputeTeaser(subscription){
     catch(e){ locked=false; }
   }
   MP_TEASER_LOCKED=locked;
+  // Drives the section-wide CSS teasers (Leaderboard, Insights, Cards, Signal
+  // Lab, Market Physics) + their .mp-tcta banners. CSS keys off this class so
+  // re-rendered lists re-lock without per-renderer hooks.
+  document.body.classList.toggle('mp-teaser-locked', locked);
   if(typeof tlsRenderSlate==='function') tlsRenderSlate();
 }
 window.tlsShowMore=function(){TLS_CAP+=8;tlsRenderSlate();};

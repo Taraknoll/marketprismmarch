@@ -4460,6 +4460,22 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
 <body>
 <script>if(new URLSearchParams(window.location.search).get('embed')==='1')document.body.classList.add('embed-mode');</script>
 <div class="info-tip-popup" id="info-tip-popup"></div>
+<style>
+/* ── Pro teaser for free (logged-in, non-paying) users. body.mp-teaser-locked
+   is set by the access-gating IIFE below, fail-open: beta, admin, paying, or
+   any unresolved/error state never locks. Taste = hero, chart, narratives,
+   stories; Pro = verdict/forecast banner + Trading Strategy tab. Inter only —
+   no serif in teaser UI. ── */
+.mp-tcta{display:none;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 18px;padding:14px 18px;border:1px solid rgba(0,174,255,0.25);border-radius:14px;background:linear-gradient(180deg,rgba(0,174,255,0.07),rgba(0,174,255,0.02));}
+body.mp-teaser-locked .mp-tcta{display:flex;}
+.mp-tcta-text{flex:1;min-width:220px;font-family:var(--font-body,'Inter',sans-serif);font-size:13px;color:var(--text-secondary,#A0A8B0);line-height:1.5;}
+.mp-tcta-text strong{color:var(--text-primary,#FFFFFF);font-weight:600;}
+.mp-tcta-lock{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#00AEFF;margin-right:10px;}
+.mp-tcta-btn{font-family:var(--font-body,'Inter',sans-serif);font-size:13px;font-weight:700;letter-spacing:.02em;color:#06121f;background:#00AEFF;border:none;border-radius:9px;padding:11px 22px;cursor:pointer;transition:filter .2s,transform .2s;white-space:nowrap;}
+.mp-tcta-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+body.mp-teaser-locked #verdict-banner>*{filter:blur(8px);pointer-events:none;user-select:none;-webkit-user-select:none;}
+body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-events:none;user-select:none;-webkit-user-select:none;}
+</style>
 <div class="app-layout">
   <!-- ── SIDE NAV ── (rendered by lib/mp-sidebar.js — single source of truth across pages) -->
   <nav class="side-nav" id="side-nav"></nav>
@@ -4512,6 +4528,12 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
         <div class="tt-loading-sub">Loading narrative state, forecast, and reality-belief signals.</div>
       </div>
     </div>
+  </div>
+  <!-- Pro teaser CTA — static sibling of the (re-rendered) verdict banner so it
+       survives renderTradeTicket innerHTML swaps. Visible only when locked. -->
+  <div class="mp-tcta">
+    <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>The verdict and forecast are Pro views.</strong> Free accounts get the chart, narratives and story feed on every ticker — Pro unlocks the verdict, multi-horizon forecast, and exact entry, target and stop.</div>
+    <button class="mp-tcta-btn" type="button" onclick="(window.mpTeaserUpgrade||function(){location.href='/pricing';})()">Unlock with Pro — $25/mo</button>
   </div>
 
   <!-- Ask Market Scholar AI bar removed — replaced by the sidebar AI section. -->
@@ -4941,7 +4963,10 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
 
   <!-- ═══ TAB: STRATEGY ═══ -->
   <div class="tk-tab-panel" id="tab-strategy" style="position:relative;">
-    <!-- Pro gating removed — single tier, all paid users get full access -->
+    <div class="mp-tcta">
+      <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>Trading Strategy is Pro.</strong> Entry, target, invalidation and historical analogues for every tracked ticker.</div>
+      <button class="mp-tcta-btn" type="button" onclick="(window.mpTeaserUpgrade||function(){location.href='/pricing';})()">Unlock with Pro — $25/mo</button>
+    </div>
     <!-- Loading skeleton -->
     <div id="strategy-loading">
       <div class="section">
@@ -10516,6 +10541,8 @@ async function refreshAll() {
   // Determine subscription — check beta first, then Supabase auth
   var sub = null;
   var isAuthed = false;
+  var subResolved = false;   // true only when we POSITIVELY know paying vs free
+  var isAdminEmail = false;
   var isBeta = localStorage.getItem('mp-beta-access') === 'true';
   if(isBeta){
     var betaTier = localStorage.getItem('mp-beta-tier') || 'pro';
@@ -10538,9 +10565,12 @@ async function refreshAll() {
         if(user){
           window._mpCurrentUserEmail = (user.email || '').toLowerCase();
           // Admin bypass
-          if(window._mpCurrentUserEmail === 'tara@vtlbranding.com'){ isAuthed = true; }
+          if(window._mpCurrentUserEmail === 'tara@vtlbranding.com'){ isAuthed = true; isAdminEmail = true; }
           var res = await supa.from('subscriptions').select('*').eq('user_id', user.id).in('status', ['active','trialing']).single();
-          if(!res.error && res.data){ sub = res.data; isAuthed = true; }
+          if(!res.error && res.data){ sub = res.data; isAuthed = true; subResolved = true; }
+          // PGRST116 = zero rows — a positive "logged in, no active sub".
+          // Any other error leaves subResolved false → teaser fails open.
+          else if(res.error && res.error.code === 'PGRST116'){ subResolved = true; }
           // Even without subscription, logged-in users can view (free preview)
           if(user){ isAuthed = true; }
         }
@@ -10554,9 +10584,23 @@ async function refreshAll() {
     return;
   }
 
+  // Pro teaser (free preview): blur the verdict/forecast banner + Trading
+  // Strategy tab via body.mp-teaser-locked. FAIL-OPEN — locks only when we
+  // positively resolved a logged-in, non-beta, non-admin user with no
+  // active/trialing subscription. Errors or unresolved state show everything.
+  var locked = false;
+  try {
+    if(subResolved && !isBeta && !isAdminEmail && typeof BILLING.hasAccess === 'function'){
+      locked = !BILLING.hasAccess(sub, 'pro');
+    }
+  } catch(e){ locked = false; }
+  document.body.classList.toggle('mp-teaser-locked', locked);
+
   // Authenticated — load all data
   refreshAll();
 })();
+
+window.mpTeaserUpgrade = function(){ window.location.href = '/pricing'; };
 
 // Story feed refresh button
 document.getElementById('tk-feed-refresh')?.addEventListener('click', async function() {
