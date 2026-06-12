@@ -6748,12 +6748,13 @@ async function loadHero() {
 
     const eps        = (bzIsFresher ? bz.actual_eps : null) ?? cv.benzinga_eps_actual ?? cv.sec_eps ?? r.benzinga_eps_actual ?? r.sec_eps;
     const epsEst     = (bzIsFresher ? bz.estimated_eps : null) ?? cv.benzinga_eps_estimate ?? r.benzinga_eps_estimate;
-    // benzinga_earnings.eps_surprise_percent is a decimal (0.74 = 74%);
-    // claim_verifications.benzinga_eps_surprise_pct is already a percent.
-    // Normalize bz to percent so the existing formatter doesn't double-scale.
-    const epsSurp    = (bzIsFresher && bz.eps_surprise_percent != null)
-      ? Number(bz.eps_surprise_percent) * 100
+    // EVERY source stores EPS surprise as a decimal fraction (0.0968 = 9.68%):
+    // benzinga_earnings.eps_surprise_percent, claim_verifications.benzinga_eps_surprise_pct,
+    // and v_dash_daily_story.benzinga_eps_surprise_pct. Normalize all to percent.
+    const epsSurpRaw = (bzIsFresher && bz.eps_surprise_percent != null)
+      ? bz.eps_surprise_percent
       : (cv.benzinga_eps_surprise_pct ?? r.benzinga_eps_surprise_pct);
+    const epsSurp    = epsSurpRaw != null ? Number(epsSurpRaw) * 100 : null;
     const epsSurpCls = epsSurp > 0 ? 'color:var(--accent-surging)' : epsSurp < 0 ? 'color:var(--accent-breaking)' : '';
     const epsSurpTxt = epsSurp != null ? (epsSurp > 0 ? '+' : '') + epsSurp.toFixed(1) + '%' : '—';
 
@@ -9832,7 +9833,8 @@ function exportReport() {
       if (r.benzinga_eps_estimate != null) kvRow('EPS estimate', '$' + Number(r.benzinga_eps_estimate).toFixed(2), muted);
       if (r.benzinga_eps_surprise_pct != null) {
         var surpC = r.benzinga_eps_surprise_pct > 0 ? green : red;
-        kvRow('EPS surprise', (r.benzinga_eps_surprise_pct > 0 ? '+' : '') + Number(r.benzinga_eps_surprise_pct).toFixed(1) + '%', surpC);
+        // benzinga_eps_surprise_pct is a decimal fraction (0.0968 = 9.68%)
+        kvRow('EPS surprise', (r.benzinga_eps_surprise_pct > 0 ? '+' : '') + (Number(r.benzinga_eps_surprise_pct) * 100).toFixed(1) + '%', surpC);
       }
       if (r.guidance_direction && r.guidance_direction !== 'Neutral') {
         kvRow('Guidance', r.guidance_direction, r.guidance_direction === 'Positive' ? green : red);
