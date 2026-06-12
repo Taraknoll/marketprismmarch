@@ -230,6 +230,41 @@ nav {
   font-weight: 400;
 }
 
+/* ── LIVE DEMOS ── */
+.about-demos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 36px;
+}
+@media (max-width: 720px) { .about-demos { grid-template-columns: 1fr; } }
+.about-demo {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface, #0C1018);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+}
+.about-demo::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--blue), var(--teal), var(--green));
+  z-index: 2;
+}
+.about-demo video { width: 100%; height: auto; display: block; }
+.about-demo-caption { padding: 14px 18px 16px; }
+.about-demo-title {
+  font-family: var(--font-b);
+  font-size: 14px; font-weight: 600; color: var(--tx1);
+  margin-bottom: 4px;
+}
+.about-demo-desc {
+  font-family: var(--font-b);
+  font-size: 13px; line-height: 1.5; color: var(--tx3);
+  font-weight: 300;
+}
+
 /* ── CTA ── */
 .about-cta {
   padding: 80px 0 96px;
@@ -427,6 +462,45 @@ nav {
 </section>
 
 <!-- ── CTA ── -->
+<!-- ── SEE IT IN ACTION ── -->
+<section class="about-section alt">
+  <div class="con">
+    <div class="about-section-eyebrow">See it in action</div>
+    <h2 class="about-h2">The engine, <em>live.</em></h2>
+    <p class="about-p">Four of the screens the pipeline feeds every session — captured straight from the dashboard, no mockups.</p>
+    <div class="about-demos">
+      <div class="about-demo">
+        <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/market-insights-poster.jpg" aria-label="Market Prism Market Insights tab: featured alerts, macro currents and sector stories ranked by narrative pressure"><source src="/assets/video/market-insights.mp4" type="video/mp4"></video>
+        <div class="about-demo-caption">
+          <div class="about-demo-title">Market Insights</div>
+          <div class="about-demo-desc">The whole tape in one read — featured alerts, macro currents, and every sector's stories ranked by how hard they press on price.</div>
+        </div>
+      </div>
+      <div class="about-demo">
+        <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/narrative-lab-poster.jpg" aria-label="Market Prism Narrative Lab: validate any ticker claim against millions of historical analogues"><source src="/assets/video/narrative-lab.mp4" type="video/mp4"></video>
+        <div class="about-demo-caption">
+          <div class="about-demo-title">Narrative Lab</div>
+          <div class="about-demo-desc">Any ticker, any claim — compared against 3.5M historical narrative analogues to show how stories like it played out before.</div>
+        </div>
+      </div>
+      <div class="about-demo">
+        <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/signal-lab-poster.jpg" aria-label="Market Prism Signal Lab: narrative forces and regime analysis for a single ticker"><source src="/assets/video/signal-lab.mp4" type="video/mp4"></video>
+        <div class="about-demo-caption">
+          <div class="about-demo-title">Signal Lab</div>
+          <div class="about-demo-desc">Forces and regime for one ticker — narrative pressure, energy, and risk made visible on a single chart.</div>
+        </div>
+      </div>
+      <div class="about-demo">
+        <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/trading-cards-poster.jpg" aria-label="Market Prism Trading Cards: daily picks rendered as collectible trading cards"><source src="/assets/video/trading-cards.mp4" type="video/mp4"></video>
+        <div class="about-demo-caption">
+          <div class="about-demo-title">Trading Cards</div>
+          <div class="about-demo-desc">Every daily play rendered as a collectible card — rarity, bias, and context at a glance, built to be shared.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="about-cta">
   <div class="con">
     <a href="/" class="about-cta-btn">Run a forensic audit <span aria-hidden="true">→</span></a>
