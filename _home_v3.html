@@ -1477,7 +1477,7 @@ footer{
   </a>
   <div class="nav-mid">
     <a href="/features" class="nav-link">Product</a>
-    <a href="#blog-section" class="nav-link">News</a>
+    <a href="/blog" class="nav-link">News</a>
     <a href="/about" class="nav-link">About</a>
     <a href="/pricing" class="nav-link">Pricing</a>
   </div>
@@ -1502,7 +1502,7 @@ footer{
   </div>
   <div class="mobile-menu-links">
     <a href="/features" class="mobile-menu-link">Product</a>
-    <a href="#blog-section" class="mobile-menu-link" onclick="document.getElementById('mobile-menu').classList.remove('open')">News</a>
+    <a href="/blog" class="mobile-menu-link" onclick="document.getElementById('mobile-menu').classList.remove('open')">News</a>
     <a href="/about" class="mobile-menu-link">About</a>
     <a href="/pricing" class="mobile-menu-link">Pricing</a>
   </div>
@@ -1676,42 +1676,6 @@ footer{
     </div>
     <div class="cmp-foot" style="justify-content:center;">
       <a href="/features#compare" class="cmp-link" data-track="compare_see_full">See the full comparison vs Bloomberg &amp; AI stock apps <span aria-hidden="true">→</span></a>
-    </div>
-  </div>
-</section>
-
-<!-- ── LATEST REPORTS (blog teaser) ── -->
-<section class="below" id="blog-section">
-  <div class="container">
-    <div class="blog-head">
-      <div class="blog-head-l">
-        <div class="section-eyebrow">Latest reports</div>
-        <h2 class="section-title">Forensic intelligence, <em>published.</em></h2>
-        <p class="section-sub">Earnings forensics, narrative case studies, and market intel — the reports traders have been quoting. Free to read.</p>
-      </div>
-      <a class="blog-all" href="/blog" data-track="blog_all_reports">All reports <span aria-hidden="true">→</span></a>
-    </div>
-    <div id="blog-featured-slot">
-      <a class="blog-featured" href="/blog/2026-05-04-rddt-q1-2026-forensic-ai-fuel-thesis" data-track="blog_featured_click">
-        <div class="blog-featured-l">
-          <div class="blog-featured-eyebrow">Featured report</div>
-          <div class="blog-featured-title">RDDT Q1 2026 Forensic: The AI Fuel Thesis Just Got Its Print</div>
-          <div class="blog-featured-excerpt">Reddit (NYSE: RDDT) reported Q1 2026 earnings after the close on Thursday, April 30. The print did what the pre-earnings forensic flagged as the bull-case violent-squeeze scenario.</div>
-          <div class="blog-featured-foot">
-            <span><strong>Market Prism Research</strong></span>
-            <span>May 4, 2026 &middot; Free to read</span>
-          </div>
-        </div>
-        <div class="blog-featured-r">
-          <span class="blog-featured-tag">Post-Earnings</span>
-          <div class="blog-featured-ticker">RDDT</div>
-          <div class="blog-featured-pull">"Reddit (NYSE: RDDT) reported Q1 2026 earnings after the close on Thursday, April 30."</div>
-          <span class="blog-featured-cta">Read the full report &rarr;</span>
-        </div>
-      </a>
-    </div>
-    <div class="blog-grid" id="blog-grid">
-      <div class="blog-loading" id="blog-loading">Loading latest reports…</div>
     </div>
   </div>
 </section>
@@ -2241,123 +2205,6 @@ footer{
     }
     window.addEventListener('scroll', check, { passive: true });
     check();
-  })();
-
-  // ── Latest reports (homepage blog teaser) ────────────────────────────
-  (function loadBlogTeaser(){
-    var grid = document.getElementById('blog-grid');
-    var featuredSlot = document.getElementById('blog-featured-slot');
-    var loading = document.getElementById('blog-loading');
-    if (!grid) return;
-    var env = window.__env || {};
-    var SUPABASE_URL  = env.SUPABASE_URL  || '';
-    var SUPABASE_ANON = env.SUPABASE_ANON || '';
-    if (!SUPABASE_URL || !SUPABASE_ANON) {
-      if (loading) loading.textContent = 'Reports loading…';
-      return;
-    }
-    // Pull a wider window so we can find an RDDT post if it exists.
-    var url = SUPABASE_URL + '/rest/v1/blog_posts'
-      + '?select=ticker,slug,title,excerpt,tag,author,published_at'
-      + '&status=eq.published'
-      + '&order=published_at.desc'
-      + '&limit=20';
-    fetch(url, {
-      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
-    })
-      .then(function(r){ return r.ok ? r.json() : []; })
-      .then(function(posts){
-        if (!posts || !posts.length) {
-          if (loading) loading.textContent = 'No reports published yet.';
-          return;
-        }
-
-        function tagSlug(t){
-          var s = (t || '').toLowerCase();
-          if (s.indexOf('earning') >= 0) return 't-earnings';
-          if (s.indexOf('research') >= 0) return 't-research';
-          if (s.indexOf('market')  >= 0) return 't-market';
-          return '';
-        }
-        function fmtDate(d){
-          if (!d) return '';
-          try { return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
-          catch(_){ return ''; }
-        }
-
-        // Featured slot is hardcoded (frozen RDDT card). Still strip any matching
-        // RDDT post from the grid below so it doesn't appear twice.
-        var FROZEN_FEATURED_SLUG = '2026-05-04-rddt-q1-2026-forensic-ai-fuel-thesis';
-        var featured = null;
-        for (var i = 0; i < posts.length; i++) {
-          if ((posts[i].slug || '') === FROZEN_FEATURED_SLUG ||
-              (posts[i].ticker || '').toUpperCase() === 'RDDT') {
-            posts.splice(i, 1);
-            i--;
-          }
-        }
-        var hasStaticFeatured = !!(featuredSlot && featuredSlot.firstElementChild);
-        if (!hasStaticFeatured) featured = posts.shift();
-
-        if (featured && featuredSlot && !hasStaticFeatured) {
-          var fSlug = encodeURIComponent(featured.slug || '');
-          var fTitle = esc(featured.title || 'Untitled');
-          var fEx = esc(featured.excerpt || '');
-          var fTag = esc(featured.tag || 'Featured Report');
-          var fTk = featured.ticker ? esc(featured.ticker) : '';
-          var fAuthor = featured.author ? esc(featured.author) : 'Market Prism';
-          var fDate = esc(fmtDate(featured.published_at));
-          // Pull-quote: first sentence of excerpt, capped.
-          var pull = (featured.excerpt || '').split(/(?<=[.!?])\s/)[0] || '';
-          if (pull.length > 160) pull = pull.slice(0, 157) + '…';
-          featuredSlot.innerHTML =
-            '<a class="blog-featured" href="/blog/'+fSlug+'" data-track="blog_featured_click">' +
-              '<div class="blog-featured-l">' +
-                '<div class="blog-featured-eyebrow">Featured report</div>' +
-                '<div class="blog-featured-title">'+fTitle+'</div>' +
-                '<div class="blog-featured-excerpt">'+fEx+'</div>' +
-                '<div class="blog-featured-foot">' +
-                  '<span><strong>'+fAuthor+'</strong></span>' +
-                  '<span>'+fDate+' &middot; Free to read</span>' +
-                '</div>' +
-              '</div>' +
-              '<div class="blog-featured-r">' +
-                '<span class="blog-featured-tag">'+fTag+'</span>' +
-                (fTk ? '<div class="blog-featured-ticker">'+fTk+'</div>' : '') +
-                (pull ? '<div class="blog-featured-pull">"'+esc(pull)+'"</div>' : '') +
-                '<span class="blog-featured-cta">Read the full report &rarr;</span>' +
-              '</div>' +
-            '</a>';
-        }
-
-        // Remaining six in the grid.
-        var rest = posts.slice(0, 6);
-        if (!rest.length) { grid.style.display = 'none'; return; }
-        grid.innerHTML = rest.map(function(p){
-          var slug = encodeURIComponent(p.slug || '');
-          var title = esc(p.title || 'Untitled');
-          var ex = esc(p.excerpt || '');
-          var tagTxt = esc(p.tag || 'Report');
-          var tk = p.ticker ? esc(p.ticker) : '';
-          var author = p.author ? esc(p.author) : 'Market Prism';
-          var dt = esc(fmtDate(p.published_at));
-          return '<a class="blog-card '+tagSlug(p.tag)+'" href="/blog/'+slug+'" data-track="blog_card_click">' +
-            '<div class="blog-meta">' +
-              '<span class="blog-tag">'+tagTxt+'</span>' +
-              (tk ? '<span class="blog-ticker">'+tk+'</span>' : '') +
-            '</div>' +
-            '<div class="blog-title">'+title+'</div>' +
-            '<div class="blog-excerpt">'+ex+'</div>' +
-            '<div class="blog-foot">' +
-              '<span class="blog-author">'+author+'</span>' +
-              '<span>'+dt+'</span>' +
-            '</div>' +
-          '</a>';
-        }).join('');
-      })
-      .catch(function(){
-        if (loading) loading.textContent = 'Reports unavailable right now.';
-      });
   })();
 
   // ── Live mini ticker — picks today's strongest forecast and renders
