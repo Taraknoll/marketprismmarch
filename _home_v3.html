@@ -1116,9 +1116,15 @@ section.below{padding:64px 0;}
 /* ── DIFF CARDS (v3 — replaces homepage comparison table) ─────────────── */
 .diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px;}
 @media(max-width:860px){.diff-grid{grid-template-columns:1fr;}}
-.diff-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.diff-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.3);transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;}
+.diff-card:hover{transform:translateY(-4px);border-color:var(--mp-border-hover);box-shadow:0 16px 40px rgba(0,0,0,0.45);}
 .diff-h{font-family:var(--font-body);font-size:16px;font-weight:700;color:var(--mp-text-primary);margin-bottom:10px;letter-spacing:-0.01em;}
 .diff-p{font-size:13px;line-height:1.6;color:var(--mp-text-secondary);margin:0;}
+
+/* ── SCROLL REVEAL (progressive entrance on scroll) ───────────────────── */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.16,.84,.44,1),transform .7s cubic-bezier(.16,.84,.44,1);will-change:opacity,transform;}
+.reveal.reveal-in{opacity:1;transform:none;}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important;transition:none!important;}}
 @media(max-width:780px){.compare-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}.compare-table{min-width:640px;}}
 
 /* ── STATIC TICKER PREVIEW (v2 fallback) ─────────────────────────────── */
@@ -2592,6 +2598,47 @@ footer{
   });
 
   init(); loop();
+})();
+</script>
+
+<!-- ── Scroll-reveal entrance animations ── -->
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // No JS-driven hiding when motion is reduced or IO is unsupported — content stays visible.
+  if (reduce || !('IntersectionObserver' in window)) return;
+
+  function tag(el, delay){
+    if (!el) return;
+    el.classList.add('reveal');
+    if (delay) el.style.transitionDelay = delay + 'ms';
+  }
+
+  // Staggered groups: [selector, per-item delay in ms]
+  [['.trust-cell',70],['.screen-row',60],['.diff-card',80],['.faq-item',55]].forEach(function(g){
+    var els = document.querySelectorAll(g[0]);
+    for (var i=0;i<els.length;i++) tag(els[i], Math.min(i,6)*g[1]);
+  });
+
+  // Section intros + standalone blocks (no stagger)
+  var intros = document.querySelectorAll(
+    '#product-section .section-eyebrow, #product-section .section-title, #product-section .section-sub,' +
+    '#compare-teaser .section-eyebrow, #compare-teaser .section-title, #compare-teaser .section-sub,' +
+    '#faq-section .section-eyebrow, #faq-section .section-title, #faq-section .section-sub,' +
+    '.pricing-card'
+  );
+  for (var j=0;j<intros.length;j++) tag(intros[j], 0);
+
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){
+        e.target.classList.add('reveal-in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
 })();
 </script>
 
