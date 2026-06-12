@@ -509,7 +509,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 .feature-lock-card.pro{border-color:rgba(0,222,148,0.18);}
 .feature-lock-card.standard{border-color:rgba(0,174,255,0.18);}
 .feature-lock-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mp-text-tertiary);margin-bottom:12px;}
-.feature-lock-title{font-family:'Instrument Serif',var(--font-display),Georgia,serif;font-size:28px;line-height:1.05;letter-spacing:-0.02em;color:var(--mp-text-primary);margin-bottom:10px;}
+.feature-lock-title{font-family:var(--font-body);font-weight:700;font-size:24px;line-height:1.1;letter-spacing:-0.02em;color:var(--mp-text-primary);margin-bottom:10px;}
 .feature-lock-copy{font-size:14px;line-height:1.7;color:var(--mp-text-secondary);max-width:620px;}
 .feature-lock-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;}
 .feature-lock-button{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);color:var(--mp-text-primary);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;transition:border-color .2s,transform .2s,background .2s;}
@@ -18571,17 +18571,9 @@ async function loadLeaderboard(){
   var error=document.getElementById('lb-error');
   var body=document.getElementById('lb-body');
   var grid=document.getElementById('lb-grid');
-  if(!canAccessFeature('pro')){
-    if(loading) loading.style.display='none';
-    if(body) body.style.display='block';
-    if(grid){
-      grid.innerHTML = renderFeatureLock('pro', {
-        title: 'Leaderboard',
-        detail: 'Live rankings across sources, figures, themes, and signals.'
-      });
-    }
-    return;
-  }
+  // No hard gate here anymore: free users get the boards with the top-3
+  // teaser (body.mp-teaser-locked CSS blurs rank 4+ and shows the Pro CTA).
+  // The old renderFeatureLock card hid the boards entirely, defeating it.
   try{
     var user=await ensureDashboardAuth();
     if(!user) return;
