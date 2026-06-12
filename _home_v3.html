@@ -1073,12 +1073,14 @@ section.below{padding:64px 0;}
 
 /* ── SCREENSHOT TOUR (v2) ────────────────────────────────────────────── */
 .screens-stack > * + *{margin-top:104px;}
-@media(max-width:600px){.screens-stack > * + *{margin-top:72px;}}
+@media(max-width:600px){.screens-stack > * + *{margin-top:96px;}}
 .screen-row{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:center;}
 .screen-row.flip{grid-template-columns:1fr 1.15fr;}
 .screen-row.flip .screen-shot{order:2;}
 .screen-row.flip .screen-copy{order:1;}
-@media(max-width:900px){.screen-row,.screen-row.flip{grid-template-columns:1fr;gap:28px;}.screen-row.flip .screen-shot,.screen-row.flip .screen-copy{order:initial;}}
+/* Mobile: caption first, screenshot last — so the big margin lands AFTER each
+   screenshot (separating features) instead of on top of them. */
+@media(max-width:900px){.screen-row,.screen-row.flip{display:flex;flex-direction:column;gap:20px;}.screen-row .screen-copy,.screen-row.flip .screen-copy{order:0;}.screen-row .screen-shot,.screen-row.flip .screen-shot{order:1;}}
 .screen-shot{position:relative;border-radius:16px;overflow:hidden;background:var(--mp-surface);border:1px solid var(--mp-border);box-shadow:0 24px 60px rgba(0,0,0,0.5),0 4px 12px rgba(0,0,0,0.4);transition:transform .25s,box-shadow .25s;}
 .screen-shot::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--mp-cyan),var(--mp-teal),var(--mp-green));z-index:2;}
 .screen-shot:hover{transform:translateY(-4px);box-shadow:0 32px 72px rgba(0,0,0,0.55),0 6px 16px rgba(0,0,0,0.45);}
