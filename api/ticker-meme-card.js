@@ -152,10 +152,18 @@ async function fetchTickerData(ticker, supabaseUrl, supabaseAnon) {
   ]);
 
   const scorecard = pickFreshScorecard(scRows);
+  const earnings = (Array.isArray(earnRows) && earnRows[0]) || null;
+  if (earnings) {
+    // earnings_context surprise columns are decimal fractions (0.0968 = 9.68%),
+    // unlike fvd_pct which is already percent-scale. Normalize once here so
+    // downstream fmtPct/magnitude comparisons all work on percent scale.
+    if (isFiniteNum(earnings.eps_surprise_pct)) earnings.eps_surprise_pct *= 100;
+    if (isFiniteNum(earnings.revenue_surprise_pct)) earnings.revenue_surprise_pct *= 100;
+  }
   return {
     scorecard,
     narratives: Array.isArray(narrRows) ? narrRows : [],
-    earnings: (Array.isArray(earnRows) && earnRows[0]) || null,
+    earnings,
   };
 }
 
