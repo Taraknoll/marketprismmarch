@@ -1619,7 +1619,7 @@ footer{
       <div class="screen-row">
         <div class="screen-shot">
           <div class="screen-tag">Daily plays</div>
-          <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/daily-plays-poster.jpg" aria-label="Market Prism Daily Plays dashboard: Day Trade, Swing Trade and Momentum lanes with active picks and signal summary"><source src="/assets/video/daily-plays.mp4" type="video/mp4"></video>
+          <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/daily-plays-poster.jpg" aria-label="Market Prism Daily Plays dashboard: Day Trade, Swing Trade and Momentum lanes with active picks and signal summary"><source src="/assets/video/daily-plays.mp4" type="video/mp4"></video>
         </div>
         <div class="screen-copy">
           <div class="meta">/dashboard · updated each session</div>
@@ -1631,7 +1631,7 @@ footer{
       <div class="screen-row flip">
         <div class="screen-shot">
           <div class="screen-tag">SEC anchored</div>
-          <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/stock-forensics-poster.jpg" aria-label="Market Prism ticker forensics page: hype score, fundamental disconnect, conviction tier and multi-horizon projections"><source src="/assets/video/stock-forensics.mp4" type="video/mp4"></video>
+          <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/stock-forensics-poster.jpg" aria-label="Market Prism ticker forensics page: hype score, fundamental disconnect, conviction tier and multi-horizon projections"><source src="/assets/video/stock-forensics.mp4" type="video/mp4"></video>
         </div>
         <div class="screen-copy">
           <div class="meta">/ticker/:symbol</div>
@@ -1643,7 +1643,7 @@ footer{
       <div class="screen-row">
         <div class="screen-shot">
           <div class="screen-tag">15 live boards</div>
-          <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/leaderboards-poster.jpg" aria-label="Market Prism Leaderboard: 15 ranked boards covering loudest stories, spam alarm, conviction list, narrative traps, whale tracks, hidden bargains and more"><source src="/assets/video/leaderboards.mp4" type="video/mp4"></video>
+          <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/leaderboards-poster.jpg" aria-label="Market Prism Leaderboard: 15 ranked boards covering loudest stories, spam alarm, conviction list, narrative traps, whale tracks, hidden bargains and more"><source src="/assets/video/leaderboards.mp4" type="video/mp4"></video>
         </div>
         <div class="screen-copy">
           <div class="meta">/leaderboard</div>
@@ -2637,6 +2637,28 @@ footer{
   }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
 
   document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+})();
+</script>
+
+<script>
+/* Demo videos: play only while their section is on screen, pause when it
+   leaves — avoids every loop moving at once. Honors prefers-reduced-motion
+   (poster frame only). */
+(function(){
+  var vids = [].slice.call(document.querySelectorAll('video[data-scrollplay]'));
+  if (!vids.length) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!('IntersectionObserver' in window)){
+    vids.forEach(function(v){ v.play().catch(function(){}); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.isIntersecting) en.target.play().catch(function(){});
+      else en.target.pause();
+    });
+  }, { threshold: 0.35 });
+  vids.forEach(function(v){ io.observe(v); });
 })();
 </script>
 

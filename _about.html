@@ -470,28 +470,28 @@ nav {
     <p class="about-p">Four of the screens the pipeline feeds every session — captured straight from the dashboard, no mockups.</p>
     <div class="about-demos">
       <div class="about-demo">
-        <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/market-insights-poster.jpg" aria-label="Market Prism Market Insights tab: featured alerts, macro currents and sector stories ranked by narrative pressure"><source src="/assets/video/market-insights.mp4" type="video/mp4"></video>
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/market-insights-poster.jpg" aria-label="Market Prism Market Insights tab: featured alerts, macro currents and sector stories ranked by narrative pressure"><source src="/assets/video/market-insights.mp4" type="video/mp4"></video>
         <div class="about-demo-caption">
           <div class="about-demo-title">Market Insights</div>
           <div class="about-demo-desc">The whole tape in one read — featured alerts, macro currents, and every sector's stories ranked by how hard they press on price.</div>
         </div>
       </div>
       <div class="about-demo">
-        <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/narrative-lab-poster.jpg" aria-label="Market Prism Narrative Lab: validate any ticker claim against millions of historical analogues"><source src="/assets/video/narrative-lab.mp4" type="video/mp4"></video>
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/narrative-lab-poster.jpg" aria-label="Market Prism Narrative Lab: validate any ticker claim against millions of historical analogues"><source src="/assets/video/narrative-lab.mp4" type="video/mp4"></video>
         <div class="about-demo-caption">
           <div class="about-demo-title">Narrative Lab</div>
           <div class="about-demo-desc">Any ticker, any claim — compared against 3.5M historical narrative analogues to show how stories like it played out before.</div>
         </div>
       </div>
       <div class="about-demo">
-        <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/signal-lab-poster.jpg" aria-label="Market Prism Signal Lab: narrative forces and regime analysis for a single ticker"><source src="/assets/video/signal-lab.mp4" type="video/mp4"></video>
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/signal-lab-poster.jpg" aria-label="Market Prism Signal Lab: narrative forces and regime analysis for a single ticker"><source src="/assets/video/signal-lab.mp4" type="video/mp4"></video>
         <div class="about-demo-caption">
           <div class="about-demo-title">Signal Lab</div>
           <div class="about-demo-desc">Forces and regime for one ticker — narrative pressure, energy, and risk made visible on a single chart.</div>
         </div>
       </div>
       <div class="about-demo">
-        <video autoplay muted loop playsinline preload="metadata" poster="/assets/video/trading-cards-poster.jpg" aria-label="Market Prism Trading Cards: daily picks rendered as collectible trading cards"><source src="/assets/video/trading-cards.mp4" type="video/mp4"></video>
+        <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/trading-cards-poster.jpg" aria-label="Market Prism Trading Cards: daily picks rendered as collectible trading cards"><source src="/assets/video/trading-cards.mp4" type="video/mp4"></video>
         <div class="about-demo-caption">
           <div class="about-demo-title">Trading Cards</div>
           <div class="about-demo-desc">Every daily play rendered as a collectible card — rarity, bias, and context at a glance, built to be shared.</div>
@@ -520,6 +520,28 @@ nav {
     <a href="/privacy">Privacy</a>
   </div>
 </div>
+
+<script>
+/* Demo videos: play only while their section is on screen, pause when it
+   leaves — avoids every loop moving at once. Honors prefers-reduced-motion
+   (poster frame only). */
+(function(){
+  var vids = [].slice.call(document.querySelectorAll('video[data-scrollplay]'));
+  if (!vids.length) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!('IntersectionObserver' in window)){
+    vids.forEach(function(v){ v.play().catch(function(){}); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.isIntersecting) en.target.play().catch(function(){});
+      else en.target.pause();
+    });
+  }, { threshold: 0.35 });
+  vids.forEach(function(v){ io.observe(v); });
+})();
+</script>
 
 </body>
 </html>
