@@ -4552,6 +4552,11 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
   <!-- Action bar -->
   <div class="action-bar" id="action-bar" style="display:none;">
     <div class="action-bar-spacer"></div>
+    <!-- Save to watchlist — hidden until the watchlist API confirms this user can use it -->
+    <button class="action-btn" id="mp-fav-btn" type="button" onclick="mpToggleFavorite()" aria-pressed="false" title="Save to your watchlist" style="display:none;">
+      <svg id="mp-fav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.6-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.4 12 21 12 21z"/></svg>
+      <span id="mp-fav-label">Save</span>
+    </button>
     <button class="action-btn" onclick="exportReport()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6m0 0l-3-3m3 3l3-3"/><path d="M3 17v1a2 2 0 002 2h14a2 2 0 002-2v-1"/><path d="M7 3h10l4 4v3H3V7l4-4z"/></svg>
       Export Report
@@ -4569,6 +4574,69 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
     </button>
     <a class="meme-share-link" onclick="MPMemeCard.openShare('bear')">Share</a>
   </div>
+
+  <!-- ── Save to watchlist (per-user favorites) ──────────────────────────────
+       Completes the watchlist feature: /api/watchlist + the dashboard "My
+       Watchlist" display already exist; this is the missing add/remove entry
+       point. Self-contained, cookie-auth (same as the dashboard). The button
+       only reveals itself when the watchlist API confirms the user can use it
+       (real logged-in subscriber) — beta-cookie users get no JWT/user_id and
+       so never see it, rather than seeing a button that errors. -->
+  <script>
+  (function(){
+    var btn, icon, label, saved=false, busy=false;
+    function tkr(){ return ((window.__env&&window.__env.TICKER)||'').toUpperCase().replace(/[^A-Z0-9.\-]/g,''); }
+    function toast(msg){
+      var t=document.getElementById('mp-fav-toast');
+      if(!t){ t=document.createElement('div'); t.id='mp-fav-toast';
+        t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--mp-surface2,#111927);color:#fff;border:1px solid rgba(255,255,255,.14);padding:10px 16px;border-radius:10px;font-family:var(--font-body,inherit);font-size:13px;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s;pointer-events:none;';
+        document.body.appendChild(t); }
+      t.textContent=msg; t.style.opacity='1'; clearTimeout(t._h); t._h=setTimeout(function(){t.style.opacity='0';},2600);
+    }
+    function paint(){
+      if(!btn) return;
+      icon.setAttribute('fill', saved?'currentColor':'none');
+      label.textContent = saved?'Saved':'Save';
+      btn.setAttribute('aria-pressed', saved?'true':'false');
+      btn.style.color = saved ? '#FF4D4D' : '';
+      btn.style.borderColor = saved ? 'rgba(255,77,77,.40)' : '';
+      btn.title = saved ? 'Remove from your watchlist' : 'Save to your watchlist';
+    }
+    window.mpToggleFavorite=function(){
+      if(busy) return; var t=tkr(); if(!t){ toast('Ticker unavailable.'); return; }
+      busy=true;
+      var url = saved ? '/api/watchlist?ticker='+encodeURIComponent(t) : '/api/watchlist';
+      var opts = saved
+        ? { method:'DELETE', credentials:'same-origin' }
+        : { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ticker:t}) };
+      fetch(url,opts).then(function(r){
+        if(!r.ok) throw new Error(String(r.status));
+        saved=!saved; paint();
+        toast(saved ? (t+' added to your watchlist') : (t+' removed from watchlist'));
+      }).catch(function(e){
+        var c=String(e&&e.message);
+        if(c==='402'||c==='403') toast('Watchlist is available on a paid account.');
+        else toast('Could not update watchlist — try again.');
+      }).finally(function(){ busy=false; });
+    };
+    function init(){
+      btn=document.getElementById('mp-fav-btn'); if(!btn) return;
+      icon=document.getElementById('mp-fav-icon'); label=document.getElementById('mp-fav-label');
+      var t=tkr(); if(!t) return;
+      // Reveal the Save button only for users who can actually use the watchlist.
+      fetch('/api/watchlist',{credentials:'same-origin'}).then(function(r){
+        return r.ok ? r.json() : null;
+      }).then(function(d){
+        if(!d||!Array.isArray(d.items)) return; // 401/402/403 → leave the button hidden
+        btn.style.display='';
+        saved = d.items.some(function(it){ return String(it.ticker||'').toUpperCase()===t; });
+        paint();
+      }).catch(function(){});
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+  })();
+  </script>
+
   <div class="capture-overlay" id="capture-overlay"><div class="capture-spinner"></div></div>
 
   <!-- ── Share card template ───────────────────────────────────────────────
@@ -4828,7 +4896,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
               <div class="scholar-hero-sub" id="scholar-hero-sub" style="font-size:12px;">Get instant forensic intelligence on this ticker</div>
             </div>
             <div class="scholar-hero-input-row" id="scholar-hero-input-row" style="margin-bottom:10px;">
-              <input class="scholar-hero-input" id="scholar-hero-input" type="text" autocomplete="off" style="font-size:13px;padding:10px 14px;">
+              <input class="scholar-hero-input" id="scholar-hero-input" type="text" name="mp-ticker-search" role="combobox" aria-autocomplete="list" aria-label="Search tickers" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" style="font-size:13px;padding:10px 14px;">
               <button class="scholar-hero-send" id="scholar-hero-send" style="padding:10px 14px;">
                 <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M3 10h14M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
