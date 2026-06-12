@@ -3697,6 +3697,14 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
   50%{box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 20px 4px rgba(0,174,255,0.12),inset 0 1px 0 rgba(255,255,255,0.08);}
 }
 .scholar-fab svg{width:32px;height:32px;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2));}
+/* Tiny × pinned at the FAB's top-right corner — hides the whole Scholar
+   widget for the rest of the session (sessionStorage; it returns on the
+   next visit). Hidden while the chat panel is open and on the mobile bar. */
+.scholar-fab-dismiss{position:fixed;bottom:70px;right:14px;z-index:802;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;background:#111927;border:1px solid rgba(255,255,255,0.18);color:var(--mp-text-tertiary);cursor:pointer;opacity:.65;transition:opacity .15s,color .15s,transform .15s;}
+.scholar-fab-dismiss:hover{opacity:1;color:#fff;transform:scale(1.1);}
+.scholar-fab.open + .scholar-fab-dismiss{display:none;}
+[data-theme="light"] .scholar-fab-dismiss{background:#FFFFFF;border-color:rgba(0,0,0,0.15);color:#5A6470;}
+@media(max-width:600px){.scholar-fab-dismiss{display:none;}}
 
 /* Chat panel — glass surface */
 .scholar-panel{
@@ -16727,6 +16735,9 @@ ensureDashboardAuth().then(function(user){
     +  OWL_SVG
     +'<div class="scholar-fab-label"><span class="scholar-fab-title">Market Scholar</span><span class="scholar-fab-sub">Polymathic Intelligence</span></div>'
     +'</button>'
+    +'<button class="scholar-fab-dismiss" id="scholar-fab-dismiss" title="Hide Market Scholar" aria-label="Hide Market Scholar">'
+    +'<svg viewBox="0 0 10 10" fill="none" style="width:9px;height:9px;"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'</button>'
     +'<div class="scholar-panel" id="scholar-panel">'
     +'  <div class="scholar-header">'
     +'    <div class="scholar-header-icon">'+OWL_SVG+'</div>'
@@ -16761,6 +16772,15 @@ ensureDashboardAuth().then(function(user){
   container.id = 'scholar-widget';
   container.innerHTML = widgetHTML;
   document.body.appendChild(container);
+
+  // Session-scoped dismissal: the × by the FAB hides the whole widget until
+  // the next visit (sessionStorage on purpose — the bot comes back).
+  try{ if(sessionStorage.getItem('mp-scholar-hidden')==='1') container.style.display='none'; }catch(e){}
+  document.getElementById('scholar-fab-dismiss').addEventListener('click', function(ev){
+    ev.stopPropagation();
+    container.style.display='none';
+    try{ sessionStorage.setItem('mp-scholar-hidden','1'); }catch(e){}
+  });
 
   // Elements
   var fab = document.getElementById('scholar-fab');
