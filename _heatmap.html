@@ -627,7 +627,10 @@ const SUPABASE_ANON = window.__env?.SUPABASE_ANON || '';
     var betaAccess = localStorage.getItem('mp-beta-access');
     if (betaAccess === 'true') {
       var betaExpires = localStorage.getItem('mp-beta-expires');
-      if (betaExpires && Date.now() > parseInt(betaExpires)) {
+      // Beta expiry is stored as an ISO string (mp-beta-expires = expires.toISOString()).
+      // parseInt() on an ISO string returns the year (e.g. 2026), so the old check read
+      // EVERY beta session as expired and logged the user out. Parse it as a real date.
+      if (betaExpires && Date.now() > new Date(betaExpires).getTime()) {
         localStorage.removeItem('mp-beta-access');
         localStorage.removeItem('mp-beta-expires');
         localStorage.removeItem('mp-beta-tier');

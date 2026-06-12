@@ -1,7 +1,11 @@
 const resolveTemplate = require('./_resolve-template');
+const requireAuth = require('./_require-auth');
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   try {
+    const auth = await requireAuth(req, res, { next: '/api/home-dev' });
+    if (!auth) return;
+
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseAnon = process.env.SUPABASE_ANON || '';
 
