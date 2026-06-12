@@ -12,18 +12,18 @@
 <script defer src="/_vercel/insights/script.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[BLACK TEST] AI Stock Dashboard — Market Prism</title>
-<meta name="description" content="AI-powered stock market dashboard with real-time narrative signals, trading intelligence, and sentiment analysis. Track every ticker with Market Prism AI.">
+<title>[BLACK TEST] AI Stock Dashboard — Market Prism™</title>
+<meta name="description" content="AI-powered stock market dashboard with real-time narrative signals, trading intelligence, and sentiment analysis. Track every ticker with Market Prism™ AI.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="canonical" href="https://marketprism.co/dashboard">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Market Prism">
-<meta property="og:title" content="AI Stock Dashboard — Market Prism">
+<meta property="og:site_name" content="Market Prism™">
+<meta property="og:title" content="AI Stock Dashboard — Market Prism™">
 <meta property="og:description" content="AI-powered stock market dashboard with real-time narrative signals, trading intelligence, and sentiment analysis.">
 <meta property="og:url" content="https://marketprism.co/dashboard">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@marketprism">
-<meta name="twitter:title" content="AI Stock Dashboard — Market Prism">
+<meta name="twitter:title" content="AI Stock Dashboard — Market Prism™">
 <link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
 <script>try{if(localStorage.getItem('mp-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
 <meta http-equiv="x-dns-prefetch-control" content="on">
@@ -15047,7 +15047,20 @@ function calendarBoot(){
   });
 }
 
-function restFetch(table, params, timeoutMs){
+async function restFetch(table, params, timeoutMs){
+  // Send the logged-in user's Supabase JWT as the Bearer token so PostgREST
+  // sees role=authenticated — prerequisite for the RLS hardening (see
+  // sql/rls-hardening/ and the matching note in _template.html). Falls back to
+  // the anon key for public pages / beta-cookie users (who have no Supabase
+  // session). apikey stays anon (identifies the project); Authorization carries
+  // the user identity. Verified safe to deploy ahead of the RLS phases:
+  // current policies on these tables target {public}/{anon,authenticated}.
+  var bearer = SUPABASE_ANON;
+  try {
+    var sr = await (SUPA && SUPA.auth && SUPA.auth.getSession ? SUPA.auth.getSession() : Promise.resolve(null));
+    var session = sr && sr.data ? sr.data.session : null;
+    if (session && session.access_token) bearer = session.access_token;
+  } catch (_e) {}
   var qs = Object.keys(params || {}).filter(function(key){
     var value = params[key];
     return value !== undefined && value !== null && value !== '';
@@ -15061,7 +15074,7 @@ function restFetch(table, params, timeoutMs){
   return fetch(SUPABASE_URL + '/rest/v1/' + table + (qs ? '?' + qs : ''), {
     headers: {
       'apikey': SUPABASE_ANON,
-      'Authorization': 'Bearer ' + SUPABASE_ANON,
+      'Authorization': 'Bearer ' + bearer,
       'Accept': 'application/json'
     },
     signal: ctrl.signal

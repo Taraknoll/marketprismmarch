@@ -12,18 +12,18 @@
 <script defer src="/_vercel/insights/script.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Stock Dashboard — Market Prism | Real-Time Narrative Intelligence</title>
-<meta name="description" content="AI-powered stock market dashboard with real-time narrative signals, trading intelligence, and sentiment analysis. Track every ticker with Market Prism AI.">
+<title>AI Stock Dashboard — Market Prism™ | Real-Time Narrative Intelligence</title>
+<meta name="description" content="AI-powered stock market dashboard with real-time narrative signals, trading intelligence, and sentiment analysis. Track every ticker with Market Prism™ AI.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="canonical" href="https://marketprism.co/dashboard">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Market Prism">
-<meta property="og:title" content="AI Stock Dashboard — Market Prism">
+<meta property="og:site_name" content="Market Prism™">
+<meta property="og:title" content="AI Stock Dashboard — Market Prism™">
 <meta property="og:description" content="AI-powered stock market dashboard with real-time narrative signals, trading intelligence, and sentiment analysis.">
 <meta property="og:url" content="https://marketprism.co/dashboard">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@marketprism">
-<meta name="twitter:title" content="AI Stock Dashboard — Market Prism">
+<meta name="twitter:title" content="AI Stock Dashboard — Market Prism™">
 <link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
 <script>try{if(localStorage.getItem('mp-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
 <meta http-equiv="x-dns-prefetch-control" content="on">
@@ -15295,7 +15295,28 @@ function calendarBoot(){
   });
 }
 
-function restFetch(table, params, timeoutMs){
+async function restFetch(table, params, timeoutMs){
+  // Send the logged-in user's Supabase JWT as the Bearer token so PostgREST
+  // sees role=authenticated. This is the prerequisite for the RLS hardening
+  // (sql/rls-hardening/): once "public read" policies become "authenticated"-
+  // only, gated-dashboard reads keep working ONLY because we send the user
+  // token here instead of the anon key. apikey stays anon (it identifies the
+  // project); Authorization carries the user identity.
+  //   • Real Supabase-auth users  -> role=authenticated (admitted post-lockdown)
+  //   • Public pages / beta-cookie users (no Supabase session) -> falls back to
+  //     the anon key, so those reads only succeed on tables that still allow
+  //     anon. Beta users have NO Supabase JWT, so authenticated-only RLS would
+  //     block them — migrate beta to real sessions or serve their data
+  //     server-side before locking the crown-jewel tables.
+  // Every current policy on the dashboard tables targets {public} or
+  // {anon,authenticated}, so sending the user token is a no-op today (verified
+  // 2026-06-12 against pg_policies) — safe to deploy ahead of the RLS phases.
+  var bearer = SUPABASE_ANON;
+  try {
+    var sr = await (SUPA && SUPA.auth && SUPA.auth.getSession ? SUPA.auth.getSession() : Promise.resolve(null));
+    var session = sr && sr.data ? sr.data.session : null;
+    if (session && session.access_token) bearer = session.access_token;
+  } catch (_e) {}
   var qs = Object.keys(params || {}).filter(function(key){
     var value = params[key];
     return value !== undefined && value !== null && value !== '';
@@ -15309,7 +15330,7 @@ function restFetch(table, params, timeoutMs){
   return fetch(SUPABASE_URL + '/rest/v1/' + table + (qs ? '?' + qs : ''), {
     headers: {
       'apikey': SUPABASE_ANON,
-      'Authorization': 'Bearer ' + SUPABASE_ANON,
+      'Authorization': 'Bearer ' + bearer,
       'Accept': 'application/json'
     },
     signal: ctrl.signal
