@@ -151,6 +151,27 @@ body{
   .side-nav.open{transform:translateX(0);}
 }
 [data-theme="dark"] .side-nav{background:var(--mp-deep);border-right-color:var(--mp-border);}
+/* Scrollbars (page + sidebar): scrolling still works, no visible bar. */
+html{scrollbar-width:none;}
+html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
+.side-nav{scrollbar-width:none;}
+.side-nav::-webkit-scrollbar{display:none;}
+/* Desktop collapse — toggled by the Hide-menu button at the bottom of the nav
+   (mp-sidebar.js). Mobile keeps the hamburger/.open flow; .collapsed is inert
+   there. Keep these rules in sync with SIDEBAR_CSS in public/lib/mp-sidebar.js. */
+@media(min-width:768px){
+  .side-nav.collapsed{transform:translateX(-100%);}
+  .side-nav.collapsed ~ .main{margin-left:0;}
+}
+.nav-collapse-btn{display:flex;align-items:center;gap:8px;width:100%;margin-top:6px;padding:6px 8px;border:none;background:none;border-radius:8px;font-family:var(--font-body);font-size:11px;color:var(--mp-text-tertiary);cursor:pointer;text-align:left;transition:color .15s,background .15s;}
+.nav-collapse-btn:hover{color:var(--mp-text-secondary);background:rgba(0,174,255,0.05);}
+[data-theme="dark"] .nav-collapse-btn:hover{background:rgba(255,255,255,0.05);}
+.nav-collapse-btn svg{width:15px;height:15px;flex-shrink:0;opacity:.7;}
+@media(max-width:767px){.nav-collapse-btn{display:none;}}
+.nav-reopen-btn{display:none;position:fixed;bottom:16px;left:12px;z-index:101;width:36px;height:36px;align-items:center;justify-content:center;border-radius:10px;background:var(--mp-surface);border:1px solid var(--mp-border-hover,rgba(255,255,255,0.14));color:var(--mp-text-tertiary);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.35);transition:color .15s,border-color .15s;}
+@media(min-width:768px){.side-nav.collapsed ~ .nav-reopen-btn{display:flex;}}
+.nav-reopen-btn:hover{color:var(--mp-text-primary);}
+.nav-reopen-btn svg{width:16px;height:16px;}
 .nav-logo{
   padding:22px 18px 18px;
   display:flex;align-items:center;gap:10px;

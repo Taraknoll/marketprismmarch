@@ -40,6 +40,9 @@
     // (escapes the .nav-item svg{opacity:.5} default via inline style).
     sparkleFeature:'<svg viewBox="0 0 24 24" fill="none" stroke="#4DC8F0" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="opacity:1;filter:drop-shadow(0 0 4px rgba(77,200,240,0.55));"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>',
     sparkle2:     '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#00DE94" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>',
+    // Panel-left close / open — desktop sidebar collapse toggle + reopen tab.
+    collapse:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m16 15-3-3 3-3"/></svg>',
+    expand:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m13 9 3 3-3 3"/></svg>',
     moon:         '<svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>',
     sun:          '<svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.25v1.5m0 16.5v1.5M4.219 4.219l1.061 1.061m13.44 13.44l1.061 1.061M2.25 12h1.5m16.5 0h1.5M4.219 19.781l1.061-1.061M18.72 5.28l1.061-1.061"/></svg>'
   };
@@ -97,7 +100,8 @@
     { type:'theme-toggle' },
     { type:'back-home' },
     { type:'share-row' },
-    { type:'data-sources' }
+    { type:'data-sources' },
+    { type:'collapse' }
   ];
 
   // Where dashboard tabs are reachable from off-dashboard pages.
@@ -188,6 +192,24 @@
     return '<div class="nav-data-sources">Data: SEC EDGAR · Market feeds · Proprietary AI<br>Patent Pending: 63/971,470</div>';
   }
 
+  function renderCollapse(){
+    return '<button class="nav-collapse-btn" onclick="MP.toggleSidebar()" title="Hide menu" aria-label="Hide menu">'+
+             ICONS.collapse + '<span>Hide menu</span>'+
+           '</button>';
+  }
+
+  // Desktop-only sidebar collapse. State persists per browser via localStorage
+  // so the choice sticks across pages and visits. Mobile is untouched — the
+  // hamburger/.open flow owns visibility below 768px.
+  var COLLAPSE_KEY = 'mp-sidebar-collapsed';
+  MP.toggleSidebar = function(force){
+    var nav = document.getElementById('side-nav');
+    if (!nav) return;
+    var collapsed = (typeof force === 'boolean') ? force : !nav.classList.contains('collapsed');
+    nav.classList.toggle('collapsed', collapsed);
+    try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch(e){}
+  };
+
   // Canonical sidebar CSS — kept identical to _template.html's inline rules so
   // injecting here on other pages produces the same look without divergence.
   // Injected at most once (marker: <style data-mp-sidebar-css>).
@@ -244,7 +266,22 @@
     '[data-theme="dark"] .nav-upgrade:hover{border-color:rgba(232,232,227,0.2);color:#fff;}'+
     '.nav-upgrade svg{width:14px;height:14px;opacity:.7;}'+
     '@media(min-width:768px){.side-nav ~ .main, .side-nav ~ .main-content{margin-left:248px;}}'+
-    '@media(max-width:767px){.nav-overlay.open{display:block;}}';
+    '@media(max-width:767px){.nav-overlay.open{display:block;}}'+
+    /* Sidebar scrollbar: scrolls, but no visible bar. */
+    '.side-nav{scrollbar-width:none;}'+
+    '.side-nav::-webkit-scrollbar{display:none;}'+
+    /* Desktop collapse: slide the nav off and reclaim its width. */
+    '@media(min-width:768px){.side-nav.collapsed{transform:translateX(-100%);}.side-nav.collapsed ~ .main,.side-nav.collapsed ~ .main-content{margin-left:0;}}'+
+    '.nav-collapse-btn{display:flex;align-items:center;gap:8px;width:100%;margin-top:6px;padding:6px 8px;border:none;background:none;border-radius:8px;font-family:var(--font-body,Inter,sans-serif);font-size:11px;color:var(--mp-text-tertiary,#A0A8B0);cursor:pointer;text-align:left;transition:color .15s,background .15s;}'+
+    '.nav-collapse-btn:hover{color:var(--mp-text-secondary,rgba(255,255,255,0.7));background:rgba(0,174,255,0.05);}'+
+    '[data-theme="dark"] .nav-collapse-btn:hover{background:rgba(255,255,255,0.05);}'+
+    '.nav-collapse-btn svg{width:15px;height:15px;flex-shrink:0;opacity:.7;}'+
+    '@media(max-width:767px){.nav-collapse-btn{display:none;}}'+
+    /* Floating reopen tab — only exists visually while the nav is collapsed. */
+    '.nav-reopen-btn{display:none;position:fixed;bottom:16px;left:12px;z-index:101;width:36px;height:36px;align-items:center;justify-content:center;border-radius:10px;background:var(--mp-surface,#0C1018);border:1px solid var(--mp-border,rgba(255,255,255,0.12));color:var(--mp-text-tertiary,#A0A8B0);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.35);transition:color .15s,border-color .15s;}'+
+    '@media(min-width:768px){.side-nav.collapsed ~ .nav-reopen-btn{display:flex;}}'+
+    '.nav-reopen-btn:hover{color:var(--mp-text-primary,#fff);border-color:var(--mp-border-hover,rgba(255,255,255,0.25));}'+
+    '.nav-reopen-btn svg{width:16px;height:16px;}';
 
   function injectStylesOnce(){
     if (document.querySelector('style[data-mp-sidebar-css]')) return;
@@ -284,6 +321,7 @@
       else if (item.type === 'back-home')    html += renderBackHome();
       else if (item.type === 'share-row')    html += renderShareRow();
       else if (item.type === 'data-sources') html += renderDataSources();
+      else if (item.type === 'collapse')     html += renderCollapse();
     });
 
     html += '</div>';
@@ -291,6 +329,22 @@
     container.innerHTML = html;
     if (!container.classList.contains('side-nav')) container.classList.add('side-nav');
     if (!container.id) container.id = 'side-nav';
+
+    // Restore collapse state before first paint (script runs synchronously in
+    // body), then mount the floating reopen tab as a sibling right after the
+    // nav so the `.side-nav.collapsed ~ .nav-reopen-btn` show-rule and the
+    // existing `.side-nav ~ .main` margin rules both keep matching.
+    try { if (localStorage.getItem(COLLAPSE_KEY) === '1') container.classList.add('collapsed'); } catch(e){}
+    if (!document.getElementById('nav-reopen-btn')){
+      var reopen = document.createElement('button');
+      reopen.id = 'nav-reopen-btn';
+      reopen.className = 'nav-reopen-btn';
+      reopen.title = 'Show menu';
+      reopen.setAttribute('aria-label','Show menu');
+      reopen.innerHTML = ICONS.expand;
+      reopen.addEventListener('click', function(){ MP.toggleSidebar(false); });
+      container.insertAdjacentElement('afterend', reopen);
+    }
   };
 
   // Expose config for diagnostics / future tooling.
