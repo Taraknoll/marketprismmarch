@@ -10242,18 +10242,32 @@ async function loadTimeline() {
     parts.push('Credibility scores are sparse before 2026; the newest ~20 trading days are intentionally still unresolved (no verdict yet).');
     if (note) note.textContent = parts.join(' ');
 
+    // Deterministic [0,1) from a dot's hash so jitter is stable across reloads.
+    function ftlRand(str) {
+      var h = 2166136261;
+      for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return ((h >>> 0) % 100000) / 100000;
+    }
+    var DAY = 86400000;
     var points = dots.map(function (d) {
       var hasBs = d.bullshit_probability != null;
       var auth = d.speaker_authority != null ? Number(d.speaker_authority) : null;
       var isFalse = d.ground_truth_label === false;
       var fill = hasBs ? _ftlDirColor(d.narrative_direction) : '#6B7280';
+      // Same-day, same-credibility stories pile up — fan them out a touch so
+      // each remains clickable. Jitter is small (x within ~half a day, y < 0.03)
+      // and seeded, so it declutters without misrepresenting the reading.
+      var hash = d.dot_hash || (d.observed_at + (d.narrative_text || ''));
+      var xj = (ftlRand(hash + 'x') - 0.5) * DAY * 1.1;
+      var yj = (ftlRand(hash + 'y') - 0.5) * 0.05;
+      var yv = (hasBs ? Number(d.bullshit_probability) : 0.5) + yj;
       return {
-        x: new Date(d.observed_at).getTime(),
-        y: hasBs ? Number(d.bullshit_probability) : 0.5, // unscored parked at mid
+        x: new Date(d.observed_at).getTime() + xj,
+        y: Math.max(0.02, Math.min(0.99, yv)),
         r: 5 + (auth != null ? auth : 0) * 0.11,
         _bg: fill,
         _border: isFalse ? '#FF4D4D' : fill,
-        _bw: isFalse ? 2.5 : 1,
+        _bw: isFalse ? 2.5 : 1.25,
         _d: d
       };
     });
@@ -10264,9 +10278,11 @@ async function loadTimeline() {
       type: 'bubble',
       data: { datasets: [{
         data: points,
-        backgroundColor: points.map(function (p) { return p._bg + 'CC'; }),
+        backgroundColor: points.map(function (p) { return p._bg + '6E'; }),
         borderColor: points.map(function (p) { return p._border; }),
         borderWidth: points.map(function (p) { return p._bw; }),
+        hoverBackgroundColor: points.map(function (p) { return p._bg; }),
+        hoverBorderColor: '#FFFFFF',
         hoverBorderWidth: points.map(function (p) { return p._bw + 1; })
       }]},
       options: {
