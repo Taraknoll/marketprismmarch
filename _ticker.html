@@ -5159,6 +5159,44 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
 
       </div>
     </div>
+
+    <!-- ── Narrative Clusters (theme lanes) ── -->
+    <div class="section">
+      <div class="section-label">
+        Narrative Clusters
+        <span class="section-label-sub">The themes <span id="ncl-ticker"></span> gets pulled into, over time</span>
+      </div>
+      <div class="section-body" style="padding:20px;">
+
+        <p class="ftl-intro">
+          Each bubble is a <b>narrative theme</b> clustering around this stock on a given day.
+          <b>Bigger = more stories</b> in that cluster. Themes are stacked into lanes, busiest on top.
+        </p>
+
+        <div class="ftl-stats">
+          <div class="ftl-stat s-total"><div class="ftl-stat-val" id="ncl-s-themes">—</div><div class="ftl-stat-lbl">Active themes</div></div>
+          <div class="ftl-stat s-bs"><div class="ftl-stat-val" id="ncl-s-top" style="font-size:18px;line-height:1.25;">—</div><div class="ftl-stat-lbl">Loudest theme</div></div>
+          <div class="ftl-stat s-false"><div class="ftl-stat-val" id="ncl-s-clusters">—</div><div class="ftl-stat-lbl">Clusters detected</div></div>
+        </div>
+
+        <div class="ftl-controls">
+          <div class="ftl-presets" id="ncl-presets">
+            <button class="ftl-preset" data-days="30">30d</button>
+            <button class="ftl-preset active" data-days="90">90d</button>
+            <button class="ftl-preset" data-days="180">6mo</button>
+            <button class="ftl-preset" data-days="all">All</button>
+          </div>
+        </div>
+
+        <div class="ftl-chart-wrap" id="ncl-chart-wrap">
+          <canvas id="ncl-canvas"></canvas>
+          <div class="ftl-tooltip" id="ncl-tooltip"></div>
+          <div class="ftl-state" id="ncl-state">Loading narrative clusters…</div>
+        </div>
+        <div class="ftl-note" id="ncl-note"></div>
+
+      </div>
+    </div>
   </div><!-- /tab-timeline -->
 
   <!-- ═══ TAB: STRATEGY ═══ -->
@@ -10140,6 +10178,7 @@ async function createImage() {
       if (tab.dataset.tab === 'timeline' && !window._timelineLoaded) {
         window._timelineLoaded = true;
         initTimeline();
+        initClusters();
       }
       // Lazy-load strategy data on first click
       if (tab.dataset.tab === 'strategy' && !window._strategyLoaded) {
@@ -10447,6 +10486,186 @@ function ftlTooltip(context) {
   var wrapW = wrap.clientWidth, wrapH = wrap.clientHeight;
   el.style.opacity = 1; // render so we can measure height
   var tw = el.offsetWidth || 250, th = el.offsetHeight || 160;
+  var left = canvas.offsetLeft + tt.caretX + 14;
+  if (left + tw > wrapW - 4) left = canvas.offsetLeft + tt.caretX - tw - 14;
+  if (left < 4) left = 4;
+  var top = canvas.offsetTop + tt.caretY - th / 2;
+  if (top + th > wrapH - 4) top = wrapH - th - 4;
+  if (top < 4) top = 4;
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+}
+
+// ── Narrative Clusters (theme lanes) ──────────────────────────────────────────
+var _nclDays = '90';
+var _NCL_COLORS = ['#00AEFF', '#00DE94', '#FFB800', '#7B61FF', '#38C8B8', '#E0663A',
+  '#FF4D4D', '#FF6FB5', '#4DA3FF', '#9CCC65', '#26C6DA', '#EC407A', '#A0A8B0', '#FFA726'];
+
+function initClusters() {
+  var t = document.getElementById('ncl-ticker');
+  if (t) t.textContent = TICKER;
+  document.querySelectorAll('#ncl-presets .ftl-preset').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('#ncl-presets .ftl-preset').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      _nclDays = btn.dataset.days;
+      loadClusters();
+    });
+  });
+  loadClusters();
+}
+
+async function loadClusters() {
+  var state = document.getElementById('ncl-state');
+  var note = document.getElementById('ncl-note');
+  if (state) { state.style.display = 'block'; state.textContent = 'Loading narrative clusters…'; }
+  if (note) note.textContent = '';
+  if (window._nclChart) { try { window._nclChart.destroy(); } catch (e) {} window._nclChart = null; }
+
+  if (typeof Chart === 'undefined') {
+    if ((window._nclWait = (window._nclWait || 0) + 1) > 40) {
+      if (state) state.textContent = 'Chart library failed to load.';
+      return;
+    }
+    return void setTimeout(loadClusters, 100);
+  }
+  window._nclWait = 0;
+
+  try {
+    var url = '/api/ticker-clusters?ticker=' + encodeURIComponent(TICKER) + '&days=' + encodeURIComponent(_nclDays);
+    var resp = await fetch(url);
+    var data = await resp.json();
+    if (!resp.ok) throw new Error(data && data.error ? data.error : 'Request failed');
+    window._nclData = data;
+
+    var s = data.summary || {};
+    document.getElementById('ncl-s-themes').textContent = s.theme_count != null ? s.theme_count : '—';
+    document.getElementById('ncl-s-top').textContent = s.top_theme || '—';
+    document.getElementById('ncl-s-clusters').textContent = s.cluster_total != null ? s.cluster_total.toLocaleString() : '—';
+
+    nclRender();
+  } catch (err) {
+    if (state) { state.style.display = 'block'; state.textContent = 'Could not load narrative clusters: ' + (err.message || err); }
+  }
+}
+
+function nclRender() {
+  var data = window._nclData;
+  if (!data || typeof Chart === 'undefined') return;
+  var state = document.getElementById('ncl-state');
+  var note = document.getElementById('ncl-note');
+  if (window._nclChart) { try { window._nclChart.destroy(); } catch (e) {} window._nclChart = null; }
+
+  var themes = data.themes || [];
+  var dots = data.dots || [];
+  if (!dots.length) {
+    if (state) { state.style.display = 'block'; state.textContent = 'No narrative clusters found for this range.'; }
+    return;
+  }
+  if (state) state.style.display = 'none';
+
+  var n = themes.length;
+  var laneOf = {};          // theme -> rank (0 = busiest)
+  var colorOf = {};
+  themes.forEach(function (th, i) { laneOf[th] = i; colorOf[th] = _NCL_COLORS[i % _NCL_COLORS.length]; });
+
+  // Size the chart to the number of lanes so rows never cram.
+  var wrap = document.getElementById('ncl-chart-wrap');
+  if (wrap) wrap.style.height = Math.max(300, n * 34 + 70) + 'px';
+
+  var DAY = 86400000;
+  var points = dots.map(function (d) {
+    return {
+      x: new Date(d.date + 'T00:00:00').getTime(), // snapshot_date is a daily date
+      y: (n - 1) - laneOf[d.theme],                 // busiest theme on top
+      r: 4 + Math.sqrt(Math.max(1, d.size)) * 2.0,
+      _c: colorOf[d.theme],
+      _d: d
+    };
+  });
+
+  if (note) note.textContent = dots.length.toLocaleString() + ' theme-days across ' + n +
+    ' theme' + (n === 1 ? '' : 's') + ' in range. Bubble size = stories in that cluster; lanes ordered by total activity.';
+
+  var xMax = Date.now();
+  var xMin = (_nclDays === 'all') ? undefined : (xMax - parseInt(_nclDays, 10) * DAY);
+  var wide = (_nclDays === '180' || _nclDays === 'all');
+
+  var ctx = document.getElementById('ncl-canvas').getContext('2d');
+  window._nclChart = new Chart(ctx, {
+    type: 'bubble',
+    data: { datasets: [{
+      data: points,
+      backgroundColor: points.map(function (p) { return p._c + '99'; }),
+      borderColor: points.map(function (p) { return p._c; }),
+      borderWidth: 1.25,
+      hoverBackgroundColor: points.map(function (p) { return p._c; }),
+      hoverBorderColor: '#FFFFFF',
+      hoverBorderWidth: 2,
+      hoverRadius: 3
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      scales: {
+        x: {
+          type: 'linear', min: xMin, max: xMax,
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: {
+            color: '#A0A8B0', font: { family: 'Inter', size: 11 }, maxTicksLimit: 7,
+            callback: function (v) {
+              var dt = new Date(v);
+              var mo = dt.toLocaleString('en-US', { month: 'short' });
+              return wide ? mo + " '" + String(dt.getFullYear()).slice(2) : mo + ' ' + dt.getDate();
+            }
+          }
+        },
+        y: {
+          min: -0.5, max: n - 0.5,
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: {
+            color: '#C7CDD4', font: { family: 'Inter', size: 11 }, stepSize: 1,
+            callback: function (v) {
+              if (v < 0 || v > n - 1 || v !== Math.round(v)) return '';
+              var th = themes[(n - 1) - v] || '';
+              return th.length > 22 ? th.slice(0, 21) + '…' : th;
+            }
+          }
+        }
+      },
+      plugins: { legend: { display: false }, tooltip: { enabled: false, external: nclTooltip } }
+    }
+  });
+}
+
+function nclTooltip(context) {
+  var el = document.getElementById('ncl-tooltip');
+  if (!el) return;
+  var tt = context.tooltip;
+  if (!tt || tt.opacity === 0) { el.style.opacity = 0; return; }
+  var dp = tt.dataPoints && tt.dataPoints[0];
+  var d = dp && dp.raw && dp.raw._d;
+  var col = dp && dp.raw && dp.raw._c;
+  if (!d) { el.style.opacity = 0; return; }
+
+  var dateTxt = new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  var anchor = (d.anchor || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\s*\|\s*$/, '');
+  var contagion = (d.contagion || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  var showContagion = contagion && !/^(n\/a|none|nflx|^—$)/i.test(contagion) && contagion.length < 90;
+
+  el.innerHTML =
+    '<div class="ftl-tt-claim" style="color:' + (col || '#0C1018') + '">' + (d.theme || 'Theme') + '</div>' +
+    (anchor ? '<div style="font-size:12px;line-height:1.4;color:#3A424E;margin-bottom:9px;">' + anchor + '</div>' : '') +
+    '<div class="ftl-tt-row"><span>Date</span><span>' + dateTxt + '</span></div>' +
+    '<div class="ftl-tt-row"><span>Stories in cluster</span><span>' + d.size + '</span></div>' +
+    '<div class="ftl-tt-row"><span>Chain strength</span><span>' + d.strength + ' / 10</span></div>' +
+    (showContagion ? '<div class="ftl-tt-row"><span>Contagion</span><span style="max-width:150px;">' + contagion + '</span></div>' : '');
+
+  var canvas = context.chart.canvas;
+  var wrap = canvas.parentNode;
+  var wrapW = wrap.clientWidth, wrapH = wrap.clientHeight;
+  el.style.opacity = 1;
+  var tw = el.offsetWidth || 250, th = el.offsetHeight || 150;
   var left = canvas.offsetLeft + tt.caretX + 14;
   if (left + tw > wrapW - 4) left = canvas.offsetLeft + tt.caretX - tw - 14;
   if (left < 4) left = 4;
