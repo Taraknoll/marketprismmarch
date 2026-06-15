@@ -8180,11 +8180,14 @@ function isNonArticleNarrative(r) {
   if (!r) return false;
   if (r.article_url && NON_ARTICLE_URL_RE.test(r.article_url)) return true;
   if (r.narrative_text && NON_ARTICLE_TEXT_RE.test(r.narrative_text)) return true;
-  // Structural rows with no source ref AND no numeric anchor are landing-page
-  // descriptions, not narratives. Only apply when the flags are present
-  // (loadStoriesFeed doesn't fetch them).
+  // Structural rows with no numeric anchor are landing-page descriptions
+  // ("…has recent stock news and headlines available on Yahoo Finance"), not
+  // real narratives. The LLM often sets has_source_ref=true just because the
+  // stub names an outlet, so we deliberately ignore that flag here — a
+  // structural row with no numeric anchor is a landing page regardless.
+  // Only apply when has_numeric_anchor is present (loadStoriesFeed doesn't
+  // fetch it, so undefined → don't drop).
   if (String(r.narrative_type || '').toLowerCase() === 'structural'
-      && r.has_source_ref === false
       && r.has_numeric_anchor === false) return true;
   return false;
 }
@@ -10432,7 +10435,7 @@ async function loadStoriesFeed() {
   try {
     let [rows, srsRows] = await Promise.all([
       sbFetch('narrative_analyses', {
-        select: 'narrative_text,verdict,sentiment_score,snapshot_date,created_at,source_outlet,narrative_type,article_url',
+        select: 'narrative_text,verdict,sentiment_score,snapshot_date,created_at,source_outlet,narrative_type,article_url,has_numeric_anchor',
         ticker: `eq.${TICKER}`,
         order: 'created_at.desc',
         limit: '50'
