@@ -463,11 +463,16 @@ body::before{
         setLoading('btn-beta', false);
         return;
       }
+      // Use the server-authoritative expiry when provided (per-code TTL — e.g. a
+      // 24h Reddit code returns ~24h, not the 7d we asked for); fall back to our
+      // requested window for older deployments that don't return one.
+      var grantedExpires = expires.toISOString();
+      try { var ok = await resp.json(); if(ok && ok.expires) grantedExpires = ok.expires; } catch(_){}
       // Mirror the same localStorage flags the existing register flow sets, so
       // every client-side soft-gate keeps treating beta users as authed.
       localStorage.setItem('mp-beta-access', 'true');
       localStorage.setItem('mp-beta-tier', 'pro');
-      localStorage.setItem('mp-beta-expires', expires.toISOString());
+      localStorage.setItem('mp-beta-expires', grantedExpires);
       localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()}));
       showMsg('success','Beta access granted. Redirecting…');
       document.getElementById('btn-beta').classList.add('success');
