@@ -737,7 +737,7 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       <!-- 5. Analogues — the closest historical narratives and how they resolved -->
       <div class="analogue-intro">
         <div class="ai-h" id="ai-h">The closest historical analogues</div>
-        <div class="ai-sub" id="ai-sub">These are past narratives that were semantically similar. Similar stories produced both winners and losers — outcomes here were mixed.</div>
+        <div class="ai-sub" id="ai-sub">These are the <strong>closest matches by wording</strong> — not a summary of the full case set the consensus above is built on. The nearest-worded stories can lean one way while the broader set leans the other, so expect both winners and losers here.</div>
       </div>
       <div id="neighbors"></div>
 
@@ -1119,12 +1119,23 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       })
     })
     .then(function(r){
-      return r.json().then(function(j){ return { ok: r.ok, status: r.status, body: j }; });
+      // Read as text first: on a platform-level crash (OOM / timeout) Vercel
+      // returns a plain-text error page, not JSON. Parsing blind would throw a
+      // cryptic "Unexpected token 'A'" instead of a usable message.
+      return r.text().then(function(t){
+        var j = null;
+        try { j = t ? JSON.parse(t) : null; } catch(_) { j = null; }
+        return { ok: r.ok, status: r.status, body: j, raw: t };
+      });
     })
     .then(function(res){
       setLoading(false);
-      if (!res.ok) {
-        showError((res.body && res.body.error) || ('Request failed (HTTP ' + res.status + ').'));
+      if (!res.ok || !res.body) {
+        var msg = (res.body && res.body.error)
+          || (res.status >= 500
+                ? 'The search engine is temporarily overloaded (HTTP ' + res.status + '). Give it a moment and try again.'
+                : 'Request failed (HTTP ' + res.status + ').');
+        showError(msg);
         return;
       }
       if (res.body.warning === 'no_similar_dots') {
