@@ -10231,8 +10231,14 @@ async function loadTimeline() {
 
     // Honest coverage note.
     var parts = [];
-    parts.push('Showing ' + data.returned.toLocaleString() + (data.capped ? ' of ' + data.matched.toLocaleString() + ' (most recent, capped)' : '') +
-               (_ftlScored ? ' scored' : '') + ' narrative' + (data.returned === 1 ? '' : 's') + '.');
+    var shown = data.returned.toLocaleString();
+    if (data.filtered) {
+      parts.push('Showing the ' + shown + ' highest-impact ' + (_ftlScored ? 'scored ' : '') +
+                 'narratives (largest 5-day moves) of ' + data.matched.toLocaleString() + ' in range.');
+    } else {
+      parts.push('Showing all ' + shown + (_ftlScored ? ' scored' : '') +
+                 ' narrative' + (data.returned === 1 ? '' : 's') + ' in range.');
+    }
     parts.push('Credibility scores are sparse before 2026; the newest ~20 trading days are intentionally still unresolved (no verdict yet).');
     if (note) note.textContent = parts.join(' ');
 
@@ -10244,7 +10250,7 @@ async function loadTimeline() {
       return {
         x: new Date(d.observed_at).getTime(),
         y: hasBs ? Number(d.bullshit_probability) : 0.5, // unscored parked at mid
-        r: 6 + (auth != null ? auth : 0) * 0.16,
+        r: 5 + (auth != null ? auth : 0) * 0.11,
         _bg: fill,
         _border: isFalse ? '#FF4D4D' : fill,
         _bw: isFalse ? 2.5 : 1,
