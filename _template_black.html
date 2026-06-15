@@ -17913,42 +17913,6 @@ var BOARDS=[
       });
     }catch(e){console.warn('[Leaderboard Growth-at-Discount] fetch failed:',e);return [];}
   }},
-  {id:'influential-movers',title:'MOST INFLUENTIAL MARKET MOVERS',sub:'The people whose bullish calls actually land',color:'#FFB800',bg:'rgba(255,184,0,0.12)',scoreLabel:'Hit Rate',
-  // Deliberately last in BOARDS: renders as a full-width table spanning the
-  // grid (renderAs:'table'), so it anchors the bottom of the page instead of
-  // sitting mid-grid as a card. tableHead[0] is the name column; each row's
-  // cells[] aligns with tableHead[1..].
-  // Top 10 people by bullish hit rate, from v_influential_movers, which
-  // collapses the per-(analyst, ticker) rows of analyst_ticker_scores into
-  // one row per person: hit rate weighted by bullish article count across
-  // every ticker they cover. Guardrails live in the view, same rule-based
-  // philosophy as this file's constants: >= 30 bullish articles (no 3-call
-  // wonders at 100%), >= 2 tickers covered, and corporate-token name
-  // filtering so PR feeds / research shops / law firms filed under
-  // analyst_name ("Verified Market Research") never rank as people.
-  renderAs:'table',
-  tableHead:[{label:'Analyst'},{label:'Hit Rate',num:true},{label:'Bullish Calls',num:true},{label:'Tickers',num:true},{label:'Avg 5d Return',num:true},{label:'Top Ticker'},{label:'Top Publication'}],
-  fetch:async function(){
-    try{
-      var rows=await sq('v_influential_movers?select=analyst_name,tickers_covered,total_articles,bullish_articles,hit_rate,avg_return_5d,top_ticker,top_publication&order=hit_rate.desc&limit=10');
-      if(!rows||!rows.length) return [];
-      return rows.map(function(r){
-        var hit=(Number(r.hit_rate)||0)*100;
-        var col=hit>=80?'#00DE94':hit>=65?'#FFB800':'#00AEFF';
-        var nTick=Number(r.tickers_covered)||0;
-        var ret=r.avg_return_5d!=null?Number(r.avg_return_5d):null;
-        return{name:r.analyst_name,score:hit,scoreDisplay:Math.round(hit)+'%',_scoreColor:col,
-          cells:[
-            {text:Math.round(hit)+'%',color:col,strong:true},
-            {text:String(Number(r.bullish_articles)||0)},
-            {text:String(nTick)},
-            {text:ret!=null?((ret>=0?'+':'')+ret.toFixed(1)+'%'):'—',color:ret!=null?(ret>=0?'#00DE94':'#FF4D4D'):null},
-            {text:r.top_ticker||'—',link:r.top_ticker?'/ticker/'+r.top_ticker:null},
-            {text:r.top_publication||'—'}
-          ]};
-      });
-    }catch(e){console.warn('[Leaderboard Influential Movers] fetch failed:',e);return [];}
-  }},
 ];
 
 
