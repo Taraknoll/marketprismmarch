@@ -1398,7 +1398,7 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
   text-transform:uppercase;background:rgba(255,255,255,0.04);color:var(--mp-text-secondary);
 }
 .sector-body{padding:0 16px 14px;}
-.sector-desc{font-size:14.5px;color:var(--mp-text-primary);line-height:1.65;margin-top:14px;margin-bottom:12px;}
+.sector-desc{font-size:14.5px;font-weight:400;color:var(--mp-text-secondary);line-height:1.65;margin-top:14px;margin-bottom:12px;}
 .sector-tickers{display:flex;gap:5px;flex-wrap:wrap;}
 .sector-ticker-chip{
   font-family:var(--font-body);font-size:11px;
@@ -11361,15 +11361,37 @@ async function loadSectorsFromSummaries(){
       return 'low';
     }
 
-    // Preserve original CAGR values from static data
-    var cagrMap={};SECTOR_STATIC.forEach(function(s){if(s.cagr&&s.cagr!=='—')cagrMap[s.name]=s.cagr;});
+    // Live sector CAGR = median 5-yr revenue CAGR of the sector's constituents
+    // (ticker_valuation_config.rev_cagr_5yr_est, stored as whole-number percent).
+    // Curated estimates remain a fallback for any sector with no covered names.
+    var cagrFallback={
+      'Healthcare Technology & Biotech':'15%',
+      'Real Estate & PropTech':'11%',
+      'Semiconductors':'21%',
+      'Quantum Computing':'35%',
+      'Data Licensing & AI Training Data':'28%',
+      'Social Media & Digital Advertising':'14%'
+    };
+    SECTOR_STATIC.forEach(function(s){if(s.cagr&&s.cagr!=='—')cagrFallback[s.name]=s.cagr;});
+    var vcMap={};
+    try{
+      var vcRes=await fetch(SUPABASE_URL+'/rest/v1/ticker_valuation_config?select=ticker,rev_cagr_5yr_est&rev_cagr_5yr_est=not.is.null',{headers:hdrs});
+      if(vcRes.ok){(await vcRes.json()).forEach(function(v){var n=Number(v.rev_cagr_5yr_est);if(v.ticker&&isFinite(n))vcMap[String(v.ticker).toUpperCase()]=n;});}
+    }catch(e){console.warn('[MP] valuation CAGR fetch failed:',e);}
+    function medianCagr(list){
+      var vals=(list||[]).map(function(t){return vcMap[String(t).toUpperCase()];}).filter(function(n){return typeof n==='number'&&isFinite(n);}).sort(function(a,b){return a-b;});
+      if(!vals.length) return null;
+      var m=Math.floor(vals.length/2);
+      return vals.length%2?vals[m]:(vals[m-1]+vals[m])/2;
+    }
     SECTOR_STATIC=rows.map(function(r){
       var tickers=typeof r.tickers==='string'?JSON.parse(r.tickers):(r.tickers||[]);
+      var med=medianCagr(tickers);
       return {
         name:r.scope_key||'',
         sub:tickers.slice(0,3).join(', '),
         state:statusToState(r.status),
-        cagr:cagrMap[r.scope_key]||'—',
+        cagr:med!=null?Math.round(med)+'%':(cagrFallback[r.scope_key]||'—'),
         momentum:Math.round(r.momentum_score||0),
         risk:statusToRisk(r.status),
         desc:r.body||'',
