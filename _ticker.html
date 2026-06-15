@@ -5069,11 +5069,11 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
       .ftl-leg-item { display: inline-flex; align-items: center; gap: 6px;
         font-family: var(--font-body); font-size: 12px; color: var(--mp-text-secondary); }
       .ftl-dot { border-radius: 50%; display: inline-block; flex: none; }
-      .ftl-dot.lg-bull  { width: 11px; height: 11px; background: #00AEFF; }
-      .ftl-dot.lg-bear  { width: 11px; height: 11px; background: #E0663A; }
+      .ftl-dot.lg-bull  { width: 11px; height: 11px; background: #00DE94; }
+      .ftl-dot.lg-bear  { width: 11px; height: 11px; background: #FF4D4D; }
       .ftl-dot.lg-neut  { width: 11px; height: 11px; background: #8A93A0; }
       .ftl-dot.lg-false { width: 11px; height: 11px; background: transparent;
-        border: 2.5px solid #FF4D4D; }
+        border: 2.5px solid #FFFFFF; }
       .ftl-dot.sz-s { width: 7px;  height: 7px;  background: #6B7280; }
       .ftl-dot.sz-m { width: 12px; height: 12px; background: #6B7280; }
       .ftl-dot.sz-l { width: 18px; height: 18px; background: #6B7280; }
@@ -5112,7 +5112,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
         <p class="ftl-intro" id="ftl-intro">
           Each dot is <b>one narrative</b> told about this stock.
           <b>Bigger = more authoritative source.</b>
-          A <b>red ring</b> means the claim was later contradicted by price — it resolved <b>false</b>.
+          A <b>white ring</b> means the claim was later contradicted by price — it resolved <b>false</b>.
         </p>
 
         <div class="ftl-stats" id="ftl-stats">
@@ -10200,8 +10200,8 @@ function initTimeline() {
 }
 
 function _ftlDirColor(dir) {
-  if (dir === 'bullish') return '#00AEFF';
-  if (dir === 'bearish') return '#E0663A';
+  if (dir === 'bullish') return '#00DE94'; // green
+  if (dir === 'bearish') return '#FF4D4D'; // red
   if (dir === 'neutral') return '#8A93A0';
   return '#4A5260'; // null/unknown direction
 }
@@ -10278,8 +10278,8 @@ function ftlRender() {
   // Intro copy follows the active axis.
   if (intro) {
     intro.innerHTML = impact
-      ? 'Each dot is <b>one narrative</b> told about this stock. <b>Up = the stock rose</b> over the 5 days after the claim, <b>down = it fell</b>. <b>Bigger = more authoritative source.</b> A <b>red ring</b> means it resolved <b>false</b>.'
-      : 'Each dot is <b>one narrative</b> told about this stock. <b>Higher = less credible</b> (closer to "air"). <b>Bigger = more authoritative source.</b> A <b>red ring</b> means the claim was contradicted by price — it resolved <b>false</b>.';
+      ? 'Each dot is <b>one narrative</b> told about this stock. <b>Up = the stock rose</b> over the 5 days after the claim, <b>down = it fell</b>. <b>Bigger = more authoritative source.</b> A <b>white ring</b> means it resolved <b>false</b>.'
+      : 'Each dot is <b>one narrative</b> told about this stock. <b>Higher = less credible</b> (closer to "air"). <b>Bigger = more authoritative source.</b> A <b>white ring</b> means the claim was contradicted by price — it resolved <b>false</b>.';
   }
 
   // Symmetric, round y-bounds for the impact axis.
@@ -10315,7 +10315,7 @@ function ftlRender() {
       y: yv,
       r: 5 + (auth != null ? auth : 0) * 0.11,
       _bg: fill,
-      _border: isFalse ? '#FF4D4D' : fill,
+      _border: isFalse ? '#FFFFFF' : fill,
       _bw: isFalse ? 2.5 : 1.25,
       _d: d
     };
@@ -10357,8 +10357,9 @@ function ftlRender() {
       borderColor: points.map(function (p) { return p._border; }),
       borderWidth: points.map(function (p) { return p._bw; }),
       hoverBackgroundColor: points.map(function (p) { return p._bg; }),
-      hoverBorderColor: '#FFFFFF',
-      hoverBorderWidth: points.map(function (p) { return p._bw + 1; })
+      hoverBorderColor: points.map(function (p) { return p._border; }),
+      hoverBorderWidth: points.map(function (p) { return p._bw + 1.5; }),
+      hoverRadius: 3
     }]},
     options: {
       responsive: true, maintainAspectRatio: false,
