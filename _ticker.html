@@ -5243,6 +5243,11 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
     <!-- Strategy content (populated by loadStrategyData) -->
     <div id="strategy-content" style="display:none;">
 
+      <!-- Share / download action -->
+      <div class="ftl-actions" style="margin:0 0 16px;justify-content:flex-end;">
+        <button class="ftl-dl" type="button" onclick="mpDownloadStrategy()" title="Download as image to share">&#8595;&nbsp; Download image</button>
+      </div>
+
       <!-- Behavior Hero -->
       <div class="behavior-hero" id="strat-hero">
         <div class="bh-icon" id="strat-hero-icon"></div>
@@ -10238,13 +10243,14 @@ function initTimeline() {
       loadTimeline();
     });
   });
-  // Y-axis metric toggle (re-renders cached data, no refetch)
+  // Y-axis metric toggle. Impact mode pulls a different dataset (unscored dots
+  // with a resolved move are valid there), so this refetches.
   document.querySelectorAll('#ftl-metrics .ftl-preset').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('#ftl-metrics .ftl-preset').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       _ftlMetric = btn.dataset.metric;
-      ftlRender();
+      loadTimeline();
     });
   });
   // Unscored toggle
@@ -10285,9 +10291,12 @@ async function loadTimeline() {
   window._ftlWait = 0;
 
   try {
+    // Impact axis doesn't use the credibility score, so include unscored dots
+    // there (robust to scoring-pipeline gaps); credibility view honours the toggle.
+    var fetchScored = (_ftlMetric === 'impact') ? false : _ftlScored;
     var url = '/api/constellation?ticker=' + encodeURIComponent(TICKER) +
               '&days=' + encodeURIComponent(_ftlDays) +
-              '&scored=' + (_ftlScored ? '1' : '0');
+              '&scored=' + (fetchScored ? '1' : '0');
     var resp = await fetch(url);
     var data = await resp.json();
     if (!resp.ok) throw new Error(data && data.error ? data.error : 'Request failed');
@@ -10317,6 +10326,11 @@ function ftlRender() {
   var allDots = data.dots || [];
   // Impact axis can only place dots whose 5-day move has resolved.
   var dots = impact ? allDots.filter(function (d) { return d.return_5d != null; }) : allDots;
+
+  // The "show unscored" toggle is a credibility-mode concept; impact mode always
+  // includes unscored dots, so hide it there.
+  var unEl = document.getElementById('ftl-unscored');
+  if (unEl && unEl.parentNode) unEl.parentNode.style.display = impact ? 'none' : 'inline-flex';
 
   if (!dots.length) {
     if (state) {
@@ -10352,7 +10366,9 @@ function ftlRender() {
     var hasBs = d.bullshit_probability != null;
     var auth = d.speaker_authority != null ? Number(d.speaker_authority) : null;
     var isFalse = d.ground_truth_label === false;
-    var fill = hasBs ? _ftlDirColor(d.narrative_direction) : '#6B7280';
+    // Impact mode colours by direction even when unscored (credibility isn't the
+    // axis there); credibility mode greys unscored dots parked at 0.5.
+    var fill = (impact || hasBs) ? _ftlDirColor(d.narrative_direction) : '#6B7280';
     // Seeded jitter fans out coincident dots so each stays clickable.
     var hash = d.dot_hash || (d.observed_at + (d.narrative_text || ''));
     var xj = (ftlRand(hash + 'x') - 0.5) * DAY * 1.6;
@@ -10377,14 +10393,16 @@ function ftlRender() {
 
   // Coverage note.
   var parts = [];
-  parts.push('Showing ' + points.length.toLocaleString() + (data.filtered ? ' of ' + data.matched.toLocaleString() : '') +
-             (_ftlScored ? ' scored' : '') + ' narrative' + (points.length === 1 ? '' : 's') + ' in range' +
-             (data.filtered ? ' (up to ' + data.per_day + ' most-authoritative per day)' : '') + '.');
+  var perDayTxt = data.filtered ? ' (up to ' + data.per_day + ' most-authoritative per day)' : '';
   if (impact) {
+    parts.push('Showing ' + points.length.toLocaleString() + ' narrative' + (points.length === 1 ? '' : 's') +
+      ' with a resolved 5-day move' + perDayTxt + ', scored or not.');
     var pending = allDots.length - dots.length;
-    if (pending > 0) parts.push(pending.toLocaleString() + ' recent dot' + (pending === 1 ? '' : 's') +
-      ' hidden — 5-day move not resolved yet (see Credibility).');
+    if (pending > 0) parts.push(pending.toLocaleString() + ' very recent dot' + (pending === 1 ? '' : 's') +
+      ' hidden — 5-day move not resolved yet.');
   } else {
+    parts.push('Showing ' + points.length.toLocaleString() + (data.filtered ? ' of ' + data.matched.toLocaleString() : '') +
+      (_ftlScored ? ' scored' : '') + ' narrative' + (points.length === 1 ? '' : 's') + ' in range' + perDayTxt + '.');
     parts.push('Credibility scores are sparse before 2026; the newest ~20 trading days are intentionally still unresolved (no verdict yet).');
   }
   parts.push('Tip: scroll or drag a box to zoom in (spreads the dots); double-click to reset.');
@@ -10806,6 +10824,127 @@ function mpDownloadChart(which) {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }, 'image/png');
+}
+
+// ── Branded logo loader (cached) ───────────────────────────────────────────────
+var _mpLogoImg = null;
+function _mpLoadLogo() {
+  if (_mpLogoImg) return Promise.resolve(_mpLogoImg);
+  return new Promise(function (resolve) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () { _mpLogoImg = img; resolve(img); };
+    img.onerror = function () { resolve(null); };   // fail-soft: card still renders without logo
+    img.src = '/assets/Market-Prism-Logo-Light.png';
+  });
+}
+
+// ── Trading Strategy → branded share image (PNG) ───────────────────────────────
+// Snapshots the live #strategy-content with html2canvas, then composites it into
+// a fixed branded frame (logo + marketprism.co header, tagline + URL footer) so
+// it's ready to post on social with the brand attached. Same visual language as
+// mpDownloadChart.
+async function mpDownloadStrategy() {
+  var content = document.getElementById('strategy-content');
+  if (!content || content.style.display === 'none') {
+    alert('Strategy is still loading — try again in a moment.');
+    return;
+  }
+  var btn = document.querySelector('#tab-strategy .ftl-dl[onclick="mpDownloadStrategy()"]');
+  var btnTxt = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Generating…'; }
+
+  try {
+    await ensureHtml2Canvas();
+    var logo = await _mpLoadLogo();
+
+    // Collapse the action row so the button (and its empty band) don't appear
+    // in the snapshot.
+    var actionRow = btn ? btn.closest('.ftl-actions') : null;
+    if (actionRow) actionRow.style.display = 'none';
+    var src = await html2canvas(content, {
+      backgroundColor: '#0C1018',
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false
+    });
+    if (actionRow) actionRow.style.display = '';
+
+    var dpr = 2;                              // match html2canvas scale
+    var P = function (n) { return Math.round(n * dpr); };
+    var FONT = ', "Inter", system-ui, sans-serif';
+
+    var pad = P(28), headerH = P(96), footerH = P(54);
+    var W = src.width + pad * 2;
+    var H = src.height + headerH + footerH;
+    var c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    var x = c.getContext('2d');
+
+    // Surface + top accent bar.
+    x.fillStyle = '#0C1018'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#00AEFF'; x.fillRect(0, 0, W, P(4));
+
+    // Header — logo top-left, marketprism.co top-right.
+    var hx = pad, logoBottom = P(40);
+    if (logo) {
+      var lh = P(30), lw = Math.round(lh * (logo.width / logo.height));
+      x.drawImage(logo, hx, P(24), lw, lh);
+      hx += lw + P(12);
+      logoBottom = P(24) + lh;
+    } else {
+      x.textBaseline = 'alphabetic'; x.textAlign = 'left';
+      x.fillStyle = '#FFFFFF';
+      x.font = '700 ' + P(20) + 'px' + FONT;
+      x.fillText('MARKET PRISM', hx, P(46));
+    }
+    x.textBaseline = 'alphabetic'; x.textAlign = 'right';
+    x.fillStyle = '#00AEFF';
+    x.font = '700 ' + P(17) + 'px' + FONT;
+    x.fillText('marketprism.co', W - pad, P(44));
+
+    // Title line — "Trading Strategy · TICKER".
+    x.textAlign = 'left';
+    x.fillStyle = '#FFFFFF';
+    x.font = '700 ' + P(22) + 'px' + FONT;
+    x.fillText('Trading Strategy', pad, headerH - P(18));
+    var tW = x.measureText('Trading Strategy').width;
+    x.fillStyle = '#A0A8B0';
+    x.font = '500 ' + P(15) + 'px' + FONT;
+    x.fillText('  ·  ' + TICKER, pad + tW, headerH - P(18));
+
+    // Strategy snapshot.
+    x.drawImage(src, pad, headerH);
+
+    // Footer.
+    var fy = headerH + src.height;
+    x.strokeStyle = 'rgba(255,255,255,0.08)'; x.lineWidth = dpr;
+    x.beginPath(); x.moveTo(pad, fy + P(14)); x.lineTo(W - pad, fy + P(14)); x.stroke();
+    x.textAlign = 'left';
+    x.fillStyle = '#6B7280';
+    x.font = '500 ' + P(11) + 'px' + FONT;
+    x.fillText('Market Prism · narrative-lifecycle engine · not investment advice', pad, fy + P(38));
+    x.textAlign = 'right';
+    x.fillStyle = '#A0A8B0';
+    x.font = '700 ' + P(12) + 'px' + FONT;
+    x.fillText('marketprism.co', W - pad, fy + P(38));
+
+    c.toBlob(function (blob) {
+      if (!blob) { alert('Could not generate image.'); return; }
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = TICKER + '-trading-strategy.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }, 'image/png');
+  } catch (e) {
+    alert('Could not generate image — please try again.');
+  } finally {
+    if (actionRow) actionRow.style.display = '';
+    if (btn) { btn.disabled = false; btn.innerHTML = btnTxt; }
+  }
 }
 
 async function loadStrategyData() {
