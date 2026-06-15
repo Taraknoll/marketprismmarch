@@ -10320,15 +10320,15 @@ function ftlRender() {
       : 'Each dot is <b>one narrative</b> told about this stock. <b>Higher = less credible</b> (closer to "air"). <b>Bigger = more authoritative source.</b> A <b>white ring</b> means the claim was contradicted by price — it resolved <b>false</b>.';
   }
 
-  // Symmetric, round y-bounds for the impact axis.
+  // Symmetric y-bounds for the impact axis, fitted to the BULK of the moves
+  // (~p92) so dots use the full height instead of squashing near zero. Rare
+  // outliers clamp to the edge.
   var M = 5;
   if (impact) {
-    var mx = 0;
-    for (var i = 0; i < dots.length; i++) {
-      var a = Math.abs(Number(dots[i].return_5d) * 100);
-      if (a > mx) mx = a;
-    }
-    M = Math.min(60, Math.max(5, Math.ceil(mx / 5) * 5));
+    var absv = dots.map(function (d) { return Math.abs(Number(d.return_5d) * 100); })
+                   .sort(function (a, b) { return a - b; });
+    var p = absv.length ? absv[Math.min(absv.length - 1, Math.floor(absv.length * 0.92))] : 5;
+    M = Math.min(40, Math.max(4, Math.ceil(p / 2) * 2));
   }
 
   var DAY = 86400000;
@@ -10339,10 +10339,10 @@ function ftlRender() {
     var fill = hasBs ? _ftlDirColor(d.narrative_direction) : '#6B7280';
     // Seeded jitter fans out coincident dots so each stays clickable.
     var hash = d.dot_hash || (d.observed_at + (d.narrative_text || ''));
-    var xj = (ftlRand(hash + 'x') - 0.5) * DAY * 1.1;
+    var xj = (ftlRand(hash + 'x') - 0.5) * DAY * 1.6;
     var yv, yj;
     if (impact) {
-      yj = (ftlRand(hash + 'y') - 0.5) * (M * 0.04);
+      yj = (ftlRand(hash + 'y') - 0.5) * (M * 0.06);
       yv = Math.max(-M, Math.min(M, Number(d.return_5d) * 100 + yj));
     } else {
       yj = (ftlRand(hash + 'y') - 0.5) * 0.05;
@@ -10374,11 +10374,14 @@ function ftlRender() {
   if (note) note.textContent = parts.join(' ');
 
   var wide = (_ftlDays === '180' || _ftlDays === 'all');
-  // Pin the x-axis to the requested window (… → today) so the axis always
-  // reaches the present and a "6mo" view actually spans 6 months — instead of
-  // collapsing to wherever dots happen to land.
+  // Right edge = today (axis always reaches the present). Left edge = where data
+  // actually starts (drop empty leading space, e.g. pre-Feb for a 6mo view) but
+  // never before the requested window start.
   var xMax = Date.now();
-  var xMin = (_ftlDays === 'all') ? undefined : (xMax - parseInt(_ftlDays, 10) * DAY);
+  var minPt = Infinity;
+  for (var qi = 0; qi < points.length; qi++) { if (points[qi].x < minPt) minPt = points[qi].x; }
+  var winStart = (_ftlDays === 'all') ? minPt : (xMax - parseInt(_ftlDays, 10) * DAY);
+  var xMin = isFinite(minPt) ? Math.max(winStart, minPt - 3 * DAY) : winStart;
   var yScale = impact ? {
     min: -M, max: M,
     grid: { color: function (c) { return (c.tick && c.tick.value === 0) ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)'; } },

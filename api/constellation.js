@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
     const top = Math.min(Math.max(parseInt(url.searchParams.get('top') || '400', 10) || 400, 10), 1000);
     // Per-day density cap: keep only the most authoritative N voices per day so
     // busy event-days don't pile into an unreadable clump.
-    const perDay = Math.min(Math.max(parseInt(url.searchParams.get('per_day') || '5', 10) || 5, 1), 50);
+    const perDay = Math.min(Math.max(parseInt(url.searchParams.get('per_day') || '4', 10) || 4, 1), 50);
 
     if (!ticker) return sendJson(res, 400, { error: 'Missing ticker' });
 
