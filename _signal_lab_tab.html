@@ -235,13 +235,9 @@
   @media (max-width: 768px) { .sl-pattern-cards { grid-template-columns: 1fr; } }
 
   /* ── Signal Lab: Clusters + Price Reaction ── */
-  /* Two-column shell: charts (left) share one timeline; day-detail rail (right). */
-  .sl-cp-wrap { display: flex; align-items: stretch; gap: 0; }
-  .sl-cp-left { position: relative; flex: 1 1 auto; min-width: 0; }
-  .sl-cp-rail {
-    flex: 0 0 252px; width: 252px; border-left: 1px solid var(--mp-border);
-    padding: 16px 18px; font-family: var(--font-body); align-self: stretch;
-  }
+  /* Full-width charts share one timeline; day-detail lives in a strip below. */
+  .sl-cp-wrap { display: block; }
+  .sl-cp-left { position: relative; width: 100%; min-width: 0; }
   /* Vertical guide spanning price chart + cluster lanes. */
   .sl-crosshair {
     position: absolute; top: 4px; width: 1px; pointer-events: none;
@@ -267,40 +263,56 @@
     display: flex; align-items: center; justify-content: center; min-height: 120px;
     font-size: 12px; color: var(--mp-text-tertiary); text-align: center; padding: 0 24px;
   }
-  /* Day-detail rail */
-  .sl-rail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .sl-rail-date { font-family: var(--font-display); font-size: 19px; font-weight: 400; color: var(--mp-text-primary); }
-  .sl-rail-close { background: none; border: none; color: var(--mp-text-tertiary); font-size: 17px; line-height: 1; cursor: pointer; padding: 2px 4px; }
-  .sl-rail-close:hover { color: var(--mp-text-primary); }
-  .sl-rail-rxlbl { font-size: 11px; color: var(--mp-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-  .sl-rail-rx { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 14px; font-family: var(--font-body); }
+  /* Day-detail strip (full width, below the charts) */
+  .sl-day-strip { border-top: 1px solid var(--mp-border); padding: 14px 16px 4px; font-family: var(--font-body); }
+  .sl-day-main { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 30px; }
+  .sl-day-block { min-width: 0; }
+  .sl-day-narr { flex: 1 1 280px; }
+  .sl-rail-head { display: flex; align-items: center; gap: 10px; }
+  .sl-rail-date { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--mp-text-primary); white-space: nowrap; }
+  .sl-rail-close { background: none; border: 1px solid var(--mp-border); border-radius: 6px; color: var(--mp-text-tertiary); font-size: 13px; line-height: 1; cursor: pointer; padding: 3px 6px; }
+  .sl-rail-close:hover { color: var(--mp-text-primary); border-color: var(--mp-border-hover, rgba(255,255,255,0.28)); }
+  .sl-rail-rxlbl { font-size: 11px; color: var(--mp-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .sl-rail-rx { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 8px; font-family: var(--font-body); }
   .sl-rail-rx.up { color: #00DE94; } .sl-rail-rx.down { color: #FF4D4D; } .sl-rail-rx.flat { color: var(--mp-text-tertiary); }
-  .sl-rail-pxlbl { font-size: 11px; color: var(--mp-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-  .sl-rail-px { font-size: 22px; font-weight: 600; color: var(--mp-text-primary); font-family: var(--font-body); margin-bottom: 16px; }
-  .sl-hz { display: inline-flex; gap: 4px; margin-bottom: 18px; }
+  .sl-rail-pxlbl { font-size: 11px; color: var(--mp-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .sl-rail-px { font-size: 22px; font-weight: 600; color: var(--mp-text-primary); font-family: var(--font-body); }
+  .sl-hz { display: inline-flex; gap: 4px; }
   .sl-hz button {
     font-family: var(--font-body); font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 7px;
     border: 1px solid var(--mp-border); background: transparent; color: var(--mp-text-tertiary); cursor: pointer; transition: all 0.15s;
   }
   .sl-hz button.active { background: rgba(0,174,255,0.10); border-color: rgba(0,174,255,0.30); color: #00AEFF; }
-  .sl-rail-sec { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mp-text-tertiary); margin: 0 0 9px; }
-  .sl-rail-nrow { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; font-size: 13px; color: var(--mp-text-secondary); }
+  .sl-rail-sec { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mp-text-tertiary); margin: 0 0 8px; }
+  /* Narratives render as inline chips inside the strip */
+  #sl-rail-dominant, #sl-rail-other { display: flex; flex-wrap: wrap; gap: 7px; }
+  .sl-rail-nrow {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--mp-text-primary);
+    background: rgba(255,255,255,0.04); border: 1px solid var(--mp-border); border-radius: 99px; padding: 4px 11px;
+  }
   .sl-rail-ndot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-  .sl-rail-nrank { color: var(--mp-text-tertiary); font-size: 12px; min-width: 10px; }
-  .sl-rail-nname { flex: 1 1 auto; color: var(--mp-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl-rail-nrank { color: var(--mp-text-tertiary); font-size: 11px; }
+  .sl-rail-nname { color: var(--mp-text-primary); white-space: nowrap; }
   .sl-rail-nint { font-size: 11px; font-weight: 600; }
   .sl-rail-nint.high { color: #00DE94; } .sl-rail-nint.medium { color: #FFB800; } .sl-rail-nint.low { color: var(--mp-text-tertiary); }
-  .sl-rail-divider { height: 1px; background: var(--mp-border); margin: 16px 0; }
   .sl-rail-insight {
-    margin-top: 16px; padding: 12px 14px; border-radius: 10px;
+    margin-top: 12px; padding: 11px 14px; border-radius: 10px;
     background: rgba(0,174,255,0.05); border: 1px solid rgba(0,174,255,0.14);
     font-size: 12px; line-height: 1.5; color: var(--mp-text-secondary); display: flex; gap: 8px; align-items: flex-start;
   }
   .sl-rail-insight svg { flex-shrink: 0; margin-top: 1px; color: #00AEFF; }
-  .sl-rail-empty { font-size: 12px; color: var(--mp-text-tertiary); line-height: 1.5; padding-top: 8px; }
-  @media (max-width: 880px) {
-    .sl-cp-wrap { flex-direction: column; }
-    .sl-cp-rail { flex-basis: auto; width: auto; border-left: none; border-top: 1px solid var(--mp-border); }
+  .sl-rail-empty { font-size: 12px; color: var(--mp-text-tertiary); line-height: 1.5; padding: 4px 0 10px; }
+  /* Mobile / narrow */
+  @media (max-width: 680px) {
+    .sl-chart-wrap { padding: 8px 8px 0; height: 320px !important; }
+    .sl-cluster-wrap { padding: 4px 8px 6px; }
+    .sl-cluster-head { padding: 8px 8px 2px; }
+    .sl-cluster-title { font-size: 14px; }
+    .sl-day-strip { padding: 12px 12px 4px; }
+    .sl-day-main { gap: 12px 20px; }
+    .sl-rail-rx { font-size: 24px; }
+    .sl-toggles { gap: 5px; }
+    .sl-tog { padding: 4px 9px; font-size: 11px; }
   }
 </style>
 
@@ -395,7 +407,7 @@
         </div>
       </div>
 
-      <!-- Canvas + cluster lanes (shared timeline) + day-detail rail -->
+      <!-- Canvas + cluster lanes (shared full-width timeline) -->
       <div class="sl-cp-wrap" id="sl-cp-wrap">
         <div class="sl-cp-left" id="sl-cp-left">
           <div class="sl-chart-wrap" id="sl-chart-outer" style="height:420px;">
@@ -424,31 +436,40 @@
           </div>
           <div class="sl-crosshair" id="sl-crosshair"></div>
         </div>
-        <div class="sl-cp-rail" id="sl-cp-rail">
-          <div class="sl-rail-empty" id="sl-rail-empty">Hover a day on the chart to see its price reaction and the narrative themes driving it. Click to pin.</div>
-          <div id="sl-rail-detail" style="display:none;">
-            <div class="sl-rail-head">
-              <span class="sl-rail-date" id="sl-rail-date">&mdash;</span>
-              <button class="sl-rail-close" id="sl-rail-close" title="Unpin day" style="display:none;">&#10005;</button>
+      </div>
+
+      <!-- Full-width "on this day" detail strip (replaces the side rail) -->
+      <div class="sl-day-strip" id="sl-day-strip">
+        <div class="sl-rail-empty" id="sl-rail-empty">Hover or tap a day on the chart to see its price reaction and the narrative themes driving it. Tap a bubble to pin it.</div>
+        <div id="sl-rail-detail" style="display:none;">
+          <div class="sl-day-main">
+            <div class="sl-day-block sl-day-date-block">
+              <div class="sl-rail-head"><span class="sl-rail-date" id="sl-rail-date">&mdash;</span>
+                <button class="sl-rail-close" id="sl-rail-close" title="Unpin day" style="display:none;">&#10005;</button></div>
             </div>
-            <div class="sl-rail-rxlbl" id="sl-rail-rxlbl">5D Price Reaction</div>
-            <div class="sl-rail-rx flat" id="sl-rail-rx">&mdash;</div>
-            <div class="sl-hz" id="sl-rail-hz">
-              <button type="button" data-hz="1">1D</button>
-              <button type="button" data-hz="5" class="active">5D</button>
-              <button type="button" data-hz="20">20D</button>
+            <div class="sl-day-block">
+              <div class="sl-rail-rxlbl" id="sl-rail-rxlbl">5D Price Reaction</div>
+              <div class="sl-rail-rx flat" id="sl-rail-rx">&mdash;</div>
+              <div class="sl-hz" id="sl-rail-hz">
+                <button type="button" data-hz="1">1D</button>
+                <button type="button" data-hz="5" class="active">5D</button>
+                <button type="button" data-hz="20">20D</button>
+              </div>
             </div>
-            <div class="sl-rail-pxlbl">Price</div>
-            <div class="sl-rail-px" id="sl-rail-px">&mdash;</div>
-            <div class="sl-rail-divider"></div>
-            <div class="sl-rail-sec">Dominant Narratives</div>
-            <div id="sl-rail-dominant"></div>
-            <div id="sl-rail-other-wrap" style="display:none;">
-              <div class="sl-rail-sec" style="margin-top:16px;">Other Active Narratives</div>
-              <div id="sl-rail-other"></div>
+            <div class="sl-day-block">
+              <div class="sl-rail-pxlbl">Price</div>
+              <div class="sl-rail-px" id="sl-rail-px">&mdash;</div>
             </div>
-            <div class="sl-rail-insight" id="sl-rail-insight" style="display:none;"></div>
+            <div class="sl-day-block sl-day-narr">
+              <div class="sl-rail-sec">Dominant Narratives</div>
+              <div id="sl-rail-dominant"></div>
+              <div id="sl-rail-other-wrap" style="display:none;">
+                <div class="sl-rail-sec" style="margin-top:12px;">Other Active Narratives</div>
+                <div id="sl-rail-other"></div>
+              </div>
+            </div>
           </div>
+          <div class="sl-rail-insight" id="sl-rail-insight" style="display:none;"></div>
         </div>
       </div>
       <div id="sl-alt-legend" style="display:none;margin:8px 14px 0;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-tertiary);">
@@ -916,7 +937,8 @@
     }
     // Wider left gutter when cluster lanes are shown, so theme labels fit in the
     // shared gutter and the price plot + bubble plot start at the same x.
-    var _leftPad=(SL_SHOW_CLUSTERS)?118:50;
+    // Narrower on small screens so the plot doesn't get squeezed.
+    var _leftPad=(SL_SHOW_CLUSTERS)?(W<560?84:118):50;
     var PAD={top:8,right:52,bottom:28,left:_leftPad},CW=W-PAD.left-PAD.right,CH=H-PAD.top-PAD.bottom,N=snaps.length;
     function xOf(i){return PAD.left+(i/Math.max(N-1,1))*CW;}
     function yOf(p){return PAD.top+(1-(p-minP)/(maxP-minP))*CH;}
@@ -1106,10 +1128,13 @@
     function nearestSnapIdx(px){return Math.max(0,Math.min(snaps.length-1,Math.round(((px-PAD.left)/CW)*(snaps.length-1))));}
     SL_AXIS={leftOffset:PAD.left,W:W,H:H,PAD:PAD,CW:CW,snaps:snaps,lo:lo,hi:hi,idxByDate:dateIdx,xOf:xOf,xOfDate:xOfDate,nearestSnapIdx:nearestSnapIdx};
 
-    // Crosshair: hovering/clicking the price canvas drives the shared guide + day rail.
+    // Crosshair: hovering/clicking the price canvas drives the shared guide + day strip.
     cv.addEventListener('mousemove',function(e){var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.clientX-rect.left);});
     cv.addEventListener('mouseleave',function(){slCrosshairLeave();});
     cv.addEventListener('click',function(e){var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;if(dotHits.find(function(d){return Math.hypot(mx-d.cx,my-d.cy)<8;}))return;var i=nearestSnapIdx(mx);slPinDate((snaps[i].snapshot_date||'').slice(0,10));});
+    // Touch (mobile): scrub the shared guide + day strip.
+    cv.addEventListener('touchstart',function(e){if(!e.touches.length||!SL_SHOW_CLUSTERS)return;var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.touches[0].clientX-rect.left);},{passive:true});
+    cv.addEventListener('touchmove',function(e){if(!e.touches.length||!SL_SHOW_CLUSTERS)return;var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.touches[0].clientX-rect.left);e.preventDefault();},{passive:false});
 
     // Draw the cluster lanes on this same mapping (after axis is stashed).
     if(SL_SHOW_CLUSTERS)slDrawClusters();
@@ -1167,7 +1192,8 @@
       ctx.strokeStyle=light?'#E2E5EC':'rgba(255,255,255,0.05)';ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
       ctx.fillStyle=light?'#5A6473':'#C7CDD4';
-      var lbl=t.length>16?t.slice(0,15)+'…':t;
+      var maxCh=Math.max(6,Math.floor((PAD.left-18)/6.4));
+      var lbl=t.length>maxCh?t.slice(0,maxCh-1)+'…':t;
       ctx.fillText(lbl,PAD.left-10,y+3);
       ctx.fillStyle=slThemeColor(t);ctx.beginPath();ctx.arc(PAD.left-4,y,3,0,Math.PI*2);ctx.fill();
     });
@@ -1219,6 +1245,8 @@
       var ds=hit?(hit.d.date||'').slice(0,10):(SL_AXIS.snaps[SL_AXIS.nearestSnapIdx(mx)].snapshot_date||'').slice(0,10);
       slPinDate(ds);
     });
+    cv.addEventListener('touchstart',function(e){if(!e.touches.length)return;var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.touches[0].clientX-rect.left);},{passive:true});
+    cv.addEventListener('touchmove',function(e){if(!e.touches.length)return;var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.touches[0].clientX-rect.left);e.preventDefault();},{passive:false});
 
     // Re-assert any pinned crosshair now that the panel re-rendered.
     if(SL_PINNED_DATE)slPositionCrosshair(SL_PINNED_DATE,true);
@@ -1757,9 +1785,9 @@
     if(cTog)cTog.addEventListener('click',function(){
       SL_SHOW_CLUSTERS=!SL_SHOW_CLUSTERS;
       cTog.classList.toggle('active',SL_SHOW_CLUSTERS);
-      var co=document.getElementById('sl-cluster-outer'),rail=document.getElementById('sl-cp-rail'),cross=document.getElementById('sl-crosshair');
+      var co=document.getElementById('sl-cluster-outer'),strip=document.getElementById('sl-day-strip'),cross=document.getElementById('sl-crosshair');
       if(co)co.style.display=SL_SHOW_CLUSTERS?'':'none';
-      if(rail)rail.style.display=SL_SHOW_CLUSTERS?'':'none';
+      if(strip)strip.style.display=SL_SHOW_CLUSTERS?'':'none';
       if(!SL_SHOW_CLUSTERS&&cross)cross.style.opacity='0';
       if(SL_SNAPS.length)slRenderChart();
       if(SL_SHOW_CLUSTERS){var last=SL_SNAPS.length?(SL_SNAPS[SL_SNAPS.length-1].snapshot_date||'').slice(0,10):null;if(last&&!SL_PINNED_DATE)slShowRail(last);}
