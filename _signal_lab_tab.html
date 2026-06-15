@@ -233,6 +233,75 @@
   .sl-regime-m { font-size: 12px; color: var(--mp-text-secondary); }
   .sl-regime-m span { font-weight: 600; color: var(--mp-text-primary); }
   @media (max-width: 768px) { .sl-pattern-cards { grid-template-columns: 1fr; } }
+
+  /* ── Signal Lab: Clusters + Price Reaction ── */
+  /* Two-column shell: charts (left) share one timeline; day-detail rail (right). */
+  .sl-cp-wrap { display: flex; align-items: stretch; gap: 0; }
+  .sl-cp-left { position: relative; flex: 1 1 auto; min-width: 0; }
+  .sl-cp-rail {
+    flex: 0 0 252px; width: 252px; border-left: 1px solid var(--mp-border);
+    padding: 16px 18px; font-family: var(--font-body); align-self: stretch;
+  }
+  /* Vertical guide spanning price chart + cluster lanes. */
+  .sl-crosshair {
+    position: absolute; top: 4px; width: 1px; pointer-events: none;
+    background: rgba(0,174,255,0.55); opacity: 0; transition: opacity 0.1s; z-index: 9;
+  }
+  .sl-crosshair.pinned { background: #00AEFF; box-shadow: 0 0 6px rgba(0,174,255,0.5); }
+  /* Cluster lane panel (custom canvas; shares the price chart's x mapping). */
+  .sl-cluster-wrap { position: relative; padding: 4px 14px 6px; }
+  .sl-cluster-wrap canvas { display: block; width: 100%; }
+  .sl-cluster-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px 2px; gap: 10px; flex-wrap: wrap;
+  }
+  .sl-cluster-title { font-family: var(--font-display); font-size: 16px; font-weight: 400; color: var(--mp-text-primary); }
+  .sl-cluster-title small { font-family: var(--font-body); font-size: 11px; color: var(--mp-text-tertiary); margin-left: 6px; }
+  .sl-cluster-expand {
+    font-family: var(--font-body); font-size: 11px; font-weight: 500; padding: 4px 11px; border-radius: 99px;
+    border: 1px solid var(--mp-border-mid, rgba(255,255,255,0.14)); background: transparent;
+    color: var(--mp-text-secondary); cursor: pointer; transition: all 0.15s;
+  }
+  .sl-cluster-expand:hover { border-color: var(--mp-border-hover, rgba(255,255,255,0.28)); color: var(--mp-text-primary); }
+  .sl-cluster-empty {
+    display: flex; align-items: center; justify-content: center; min-height: 120px;
+    font-size: 12px; color: var(--mp-text-tertiary); text-align: center; padding: 0 24px;
+  }
+  /* Day-detail rail */
+  .sl-rail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sl-rail-date { font-family: var(--font-display); font-size: 19px; font-weight: 400; color: var(--mp-text-primary); }
+  .sl-rail-close { background: none; border: none; color: var(--mp-text-tertiary); font-size: 17px; line-height: 1; cursor: pointer; padding: 2px 4px; }
+  .sl-rail-close:hover { color: var(--mp-text-primary); }
+  .sl-rail-rxlbl { font-size: 11px; color: var(--mp-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .sl-rail-rx { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 14px; font-family: var(--font-body); }
+  .sl-rail-rx.up { color: #00DE94; } .sl-rail-rx.down { color: #FF4D4D; } .sl-rail-rx.flat { color: var(--mp-text-tertiary); }
+  .sl-rail-pxlbl { font-size: 11px; color: var(--mp-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .sl-rail-px { font-size: 22px; font-weight: 600; color: var(--mp-text-primary); font-family: var(--font-body); margin-bottom: 16px; }
+  .sl-hz { display: inline-flex; gap: 4px; margin-bottom: 18px; }
+  .sl-hz button {
+    font-family: var(--font-body); font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 7px;
+    border: 1px solid var(--mp-border); background: transparent; color: var(--mp-text-tertiary); cursor: pointer; transition: all 0.15s;
+  }
+  .sl-hz button.active { background: rgba(0,174,255,0.10); border-color: rgba(0,174,255,0.30); color: #00AEFF; }
+  .sl-rail-sec { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mp-text-tertiary); margin: 0 0 9px; }
+  .sl-rail-nrow { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; font-size: 13px; color: var(--mp-text-secondary); }
+  .sl-rail-ndot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .sl-rail-nrank { color: var(--mp-text-tertiary); font-size: 12px; min-width: 10px; }
+  .sl-rail-nname { flex: 1 1 auto; color: var(--mp-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl-rail-nint { font-size: 11px; font-weight: 600; }
+  .sl-rail-nint.high { color: #00DE94; } .sl-rail-nint.medium { color: #FFB800; } .sl-rail-nint.low { color: var(--mp-text-tertiary); }
+  .sl-rail-divider { height: 1px; background: var(--mp-border); margin: 16px 0; }
+  .sl-rail-insight {
+    margin-top: 16px; padding: 12px 14px; border-radius: 10px;
+    background: rgba(0,174,255,0.05); border: 1px solid rgba(0,174,255,0.14);
+    font-size: 12px; line-height: 1.5; color: var(--mp-text-secondary); display: flex; gap: 8px; align-items: flex-start;
+  }
+  .sl-rail-insight svg { flex-shrink: 0; margin-top: 1px; color: #00AEFF; }
+  .sl-rail-empty { font-size: 12px; color: var(--mp-text-tertiary); line-height: 1.5; padding-top: 8px; }
+  @media (max-width: 880px) {
+    .sl-cp-wrap { flex-direction: column; }
+    .sl-cp-rail { flex-basis: auto; width: auto; border-left: none; border-top: 1px solid var(--mp-border); }
+  }
 </style>
 
 <!-- SIGNAL LAB TAB: HTML -->
@@ -304,6 +373,8 @@
         <button class="sl-tog active" data-sl-line="risk-pressure" title="NRS-weighted risk score. Above 20 = bearish pressure detected." style="--color:#FF6B4A;--bg-color:rgba(255,107,74,0.08);"><span class="sl-tog-sw" style="background:#FF6B4A;"></span> Risk Pressure</button>
         <button class="sl-tog active" data-sl-line="mass-dots" title="Dot size = narrative mass. Color = keyword price prediction (green=bullish, red=bearish)." style="--color:#00AEFF;--bg-color:rgba(0,174,255,0.08);"><span class="sl-tog-sw" style="background:linear-gradient(135deg,#00DE94,#A0A8B8,#FF4D4D);border-radius:50%;width:7px;height:7px;"></span> Mass Dots</button>
         <button class="sl-tog active" data-sl-line="sma-smooth" title="Smooth lines with a 3-day simple moving average" style="--color:#F0F4FF;--bg-color:rgba(240,244,255,0.08);"><span class="sl-tog-sw" style="background:#F0F4FF;"></span> 3-Day SMA</button>
+        <button class="sl-tog active" data-sl-line="spy" title="Faint S&amp;P 500 (SPY) benchmark, rebased to this ticker's price at the start of the window. Hover shows SPY's actual close." style="--color:#8B97B8;--bg-color:rgba(139,151,184,0.10);"><span class="sl-tog-sw" style="background:#8B97B8;"></span> SPY</button>
+        <button class="sl-tog active" id="sl-cluster-toggle" title="Show the narrative-cluster lanes beneath the price chart — the themes generating the force/pressure lines, on the same timeline." style="--color:#00AEFF;--bg-color:rgba(0,174,255,0.10);"><span class="sl-tog-sw" style="background:#00AEFF;border-radius:50%;width:7px;height:7px;"></span> Narrative clusters</button>
       </div>
 
       <!-- Controls -->
@@ -324,19 +395,60 @@
         </div>
       </div>
 
-      <!-- Canvas -->
-      <div class="sl-chart-wrap" id="sl-chart-outer" style="height:420px;">
-        <canvas id="sl-price-canvas"></canvas>
-        <div id="slChartAltWrap" style="display:none;position:absolute;top:10px;left:14px;right:14px;bottom:0;">
-          <canvas id="slChartAlt"></canvas>
+      <!-- Canvas + cluster lanes (shared timeline) + day-detail rail -->
+      <div class="sl-cp-wrap" id="sl-cp-wrap">
+        <div class="sl-cp-left" id="sl-cp-left">
+          <div class="sl-chart-wrap" id="sl-chart-outer" style="height:420px;">
+            <canvas id="sl-price-canvas"></canvas>
+            <div id="slChartAltWrap" style="display:none;position:absolute;top:10px;left:14px;right:14px;bottom:0;">
+              <canvas id="slChartAlt"></canvas>
+            </div>
+            <div class="sl-tip" id="sl-chart-tip"></div>
+            <div class="sl-popup" id="sl-story-popup">
+              <button class="sl-popup-close" id="sl-popup-close">&#10005;</button>
+              <div class="sl-popup-date" id="sl-popup-date"></div>
+              <div class="sl-popup-hl" id="sl-popup-headline"></div>
+              <div class="sl-popup-body" id="sl-popup-body"></div>
+              <div id="sl-popup-vms"></div>
+            </div>
+          </div>
+          <!-- Narrative cluster lanes — drawn on the price chart's shared x mapping -->
+          <div class="sl-cluster-wrap" id="sl-cluster-outer">
+            <div class="sl-cluster-head">
+              <div class="sl-cluster-title">Narrative Clusters <small>themes driving the lines above</small></div>
+              <button class="sl-cluster-expand" id="sl-cluster-expand" style="display:none;">Show all lanes</button>
+            </div>
+            <canvas id="sl-cluster-canvas"></canvas>
+            <div class="sl-tip" id="sl-cluster-tip"></div>
+            <div class="sl-cluster-empty" id="sl-cluster-empty" style="display:none;"></div>
+          </div>
+          <div class="sl-crosshair" id="sl-crosshair"></div>
         </div>
-        <div class="sl-tip" id="sl-chart-tip"></div>
-        <div class="sl-popup" id="sl-story-popup">
-          <button class="sl-popup-close" id="sl-popup-close">&#10005;</button>
-          <div class="sl-popup-date" id="sl-popup-date"></div>
-          <div class="sl-popup-hl" id="sl-popup-headline"></div>
-          <div class="sl-popup-body" id="sl-popup-body"></div>
-          <div id="sl-popup-vms"></div>
+        <div class="sl-cp-rail" id="sl-cp-rail">
+          <div class="sl-rail-empty" id="sl-rail-empty">Hover a day on the chart to see its price reaction and the narrative themes driving it. Click to pin.</div>
+          <div id="sl-rail-detail" style="display:none;">
+            <div class="sl-rail-head">
+              <span class="sl-rail-date" id="sl-rail-date">&mdash;</span>
+              <button class="sl-rail-close" id="sl-rail-close" title="Unpin day" style="display:none;">&#10005;</button>
+            </div>
+            <div class="sl-rail-rxlbl" id="sl-rail-rxlbl">5D Price Reaction</div>
+            <div class="sl-rail-rx flat" id="sl-rail-rx">&mdash;</div>
+            <div class="sl-hz" id="sl-rail-hz">
+              <button type="button" data-hz="1">1D</button>
+              <button type="button" data-hz="5" class="active">5D</button>
+              <button type="button" data-hz="20">20D</button>
+            </div>
+            <div class="sl-rail-pxlbl">Price</div>
+            <div class="sl-rail-px" id="sl-rail-px">&mdash;</div>
+            <div class="sl-rail-divider"></div>
+            <div class="sl-rail-sec">Dominant Narratives</div>
+            <div id="sl-rail-dominant"></div>
+            <div id="sl-rail-other-wrap" style="display:none;">
+              <div class="sl-rail-sec" style="margin-top:16px;">Other Active Narratives</div>
+              <div id="sl-rail-other"></div>
+            </div>
+            <div class="sl-rail-insight" id="sl-rail-insight" style="display:none;"></div>
+          </div>
         </div>
       </div>
       <div id="sl-alt-legend" style="display:none;margin:8px 14px 0;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-tertiary);">
@@ -414,8 +526,33 @@
 <script>
 (function(){
   // ── Namespaced globals ──
-  var SL_VIS = {'narr-force':true,'risk-pressure':true,'mass-dots':true,'sma-smooth':true};
+  var SL_VIS = {'narr-force':true,'risk-pressure':true,'mass-dots':true,'sma-smooth':true,'spy':true};
   var SL_SNAPS=[], SL_NARRS=[], SL_DECAY=[], SL_PHYSICS=[], SL_PRESSURE=[], SL_ENERGY_T=[], SL_SCORECARD=[], SL_MASS=[];
+  // ── Clusters + Price Reaction state ──
+  var SL_SPY=[];                 // [{snapshot_date, price_close}] S&P 500 benchmark
+  var SL_CLUSTERS=null;          // {themes:[], dots:[{date,theme,size,strength,anchor,contagion,n}]} for SL_CLUSTER_TICKER
+  var SL_CLUSTER_TICKER='';      // ticker SL_CLUSTERS was loaded for
+  var SL_SHOW_CLUSTERS=true;     // cluster lane panel visible
+  var SL_CLUSTER_EXPAND=false;   // false = top lanes only, true = all lanes
+  var SL_HORIZON=5;              // forward-return horizon in trading days (1/5/20)
+  var SL_PINNED_DATE=null;       // YYYY-MM-DD pinned day for the rail, or null
+  var SL_AXIS=null;              // shared x mapping stashed by slDrawChart for the cluster canvas
+  var SL_CLUSTER_TOP=5;          // default lanes shown when collapsed
+  // Stable theme→color map so a narrative reads the same color everywhere.
+  var SL_THEME_COLORS={
+    'ai infrastructure':'#00AEFF','earnings season':'#00DE94','sector rotation':'#FFB800',
+    'company specific':'#7B61FF','ai capex fatigue':'#38C8B8','geopolitical':'#FF4D4D',
+    'supply constraint':'#FF6FB5','competitive threat':'#4DA3FF','regulatory':'#A0A8B0',
+    'consumer demand':'#26C6DA','rate cycle':'#9CCC65','energy transition':'#FFA726',
+    'valuation':'#EC407A','macro':'#7E8AA0','product cycle':'#4DC8F0','m&a':'#B388FF'
+  };
+  var SL_THEME_FALLBACK=['#00AEFF','#00DE94','#FFB800','#7B61FF','#38C8B8','#E0663A','#FF4D4D','#FF6FB5','#4DA3FF','#9CCC65','#26C6DA','#EC407A','#A0A8B0','#FFA726'];
+  function slThemeColor(label){
+    var k=(label||'').toLowerCase().split('|')[0].trim();
+    if(SL_THEME_COLORS[k])return SL_THEME_COLORS[k];
+    var h=0;for(var i=0;i<k.length;i++)h=(h*31+k.charCodeAt(i))>>>0;
+    return SL_THEME_FALLBACK[h%SL_THEME_FALLBACK.length];
+  }
   // OHLC series from /api/price-history (Massive/Polygon daily aggs). Keyed by
   // ticker and lazy-loaded the first time the Candles view is activated.
   var SL_OHLC_CACHE={};
@@ -492,16 +629,21 @@
     var mainCanvas=document.getElementById('sl-price-canvas');
     var altWrap=document.getElementById('slChartAltWrap');
     var altLegend=document.getElementById('sl-alt-legend');
+    var clusterOuter=document.getElementById('sl-cluster-outer'),crossEl=document.getElementById('sl-crosshair');
     if(view==='regime'){
       // Regime-colored bars live on the alt (Chart.js) canvas
       if(mainCanvas)mainCanvas.style.visibility='hidden';
       if(altWrap)altWrap.style.display='block';
       if(altLegend)altLegend.style.display='flex';
+      // Cluster lanes can't align with the alt (Chart.js) axis — hide them here.
+      if(clusterOuter)clusterOuter.style.display='none';
+      if(crossEl)crossEl.style.opacity='0';
       slDrawAltChart('regime');
       return;
     }
     // Both 'lines' and 'candles' render on the main canvas
     if(mainCanvas)mainCanvas.style.visibility='';
+    if(clusterOuter)clusterOuter.style.display=SL_SHOW_CLUSTERS?'':'none';
     if(altWrap)altWrap.style.display='none';
     if(altLegend)altLegend.style.display='none';
     if(view==='candles'){
@@ -772,7 +914,10 @@
       minP=Math.min.apply(null,prices)*0.975;
       maxP=Math.max.apply(null,prices)*1.025;
     }
-    var PAD={top:8,right:52,bottom:28,left:50},CW=W-PAD.left-PAD.right,CH=H-PAD.top-PAD.bottom,N=snaps.length;
+    // Wider left gutter when cluster lanes are shown, so theme labels fit in the
+    // shared gutter and the price plot + bubble plot start at the same x.
+    var _leftPad=(SL_SHOW_CLUSTERS)?118:50;
+    var PAD={top:8,right:52,bottom:28,left:_leftPad},CW=W-PAD.left-PAD.right,CH=H-PAD.top-PAD.bottom,N=snaps.length;
     function xOf(i){return PAD.left+(i/Math.max(N-1,1))*CW;}
     function yOf(p){return PAD.top+(1-(p-minP)/(maxP-minP))*CH;}
     function yE(v){return PAD.top+(1-Math.min(100,Math.max(0,v))/100)*CH;}
@@ -821,6 +966,30 @@
     }
 
     var lo=snaps[0]?.snapshot_date?.slice(0,10)||'',hi=snaps[snaps.length-1]?.snapshot_date?.slice(0,10)||'';
+
+    // SPY benchmark — faint dashed line, rebased to this ticker's first close in
+    // the window so relative performance reads on the same price scale. Hover
+    // surfaces SPY's actual close. Trading days align with the ticker, so map by
+    // the same index (dateIdx) — no interpolation needed.
+    if(SL_VIS['spy']&&SL_SPY&&SL_SPY.length){
+      var spyIn=SL_SPY.filter(function(s){var d=s.snapshot_date.slice(0,10);return d>=lo&&d<=hi&&dateIdx[d]!=null;});
+      if(spyIn.length>1){
+        var firstTk=null;for(var ii=0;ii<snaps.length;ii++){if(snaps[ii].price_close!=null){firstTk=snaps[ii].price_close;break;}}
+        var firstSpy=spyIn[0].price_close;
+        if(firstTk!=null&&firstSpy){
+          var rb=firstTk/firstSpy;
+          ctx.save();ctx.setLineDash([4,3]);ctx.strokeStyle=slIsLight()?'#9aa3b5':'#8B97B8';ctx.globalAlpha=0.5;ctx.lineWidth=1.2;
+          ctx.beginPath();var spyStarted=false;
+          spyIn.forEach(function(s){var d=s.snapshot_date.slice(0,10);var x=xOf(dateIdx[d]),y=yOf(s.price_close*rb);if(!spyStarted){ctx.moveTo(x,y);spyStarted=true;}else ctx.lineTo(x,y);});
+          ctx.stroke();
+          // Faint "SPY" label at the line's right end.
+          var lastSpy=spyIn[spyIn.length-1];
+          ctx.setLineDash([]);ctx.globalAlpha=0.6;ctx.fillStyle=slIsLight()?'#9aa3b5':'#8B97B8';ctx.font='9px Inter, sans-serif';ctx.textAlign='right';
+          ctx.fillText('SPY',xOf(dateIdx[lastSpy.snapshot_date.slice(0,10)])-2,yOf(lastSpy.price_close*rb)-4);
+          ctx.restore();
+        }
+      }
+    }
 
     // Right axis labels (0-100)
     ctx.save();ctx.font='9px Inter, sans-serif';ctx.fillStyle='#8B97B8';ctx.textAlign='left';ctx.globalAlpha=0.6;
@@ -922,6 +1091,239 @@
     cv.addEventListener('mousemove',function(e){var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;var hit=dotHits.find(function(d){return Math.hypot(mx-d.cx,my-d.cy)<8;});cv.style.cursor=hit?'pointer':'default';if(hit){tip.style.opacity='0';showPopup(hit);return;}if(popup.classList.contains('visible')){popup.classList.remove('visible');}var idx=Math.max(0,Math.min(N-1,Math.round(((mx-PAD.left)/CW)*(N-1))));var s=snaps[idx];if(!s?.price_close){tip.style.opacity='0';return;}tip.style.opacity='1';tip.textContent=new Date(s.snapshot_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'  $'+s.price_close.toFixed(2);var tx=xOf(idx)+8;if(tx+120>W)tx=xOf(idx)-128;tip.style.left=(tx+14)+'px';tip.style.top=(my-18)+'px';});
     cv.addEventListener('mouseleave',function(){tip.style.opacity='0';popup.classList.remove('visible');});
     cv.addEventListener('click',function(e){var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;var hit=dotHits.find(function(d){return Math.hypot(mx-d.cx,my-d.cy)<8;});if(!hit){popup.classList.remove('visible');return;}showPopup(hit);});
+
+    // ── Shared x-axis stash (consumed by the cluster panel + crosshair) ──
+    var _snapTimes=snaps.map(function(s){return new Date((s.snapshot_date||'').slice(0,10)+'T12:00:00').getTime();});
+    function xOfDate(ds){
+      if(!ds)return null;var di=dateIdx[ds];if(di!=null)return xOf(di);
+      var t=new Date(ds+'T12:00:00').getTime();if(!_snapTimes.length)return null;
+      if(t<=_snapTimes[0])return xOf(0);
+      if(t>=_snapTimes[_snapTimes.length-1])return xOf(snaps.length-1);
+      var l=0,h=_snapTimes.length-1;while(l<h-1){var m=(l+h)>>1;if(_snapTimes[m]<=t)l=m;else h=m;}
+      var frac=(t-_snapTimes[l])/((_snapTimes[h]-_snapTimes[l])||1);
+      return xOf(l)+(xOf(h)-xOf(l))*frac;
+    }
+    function nearestSnapIdx(px){return Math.max(0,Math.min(snaps.length-1,Math.round(((px-PAD.left)/CW)*(snaps.length-1))));}
+    SL_AXIS={leftOffset:PAD.left,W:W,H:H,PAD:PAD,CW:CW,snaps:snaps,lo:lo,hi:hi,idxByDate:dateIdx,xOf:xOf,xOfDate:xOfDate,nearestSnapIdx:nearestSnapIdx};
+
+    // Crosshair: hovering/clicking the price canvas drives the shared guide + day rail.
+    cv.addEventListener('mousemove',function(e){var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.clientX-rect.left);});
+    cv.addEventListener('mouseleave',function(){slCrosshairLeave();});
+    cv.addEventListener('click',function(e){var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;if(dotHits.find(function(d){return Math.hypot(mx-d.cx,my-d.cy)<8;}))return;var i=nearestSnapIdx(mx);slPinDate((snaps[i].snapshot_date||'').slice(0,10));});
+
+    // Draw the cluster lanes on this same mapping (after axis is stashed).
+    if(SL_SHOW_CLUSTERS)slDrawClusters();
+  }
+
+  // ── Cluster lanes + crosshair + day-detail rail ──────────────────────────────
+  function slClusterWindowDots(){
+    if(!SL_CLUSTERS||!SL_AXIS)return [];
+    var lo=SL_AXIS.lo,hi=SL_AXIS.hi;
+    return SL_CLUSTERS.dots.filter(function(d){var ds=(d.date||'').slice(0,10);return ds>=lo&&ds<=hi;});
+  }
+  function slClusterLanes(dots){
+    var totals={};dots.forEach(function(d){totals[d.theme]=(totals[d.theme]||0)+(Number(d.size)||0);});
+    return Object.keys(totals).sort(function(a,b){return totals[b]-totals[a];});
+  }
+  function slDrawClusters(){
+    var outer=document.getElementById('sl-cluster-outer');
+    if(!outer||!SL_AXIS){return;}
+    var emptyEl=document.getElementById('sl-cluster-empty');
+    var expandBtn=document.getElementById('sl-cluster-expand');
+    var oldCv=document.getElementById('sl-cluster-canvas');
+    if(!oldCv)return;
+    var cv=oldCv.cloneNode(false);oldCv.parentNode.replaceChild(cv,oldCv);
+    var ctx=cv.getContext('2d');
+
+    var dots=slClusterWindowDots();
+    var allLanes=slClusterLanes(dots);
+    if(!dots.length||!allLanes.length){
+      cv.style.height='0px';cv.width=0;cv.height=0;
+      if(emptyEl){emptyEl.style.display='flex';emptyEl.textContent=SL_CLUSTERS?'No narrative clusters detected for '+(SL_TICKER||'this ticker')+' in this range.':'Loading narrative clusters…';}
+      if(expandBtn)expandBtn.style.display='none';
+      return;
+    }
+    if(emptyEl)emptyEl.style.display='none';
+
+    var lanes=SL_CLUSTER_EXPAND?allLanes:allLanes.slice(0,SL_CLUSTER_TOP);
+    if(expandBtn){
+      if(allLanes.length>SL_CLUSTER_TOP){expandBtn.style.display='';expandBtn.textContent=SL_CLUSTER_EXPAND?'Show top '+SL_CLUSTER_TOP+' lanes':'Show all '+allLanes.length+' lanes';}
+      else expandBtn.style.display='none';
+    }
+
+    var laneOf={};lanes.forEach(function(t,i){laneOf[t]=i;});
+    var DPR=devicePixelRatio||1;
+    var W=SL_AXIS.W, PAD=SL_AXIS.PAD;
+    var laneH=30, topPad=8, botPad=24;
+    var H=lanes.length*laneH+topPad+botPad;
+    cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';ctx.scale(DPR,DPR);
+    function yOfLane(i){return topPad+i*laneH+laneH/2;}
+
+    var light=slIsLight();
+    // Lane baselines + labels (labels sit in the shared left gutter, right-aligned).
+    ctx.textAlign='right';ctx.font='11px Inter, sans-serif';
+    lanes.forEach(function(t,i){
+      var y=yOfLane(i);
+      ctx.strokeStyle=light?'#E2E5EC':'rgba(255,255,255,0.05)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
+      ctx.fillStyle=light?'#5A6473':'#C7CDD4';
+      var lbl=t.length>16?t.slice(0,15)+'…':t;
+      ctx.fillText(lbl,PAD.left-10,y+3);
+      ctx.fillStyle=slThemeColor(t);ctx.beginPath();ctx.arc(PAD.left-4,y,3,0,Math.PI*2);ctx.fill();
+    });
+
+    // Bubbles
+    var dotHits=[];
+    dots.forEach(function(d){
+      var li=laneOf[d.theme];if(li==null)return; // theme not in shown lanes
+      var ds=(d.date||'').slice(0,10);
+      var x=SL_AXIS.xOfDate(ds);if(x==null)return;
+      var y=yOfLane(li);
+      var size=Number(d.size)||0;
+      var r=Math.max(3,Math.min(14,3+Math.sqrt(Math.max(1,size))*2.0));
+      var col=slThemeColor(d.theme);
+      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fillStyle=col+'99';ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.stroke();
+      dotHits.push({cx:x,cy:y,r:r,d:d});
+    });
+
+    // X axis date ticks (mirror the price chart so columns read the same)
+    ctx.textAlign='center';ctx.font='10px Inter, sans-serif';ctx.fillStyle=light?'#8B90A0':'#8B97B8';
+    var snaps=SL_AXIS.snaps,Ns=snaps.length;
+    var every=Math.max(1,Math.floor(Ns/10));
+    snaps.forEach(function(s,i){if(i%every!==0&&i!==Ns-1)return;var d=new Date((s.snapshot_date||'').slice(0,10)+'T12:00:00');ctx.fillText(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}),SL_AXIS.xOf(i),H-6);});
+
+    var tip=document.getElementById('sl-cluster-tip');
+    cv.addEventListener('mousemove',function(e){
+      var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+      slCrosshairAtPx(mx);
+      var hit=null,best=1e9;
+      dotHits.forEach(function(h){var dd=Math.hypot(mx-h.cx,my-h.cy);if(dd<h.r+3&&dd<best){best=dd;hit=h;}});
+      cv.style.cursor=hit?'pointer':'default';
+      if(hit&&tip){
+        var rx=slReaction((hit.d.date||'').slice(0,10),SL_HORIZON);
+        var rxTxt=(rx&&rx.ret!=null)?((rx.ret>=0?'+':'')+(rx.ret*100).toFixed(2)+'%'):'n/a';
+        var rxClr=(rx&&rx.ret!=null)?(rx.ret>0?'#00DE94':rx.ret<0?'#FF4D4D':'#A0A8B8'):'#A0A8B8';
+        tip.innerHTML='<div style="font-weight:600;color:'+slThemeColor(hit.d.theme)+';margin-bottom:3px;">'+slEsc(hit.d.theme)+'</div>'+
+          '<div style="color:var(--mp-text-tertiary);">'+new Date((hit.d.date||'').slice(0,10)+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div>'+
+          '<div style="margin-top:3px;">'+Math.round(Number(hit.d.size)||0)+' stories &middot; <span style="color:'+rxClr+';">'+SL_HORIZON+'D '+rxTxt+'</span></div>';
+        tip.style.opacity='1';
+        var tx=hit.cx+12;if(tx+170>W)tx=hit.cx-180;tip.style.left=tx+'px';tip.style.top=(hit.cy-10)+'px';
+      }else if(tip){tip.style.opacity='0';}
+    });
+    cv.addEventListener('mouseleave',function(){if(tip)tip.style.opacity='0';slCrosshairLeave();});
+    cv.addEventListener('click',function(e){
+      var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+      var hit=null,best=1e9;dotHits.forEach(function(h){var dd=Math.hypot(mx-h.cx,my-h.cy);if(dd<h.r+3&&dd<best){best=dd;hit=h;}});
+      var ds=hit?(hit.d.date||'').slice(0,10):(SL_AXIS.snaps[SL_AXIS.nearestSnapIdx(mx)].snapshot_date||'').slice(0,10);
+      slPinDate(ds);
+    });
+
+    // Re-assert any pinned crosshair now that the panel re-rendered.
+    if(SL_PINNED_DATE)slPositionCrosshair(SL_PINNED_DATE,true);
+  }
+
+  // Position the shared vertical guide at a date (canvas x reused from price map).
+  function slPositionCrosshair(ds,pinned){
+    var cross=document.getElementById('sl-crosshair'),left=document.getElementById('sl-cp-left'),pcv=document.getElementById('sl-price-canvas');
+    if(!cross||!left||!pcv||!SL_AXIS)return;
+    if(!SL_SHOW_CLUSTERS){cross.style.opacity='0';return;}
+    var cx=SL_AXIS.xOfDate(ds);if(cx==null){cross.style.opacity='0';return;}
+    var cvRect=pcv.getBoundingClientRect(),leftRect=left.getBoundingClientRect();
+    var px=(cvRect.left-leftRect.left)+cx;
+    cross.style.left=px+'px';cross.style.top='4px';cross.style.height=(left.clientHeight-8)+'px';
+    cross.style.opacity='1';cross.classList.toggle('pinned',!!pinned);
+  }
+  function slCrosshairAtPx(px){
+    if(!SL_AXIS||!SL_SHOW_CLUSTERS)return;
+    var i=SL_AXIS.nearestSnapIdx(px);
+    var ds=(SL_AXIS.snaps[i].snapshot_date||'').slice(0,10);
+    slPositionCrosshair(ds,SL_PINNED_DATE===ds);
+    if(!SL_PINNED_DATE)slShowRail(ds);
+  }
+  function slCrosshairLeave(){
+    var cross=document.getElementById('sl-crosshair');
+    if(SL_PINNED_DATE){slPositionCrosshair(SL_PINNED_DATE,true);slShowRail(SL_PINNED_DATE);return;}
+    if(cross){cross.style.opacity='0';cross.classList.remove('pinned');}
+  }
+  function slPinDate(ds){
+    SL_PINNED_DATE=(SL_PINNED_DATE===ds)?null:ds;
+    var closeBtn=document.getElementById('sl-rail-close');
+    if(closeBtn)closeBtn.style.display=SL_PINNED_DATE?'':'none';
+    if(SL_PINNED_DATE){slPositionCrosshair(SL_PINNED_DATE,true);slShowRail(SL_PINNED_DATE);}
+    else slCrosshairLeave();
+  }
+
+  // Forward price reaction from the daily bars: close[t+h]/close[t]-1.
+  function slReaction(ds,h){
+    if(!SL_SNAPS||!SL_SNAPS.length)return null;
+    var i=-1;for(var k=0;k<SL_SNAPS.length;k++){if((SL_SNAPS[k].snapshot_date||'').slice(0,10)===ds){i=k;break;}}
+    if(i<0){ // nearest preceding trading day
+      for(var k2=0;k2<SL_SNAPS.length;k2++){if((SL_SNAPS[k2].snapshot_date||'').slice(0,10)<=ds)i=k2;}
+    }
+    if(i<0)return null;
+    var c0=SL_SNAPS[i].price_close;
+    var j=i+h;var ret=(j<SL_SNAPS.length&&SL_SNAPS[j].price_close!=null&&c0)?(SL_SNAPS[j].price_close/c0-1):null;
+    return {price:c0,ret:ret,partial:(j>=SL_SNAPS.length)};
+  }
+  function slSpyClose(ds){
+    if(!SL_SPY||!SL_SPY.length)return null;
+    var best=null;for(var k=0;k<SL_SPY.length;k++){var d=(SL_SPY[k].snapshot_date||'').slice(0,10);if(d<=ds)best=SL_SPY[k];}
+    return best?best.price_close:null;
+  }
+  function slIntensity(size,maxSize){
+    var f=maxSize>0?size/maxSize:0;
+    if(f>=0.66||size>=6)return['High','high'];
+    if(f>=0.33||size>=3)return['Medium','medium'];
+    return['Low','low'];
+  }
+  function slShowRail(ds){
+    var det=document.getElementById('sl-rail-detail'),emp=document.getElementById('sl-rail-empty');
+    if(!det)return;
+    if(emp)emp.style.display='none';det.style.display='block';
+    var dt=new Date(ds+'T12:00:00');
+    document.getElementById('sl-rail-date').textContent=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var rx=slReaction(ds,SL_HORIZON);
+    var rxEl=document.getElementById('sl-rail-rx');
+    document.getElementById('sl-rail-rxlbl').textContent=SL_HORIZON+'D Price Reaction';
+    if(rx&&rx.ret!=null){rxEl.textContent=(rx.ret>=0?'+':'')+(rx.ret*100).toFixed(2)+'%';rxEl.className='sl-rail-rx '+(rx.ret>0?'up':rx.ret<0?'down':'flat');}
+    else{rxEl.textContent=rx&&rx.partial?'pending':'n/a';rxEl.className='sl-rail-rx flat';}
+    var px=document.getElementById('sl-rail-px');
+    var spy=slSpyClose(ds);
+    px.innerHTML=(rx&&rx.price!=null?('$'+rx.price.toFixed(2)):'&mdash;')+(spy!=null?'<span style="font-size:12px;color:var(--mp-text-tertiary);font-weight:500;margin-left:8px;">SPY $'+spy.toFixed(2)+'</span>':'');
+
+    // Themes active that day, ranked by story count.
+    var dayDots=(SL_CLUSTERS?SL_CLUSTERS.dots:[]).filter(function(d){return (d.date||'').slice(0,10)===ds;})
+      .sort(function(a,b){return (Number(b.size)||0)-(Number(a.size)||0);});
+    var maxSize=dayDots.length?(Number(dayDots[0].size)||0):0;
+    var domWrap=document.getElementById('sl-rail-dominant'),othWrap=document.getElementById('sl-rail-other'),othOuter=document.getElementById('sl-rail-other-wrap');
+    function row(d,rank){
+      var it=slIntensity(Number(d.size)||0,maxSize);
+      return '<div class="sl-rail-nrow"><span class="sl-rail-ndot" style="background:'+slThemeColor(d.theme)+';"></span>'+
+        (rank?'<span class="sl-rail-nrank">'+rank+'</span>':'')+
+        '<span class="sl-rail-nname">'+slEsc(d.theme)+'</span>'+
+        '<span class="sl-rail-nint '+it[1]+'">'+it[0]+'</span></div>';
+    }
+    if(!dayDots.length){
+      domWrap.innerHTML='<div class="sl-rail-empty" style="padding:0;">No narrative clusters recorded on this day.</div>';
+      othOuter.style.display='none';
+    }else{
+      var dominant=dayDots.slice(0,3),other=dayDots.slice(3);
+      domWrap.innerHTML=dominant.map(function(d,i){return row(d,i+1);}).join('');
+      if(other.length){othOuter.style.display='';othWrap.innerHTML=other.map(function(d){return row(d,null);}).join('');}
+      else othOuter.style.display='none';
+    }
+
+    // Insight line tying dominant themes to the reaction.
+    var ins=document.getElementById('sl-rail-insight');
+    if(dayDots.length&&rx&&rx.ret!=null){
+      var dir=rx.ret>0?'positive':rx.ret<0?'negative':'flat';
+      var names=dayDots.slice(0,2).map(function(d){return d.theme;}).join(' and ');
+      ins.style.display='flex';
+      ins.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.66 18h4.68M12 2v1m6.36 1.64l-.7.7M21 12h-1M4 12H3m3.34-6.36l-.7-.7M9 16a5 5 0 1 1 6 0c-.5.4-1 1-1 2H10c0-1-.5-1.6-1-2z"/></svg>'+
+        '<span><strong>'+slEsc(names)+'</strong> '+(dayDots.length>2?'led the narrative mix':'drove the narrative')+', aligned with a '+dir+' '+SL_HORIZON+'D price reaction.</span>';
+    }else if(ins){ins.style.display='none';}
   }
 
   // ── Load data ──
@@ -937,7 +1339,8 @@
       restFetch('decay_metrics',{select:'snapshot_date,energy_remaining_pct,day_number',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
       restFetch('narrative_scorecard',{select:'snapshot_date,narrative_energy_absolute,nrs,overreaction_ratio,coordination_score,narrative_energy_t,signal_regime,regime_direction,blue_energy,yellow_energy,energy_t_normalized,narrative_energy_regime,wks_score,narrative_mass_score',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
       restFetch('mv_energy_t_normalized',{select:'snapshot_date,raw_et,te_rank_pct,te_rolling_q90_norm,full_coverage_day',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
-      restFetch('mv_physics_energy_normalized',{select:'snapshot_date,raw_pe,pe_rank_pct,pe_rolling_q90_norm,full_coverage_day',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'})
+      restFetch('mv_physics_energy_normalized',{select:'snapshot_date,raw_pe,pe_rank_pct,pe_rolling_q90_norm,full_coverage_day',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
+      fetch('/api/price-history?ticker=SPY&days=2000').then(function(res){return res.ok?res.json():{series:[]};}).then(function(j){return (j&&Array.isArray(j.series))?j.series.map(function(x){return {snapshot_date:x.snapshot_date,price_close:x.price_close};}):[];}).catch(function(){return [];})
     ]);
     settled.forEach(function(s,i){ if(s.status==='rejected') console.warn('[SL] source',i,'failed:', s.reason && s.reason.message || s.reason); });
     var r=settled.map(function(s){ return s.status==='fulfilled' && Array.isArray(s.value) ? s.value : []; });
@@ -982,6 +1385,20 @@
       SL_ENERGY_T=[];
     }
     SL_MASS=r[4].filter(function(x){return x.snapshot_date;}).map(function(x){return{snapshot_date:x.snapshot_date,mass:x.narrative_mass_score!=null?Number(x.narrative_mass_score):0,wks:x.wks_score!=null?Number(x.wks_score):0};});
+    SL_SPY=(r[7]||[]).filter(function(x){return x.snapshot_date&&x.price_close!=null;});
+  }
+
+  // ── Narrative clusters: load once per ticker (full history), filter client-side ──
+  async function slLoadClusters(ticker){
+    if(SL_CLUSTER_TICKER===ticker&&SL_CLUSTERS)return SL_CLUSTERS;
+    try{
+      var res=await fetch('/api/ticker-clusters?ticker='+encodeURIComponent(ticker)+'&days=400');
+      var j=await res.json();
+      if(!res.ok)throw new Error(j&&j.error?j.error:'cluster fetch failed');
+      SL_CLUSTERS={themes:j.themes||[],dots:(j.dots||[]).filter(function(d){return d&&d.date&&d.theme;})};
+    }catch(e){console.warn('[SL] clusters fetch failed:',e);SL_CLUSTERS={themes:[],dots:[]};}
+    SL_CLUSTER_TICKER=ticker;
+    return SL_CLUSTERS;
   }
 
   // ── Regime detection ──
@@ -1149,6 +1566,11 @@
     restFetch('keyword_price_impact',{ticker:'eq.'+ticker,select:'keyword,keyword_type,avg_return_5d,article_count',order:'abs(avg_return_5d).desc',limit:'10'})
       .then(function(rows){ if(ticker===SL_TICKER && Array.isArray(rows)) SL_KEYWORDS=rows; })
       .catch(function(e){ console.warn('[SL] keywords fetch failed:',e); });
+    // Reset cluster state for the new ticker and lazy-load its theme history.
+    SL_CLUSTERS=null;SL_CLUSTER_TICKER='';SL_PINNED_DATE=null;SL_CLUSTER_EXPAND=false;
+    var _rcEl=document.getElementById('sl-rail-close');if(_rcEl)_rcEl.style.display='none';
+    var _emEl=document.getElementById('sl-rail-empty');if(_emEl)_emEl.style.display='';
+    var _dtEl=document.getElementById('sl-rail-detail');if(_dtEl)_dtEl.style.display='none';
     try{
       document.getElementById('sl-chart-outer').innerHTML='<div class="sl-no-data">Loading '+slEsc(ticker)+'...</div>';
       window.SL_CURRENT_REGIME=null; // clear cached regime so previous ticker's label doesn't flash
@@ -1157,6 +1579,14 @@
       document.getElementById('sl-chart-outer').innerHTML='<canvas id="sl-price-canvas"></canvas><div id="slChartAltWrap" style="display:none;position:absolute;top:10px;left:14px;right:14px;bottom:0;"><canvas id="slChartAlt"></canvas></div><div class="sl-tip" id="sl-chart-tip"></div><div class="sl-popup" id="sl-story-popup"><button class="sl-popup-close" id="sl-popup-close">&#10005;</button><div class="sl-popup-date" id="sl-popup-date"></div><div class="sl-popup-hl" id="sl-popup-headline"></div><div class="sl-popup-body" id="sl-popup-body"></div><div id="sl-popup-vms"></div></div>';
       document.getElementById('sl-popup-close').onclick=function(){document.getElementById('sl-story-popup').classList.remove('visible');};
       requestAnimationFrame(function(){slRenderChart();slBuildBearList();slDetectRegime();document.getElementById('sl-interpret-btn').disabled=false;document.getElementById('sl-interpret-panel').classList.remove('visible');window.SL_INTERP_OK=false;var _fo=document.getElementById('sl-share-opt-full');if(_fo){_fo.disabled=true;var _sm=_fo.querySelector('small');if(_sm)_sm.textContent='Generate the interpretation first';}});
+      // Cluster lanes load independently — redraw + seed the rail when they arrive.
+      slLoadClusters(ticker).then(function(){
+        if(ticker!==SL_TICKER)return;
+        if(SL_SHOW_CLUSTERS&&SL_SNAPS.length){slRenderChart();
+          var last=(SL_SNAPS[SL_SNAPS.length-1].snapshot_date||'').slice(0,10);
+          if(last&&!SL_PINNED_DATE)slShowRail(last);
+        }
+      });
     }catch(err){document.getElementById('sl-chart-outer').innerHTML='<div class="sl-no-data" style="color:var(--mp-red);">'+slEsc(err.message)+'</div>';}
   }
 
@@ -1321,7 +1751,35 @@
       var v=this.value;
       if(v){document.getElementById('sl-ticker-input').value='';slLoadTicker(v);}
     };
-    document.querySelectorAll('.sl-tog').forEach(function(btn){btn.addEventListener('click',function(){var line=btn.dataset.slLine;SL_VIS[line]=!SL_VIS[line];btn.classList.toggle('active');if(SL_SNAPS.length)slRenderChart();});});
+    document.querySelectorAll('.sl-tog[data-sl-line]').forEach(function(btn){btn.addEventListener('click',function(){var line=btn.dataset.slLine;SL_VIS[line]=!SL_VIS[line];btn.classList.toggle('active');if(SL_SNAPS.length)slRenderChart();});});
+    // Cluster panel show/hide
+    var cTog=document.getElementById('sl-cluster-toggle');
+    if(cTog)cTog.addEventListener('click',function(){
+      SL_SHOW_CLUSTERS=!SL_SHOW_CLUSTERS;
+      cTog.classList.toggle('active',SL_SHOW_CLUSTERS);
+      var co=document.getElementById('sl-cluster-outer'),rail=document.getElementById('sl-cp-rail'),cross=document.getElementById('sl-crosshair');
+      if(co)co.style.display=SL_SHOW_CLUSTERS?'':'none';
+      if(rail)rail.style.display=SL_SHOW_CLUSTERS?'':'none';
+      if(!SL_SHOW_CLUSTERS&&cross)cross.style.opacity='0';
+      if(SL_SNAPS.length)slRenderChart();
+      if(SL_SHOW_CLUSTERS){var last=SL_SNAPS.length?(SL_SNAPS[SL_SNAPS.length-1].snapshot_date||'').slice(0,10):null;if(last&&!SL_PINNED_DATE)slShowRail(last);}
+    });
+    // Forward-return horizon selector (1D / 5D / 20D)
+    document.querySelectorAll('#sl-rail-hz button').forEach(function(b){b.addEventListener('click',function(){
+      document.querySelectorAll('#sl-rail-hz button').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active');SL_HORIZON=parseInt(b.dataset.hz,10)||5;
+      var ds=SL_PINNED_DATE||(SL_SNAPS.length?(SL_SNAPS[SL_SNAPS.length-1].snapshot_date||'').slice(0,10):null);
+      if(ds)slShowRail(ds);
+      if(SL_SHOW_CLUSTERS&&SL_SNAPS.length)slDrawClusters();
+    });});
+    // Expand / collapse cluster lanes
+    var expB=document.getElementById('sl-cluster-expand');
+    if(expB)expB.addEventListener('click',function(){SL_CLUSTER_EXPAND=!SL_CLUSTER_EXPAND;if(SL_SNAPS.length&&SL_SHOW_CLUSTERS)slDrawClusters();});
+    // Unpin the rail
+    var railClose=document.getElementById('sl-rail-close');
+    if(railClose)railClose.addEventListener('click',function(){SL_PINNED_DATE=null;this.style.display='none';slCrosshairLeave();var last=SL_SNAPS.length?(SL_SNAPS[SL_SNAPS.length-1].snapshot_date||'').slice(0,10):null;if(last)slShowRail(last);});
+    // Re-align shared axis + crosshair on resize
+    var _slRz;window.addEventListener('resize',function(){clearTimeout(_slRz);_slRz=setTimeout(function(){if(SL_SNAPS.length)slRenderChart();if(SL_PINNED_DATE)slPositionCrosshair(SL_PINNED_DATE,true);},150);});
     document.querySelectorAll('.sl-tf-btn').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('.sl-tf-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');document.getElementById('sl-story-popup')?.classList.remove('visible');if(SL_SNAPS.length)slRenderChart();});});
     document.querySelectorAll('.sl-view-btn').forEach(function(btn){btn.addEventListener('click',function(){slSetView(btn.dataset.slView);});});
     document.getElementById('sl-story-sort')?.addEventListener('change',function(){document.getElementById('sl-story-popup')?.classList.remove('visible');if(SL_SNAPS.length)slRenderChart();});
