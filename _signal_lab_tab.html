@@ -263,54 +263,41 @@
     display: flex; align-items: center; justify-content: center; min-height: 120px;
     font-size: 12px; color: var(--mp-text-tertiary); text-align: center; padding: 0 24px;
   }
-  /* Day-detail strip (full width, below the charts) */
-  .sl-day-strip { border-top: 1px solid var(--mp-border); padding: 14px 16px 4px; font-family: var(--font-body); }
-  .sl-day-main { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 30px; }
-  .sl-day-block { min-width: 0; }
-  .sl-day-narr { flex: 1 1 280px; }
-  .sl-rail-head { display: flex; align-items: center; gap: 10px; }
-  .sl-rail-date { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--mp-text-primary); white-space: nowrap; }
-  .sl-rail-close { background: none; border: 1px solid var(--mp-border); border-radius: 6px; color: var(--mp-text-tertiary); font-size: 13px; line-height: 1; cursor: pointer; padding: 3px 6px; }
+  /* Day-detail strip — minimal single row, no serif */
+  .sl-day-strip { border-top: 1px solid var(--mp-border); padding: 9px 16px; font-family: var(--font-body); }
+  .sl-day-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 11px; }
+  .sl-day-sep { width: 1px; height: 15px; background: var(--mp-border); flex-shrink: 0; }
+  .sl-rail-date { font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--mp-text-primary); white-space: nowrap; }
+  .sl-rail-close { margin-left: auto; background: none; border: 1px solid var(--mp-border); border-radius: 6px; color: var(--mp-text-tertiary); font-size: 12px; line-height: 1; cursor: pointer; padding: 3px 6px; }
   .sl-rail-close:hover { color: var(--mp-text-primary); border-color: var(--mp-border-hover, rgba(255,255,255,0.28)); }
-  .sl-rail-rxlbl { font-size: 11px; color: var(--mp-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
-  .sl-rail-rx { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 8px; font-family: var(--font-body); }
+  .sl-rail-rx { font-size: 16px; font-weight: 600; line-height: 1; font-family: var(--font-body); white-space: nowrap; }
   .sl-rail-rx.up { color: #00DE94; } .sl-rail-rx.down { color: #FF4D4D; } .sl-rail-rx.flat { color: var(--mp-text-tertiary); }
-  .sl-rail-pxlbl { font-size: 11px; color: var(--mp-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
-  .sl-rail-px { font-size: 22px; font-weight: 600; color: var(--mp-text-primary); font-family: var(--font-body); }
+  .sl-rail-px { font-size: 16px; font-weight: 600; color: var(--mp-text-primary); font-family: var(--font-body); white-space: nowrap; }
+  .sl-rail-px small { font-size: 12px; color: var(--mp-text-tertiary); font-weight: 500; margin-left: 6px; }
   .sl-hz { display: inline-flex; gap: 4px; }
   .sl-hz button {
-    font-family: var(--font-body); font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 7px;
+    font-family: var(--font-body); font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 6px;
     border: 1px solid var(--mp-border); background: transparent; color: var(--mp-text-tertiary); cursor: pointer; transition: all 0.15s;
   }
   .sl-hz button.active { background: rgba(0,174,255,0.10); border-color: rgba(0,174,255,0.30); color: #00AEFF; }
-  .sl-rail-sec { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mp-text-tertiary); margin: 0 0 8px; }
-  /* Narratives render as inline chips inside the strip */
-  #sl-rail-dominant, #sl-rail-other { display: flex; flex-wrap: wrap; gap: 7px; }
+  .sl-day-narr-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mp-text-tertiary); }
+  .sl-day-chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
   .sl-rail-nrow {
-    display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--mp-text-primary);
-    background: rgba(255,255,255,0.04); border: 1px solid var(--mp-border); border-radius: 99px; padding: 4px 11px;
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--mp-text-primary);
+    background: rgba(255,255,255,0.04); border: 1px solid var(--mp-border); border-radius: 99px; padding: 3px 9px;
   }
-  .sl-rail-ndot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-  .sl-rail-nrank { color: var(--mp-text-tertiary); font-size: 11px; }
+  .sl-rail-ndot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .sl-rail-nname { color: var(--mp-text-primary); white-space: nowrap; }
   .sl-rail-nint { font-size: 11px; font-weight: 600; }
   .sl-rail-nint.high { color: #00DE94; } .sl-rail-nint.medium { color: #FFB800; } .sl-rail-nint.low { color: var(--mp-text-tertiary); }
-  .sl-rail-insight {
-    margin-top: 12px; padding: 11px 14px; border-radius: 10px;
-    background: rgba(0,174,255,0.05); border: 1px solid rgba(0,174,255,0.14);
-    font-size: 12px; line-height: 1.5; color: var(--mp-text-secondary); display: flex; gap: 8px; align-items: flex-start;
-  }
-  .sl-rail-insight svg { flex-shrink: 0; margin-top: 1px; color: #00AEFF; }
-  .sl-rail-empty { font-size: 12px; color: var(--mp-text-tertiary); line-height: 1.5; padding: 4px 0 10px; }
+  .sl-rail-empty { font-size: 12px; color: var(--mp-text-tertiary); line-height: 1.4; }
   /* Mobile / narrow */
   @media (max-width: 680px) {
     .sl-chart-wrap { padding: 8px 8px 0; height: 320px !important; }
     .sl-cluster-wrap { padding: 4px 8px 6px; }
     .sl-cluster-head { padding: 8px 8px 2px; }
     .sl-cluster-title { font-size: 14px; }
-    .sl-day-strip { padding: 12px 12px 4px; }
-    .sl-day-main { gap: 12px 20px; }
-    .sl-rail-rx { font-size: 24px; }
+    .sl-day-strip { padding: 9px 12px; }
     .sl-toggles { gap: 5px; }
     .sl-tog { padding: 4px 9px; font-size: 11px; }
   }
@@ -438,38 +425,24 @@
         </div>
       </div>
 
-      <!-- Full-width "on this day" detail strip (replaces the side rail) -->
+      <!-- Full-width "on this day" detail strip — minimal single row -->
       <div class="sl-day-strip" id="sl-day-strip">
-        <div class="sl-rail-empty" id="sl-rail-empty">Hover or tap a day on the chart to see its price reaction and the narrative themes driving it. Tap a bubble to pin it.</div>
-        <div id="sl-rail-detail" style="display:none;">
-          <div class="sl-day-main">
-            <div class="sl-day-block sl-day-date-block">
-              <div class="sl-rail-head"><span class="sl-rail-date" id="sl-rail-date">&mdash;</span>
-                <button class="sl-rail-close" id="sl-rail-close" title="Unpin day" style="display:none;">&#10005;</button></div>
-            </div>
-            <div class="sl-day-block">
-              <div class="sl-rail-rxlbl" id="sl-rail-rxlbl">5D Price Reaction</div>
-              <div class="sl-rail-rx flat" id="sl-rail-rx">&mdash;</div>
-              <div class="sl-hz" id="sl-rail-hz">
-                <button type="button" data-hz="1">1D</button>
-                <button type="button" data-hz="5" class="active">5D</button>
-                <button type="button" data-hz="20">20D</button>
-              </div>
-            </div>
-            <div class="sl-day-block">
-              <div class="sl-rail-pxlbl">Price</div>
-              <div class="sl-rail-px" id="sl-rail-px">&mdash;</div>
-            </div>
-            <div class="sl-day-block sl-day-narr">
-              <div class="sl-rail-sec">Dominant Narratives</div>
-              <div id="sl-rail-dominant"></div>
-              <div id="sl-rail-other-wrap" style="display:none;">
-                <div class="sl-rail-sec" style="margin-top:12px;">Other Active Narratives</div>
-                <div id="sl-rail-other"></div>
-              </div>
-            </div>
+        <div class="sl-rail-empty" id="sl-rail-empty">Hover or tap a day to see its price reaction and the themes driving it.</div>
+        <div id="sl-rail-detail" class="sl-day-row" style="display:none;">
+          <span class="sl-rail-date" id="sl-rail-date">&mdash;</span>
+          <span class="sl-day-sep"></span>
+          <div class="sl-hz" id="sl-rail-hz">
+            <button type="button" data-hz="1">1D</button>
+            <button type="button" data-hz="5" class="active">5D</button>
+            <button type="button" data-hz="20">20D</button>
           </div>
-          <div class="sl-rail-insight" id="sl-rail-insight" style="display:none;"></div>
+          <span class="sl-rail-rx flat" id="sl-rail-rx">&mdash;</span>
+          <span class="sl-day-sep"></span>
+          <span class="sl-rail-px" id="sl-rail-px">&mdash;</span>
+          <span class="sl-day-sep"></span>
+          <span class="sl-day-narr-lbl">Themes</span>
+          <div id="sl-rail-dominant" class="sl-day-chips"></div>
+          <button class="sl-rail-close" id="sl-rail-close" title="Unpin day" style="display:none;">&#10005;</button>
         </div>
       </div>
       <div id="sl-alt-legend" style="display:none;margin:8px 14px 0;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-tertiary);">
@@ -1309,49 +1282,34 @@
   function slShowRail(ds){
     var det=document.getElementById('sl-rail-detail'),emp=document.getElementById('sl-rail-empty');
     if(!det)return;
-    if(emp)emp.style.display='none';det.style.display='block';
+    if(emp)emp.style.display='none';det.style.display='flex';
     var dt=new Date(ds+'T12:00:00');
-    document.getElementById('sl-rail-date').textContent=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var dEl=document.getElementById('sl-rail-date');if(dEl)dEl.textContent=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     var rx=slReaction(ds,SL_HORIZON);
     var rxEl=document.getElementById('sl-rail-rx');
-    document.getElementById('sl-rail-rxlbl').textContent=SL_HORIZON+'D Price Reaction';
-    if(rx&&rx.ret!=null){rxEl.textContent=(rx.ret>=0?'+':'')+(rx.ret*100).toFixed(2)+'%';rxEl.className='sl-rail-rx '+(rx.ret>0?'up':rx.ret<0?'down':'flat');}
-    else{rxEl.textContent=rx&&rx.partial?'pending':'n/a';rxEl.className='sl-rail-rx flat';}
+    if(rxEl){
+      if(rx&&rx.ret!=null){rxEl.textContent=(rx.ret>=0?'+':'')+(rx.ret*100).toFixed(2)+'%';rxEl.className='sl-rail-rx '+(rx.ret>0?'up':rx.ret<0?'down':'flat');}
+      else{rxEl.textContent=rx&&rx.partial?'pending':'n/a';rxEl.className='sl-rail-rx flat';}
+    }
     var px=document.getElementById('sl-rail-px');
-    var spy=slSpyClose(ds);
-    px.innerHTML=(rx&&rx.price!=null?('$'+rx.price.toFixed(2)):'&mdash;')+(spy!=null?'<span style="font-size:12px;color:var(--mp-text-tertiary);font-weight:500;margin-left:8px;">SPY $'+spy.toFixed(2)+'</span>':'');
+    if(px){var spy=slSpyClose(ds);px.innerHTML=(rx&&rx.price!=null?('$'+rx.price.toFixed(2)):'&mdash;')+(spy!=null?'<small>SPY $'+spy.toFixed(2)+'</small>':'');}
 
-    // Themes active that day, ranked by story count.
+    // Themes active that day, ranked by story count — top 3 as chips.
     var dayDots=(SL_CLUSTERS?SL_CLUSTERS.dots:[]).filter(function(d){return (d.date||'').slice(0,10)===ds;})
       .sort(function(a,b){return (Number(b.size)||0)-(Number(a.size)||0);});
     var maxSize=dayDots.length?(Number(dayDots[0].size)||0):0;
-    var domWrap=document.getElementById('sl-rail-dominant'),othWrap=document.getElementById('sl-rail-other'),othOuter=document.getElementById('sl-rail-other-wrap');
-    function row(d,rank){
-      var it=slIntensity(Number(d.size)||0,maxSize);
-      return '<div class="sl-rail-nrow"><span class="sl-rail-ndot" style="background:'+slThemeColor(d.theme)+';"></span>'+
-        (rank?'<span class="sl-rail-nrank">'+rank+'</span>':'')+
-        '<span class="sl-rail-nname">'+slEsc(d.theme)+'</span>'+
-        '<span class="sl-rail-nint '+it[1]+'">'+it[0]+'</span></div>';
+    var domWrap=document.getElementById('sl-rail-dominant');
+    if(domWrap){
+      if(!dayDots.length){domWrap.innerHTML='<span class="sl-rail-empty" style="padding:0;">no clusters</span>';}
+      else{
+        domWrap.innerHTML=dayDots.slice(0,3).map(function(d){
+          var it=slIntensity(Number(d.size)||0,maxSize);
+          return '<span class="sl-rail-nrow"><span class="sl-rail-ndot" style="background:'+slThemeColor(d.theme)+';"></span>'+
+            '<span class="sl-rail-nname">'+slEsc(d.theme)+'</span>'+
+            '<span class="sl-rail-nint '+it[1]+'">'+it[0]+'</span></span>';
+        }).join('');
+      }
     }
-    if(!dayDots.length){
-      domWrap.innerHTML='<div class="sl-rail-empty" style="padding:0;">No narrative clusters recorded on this day.</div>';
-      othOuter.style.display='none';
-    }else{
-      var dominant=dayDots.slice(0,3),other=dayDots.slice(3);
-      domWrap.innerHTML=dominant.map(function(d,i){return row(d,i+1);}).join('');
-      if(other.length){othOuter.style.display='';othWrap.innerHTML=other.map(function(d){return row(d,null);}).join('');}
-      else othOuter.style.display='none';
-    }
-
-    // Insight line tying dominant themes to the reaction.
-    var ins=document.getElementById('sl-rail-insight');
-    if(dayDots.length&&rx&&rx.ret!=null){
-      var dir=rx.ret>0?'positive':rx.ret<0?'negative':'flat';
-      var names=dayDots.slice(0,2).map(function(d){return d.theme;}).join(' and ');
-      ins.style.display='flex';
-      ins.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.66 18h4.68M12 2v1m6.36 1.64l-.7.7M21 12h-1M4 12H3m3.34-6.36l-.7-.7M9 16a5 5 0 1 1 6 0c-.5.4-1 1-1 2H10c0-1-.5-1.6-1-2z"/></svg>'+
-        '<span><strong>'+slEsc(names)+'</strong> '+(dayDots.length>2?'led the narrative mix':'drove the narrative')+', aligned with a '+dir+' '+SL_HORIZON+'D price reaction.</span>';
-    }else if(ins){ins.style.display='none';}
   }
 
   // ── Load data ──
