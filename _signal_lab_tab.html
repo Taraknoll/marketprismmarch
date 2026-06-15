@@ -40,17 +40,18 @@
     padding: 16px 20px 0;
   }
 
-  /* ── Signal Lab: Toggle buttons ── */
-  .sl-toggles { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 20px 0; }
+  /* ── Signal Lab: Overlay toggles — grouped, flat chips (cohesive w/ Forensic Timeline) ── */
+  .sl-toggles { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 14px 14px 0; padding: 7px 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--mp-border); border-radius: 12px; }
+  .sl-tog-label { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--mp-text-muted, rgba(255,255,255,0.4)); margin-right: 4px; }
   .sl-tog {
     display: flex; align-items: center; gap: 6px;
-    padding: 5px 12px; border-radius: 99px;
+    padding: 5px 11px; border-radius: 99px;
     font-size: 11px; font-family: var(--font-body); font-weight: 500;
-    border: 1px solid var(--mp-border-mid); background: transparent;
-    color: var(--mp-text-secondary); cursor: pointer; transition: all 0.15s; user-select: none;
+    border: 1px solid transparent; background: transparent;
+    color: var(--mp-text-tertiary); cursor: pointer; transition: all 0.15s; user-select: none;
   }
   .sl-tog { position: relative; }
-  .sl-tog:hover { border-color: var(--mp-border-hover); }
+  .sl-tog:hover { color: var(--mp-text-secondary); background: var(--mp-surface2, #111927); }
   .sl-tog-tip {
     position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
     background: var(--mp-surface2, #111927); color: var(--mp-text-secondary); font-size: 11px;
@@ -60,7 +61,7 @@
     line-height: 1.4; text-align: left;
   }
   .sl-tog:hover .sl-tog-tip { opacity: 1; }
-  .sl-tog.active { border-color: var(--color); background: var(--bg-color); color: var(--color); }
+  .sl-tog.active { border-color: transparent; background: var(--bg-color); color: var(--color); }
   .sl-tog-sw { width: 10px; height: 3px; border-radius: 2px; }
   .sl-tog.active .sl-tog-sw { opacity: 1; }
   .sl-tog:not(.active) .sl-tog-sw { opacity: 0.35; }
@@ -131,21 +132,16 @@
   .sl-export-brand .sl-brand-url { color: #4DC8F0; margin-left: 8px; letter-spacing: 0.05em; }
 
   /* ── Signal Lab: Chart ── */
-  .sl-chart-ctl { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 0; flex-wrap: wrap; gap: 8px; }
-  .sl-tf { display: flex; gap: 2px; }
-  .sl-tf-btn {
-    font-size: 11px; font-family: var(--font-body); padding: 4px 9px; border-radius: 5px;
-    border: 1px solid transparent; background: none; color: var(--text-tertiary); cursor: pointer; transition: all 0.1s;
+  .sl-chart-ctl { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 0; flex-wrap: wrap; gap: 10px; }
+  /* Segmented-pill groups — matches the Forensic Timeline's clean control style */
+  .sl-tf, .sl-view-toggle { display: inline-flex; gap: 2px; background: var(--mp-surface2, #111927); border: 1px solid var(--mp-border); border-radius: 10px; padding: 3px; }
+  .sl-view-toggle { margin-left: auto; }
+  .sl-tf-btn, .sl-view-btn {
+    font-size: 12px; font-weight: 500; font-family: var(--font-body); padding: 6px 12px; border-radius: 7px;
+    border: none; background: none; color: var(--mp-text-tertiary); cursor: pointer; transition: all 0.15s;
   }
-  .sl-tf-btn:hover { color: var(--text-secondary); background: var(--surface2); }
-  .sl-tf-btn.active { background: rgba(0,174,255,0.08); color: #00AEFF; border-color: rgba(0,174,255,0.20); }
-  .sl-view-toggle { margin-left: auto; display: flex; gap: 6px; align-items: center; }
-  .sl-view-btn {
-    font-size: 11px; font-family: var(--font-body); padding: 4px 9px; border-radius: 5px;
-    border: 1px solid transparent; background: none; color: var(--text-tertiary); cursor: pointer; transition: all 0.1s;
-  }
-  .sl-view-btn:hover { color: var(--text-secondary); background: var(--surface2); }
-  .sl-view-btn.active { background: rgba(0,174,255,0.08); color: #00AEFF; border-color: rgba(0,174,255,0.20); }
+  .sl-tf-btn:hover, .sl-view-btn:hover { color: var(--mp-text-secondary); }
+  .sl-tf-btn.active, .sl-view-btn.active { background: rgba(0,174,255,0.14); color: #00AEFF; }
   .sl-sort { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-tertiary); }
   .sl-sort-sel {
     font-size: 11px; font-family: var(--font-body); padding: 4px 8px; border-radius: 5px;
@@ -168,9 +164,9 @@
   }
   .sl-no-data { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 13px; color: var(--text-tertiary); }
   .sl-popup {
-    position: absolute; background: var(--surface); border: 1px solid var(--border-strong);
-    border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.35);
-    padding: 12px 14px; width: 260px; z-index: 20; top: 0; left: 0; display: none;
+    position: absolute; background: var(--mp-surface2, #111927); border: 1px solid var(--mp-border-hover, rgba(255,255,255,0.16));
+    border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+    padding: 13px 15px; width: 248px; z-index: 20; top: 0; left: 0; display: none;
   }
   .sl-popup.visible { display: block; }
   .sl-popup-close { position: absolute; top: 8px; right: 10px; font-size: 14px; color: var(--text-tertiary); cursor: pointer; background: none; border: none; line-height: 1; padding: 2px 4px; }
@@ -375,6 +371,7 @@
 
       <!-- Toggles -->
       <div class="sl-toggles">
+        <span class="sl-tog-label">Overlays</span>
         <button class="sl-tog active" data-sl-line="narr-force" title="Combined signal: (Physics Energy × 0.6) + ((100 − Narrative Energy) × 0.4). Rising = narrative force building. Falling = exhausted." style="--color:#38C8B8;--bg-color:rgba(56,200,184,0.08);"><span class="sl-tog-sw" style="background:#38C8B8;"></span> Narrative Force</button>
         <button class="sl-tog active" data-sl-line="risk-pressure" title="NRS-weighted risk score. Above 20 = bearish pressure detected." style="--color:#FF6B4A;--bg-color:rgba(255,107,74,0.08);"><span class="sl-tog-sw" style="background:#FF6B4A;"></span> Risk Pressure</button>
         <button class="sl-tog active" data-sl-line="mass-dots" title="Dot size = narrative mass. Color = keyword price prediction (green=bullish, red=bearish)." style="--color:#00AEFF;--bg-color:rgba(0,174,255,0.08);"><span class="sl-tog-sw" style="background:linear-gradient(135deg,#00DE94,#A0A8B8,#FF4D4D);border-radius:50%;width:7px;height:7px;"></span> Mass Dots</button>
