@@ -1276,7 +1276,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
   text-transform:uppercase;background:rgba(255,255,255,0.04);color:var(--mp-text-secondary);
 }
 .sector-body{padding:0 16px 14px;}
-.sector-desc{font-size:14.5px;color:var(--mp-text-primary);line-height:1.65;margin-top:14px;margin-bottom:12px;}
+.sector-desc{font-size:14.5px;font-weight:400;color:var(--mp-text-secondary);line-height:1.65;margin-top:14px;margin-bottom:12px;}
 .sector-tickers{display:flex;gap:5px;flex-wrap:wrap;}
 .sector-ticker-chip{
   font-family:var(--font-body);font-size:11px;
@@ -3617,7 +3617,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 /* Tiny × pinned at the FAB's top-right corner — hides the whole Scholar
    widget for the rest of the session (sessionStorage; it returns on the
    next visit). Hidden while the chat panel is open and on the mobile bar. */
-.scholar-fab-dismiss{position:fixed;bottom:70px;right:14px;z-index:802;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;background:#111927;border:1px solid rgba(255,255,255,0.18);color:var(--mp-text-tertiary);cursor:pointer;opacity:.65;transition:opacity .15s,color .15s,transform .15s;}
+.scholar-fab-dismiss{position:fixed;bottom:70px;right:14px;z-index:802;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;background:var(--mp-surface2);border:1px solid rgba(255,255,255,0.18);color:var(--mp-text-tertiary);cursor:pointer;opacity:.65;transition:opacity .15s,color .15s,transform .15s;}
 .scholar-fab-dismiss:hover{opacity:1;color:#fff;transform:scale(1.1);}
 .scholar-fab.open + .scholar-fab-dismiss{display:none;}
 [data-theme="light"] .scholar-fab-dismiss{background:#FFFFFF;border-color:rgba(0,0,0,0.15);color:#5A6470;}
@@ -3933,7 +3933,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 }
 .info-tip:hover .info-icon{color:var(--mp-cyan);border-color:var(--mp-cyan);}
 .info-tip-popup{
-  position:fixed;background:#1a1f2e;
+  position:fixed;background:var(--mp-surface2);
   border:1px solid rgba(255,255,255,0.10);border-radius:8px;
   padding:8px 12px;font-size:12px;font-family:var(--font-body);
   font-weight:400;color:rgba(255,255,255,0.8);
@@ -11008,15 +11008,37 @@ async function loadSectorsFromSummaries(){
       return 'low';
     }
 
-    // Preserve original CAGR values from static data
-    var cagrMap={};SECTOR_STATIC.forEach(function(s){if(s.cagr&&s.cagr!=='—')cagrMap[s.name]=s.cagr;});
+    // Live sector CAGR = median 5-yr revenue CAGR of the sector's constituents
+    // (ticker_valuation_config.rev_cagr_5yr_est, stored as whole-number percent).
+    // Curated estimates remain a fallback for any sector with no covered names.
+    var cagrFallback={
+      'Healthcare Technology & Biotech':'15%',
+      'Real Estate & PropTech':'11%',
+      'Semiconductors':'21%',
+      'Quantum Computing':'35%',
+      'Data Licensing & AI Training Data':'28%',
+      'Social Media & Digital Advertising':'14%'
+    };
+    SECTOR_STATIC.forEach(function(s){if(s.cagr&&s.cagr!=='—')cagrFallback[s.name]=s.cagr;});
+    var vcMap={};
+    try{
+      var vcRes=await fetch(SUPABASE_URL+'/rest/v1/ticker_valuation_config?select=ticker,rev_cagr_5yr_est&rev_cagr_5yr_est=not.is.null',{headers:hdrs});
+      if(vcRes.ok){(await vcRes.json()).forEach(function(v){var n=Number(v.rev_cagr_5yr_est);if(v.ticker&&isFinite(n))vcMap[String(v.ticker).toUpperCase()]=n;});}
+    }catch(e){console.warn('[MP] valuation CAGR fetch failed:',e);}
+    function medianCagr(list){
+      var vals=(list||[]).map(function(t){return vcMap[String(t).toUpperCase()];}).filter(function(n){return typeof n==='number'&&isFinite(n);}).sort(function(a,b){return a-b;});
+      if(!vals.length) return null;
+      var m=Math.floor(vals.length/2);
+      return vals.length%2?vals[m]:(vals[m-1]+vals[m])/2;
+    }
     SECTOR_STATIC=rows.map(function(r){
       var tickers=typeof r.tickers==='string'?JSON.parse(r.tickers):(r.tickers||[]);
+      var med=medianCagr(tickers);
       return {
         name:r.scope_key||'',
         sub:tickers.slice(0,3).join(', '),
         state:statusToState(r.status),
-        cagr:cagrMap[r.scope_key]||'—',
+        cagr:med!=null?Math.round(med)+'%':(cagrFallback[r.scope_key]||'—'),
         momentum:Math.round(r.momentum_score||0),
         risk:statusToRisk(r.status),
         desc:r.body||'',
@@ -17561,7 +17583,7 @@ function mmMakeNode(x,y,type,theme,ticker){
     var c=theme.color;
     var subText=theme.tickers.length+' tickers';
     if(mmMode==='contagion'&&theme.avgRisk) subText+=' · Risk '+theme.avgRisk;
-    el.innerHTML='<div style="background:#12131C;border:1.5px solid '+c+';border-radius:12px;padding:9px 14px;text-align:center;min-width:90px;max-width:140px;"><div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:'+c+';line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+theme.label+'</div><div style="font-size:10px;color:'+c+';opacity:.5;margin-top:2px;">'+subText+'</div></div>';
+    el.innerHTML='<div style="background:var(--mp-surface);border:1.5px solid '+c+';border-radius:12px;padding:9px 14px;text-align:center;min-width:90px;max-width:140px;"><div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:'+c+';line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+theme.label+'</div><div style="font-size:10px;color:'+c+';opacity:.5;margin-top:2px;">'+subText+'</div></div>';
     el.onclick=function(){mmActiveTheme=theme;mmDraw();mmClearDetail();};
   } else if(type==='theme-center'){
     var c=theme.color; el.style.cursor='default';
