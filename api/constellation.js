@@ -54,6 +54,9 @@ module.exports = async (req, res) => {
     // Max dots to return (most-recent-first). The client spreads them on a
     // price-impact axis, so we no longer need to pre-filter by impact.
     const top = Math.min(Math.max(parseInt(url.searchParams.get('top') || '400', 10) || 400, 10), 1000);
+    // Per-day density cap: keep only the most authoritative N voices per day so
+    // busy event-days don't pile into an unreadable clump.
+    const perDay = Math.min(Math.max(parseInt(url.searchParams.get('per_day') || '5', 10) || 5, 1), 50);
 
     if (!ticker) return sendJson(res, 400, { error: 'Missing ticker' });
 
@@ -125,24 +128,43 @@ module.exports = async (req, res) => {
       resolved_false: totalFromRange(falseResp)
     };
 
-    // Cap to the most-recent `top` so the whole window stays represented
-    // (no impact pre-filter — the client's price-impact axis declutters).
-    let selected = rows.length > top ? rows.slice(0, top) : rows;
-
-    // Oldest-first for the timeline; client charts on x=time anyway.
-    selected = selected.slice().reverse();
+    // ── Per-day density cap ──
+    // Within each calendar day keep the `perDay` most authoritative voices
+    // (ties → bigger 5-day move), so dense event-days stop overlapping while
+    // the timeline stays covered. Then cap to the most-recent `top` overall.
+    const byDay = new Map();
+    for (const r of rows) {
+      const day = (r.observed_at || '').slice(0, 10);
+      if (!byDay.has(day)) byDay.set(day, []);
+      byDay.get(day).push(r);
+    }
+    const authOf = (r) => (r.speaker_authority == null ? -1 : Number(r.speaker_authority));
+    const moveOf = (r) => Math.abs(Number(r.return_5d) || 0);
+    let kept = [];
+    for (const arr of byDay.values()) {
+      if (arr.length > perDay) {
+        arr.sort((a, b) => (authOf(b) - authOf(a)) || (moveOf(b) - moveOf(a)));
+        kept.push(...arr.slice(0, perDay));
+      } else {
+        kept.push(...arr);
+      }
+    }
+    // Most-recent-first, then overall cap, then oldest-first for the timeline.
+    kept.sort((a, b) => (b.observed_at < a.observed_at ? -1 : b.observed_at > a.observed_at ? 1 : 0));
+    let selected = (kept.length > top ? kept.slice(0, top) : kept).slice().reverse();
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=900');
     return sendJson(res, 200, {
       ticker,
       days: daysRaw,
       scored,
-      top,                       // impact cap applied
+      top,                       // overall cap
+      per_day: perDay,           // per-day density cap
       summary,
       matched,                   // rows matching the (scored) display filter in-window
-      fetched: rows.length,      // rows pulled before the impact filter (<= MAX_ROWS)
+      fetched: rows.length,      // rows pulled before density caps (<= MAX_ROWS)
       returned: selected.length, // rows actually sent
-      filtered: selected.length < rows.length, // impact filter trimmed the set
+      filtered: matched != null ? selected.length < matched : selected.length < rows.length,
       capped: matched != null && matched > rows.length,
       max_rows: MAX_ROWS,
       dots: selected

@@ -5127,7 +5127,6 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
             <span class="ftl-leg-item"><span class="ftl-dot lg-bull"></span>Bullish</span>
             <span class="ftl-leg-item"><span class="ftl-dot lg-bear"></span>Bearish</span>
             <span class="ftl-leg-item"><span class="ftl-dot lg-neut"></span>Neutral</span>
-            <span class="ftl-leg-item"><span class="ftl-dot lg-false"></span>Resolved false</span>
           </div>
           <div class="ftl-leg-group">
             <span class="ftl-leg-title">Source</span>
@@ -10313,7 +10312,7 @@ function ftlRender() {
     return {
       x: new Date(d.observed_at).getTime() + xj,
       y: yv,
-      r: 5 + (auth != null ? auth : 0) * 0.11,
+      r: 4 + (auth != null ? auth : 0) * 0.10,
       _bg: fill,
       _border: isFalse ? '#FFFFFF' : fill,
       _bw: isFalse ? 2.5 : 1.25,
@@ -10324,7 +10323,8 @@ function ftlRender() {
   // Coverage note.
   var parts = [];
   parts.push('Showing ' + points.length.toLocaleString() + (data.filtered ? ' of ' + data.matched.toLocaleString() : '') +
-             (_ftlScored ? ' scored' : '') + ' narrative' + (points.length === 1 ? '' : 's') + ' in range.');
+             (_ftlScored ? ' scored' : '') + ' narrative' + (points.length === 1 ? '' : 's') + ' in range' +
+             (data.filtered ? ' (up to ' + data.per_day + ' most-authoritative per day)' : '') + '.');
   if (impact) {
     var pending = allDots.length - dots.length;
     if (pending > 0) parts.push(pending.toLocaleString() + ' recent dot' + (pending === 1 ? '' : 's') +
@@ -10397,21 +10397,23 @@ function ftlTooltip(context) {
   if (!d) { el.style.opacity = 0; return; }
 
   var auth = d.speaker_authority != null ? Math.round(Number(d.speaker_authority)) : null;
-  var authLbl = auth == null ? 'Unknown' : (auth >= 70 ? 'High' : auth >= 45 ? 'Mid' : 'Low') + ' (' + auth + ')';
-  var src = (d.speaker_type || 'unknown').replace(/^\w/, function (c) { return c.toUpperCase(); });
+  var authTier = auth == null ? '' : (auth >= 70 ? 'high' : auth >= 45 ? 'mid' : 'low');
 
   var dir = d.narrative_direction;
   var dirTxt = dir ? dir.charAt(0).toUpperCase() + dir.slice(1) : 'Unspecified';
   var dirCol = _ftlDirColor(dir);
 
-  var credHtml;
+  // One line: credible-or-not, with the source's authority folded in.
+  var credPhrase, credCol;
   if (d.bullshit_probability == null) {
-    credHtml = '<span style="color:#6B7280">Not scored</span>';
+    credPhrase = 'Not scored'; credCol = '#6B7280';
   } else {
     var b = Number(d.bullshit_probability);
     var lab = b >= 0.7 ? ['Likely air', '#C62828'] : b >= 0.45 ? ['Mixed', '#B26A00'] : ['Looks grounded', '#1B7A3D'];
-    credHtml = '<span style="color:' + lab[1] + '">' + lab[0] + ' (' + b.toFixed(2) + ')</span>';
+    credPhrase = lab[0]; credCol = lab[1];
   }
+  var credLine = '<span style="color:' + credCol + '">' + credPhrase + '</span>' +
+                 (authTier ? ' &middot; ' + authTier + ' authority' : '');
 
   var mvHtml = '<span style="color:#6B7280">—</span>';
   if (d.return_5d != null) {
@@ -10428,23 +10430,25 @@ function ftlTooltip(context) {
   var claim = (d.narrative_text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   el.innerHTML =
     '<div class="ftl-tt-claim">&ldquo;' + claim + '&rdquo;</div>' +
-    '<div class="ftl-tt-row"><span>Source</span><span>' + src + '</span></div>' +
-    '<div class="ftl-tt-row"><span>Authority</span><span>' + authLbl + '</span></div>' +
+    '<div class="ftl-tt-row"><span>Credibility</span><span>' + credLine + '</span></div>' +
     '<div class="ftl-tt-row"><span>Direction</span><span style="color:' + dirCol + '">' + dirTxt + '</span></div>' +
-    '<div class="ftl-tt-row"><span>Credibility</span><span>' + credHtml + '</span></div>' +
     '<div class="ftl-tt-row"><span>5&#8209;day move</span><span>' + mvHtml + '</span></div>' +
     foot;
 
+  // Position beside the dot, clamped inside the chart box (never cut off).
   var canvas = context.chart.canvas;
-  var wrapW = canvas.parentNode.clientWidth;
+  var wrap = canvas.parentNode;
+  var wrapW = wrap.clientWidth, wrapH = wrap.clientHeight;
+  el.style.opacity = 1; // render so we can measure height
+  var tw = el.offsetWidth || 250, th = el.offsetHeight || 160;
   var left = canvas.offsetLeft + tt.caretX + 14;
-  if (left + 250 > wrapW) left = canvas.offsetLeft + tt.caretX - 264;
+  if (left + tw > wrapW - 4) left = canvas.offsetLeft + tt.caretX - tw - 14;
   if (left < 4) left = 4;
-  var top = canvas.offsetTop + tt.caretY - 10;
-  if (top < 0) top = 4;
+  var top = canvas.offsetTop + tt.caretY - th / 2;
+  if (top + th > wrapH - 4) top = wrapH - th - 4;
+  if (top < 4) top = 4;
   el.style.left = left + 'px';
   el.style.top = top + 'px';
-  el.style.opacity = 1;
 }
 
 async function loadStrategyData() {
