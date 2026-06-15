@@ -464,7 +464,7 @@
             </div>
             <div class="sl-dc-px" id="sl-rail-px">&mdash;</div>
             <div class="sl-dc-narr" id="sl-dc-narr" style="display:none;">
-              <div class="sl-dc-themes-lbl">Primary narrative</div>
+              <div class="sl-dc-themes-lbl">Top narrative</div>
               <div class="sl-dc-story"><span class="sl-dc-storydot" id="sl-rail-storydot"></span><span class="sl-rail-storytext" id="sl-rail-storytext"></span></div>
             </div>
             <div class="sl-dc-themes-lbl">Dominant narratives</div>
@@ -546,16 +546,6 @@
   var SL_CLUSTER_TICKER='';      // ticker SL_CLUSTERS was loaded for
   var SL_DAY_NARR={};            // {YYYY-MM-DD: {count, narrative_text, ...}} most-authoritative narrative per day
   var SL_DAY_NARR_TICKER='';     // ticker SL_DAY_NARR was loaded for
-  var SL_DAY_STORY={};           // {YYYY-MM-DD: {dir, text}} primary daily narrative from v_dash_daily_story
-  // Bull/bear/neutral from the day's narrative_state (price move as fallback).
-  function slStoryDir(row){
-    var st=(row.narrative_state||'').toLowerCase();
-    if(/surg|build|strengthen|accelerat|recover/.test(st))return 'bull';
-    if(/fragile|collaps|weaken|crack|crash|fad|declin/.test(st))return 'bear';
-    var pc=Number(row.price_change_pct);
-    if(isFinite(pc)){ if(pc>0.25)return 'bull'; if(pc<-0.25)return 'bear'; }
-    return 'neutral';
-  }
   var SL_SHOW_CLUSTERS=true;     // cluster lane panel visible
   var SL_CLUSTER_EXPAND=false;   // false = top lanes only, true = all lanes
   var SL_LAST_DAY=null;          // last day shown in the floating card (for horizon refresh)
@@ -1365,14 +1355,15 @@
     var px=document.getElementById('sl-rail-px');
     if(px){var spy=slSpyClose(ds);px.innerHTML=(dayClose!=null?('$'+dayClose.toFixed(2)):'&mdash;')+(spy!=null?'<small>SPY $'+spy.toFixed(2)+'</small>':'');}
 
-    // Primary daily narrative (v_dash_daily_story) with a minimal bull/bear dot.
-    var narrBox=document.getElementById('sl-dc-narr'),story=SL_DAY_STORY&&SL_DAY_STORY[ds];
+    // Top narrative for the day = the day's most-authoritative voice (same source
+    // as the mass-dot card). Minimal dot colored by its direction (green bull / red bear).
+    var narrBox=document.getElementById('sl-dc-narr'),nd=SL_DAY_NARR&&SL_DAY_NARR[ds];
     if(narrBox){
-      if(story&&story.text){
+      if(nd&&nd.narrative_text){
         narrBox.style.display='';
         var dot=document.getElementById('sl-rail-storydot');
-        if(dot)dot.style.background=story.dir==='bull'?'#00DE94':story.dir==='bear'?'#FF4D4D':'#8A93A0';
-        var txt=document.getElementById('sl-rail-storytext');if(txt)txt.textContent=story.text;
+        if(dot)dot.style.background=slDirColor(nd.narrative_direction);
+        var txt=document.getElementById('sl-rail-storytext');if(txt)txt.textContent=nd.narrative_text;
       }else{narrBox.style.display='none';}
     }
 
@@ -1408,8 +1399,7 @@
       restFetch('narrative_scorecard',{select:'snapshot_date,narrative_energy_absolute,nrs,overreaction_ratio,coordination_score,narrative_energy_t,signal_regime,regime_direction,blue_energy,yellow_energy,energy_t_normalized,narrative_energy_regime,wks_score,narrative_mass_score',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
       restFetch('mv_energy_t_normalized',{select:'snapshot_date,raw_et,te_rank_pct,te_rolling_q90_norm,full_coverage_day',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
       restFetch('mv_physics_energy_normalized',{select:'snapshot_date,raw_pe,pe_rank_pct,pe_rolling_q90_norm,full_coverage_day',ticker:'eq.'+ticker,order:'snapshot_date.asc',limit:'2000'}),
-      fetch('/api/price-history?ticker=SPY&days=2000').then(function(res){return res.ok?res.json():{series:[]};}).then(function(j){return (j&&Array.isArray(j.series))?j.series.map(function(x){return {snapshot_date:x.snapshot_date,price_close:x.price_close};}):[];}).catch(function(){return [];}),
-      restFetch('v_dash_daily_story',{select:'snapshot_date,price_change_pct,narrative_state,headline_explanation,story_claim',ticker:'eq.'+ticker,order:'snapshot_date.desc',limit:'500'})
+      fetch('/api/price-history?ticker=SPY&days=2000').then(function(res){return res.ok?res.json():{series:[]};}).then(function(j){return (j&&Array.isArray(j.series))?j.series.map(function(x){return {snapshot_date:x.snapshot_date,price_close:x.price_close};}):[];}).catch(function(){return [];})
     ]);
     settled.forEach(function(s,i){ if(s.status==='rejected') console.warn('[SL] source',i,'failed:', s.reason && s.reason.message || s.reason); });
     var r=settled.map(function(s){ return s.status==='fulfilled' && Array.isArray(s.value) ? s.value : []; });
@@ -1455,9 +1445,6 @@
     }
     SL_MASS=r[4].filter(function(x){return x.snapshot_date;}).map(function(x){return{snapshot_date:x.snapshot_date,mass:x.narrative_mass_score!=null?Number(x.narrative_mass_score):0,wks:x.wks_score!=null?Number(x.wks_score):0};});
     SL_SPY=(r[7]||[]).filter(function(x){return x.snapshot_date&&x.price_close!=null;});
-    // Primary daily narrative per day (latest run wins via desc order → first kept).
-    SL_DAY_STORY={};
-    (r[8]||[]).forEach(function(x){var d=(x.snapshot_date||'').slice(0,10);if(!d||SL_DAY_STORY[d])return;var t=x.headline_explanation||x.story_claim||'';if(!t)return;SL_DAY_STORY[d]={dir:slStoryDir(x),text:t};});
   }
 
   // ── Narrative clusters: load once per ticker (full history), filter client-side ──
@@ -1672,7 +1659,7 @@
       .then(function(rows){ if(ticker===SL_TICKER && Array.isArray(rows)) SL_KEYWORDS=rows; })
       .catch(function(e){ console.warn('[SL] keywords fetch failed:',e); });
     // Reset cluster state for the new ticker and lazy-load its theme history.
-    SL_CLUSTERS=null;SL_CLUSTER_TICKER='';SL_LAST_DAY=null;SL_CLUSTER_EXPAND=false;SL_DAY_NARR={};SL_DAY_NARR_TICKER='';SL_DAY_STORY={};
+    SL_CLUSTERS=null;SL_CLUSTER_TICKER='';SL_LAST_DAY=null;SL_CLUSTER_EXPAND=false;SL_DAY_NARR={};SL_DAY_NARR_TICKER='';
     var _cardEl=document.getElementById('sl-day-card');if(_cardEl)_cardEl.classList.remove('visible');
     try{
       document.getElementById('sl-chart-outer').innerHTML='<div class="sl-no-data">Loading '+slEsc(ticker)+'...</div>';
