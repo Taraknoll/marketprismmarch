@@ -6,14 +6,16 @@
 //   POST   /api/watchlist  { ticker }    → add (idempotent; 200 if exists)
 //   DELETE /api/watchlist?ticker=NVDA    → remove
 //
-// Reads: any logged-in user (or beta cookie holder) — so a lapsed
-// subscription HIDES the watchlist rather than deletes it.
-// Writes: requireSubscription mode — same gate the dashboard uses, plus the
-// beta-cookie + admin-allowlist bypasses already baked into _require-auth.
+// Access: ANY logged-in user — subscribed or not. The watchlist is a
+// free perk of having an account, so we call requireAuth with
+// { subscriptionOptional: true }, which skips the subscription gate while
+// still requiring a valid Supabase session (mp_session JWT). RLS
+// (auth.uid() = user_id) does the per-user security. Beta-cookie-only
+// callers have no JWT/user_id, so there's no row for them — they get 403.
 //
 // Errors:
 //   401 { error: 'login_required' }         — no session
-//   402 { error: 'subscription_required' }  — logged in, sub inactive (writes)
+//   403 { error: 'watchlist_requires_login' } — beta-cookie-only, no user_id
 //   400 { error: 'invalid_ticker' }         — bad shape
 //   500 { error: 'server_error', detail }   — Supabase / config blew up
 
@@ -103,24 +105,11 @@ module.exports = async (req, res) => {
 
   const method = (req.method || 'GET').toUpperCase();
 
-  // Reads are open to any logged-in user (incl. lapsed subs). Writes require
-  // an active subscription — so requireAuth runs with enforcement, which uses
-  // the env-level ENFORCE_SUBSCRIPTION flag anyway. The reading path uses a
-  // looser check below.
-  const isWrite = (method === 'POST' || method === 'DELETE');
-
-  const auth = await requireAuth(req, res, { jsonOnly: true });
-  if (!auth) return; // requireAuth already responded with 401/402
-
-  // requireAuth (with ENFORCE_SUBSCRIPTION=true) already 402'd anyone without
-  // an active sub for writes. For reads, we WANT lapsed-sub users to still
-  // see their saved tickers — so when ENFORCE_SUBSCRIPTION is on, reads only
-  // get here for active-sub / beta / admin users. That's the same gate as
-  // every other page on the site, which is acceptable: someone whose sub
-  // lapses will already be bounced from /dashboard, so they'll never reach
-  // the watchlist UI in the first place. Keeping the rows around means
-  // they're still there when they resubscribe.
-  void isWrite;
+  // Watchlist is open to ANY logged-in user, subscribed or not — it's a free
+  // account perk. subscriptionOptional skips the sub gate but still requires a
+  // valid Supabase session; RLS handles per-user isolation.
+  const auth = await requireAuth(req, res, { jsonOnly: true, subscriptionOptional: true });
+  if (!auth) return; // requireAuth already responded with 401
 
   const user = auth.user;
   const jwt  = auth.jwt;

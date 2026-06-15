@@ -182,9 +182,11 @@ module.exports = async function requireAuth(req, res, options){
 
   // Logged-in path. Enforce subscription only if the kill switch is on.
   if (user) {
-    if (!enforceSub) {
+    if (!enforceSub || opts.subscriptionOptional) {
       // Legacy behavior — preserved while the kill switch is off so this
-      // ships without locking anyone out.
+      // ships without locking anyone out. Also the path for routes that opt
+      // in via { subscriptionOptional: true } (e.g. the watchlist), which are
+      // meant to work for ANY logged-in user, subscribed or not.
       return { user: user, hasBeta: false, subscription: null, jwt: cookies.mp_session };
     }
 

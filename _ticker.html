@@ -4619,7 +4619,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
         toast(saved ? (t+' added to your watchlist') : (t+' removed from watchlist'));
       }).catch(function(e){
         var c=String(e&&e.message);
-        if(c==='402'||c==='403') toast('Watchlist is available on a paid account.');
+        if(c==='401'||c==='403') toast('Sign in to save tickers to your watchlist.');
         else toast('Could not update watchlist — try again.');
       }).finally(function(){ busy=false; });
     };
