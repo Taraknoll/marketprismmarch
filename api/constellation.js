@@ -27,7 +27,7 @@ const MAX_ROWS = 1500;
 const COLS = [
   'dot_hash', 'observed_at', 'narrative_text', 'speaker_type',
   'speaker_authority', 'narrative_direction', 'bullshit_probability',
-  'return_5d', 'ground_truth_label', 'chain_root_hash'
+  'return_5d', 'ground_truth_label', 'chain_root_hash', 'price_at_observation'
 ].join(',');
 
 function sendJson(res, status, obj) {
@@ -103,11 +103,18 @@ module.exports = async (req, res) => {
       `&order=observed_at.desc&limit=${MAX_ROWS}`;
     if (scored) rowsUrl += `&bullshit_probability=not.is.null`;
 
-    const [totalResp, bsResp, falseResp, rowsResp] = await Promise.all([
+    // Latest close, to compute a provisional "return since the claim" for dots
+    // whose final 5-day move hasn't been written yet.
+    const priceUrl = `${supabaseUrl}/rest/v1/ticker_snapshots` +
+      `?select=price_close,snapshot_date&ticker=eq.${encodeURIComponent(ticker)}` +
+      `&price_close=not.is.null&order=snapshot_date.desc&limit=1`;
+
+    const [totalResp, bsResp, falseResp, rowsResp, priceResp] = await Promise.all([
       countReq(''),
       countReq('&bullshit_probability=gt.0.7'),
       countReq('&ground_truth_label=is.false'),
-      fetch(rowsUrl, { headers: Object.assign({ Prefer: 'count=exact' }, headers) })
+      fetch(rowsUrl, { headers: Object.assign({ Prefer: 'count=exact' }, headers) }),
+      fetch(priceUrl, { headers })
     ]);
 
     if (!rowsResp.ok) {
@@ -121,6 +128,21 @@ module.exports = async (req, res) => {
 
     const rows = await rowsResp.json().catch(() => []);
     const matched = totalFromRange(rowsResp); // total matching display filter
+
+    // Provisional "return since the claim" for dots missing a final 5-day move.
+    let currentPrice = null;
+    try {
+      const pj = await priceResp.json().catch(() => []);
+      if (Array.isArray(pj) && pj.length && pj[0].price_close != null) currentPrice = Number(pj[0].price_close);
+    } catch (e) { /* ignore — provisional fill is best-effort */ }
+    if (currentPrice) {
+      for (const r of rows) {
+        if (r.return_5d == null && r.price_at_observation != null) {
+          const obs = Number(r.price_at_observation);
+          if (obs > 0) r.live_return = (currentPrice - obs) / obs; // decimal fraction like return_5d
+        }
+      }
+    }
 
     const summary = {
       genesis_total: totalFromRange(totalResp),
@@ -160,6 +182,7 @@ module.exports = async (req, res) => {
       scored,
       top,                       // overall cap
       per_day: perDay,           // per-day density cap
+      current_price: currentPrice, // for provisional "return since claim"
       summary,
       matched,                   // rows matching the (scored) display filter in-window
       fetched: rows.length,      // rows pulled before density caps (<= MAX_ROWS)

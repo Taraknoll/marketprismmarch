@@ -10324,8 +10324,13 @@ function ftlRender() {
 
   var impact = (_ftlMetric === 'impact');
   var allDots = data.dots || [];
-  // Impact axis can only place dots whose 5-day move has resolved.
-  var dots = impact ? allDots.filter(function (d) { return d.return_5d != null; }) : allDots;
+  // Impact y = final 5-day move, or a provisional "return since the claim"
+  // (live_return) when the 5-day move hasn't been computed yet.
+  var moveOf = function (d) {
+    return d.return_5d != null ? Number(d.return_5d)
+      : (d.live_return != null ? Number(d.live_return) : null);
+  };
+  var dots = impact ? allDots.filter(function (d) { return moveOf(d) != null; }) : allDots;
 
   // The "show unscored" toggle is a credibility-mode concept; impact mode always
   // includes unscored dots, so hide it there.
@@ -10355,7 +10360,7 @@ function ftlRender() {
   // outliers clamp to the edge.
   var M = 5;
   if (impact) {
-    var absv = dots.map(function (d) { return Math.abs(Number(d.return_5d) * 100); })
+    var absv = dots.map(function (d) { return Math.abs(moveOf(d) * 100); })
                    .sort(function (a, b) { return a - b; });
     var p = absv.length ? absv[Math.min(absv.length - 1, Math.floor(absv.length * 0.92))] : 5;
     M = Math.min(40, Math.max(4, Math.ceil(p / 2) * 2));
@@ -10373,9 +10378,11 @@ function ftlRender() {
     var hash = d.dot_hash || (d.observed_at + (d.narrative_text || ''));
     var xj = (ftlRand(hash + 'x') - 0.5) * DAY * 1.6;
     var yv, yj;
+    var prov = false;
     if (impact) {
+      prov = (d.return_5d == null && d.live_return != null); // provisional: return-so-far
       yj = (ftlRand(hash + 'y') - 0.5) * (M * 0.06);
-      yv = Math.max(-M, Math.min(M, Number(d.return_5d) * 100 + yj));
+      yv = Math.max(-M, Math.min(M, moveOf(d) * 100 + yj));
     } else {
       yj = (ftlRand(hash + 'y') - 0.5) * 0.05;
       yv = Math.max(0.02, Math.min(0.99, (hasBs ? Number(d.bullshit_probability) : 0.5) + yj));
@@ -10387,6 +10394,7 @@ function ftlRender() {
       _bg: fill,
       _border: isFalse ? '#FFFFFF' : fill,
       _bw: isFalse ? 2.5 : 1.25,
+      _prov: prov,   // hollow style + "return so far" tooltip
       _d: d
     };
   });
@@ -10395,11 +10403,15 @@ function ftlRender() {
   var parts = [];
   var perDayTxt = data.filtered ? ' (up to ' + data.per_day + ' most-authoritative per day)' : '';
   if (impact) {
+    var provN = 0;
+    for (var pi = 0; pi < points.length; pi++) { if (points[pi]._prov) provN++; }
     parts.push('Showing ' + points.length.toLocaleString() + ' narrative' + (points.length === 1 ? '' : 's') +
-      ' with a resolved 5-day move' + perDayTxt + ', scored or not.');
+      ' by 5-day price move' + perDayTxt + ', scored or not.');
+    if (provN > 0) parts.push(provN.toLocaleString() + ' hollow dot' + (provN === 1 ? '' : 's') +
+      ' show return-so-far (final 5-day move not computed yet).');
     var pending = allDots.length - dots.length;
     if (pending > 0) parts.push(pending.toLocaleString() + ' very recent dot' + (pending === 1 ? '' : 's') +
-      ' hidden — 5-day move not resolved yet.');
+      ' hidden — no price move available yet.');
   } else {
     parts.push('Showing ' + points.length.toLocaleString() + (data.filtered ? ' of ' + data.matched.toLocaleString() : '') +
       (_ftlScored ? ' scored' : '') + ' narrative' + (points.length === 1 ? '' : 's') + ' in range' + perDayTxt + '.');
@@ -10439,10 +10451,10 @@ function ftlRender() {
     type: 'bubble',
     data: { datasets: [{
       data: points,
-      backgroundColor: points.map(function (p) { return p._bg + '6E'; }),
+      backgroundColor: points.map(function (p) { return p._bg + (p._prov ? '1A' : '6E'); }),
       borderColor: points.map(function (p) { return p._border; }),
-      borderWidth: points.map(function (p) { return p._bw; }),
-      hoverBackgroundColor: points.map(function (p) { return p._bg; }),
+      borderWidth: points.map(function (p) { return p._prov ? 1.75 : p._bw; }),
+      hoverBackgroundColor: points.map(function (p) { return p._bg + (p._prov ? '55' : 'FF'); }),
       hoverBorderColor: points.map(function (p) { return p._border; }),
       hoverBorderWidth: points.map(function (p) { return p._bw + 1.5; }),
       hoverRadius: 3
@@ -10512,11 +10524,19 @@ function ftlTooltip(context) {
   var credLine = '<span style="color:' + credCol + '">' + credPhrase + '</span>' +
                  (authTier ? ' &middot; ' + authTier + ' authority' : '');
 
+  // 5-day move if resolved; otherwise the provisional return-since-the-claim.
+  var mvLabel = '5&#8209;day move';
   var mvHtml = '<span style="color:#6B7280">—</span>';
-  if (d.return_5d != null) {
-    var pct = Number(d.return_5d) * 100; // stored as decimal fraction
+  var mvVal = (d.return_5d != null) ? Number(d.return_5d)
+            : (d.live_return != null ? Number(d.live_return) : null);
+  if (mvVal != null) {
+    var pct = mvVal * 100; // stored as decimal fraction
     mvHtml = '<span style="color:' + (pct >= 0 ? '#1B7A3D' : '#C62828') + '">' +
              (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%</span>';
+    if (d.return_5d == null) {
+      mvLabel = 'Return so far';
+      mvHtml += ' <span style="color:#8A93A0;font-weight:500">(5&#8209;day pending)</span>';
+    }
   }
 
   var foot;
@@ -10529,7 +10549,7 @@ function ftlTooltip(context) {
     '<div class="ftl-tt-claim">&ldquo;' + claim + '&rdquo;</div>' +
     '<div class="ftl-tt-row"><span>Credibility</span><span>' + credLine + '</span></div>' +
     '<div class="ftl-tt-row"><span>Direction</span><span style="color:' + dirCol + '">' + dirTxt + '</span></div>' +
-    '<div class="ftl-tt-row"><span>5&#8209;day move</span><span>' + mvHtml + '</span></div>' +
+    '<div class="ftl-tt-row"><span>' + mvLabel + '</span><span>' + mvHtml + '</span></div>' +
     foot;
 
   // Position beside the dot, clamped inside the chart box (never cut off).
