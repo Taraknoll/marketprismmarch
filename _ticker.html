@@ -10382,16 +10382,20 @@ function ftlRender() {
   for (var qi = 0; qi < points.length; qi++) { if (points[qi].x < minPt) minPt = points[qi].x; }
   var winStart = (_ftlDays === 'all') ? minPt : (xMax - parseInt(_ftlDays, 10) * DAY);
   var xMin = isFinite(minPt) ? Math.max(winStart, minPt - 3 * DAY) : winStart;
+  // Headroom beyond the data so dots at the edge aren't clipped (Chart.js clips
+  // bubbles to the plot area); ticks stay on the data-relevant values.
+  var yPad = Math.max(1.2, M * 0.12);
   var yScale = impact ? {
-    min: -M, max: M,
+    min: -(M + yPad), max: M + yPad,
     grid: { color: function (c) { return (c.tick && c.tick.value === 0) ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)'; } },
-    ticks: { color: '#A0A8B0', font: { family: 'Inter', size: 11 },
-      callback: function (v) { return (v > 0 ? '+' : '') + v + '%'; } },
+    ticks: { color: '#A0A8B0', font: { family: 'Inter', size: 11 }, stepSize: M >= 12 ? 5 : 2,
+      callback: function (v) { return (Math.abs(v) > M + 0.01) ? '' : (v > 0 ? '+' : '') + v + '%'; } },
     title: { display: true, text: '5-day price move after the claim', color: '#A0A8B0', font: { family: 'Inter', size: 12 } }
   } : {
-    min: 0, max: 1,
+    min: -0.05, max: 1.05,
     grid: { color: 'rgba(255,255,255,0.05)' },
-    ticks: { color: '#A0A8B0', font: { family: 'Inter', size: 11 }, stepSize: 0.25 },
+    ticks: { color: '#A0A8B0', font: { family: 'Inter', size: 11 }, stepSize: 0.25,
+      callback: function (v) { return (v < -0.001 || v > 1.001) ? '' : v; } },
     title: { display: true, text: 'bullshit probability  —  low = credible · high = air', color: '#A0A8B0', font: { family: 'Inter', size: 12 } }
   };
 
@@ -10624,7 +10628,7 @@ function nclRender() {
           }
         },
         y: {
-          min: -0.5, max: n - 0.5,
+          min: -0.8, max: n - 0.2,
           grid: { color: 'rgba(255,255,255,0.05)' },
           ticks: {
             color: '#C7CDD4', font: { family: 'Inter', size: 11 }, stepSize: 1,
