@@ -185,10 +185,6 @@
       "destination": "/api/home-v3"
     },
     {
-      "source": "/traps",
-      "destination": "/api/traps"
-    },
-    {
       "source": "/daily-v2",
       "destination": "/api/daily-plays-v2"
     },
@@ -289,9 +285,6 @@
     },
     "api/home-v3.js": {
       "includeFiles": "_home_v3.html"
-    },
-    "api/traps.js": {
-      "includeFiles": "_traps.html"
     },
     "api/seo-why-down.js": {
       "includeFiles": "{_seo_ticker.html,lib/**}"
