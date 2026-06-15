@@ -185,6 +185,10 @@
       "destination": "/api/home-v3"
     },
     {
+      "source": "/traps",
+      "destination": "/api/traps"
+    },
+    {
       "source": "/daily-v2",
       "destination": "/api/daily-plays-v2"
     },
@@ -217,7 +221,8 @@
     },
     "api/dots-predict.js": {
       "includeFiles": "node_modules/@xenova/transformers/dist/**",
-      "maxDuration": 60
+      "maxDuration": 60,
+      "memory": 3008
     },
     "api/ticker.js": {
       "includeFiles": "{_ticker.html,lib/**}"
@@ -284,6 +289,9 @@
     },
     "api/home-v3.js": {
       "includeFiles": "_home_v3.html"
+    },
+    "api/traps.js": {
+      "includeFiles": "_traps.html"
     },
     "api/seo-why-down.js": {
       "includeFiles": "{_seo_ticker.html,lib/**}"
