@@ -4423,6 +4423,7 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
 <script src="/billing-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
   <script>
     // Apply saved theme immediately — dark is default, only switch to light if explicitly chosen
     (function(){
@@ -5060,11 +5061,12 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
       .ftl-toggle { font-family: var(--font-body); font-size: 12px; color: var(--mp-text-tertiary);
         display: inline-flex; align-items: center; gap: 7px; cursor: pointer; user-select: none; }
       .ftl-toggle input { accent-color: var(--mp-cyan, #00AEFF); width: 14px; height: 14px; }
+      .ftl-actions { margin-left: auto; display: inline-flex; gap: 8px; }
       .ftl-dl { font-family: var(--font-body); font-size: 12px; font-weight: 600;
         color: var(--mp-text-secondary); background: var(--mp-surface2, #111927);
         border: 1px solid var(--mp-border); border-radius: 9px; padding: 7px 14px;
         cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-        transition: all .15s; margin-left: auto; }
+        transition: all .15s; }
       .ftl-dl:hover { border-color: var(--mp-border-hover); color: var(--mp-text-primary); }
       .ftl-legends { display: flex; flex-wrap: wrap; gap: 20px 28px; margin-bottom: 14px;
         padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--mp-border);
@@ -5154,7 +5156,10 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
             <button class="ftl-preset" data-days="all">All</button>
           </div>
           <label class="ftl-toggle"><input type="checkbox" id="ftl-unscored"> Show unscored (pre&#8209;2026) dots</label>
-          <button class="ftl-dl" type="button" onclick="mpDownloadChart('ftl')">&#8595;&nbsp; Download</button>
+          <div class="ftl-actions">
+            <button class="ftl-dl" type="button" onclick="mpResetZoom('ftl')" title="Reset zoom">&#8634;&nbsp; Reset</button>
+            <button class="ftl-dl" type="button" onclick="mpDownloadChart('ftl')">&#8595;&nbsp; Download</button>
+          </div>
         </div>
 
         <div class="ftl-chart-wrap">
@@ -5193,7 +5198,10 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
             <button class="ftl-preset" data-days="180">6mo</button>
             <button class="ftl-preset" data-days="all">All</button>
           </div>
-          <button class="ftl-dl" type="button" onclick="mpDownloadChart('ncl')">&#8595;&nbsp; Download</button>
+          <div class="ftl-actions">
+            <button class="ftl-dl" type="button" onclick="mpResetZoom('ncl')" title="Reset zoom">&#8634;&nbsp; Reset</button>
+            <button class="ftl-dl" type="button" onclick="mpDownloadChart('ncl')">&#8595;&nbsp; Download</button>
+          </div>
         </div>
 
         <div class="ftl-chart-wrap" id="ncl-chart-wrap">
@@ -10379,6 +10387,7 @@ function ftlRender() {
   } else {
     parts.push('Credibility scores are sparse before 2026; the newest ~20 trading days are intentionally still unresolved (no verdict yet).');
   }
+  parts.push('Tip: scroll or drag a box to zoom in (spreads the dots); double-click to reset.');
   if (note) note.textContent = parts.join(' ');
 
   var wide = (_ftlDays === '180' || _ftlDays === 'all');
@@ -10441,10 +10450,20 @@ function ftlRender() {
       },
       plugins: {
         legend: { display: false },
-        tooltip: { enabled: false, external: ftlTooltip }
+        tooltip: { enabled: false, external: ftlTooltip },
+        zoom: {
+          zoom: {
+            wheel: { enabled: true },
+            drag: { enabled: true, backgroundColor: 'rgba(0,174,255,0.12)', borderColor: 'rgba(0,174,255,0.55)', borderWidth: 1 },
+            mode: 'xy'
+          },
+          limits: { x: { min: 'original', max: 'original' }, y: { min: 'original', max: 'original' } }
+        }
       }
     }
   });
+  var cv = document.getElementById('ftl-canvas');
+  if (cv) cv.ondblclick = function () { if (window._ftlChart) window._ftlChart.resetZoom(); };
 }
 
 function ftlTooltip(context) {
@@ -10600,7 +10619,8 @@ function nclRender() {
   });
 
   if (note) note.textContent = dots.length.toLocaleString() + ' theme-days across ' + n +
-    ' theme' + (n === 1 ? '' : 's') + ' in range. Bubble size = stories in that cluster; lanes ordered by total activity.';
+    ' theme' + (n === 1 ? '' : 's') + ' in range. Bubble size = stories in that cluster; lanes ordered by total activity. ' +
+    'Tip: scroll or drag a box to zoom in; double-click to reset.';
 
   var xMax = Date.now();
   var xMin = (_nclDays === 'all') ? undefined : (xMax - parseInt(_nclDays, 10) * DAY);
@@ -10648,9 +10668,22 @@ function nclRender() {
           }
         }
       },
-      plugins: { legend: { display: false }, tooltip: { enabled: false, external: nclTooltip } }
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false, external: nclTooltip },
+        zoom: {
+          zoom: {
+            wheel: { enabled: true },
+            drag: { enabled: true, backgroundColor: 'rgba(0,174,255,0.12)', borderColor: 'rgba(0,174,255,0.55)', borderWidth: 1 },
+            mode: 'xy'
+          },
+          limits: { x: { min: 'original', max: 'original' }, y: { min: 'original', max: 'original' } }
+        }
+      }
     }
   });
+  var ncv = document.getElementById('ncl-canvas');
+  if (ncv) ncv.ondblclick = function () { if (window._nclChart) window._nclChart.resetZoom(); };
 }
 
 function nclTooltip(context) {
@@ -10695,6 +10728,11 @@ function nclTooltip(context) {
   if (top < 4) top = 4;
   el.style.left = left + 'px';
   el.style.top = top + 'px';
+}
+
+function mpResetZoom(which) {
+  var chart = (which === 'ncl') ? window._nclChart : window._ftlChart;
+  if (chart && chart.resetZoom) chart.resetZoom();
 }
 
 // ── Branded chart download (PNG) ──────────────────────────────────────────────
