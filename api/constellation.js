@@ -51,8 +51,9 @@ module.exports = async (req, res) => {
       .replace(/[^A-Za-z0-9.\-]/g, '').toUpperCase();
     const daysRaw = (url.searchParams.get('days') || '90').toLowerCase();
     const scored = url.searchParams.get('scored') !== '0'; // default: scored-only
-    // Density control: keep the N biggest 5-day movers (largest price impact).
-    const top = Math.min(Math.max(parseInt(url.searchParams.get('top') || '120', 10) || 120, 10), 600);
+    // Max dots to return (most-recent-first). The client spreads them on a
+    // price-impact axis, so we no longer need to pre-filter by impact.
+    const top = Math.min(Math.max(parseInt(url.searchParams.get('top') || '400', 10) || 400, 10), 1000);
 
     if (!ticker) return sendJson(res, 400, { error: 'Missing ticker' });
 
@@ -124,22 +125,12 @@ module.exports = async (req, res) => {
       resolved_false: totalFromRange(falseResp)
     };
 
-    // ── Density: keep the N biggest 5-day movers (largest price impact) ──
-    // Ranking by |return_5d| surfaces the highest-impact narratives and
-    // declutters the scatter. Dots from the last ~5 trading days have no
-    // resolved 5-day move yet, so they naturally fall out of the impact view.
-    let selected = rows;
-    if (rows.length > top) {
-      const ranked = rows
-        .filter((r) => r.return_5d != null)
-        .sort((a, b) => Math.abs(Number(b.return_5d)) - Math.abs(Number(a.return_5d)))
-        .slice(0, top);
-      const keep = new Set(ranked.map((r) => r.dot_hash));
-      selected = rows.filter((r) => keep.has(r.dot_hash));
-    }
+    // Cap to the most-recent `top` so the whole window stays represented
+    // (no impact pre-filter — the client's price-impact axis declutters).
+    let selected = rows.length > top ? rows.slice(0, top) : rows;
 
     // Oldest-first for the timeline; client charts on x=time anyway.
-    selected.reverse();
+    selected = selected.slice().reverse();
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=900');
     return sendJson(res, 200, {

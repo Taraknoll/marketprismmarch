@@ -5109,9 +5109,9 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
       </div>
       <div class="section-body" style="padding:20px;">
 
-        <p class="ftl-intro">
-          Each dot is <b>one narrative</b> told about this stock. <b>Higher = less credible</b>
-          (closer to "air"). <b>Bigger = more authoritative source.</b>
+        <p class="ftl-intro" id="ftl-intro">
+          Each dot is <b>one narrative</b> told about this stock.
+          <b>Bigger = more authoritative source.</b>
           A <b>red ring</b> means the claim was later contradicted by price — it resolved <b>false</b>.
         </p>
 
@@ -5138,6 +5138,10 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
         </div>
 
         <div class="ftl-controls">
+          <div class="ftl-presets" id="ftl-metrics">
+            <button class="ftl-preset active" data-metric="impact">Price impact</button>
+            <button class="ftl-preset" data-metric="credibility">Credibility</button>
+          </div>
           <div class="ftl-presets" id="ftl-presets">
             <button class="ftl-preset" data-days="30">30d</button>
             <button class="ftl-preset active" data-days="90">90d</button>
@@ -10165,7 +10169,8 @@ async function createImage() {
 // ── Strategy Tab — Narrative Response Intelligence ──────────────────────────
 // ── Forensic Timeline (narrative constellation) ───────────────────────────────
 var _ftlDays = '90';
-var _ftlScored = true; // default: scored dots only (keeps mega-caps readable)
+var _ftlScored = true;        // default: scored dots only (keeps mega-caps readable)
+var _ftlMetric = 'impact';    // y-axis: 'impact' (5-day move) or 'credibility'
 
 function initTimeline() {
   var t = document.getElementById('ftl-ticker');
@@ -10179,6 +10184,15 @@ function initTimeline() {
       loadTimeline();
     });
   });
+  // Y-axis metric toggle (re-renders cached data, no refetch)
+  document.querySelectorAll('#ftl-metrics .ftl-preset').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('#ftl-metrics .ftl-preset').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      _ftlMetric = btn.dataset.metric;
+      ftlRender();
+    });
+  });
   // Unscored toggle
   var chk = document.getElementById('ftl-unscored');
   if (chk) chk.addEventListener('change', function () { _ftlScored = !chk.checked; loadTimeline(); });
@@ -10190,6 +10204,13 @@ function _ftlDirColor(dir) {
   if (dir === 'bearish') return '#E0663A';
   if (dir === 'neutral') return '#8A93A0';
   return '#4A5260'; // null/unknown direction
+}
+
+// Deterministic [0,1) from a string seed so jitter is stable across reloads.
+function ftlRand(str) {
+  var h = 2166136261;
+  for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ((h >>> 0) % 100000) / 100000;
 }
 
 async function loadTimeline() {
@@ -10217,107 +10238,152 @@ async function loadTimeline() {
     var data = await resp.json();
     if (!resp.ok) throw new Error(data && data.error ? data.error : 'Request failed');
 
+    window._ftlData = data;
     var s = data.summary || {};
     document.getElementById('ftl-s-total').textContent = s.genesis_total != null ? s.genesis_total.toLocaleString() : '—';
     document.getElementById('ftl-s-bs').textContent    = s.high_bullshit != null ? s.high_bullshit.toLocaleString() : '—';
     document.getElementById('ftl-s-false').textContent = s.resolved_false != null ? s.resolved_false.toLocaleString() : '—';
 
-    var dots = data.dots || [];
-    if (!dots.length) {
-      if (state) { state.style.display = 'block'; state.textContent = 'No narratives found for this range.'; }
-      return;
-    }
-    if (state) state.style.display = 'none';
-
-    // Honest coverage note.
-    var parts = [];
-    var shown = data.returned.toLocaleString();
-    if (data.filtered) {
-      parts.push('Showing the ' + shown + ' highest-impact ' + (_ftlScored ? 'scored ' : '') +
-                 'narratives (largest 5-day moves) of ' + data.matched.toLocaleString() + ' in range.');
-    } else {
-      parts.push('Showing all ' + shown + (_ftlScored ? ' scored' : '') +
-                 ' narrative' + (data.returned === 1 ? '' : 's') + ' in range.');
-    }
-    parts.push('Credibility scores are sparse before 2026; the newest ~20 trading days are intentionally still unresolved (no verdict yet).');
-    if (note) note.textContent = parts.join(' ');
-
-    // Deterministic [0,1) from a dot's hash so jitter is stable across reloads.
-    function ftlRand(str) {
-      var h = 2166136261;
-      for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
-      return ((h >>> 0) % 100000) / 100000;
-    }
-    var DAY = 86400000;
-    var points = dots.map(function (d) {
-      var hasBs = d.bullshit_probability != null;
-      var auth = d.speaker_authority != null ? Number(d.speaker_authority) : null;
-      var isFalse = d.ground_truth_label === false;
-      var fill = hasBs ? _ftlDirColor(d.narrative_direction) : '#6B7280';
-      // Same-day, same-credibility stories pile up — fan them out a touch so
-      // each remains clickable. Jitter is small (x within ~half a day, y < 0.03)
-      // and seeded, so it declutters without misrepresenting the reading.
-      var hash = d.dot_hash || (d.observed_at + (d.narrative_text || ''));
-      var xj = (ftlRand(hash + 'x') - 0.5) * DAY * 1.1;
-      var yj = (ftlRand(hash + 'y') - 0.5) * 0.05;
-      var yv = (hasBs ? Number(d.bullshit_probability) : 0.5) + yj;
-      return {
-        x: new Date(d.observed_at).getTime() + xj,
-        y: Math.max(0.02, Math.min(0.99, yv)),
-        r: 5 + (auth != null ? auth : 0) * 0.11,
-        _bg: fill,
-        _border: isFalse ? '#FF4D4D' : fill,
-        _bw: isFalse ? 2.5 : 1.25,
-        _d: d
-      };
-    });
-
-    var wide = (_ftlDays === '180' || _ftlDays === 'all');
-    var ctx = document.getElementById('ftl-canvas').getContext('2d');
-    window._ftlChart = new Chart(ctx, {
-      type: 'bubble',
-      data: { datasets: [{
-        data: points,
-        backgroundColor: points.map(function (p) { return p._bg + '6E'; }),
-        borderColor: points.map(function (p) { return p._border; }),
-        borderWidth: points.map(function (p) { return p._bw; }),
-        hoverBackgroundColor: points.map(function (p) { return p._bg; }),
-        hoverBorderColor: '#FFFFFF',
-        hoverBorderWidth: points.map(function (p) { return p._bw + 1; })
-      }]},
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        animation: { duration: 300 },
-        scales: {
-          x: {
-            type: 'linear',
-            grid: { color: 'rgba(255,255,255,0.05)' },
-            ticks: {
-              color: '#A0A8B0', font: { family: 'Inter', size: 11 }, maxTicksLimit: 7,
-              callback: function (v) {
-                var dt = new Date(v);
-                var mo = dt.toLocaleString('en-US', { month: 'short' });
-                return wide ? mo + " '" + String(dt.getFullYear()).slice(2) : mo + ' ' + dt.getDate();
-              }
-            }
-          },
-          y: {
-            min: 0, max: 1,
-            grid: { color: 'rgba(255,255,255,0.05)' },
-            ticks: { color: '#A0A8B0', font: { family: 'Inter', size: 11 }, stepSize: 0.25 },
-            title: { display: true, text: 'bullshit probability  —  low = credible · high = air',
-              color: '#A0A8B0', font: { family: 'Inter', size: 12 } }
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false, external: ftlTooltip }
-        }
-      }
-    });
+    ftlRender();
   } catch (err) {
     if (state) { state.style.display = 'block'; state.textContent = 'Could not load narrative history: ' + (err.message || err); }
   }
+}
+
+// Draw (or redraw) the scatter from cached data for the active y-axis metric.
+function ftlRender() {
+  var data = window._ftlData;
+  if (!data || typeof Chart === 'undefined') return;
+  var state = document.getElementById('ftl-state');
+  var note = document.getElementById('ftl-note');
+  var intro = document.getElementById('ftl-intro');
+  if (window._ftlChart) { try { window._ftlChart.destroy(); } catch (e) {} window._ftlChart = null; }
+
+  var impact = (_ftlMetric === 'impact');
+  var allDots = data.dots || [];
+  // Impact axis can only place dots whose 5-day move has resolved.
+  var dots = impact ? allDots.filter(function (d) { return d.return_5d != null; }) : allDots;
+
+  if (!dots.length) {
+    if (state) {
+      state.style.display = 'block';
+      state.textContent = impact
+        ? 'No resolved 5-day moves in this range yet — try Credibility or a wider range.'
+        : 'No narratives found for this range.';
+    }
+    return;
+  }
+  if (state) state.style.display = 'none';
+
+  // Intro copy follows the active axis.
+  if (intro) {
+    intro.innerHTML = impact
+      ? 'Each dot is <b>one narrative</b> told about this stock. <b>Up = the stock rose</b> over the 5 days after the claim, <b>down = it fell</b>. <b>Bigger = more authoritative source.</b> A <b>red ring</b> means it resolved <b>false</b>.'
+      : 'Each dot is <b>one narrative</b> told about this stock. <b>Higher = less credible</b> (closer to "air"). <b>Bigger = more authoritative source.</b> A <b>red ring</b> means the claim was contradicted by price — it resolved <b>false</b>.';
+  }
+
+  // Symmetric, round y-bounds for the impact axis.
+  var M = 5;
+  if (impact) {
+    var mx = 0;
+    for (var i = 0; i < dots.length; i++) {
+      var a = Math.abs(Number(dots[i].return_5d) * 100);
+      if (a > mx) mx = a;
+    }
+    M = Math.min(60, Math.max(5, Math.ceil(mx / 5) * 5));
+  }
+
+  var DAY = 86400000;
+  var points = dots.map(function (d) {
+    var hasBs = d.bullshit_probability != null;
+    var auth = d.speaker_authority != null ? Number(d.speaker_authority) : null;
+    var isFalse = d.ground_truth_label === false;
+    var fill = hasBs ? _ftlDirColor(d.narrative_direction) : '#6B7280';
+    // Seeded jitter fans out coincident dots so each stays clickable.
+    var hash = d.dot_hash || (d.observed_at + (d.narrative_text || ''));
+    var xj = (ftlRand(hash + 'x') - 0.5) * DAY * 1.1;
+    var yv, yj;
+    if (impact) {
+      yj = (ftlRand(hash + 'y') - 0.5) * (M * 0.04);
+      yv = Math.max(-M, Math.min(M, Number(d.return_5d) * 100 + yj));
+    } else {
+      yj = (ftlRand(hash + 'y') - 0.5) * 0.05;
+      yv = Math.max(0.02, Math.min(0.99, (hasBs ? Number(d.bullshit_probability) : 0.5) + yj));
+    }
+    return {
+      x: new Date(d.observed_at).getTime() + xj,
+      y: yv,
+      r: 5 + (auth != null ? auth : 0) * 0.11,
+      _bg: fill,
+      _border: isFalse ? '#FF4D4D' : fill,
+      _bw: isFalse ? 2.5 : 1.25,
+      _d: d
+    };
+  });
+
+  // Coverage note.
+  var parts = [];
+  parts.push('Showing ' + points.length.toLocaleString() + (data.filtered ? ' of ' + data.matched.toLocaleString() : '') +
+             (_ftlScored ? ' scored' : '') + ' narrative' + (points.length === 1 ? '' : 's') + ' in range.');
+  if (impact) {
+    var pending = allDots.length - dots.length;
+    if (pending > 0) parts.push(pending.toLocaleString() + ' recent dot' + (pending === 1 ? '' : 's') +
+      ' hidden — 5-day move not resolved yet (see Credibility).');
+  } else {
+    parts.push('Credibility scores are sparse before 2026; the newest ~20 trading days are intentionally still unresolved (no verdict yet).');
+  }
+  if (note) note.textContent = parts.join(' ');
+
+  var wide = (_ftlDays === '180' || _ftlDays === 'all');
+  var yScale = impact ? {
+    min: -M, max: M,
+    grid: { color: function (c) { return (c.tick && c.tick.value === 0) ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)'; } },
+    ticks: { color: '#A0A8B0', font: { family: 'Inter', size: 11 },
+      callback: function (v) { return (v > 0 ? '+' : '') + v + '%'; } },
+    title: { display: true, text: '5-day price move after the claim', color: '#A0A8B0', font: { family: 'Inter', size: 12 } }
+  } : {
+    min: 0, max: 1,
+    grid: { color: 'rgba(255,255,255,0.05)' },
+    ticks: { color: '#A0A8B0', font: { family: 'Inter', size: 11 }, stepSize: 0.25 },
+    title: { display: true, text: 'bullshit probability  —  low = credible · high = air', color: '#A0A8B0', font: { family: 'Inter', size: 12 } }
+  };
+
+  var ctx = document.getElementById('ftl-canvas').getContext('2d');
+  window._ftlChart = new Chart(ctx, {
+    type: 'bubble',
+    data: { datasets: [{
+      data: points,
+      backgroundColor: points.map(function (p) { return p._bg + '6E'; }),
+      borderColor: points.map(function (p) { return p._border; }),
+      borderWidth: points.map(function (p) { return p._bw; }),
+      hoverBackgroundColor: points.map(function (p) { return p._bg; }),
+      hoverBorderColor: '#FFFFFF',
+      hoverBorderWidth: points.map(function (p) { return p._bw + 1; })
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      scales: {
+        x: {
+          type: 'linear',
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: {
+            color: '#A0A8B0', font: { family: 'Inter', size: 11 }, maxTicksLimit: 7,
+            callback: function (v) {
+              var dt = new Date(v);
+              var mo = dt.toLocaleString('en-US', { month: 'short' });
+              return wide ? mo + " '" + String(dt.getFullYear()).slice(2) : mo + ' ' + dt.getDate();
+            }
+          }
+        },
+        y: yScale
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false, external: ftlTooltip }
+      }
+    }
+  });
 }
 
 function ftlTooltip(context) {
