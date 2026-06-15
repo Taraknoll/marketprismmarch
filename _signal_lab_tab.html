@@ -262,29 +262,21 @@
     display: flex; align-items: center; justify-content: center; min-height: 120px;
     font-size: 12px; color: var(--mp-text-tertiary); text-align: center; padding: 0 24px;
   }
-  /* Controls toolbar: range (left) · view + reaction horizon (right) */
-  .sl-ctl-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .sl-hz-group { display: inline-flex; align-items: center; gap: 7px; }
-  .sl-hz-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mp-text-tertiary); }
-  .sl-hz { display: inline-flex; gap: 4px; }
-  .sl-hz button {
-    font-family: var(--font-body); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
-    border: 1px solid var(--mp-border); background: transparent; color: var(--mp-text-tertiary); cursor: pointer; transition: all 0.15s;
-  }
-  .sl-hz button.active { background: rgba(0,174,255,0.10); border-color: rgba(0,174,255,0.30); color: #00AEFF; }
-
   /* Floating "on this day" info card (Forensics-style, follows cursor) */
   .sl-day-card {
-    position: absolute; top: 0; left: 0; z-index: 12; width: 212px; pointer-events: none; opacity: 0;
+    position: absolute; top: 0; left: 0; z-index: 12; width: 220px; pointer-events: none; opacity: 0;
     transition: opacity 0.12s; background: var(--mp-surface2, #111927); border: 1px solid var(--mp-border-hover, rgba(255,255,255,0.14));
     border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 12px 13px; font-family: var(--font-body);
   }
   .sl-day-card.visible { opacity: 1; }
   .sl-dc-date { font-size: 13px; font-weight: 700; color: var(--mp-text-primary); margin-bottom: 9px; }
-  .sl-dc-rxrow { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-  .sl-rail-rx { font-size: 22px; font-weight: 600; line-height: 1; font-family: var(--font-body); white-space: nowrap; letter-spacing: -0.02em; }
-  .sl-rail-rx.up { color: #00DE94; } .sl-rail-rx.down { color: #FF4D4D; } .sl-rail-rx.flat { color: var(--mp-text-tertiary); }
-  .sl-dc-rxlbl { font-size: 11px; color: var(--mp-text-tertiary); }
+  .sl-dc-rxlbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mp-text-tertiary); margin-bottom: 5px; }
+  /* All three forward horizons together */
+  .sl-dc-rx3 { display: flex; gap: 14px; margin-bottom: 11px; }
+  .sl-dc-rx1 { display: flex; flex-direction: column; gap: 2px; }
+  .sl-dc-h { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--mp-text-tertiary); }
+  .sl-dc-v { font-size: 16px; font-weight: 600; line-height: 1; font-family: var(--font-body); }
+  .sl-dc-v.up { color: #00DE94; } .sl-dc-v.down { color: #FF4D4D; } .sl-dc-v.flat { color: var(--mp-text-tertiary); }
   .sl-dc-px { font-size: 14px; font-weight: 600; color: var(--mp-text-secondary); margin-bottom: 11px; }
   .sl-dc-px small { font-size: 12px; color: var(--mp-text-tertiary); font-weight: 500; margin-left: 7px; }
   .sl-dc-themes-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mp-text-tertiary); margin-bottom: 7px; }
@@ -312,8 +304,7 @@
     .sl-cluster-wrap { padding: 4px 8px 6px; }
     .sl-cluster-head { padding: 8px 8px 2px; }
     .sl-cluster-title { font-size: 14px; }
-    .sl-ctl-right { gap: 10px; }
-    .sl-day-card { width: 188px; }
+    .sl-day-card { width: 196px; }
     .sl-toggles { gap: 5px; }
     .sl-tog { padding: 4px 9px; font-size: 11px; }
   }
@@ -403,20 +394,10 @@
           <button class="sl-tf-btn" data-days="365">1Y</button>
           <button class="sl-tf-btn" data-days="0">All</button>
         </div>
-        <div class="sl-ctl-right">
-          <div class="sl-view-toggle">
-            <button id="sl-view-lines" class="sl-view-btn active" data-sl-view="lines">Lines</button>
-            <button id="sl-view-candles" class="sl-view-btn" data-sl-view="candles" title="Real OHLC candles from Massive market data">Candles</button>
-            <button id="sl-view-regime" class="sl-view-btn" data-sl-view="regime" title="Regime-colored bars (signal context, not real OHLC)">Regime bars</button>
-          </div>
-          <div class="sl-hz-group" title="Forward price-reaction horizon shown in the hover card">
-            <span class="sl-hz-lbl">Reaction</span>
-            <div class="sl-hz" id="sl-rail-hz">
-              <button type="button" data-hz="1">1D</button>
-              <button type="button" data-hz="5" class="active">5D</button>
-              <button type="button" data-hz="20">20D</button>
-            </div>
-          </div>
+        <div class="sl-view-toggle">
+          <button id="sl-view-lines" class="sl-view-btn active" data-sl-view="lines">Lines</button>
+          <button id="sl-view-candles" class="sl-view-btn" data-sl-view="candles" title="Real OHLC candles from Massive market data">Candles</button>
+          <button id="sl-view-regime" class="sl-view-btn" data-sl-view="regime" title="Regime-colored bars (signal context, not real OHLC)">Regime bars</button>
         </div>
       </div>
 
@@ -451,9 +432,11 @@
           <!-- Floating "on this day" info card (Forensics-style; follows the cursor) -->
           <div class="sl-day-card" id="sl-day-card">
             <div class="sl-dc-date" id="sl-rail-date">&mdash;</div>
-            <div class="sl-dc-rxrow">
-              <span class="sl-rail-rx flat" id="sl-rail-rx">&mdash;</span>
-              <span class="sl-dc-rxlbl" id="sl-dc-rxlbl">5D reaction</span>
+            <div class="sl-dc-rxlbl">Price reaction</div>
+            <div class="sl-dc-rx3">
+              <div class="sl-dc-rx1"><span class="sl-dc-h">1D</span><span class="sl-dc-v flat" id="sl-rx-1">&mdash;</span></div>
+              <div class="sl-dc-rx1"><span class="sl-dc-h">5D</span><span class="sl-dc-v flat" id="sl-rx-5">&mdash;</span></div>
+              <div class="sl-dc-rx1"><span class="sl-dc-h">20D</span><span class="sl-dc-v flat" id="sl-rx-20">&mdash;</span></div>
             </div>
             <div class="sl-dc-px" id="sl-rail-px">&mdash;</div>
             <div class="sl-dc-themes-lbl">Dominant narratives</div>
@@ -540,9 +523,10 @@
   var SL_SPY=[];                 // [{snapshot_date, price_close}] S&P 500 benchmark
   var SL_CLUSTERS=null;          // {themes:[], dots:[{date,theme,size,strength,anchor,contagion,n}]} for SL_CLUSTER_TICKER
   var SL_CLUSTER_TICKER='';      // ticker SL_CLUSTERS was loaded for
+  var SL_DAY_NARR={};            // {YYYY-MM-DD: {count, narrative_text, ...}} most-authoritative narrative per day
+  var SL_DAY_NARR_TICKER='';     // ticker SL_DAY_NARR was loaded for
   var SL_SHOW_CLUSTERS=true;     // cluster lane panel visible
   var SL_CLUSTER_EXPAND=false;   // false = top lanes only, true = all lanes
-  var SL_HORIZON=5;              // forward-return horizon in trading days (1/5/20)
   var SL_LAST_DAY=null;          // last day shown in the floating card (for horizon refresh)
   var SL_AXIS=null;              // shared x mapping stashed by slDrawChart for the cluster canvas
   var SL_CLUSTER_TOP=5;          // default lanes shown when collapsed
@@ -1087,15 +1071,56 @@
         var d=m.snapshot_date?.slice(0,10);if(!d)return;
         var pos=xyOfDate(d);if(!pos)return;
         var r=Math.round((m.mass>=0.5?7:m.mass>=0.3?5:3)*dotScale);
-        var color=m.wks>10?'#00DE94':m.wks<-10?'#FF4D4D':'#A0A8B8';
+        // Muted/desaturated so the dots read softer against the price line.
+        var color=m.wks>10?'#3E9C7B':m.wks<-10?'#C26161':'#7E8794';
         ctx.beginPath();ctx.arc(pos.cx,pos.cy,r,0,Math.PI*2);
-        ctx.fillStyle=color;ctx.fill();
-        ctx.strokeStyle=slIsLight()?'#FFFFFF':'#0A0E1A';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.fillStyle=color;ctx.globalAlpha=0.78;ctx.fill();ctx.globalAlpha=1;
+        ctx.strokeStyle=slIsLight()?'#FFFFFF':'#0A0E1A';ctx.lineWidth=1.25;ctx.stroke();
         dotHits.push({cx:pos.cx,cy:pos.cy,n:{snapshot_date:m.snapshot_date,mass:m.mass,wks:m.wks,isMassDot:true}});
       });
     }
 
-    function showPopup(hit){var n=hit.n;document.getElementById('sl-popup-date').textContent=n.snapshot_date?.slice(0,10)||'';if(n.isMassDot){document.getElementById('sl-popup-headline').textContent='Narrative Mass Signal';var wL=n.wks>10?'Bullish keywords':n.wks<-10?'Bearish keywords':'Neutral';var bodyText='Mass: '+n.mass.toFixed(2)+' \u00B7 WKS: '+(n.wks>0?'+':'')+n.wks.toFixed(1)+' ('+wL+')';document.getElementById('sl-popup-body').textContent=bodyText;var kwHtml='';if(SL_KEYWORDS&&SL_KEYWORDS.length){var top5=SL_KEYWORDS.slice(0,5);kwHtml='<div style="margin-top:6px;font-size:11px;color:var(--mp-text-tertiary);line-height:1.5;">Top keywords: '+top5.map(function(k){var ret=Number(k.avg_return_5d);var clr=ret>0?'#00DE94':'#FF4D4D';return'<span style="color:'+clr+';">'+slEsc(k.keyword.replace(/_/g,' '))+'</span> <span style="opacity:0.6;">'+(ret>0?'+':'')+ret.toFixed(1)+'%</span>';}).join(' \u00B7 ')+'</div>';}document.getElementById('sl-popup-vms').innerHTML=kwHtml;}else{document.getElementById('sl-popup-headline').textContent=n.source_outlet||n.verdict||'Narrative Story';document.getElementById('sl-popup-body').textContent=n.narrative_text||(n.sentiment_score!=null?'Sentiment: '+n.sentiment_score.toFixed(1):'No story text available.');document.getElementById('sl-popup-vms').innerHTML=[n.source_outlet||'',n.verdict||''].filter(Boolean).join(' \u00B7 ');}var px=hit.cx+10;if(px+260>W)px=hit.cx-270;var py=hit.cy-10;if(py+140>H)py=H-145;popup.style.left=(px+14)+'px';popup.style.top=(py+10)+'px';popup.classList.add('visible');}
+    function slRow(l,v){return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:2px 0;"><span style="color:var(--mp-text-tertiary);">'+l+'</span><span style="text-align:right;font-weight:600;">'+v+'</span></div>';}
+    function showPopup(hit){
+      var n=hit.n;
+      var dateEl=document.getElementById('sl-popup-date'),hlEl=document.getElementById('sl-popup-headline'),bodyEl=document.getElementById('sl-popup-body'),vmsEl=document.getElementById('sl-popup-vms');
+      var dayStr=(n.snapshot_date||'').slice(0,10);
+      dateEl.textContent=dayStr?new Date(dayStr+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+      if(n.isMassDot){
+        // A mass dot is the whole day's aggregate mass \u2192 bind to that day's single
+        // MOST-AUTHORITATIVE narrative (not a verdict for the whole day).
+        var nd=SL_DAY_NARR&&SL_DAY_NARR[dayStr];
+        if(nd&&nd.narrative_text){
+          hlEl.textContent='\u201C'+nd.narrative_text+'\u201D';
+          var dir=nd.narrative_direction,dirTxt=dir?dir.charAt(0).toUpperCase()+dir.slice(1):'Unspecified';
+          var cred=slCredFromBs(nd.bullshit_probability),tier=slAuthTier(nd.speaker_authority);
+          var credLine='<span style="color:'+cred.color+';">'+cred.phrase+'</span>'+(tier?' \u00B7 '+tier+' authority':'');
+          var mv;
+          if(nd.return_5d==null){mv='<span style="color:var(--mp-text-tertiary);">pending</span>';}
+          else{var pct=Number(nd.return_5d)*100;mv='<span style="color:'+(pct>=0?'#00DE94':'#FF4D4D')+';">'+(pct>=0?'+':'')+pct.toFixed(1)+'%</span>';}
+          bodyEl.innerHTML=slRow('Direction','<span style="color:'+slDirColor(dir)+';">'+dirTxt+'</span>')+
+            slRow('Credibility',credLine)+
+            slRow('5-day move',mv)+
+            (nd.speaker_type?slRow('Source',slEsc(nd.speaker_type)):'');
+          var footHtml='';
+          if(nd.ground_truth_label===true&&nd.resolved_at)footHtml+='<div style="margin-top:8px;font-size:12px;font-weight:600;color:#00DE94;">\u2713 Resolved TRUE \u2014 price confirmed the claim</div>';
+          else if(nd.ground_truth_label===false&&nd.resolved_at)footHtml+='<div style="margin-top:8px;font-size:12px;font-weight:600;color:#FF4D4D;">\u26A0 Resolved FALSE \u2014 price contradicted the claim</div>';
+          if(nd.count>1)footHtml+='<div style="margin-top:8px;font-size:11px;color:var(--mp-text-tertiary);">Showing 1 of '+nd.count+' narratives this day</div>';
+          vmsEl.innerHTML=footHtml;
+        }else{
+          // No narrative rows for this day (or not loaded) \u2014 show aggregate mass.
+          hlEl.textContent='Narrative Mass Signal';
+          var wL=n.wks>10?'Bullish keywords':n.wks<-10?'Bearish keywords':'Neutral';
+          bodyEl.textContent='Mass: '+n.mass.toFixed(2)+' \u00B7 WKS: '+(n.wks>0?'+':'')+n.wks.toFixed(1)+' ('+wL+')';
+          vmsEl.innerHTML='';
+        }
+      }else{
+        hlEl.textContent=n.source_outlet||n.verdict||'Narrative Story';
+        bodyEl.textContent=n.narrative_text||(n.sentiment_score!=null?'Sentiment: '+n.sentiment_score.toFixed(1):'No story text available.');
+        vmsEl.innerHTML=[n.source_outlet||'',n.verdict||''].filter(Boolean).join(' \u00B7 ');
+      }
+      var px=hit.cx+10;if(px+260>W)px=hit.cx-270;var py=hit.cy-10;if(py+170>H)py=H-175;popup.style.left=(px+14)+'px';popup.style.top=(py+10)+'px';popup.classList.add('visible');
+    }
 
     cv.addEventListener('mousemove',function(e){var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;var hit=dotHits.find(function(d){return Math.hypot(mx-d.cx,my-d.cy)<8;});cv.style.cursor=hit?'pointer':'default';if(hit){tip.style.opacity='0';showPopup(hit);return;}if(popup.classList.contains('visible')){popup.classList.remove('visible');}var idx=Math.max(0,Math.min(N-1,Math.round(((mx-PAD.left)/CW)*(N-1))));var s=snaps[idx];if(!s?.price_close){tip.style.opacity='0';return;}tip.style.opacity='1';tip.textContent=new Date(s.snapshot_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'  $'+s.price_close.toFixed(2);var tx=xOf(idx)+8;if(tx+120>W)tx=xOf(idx)-128;tip.style.left=(tx+14)+'px';tip.style.top=(my-18)+'px';});
     cv.addEventListener('mouseleave',function(){tip.style.opacity='0';popup.classList.remove('visible');});
@@ -1115,12 +1140,12 @@
     function nearestSnapIdx(px){return Math.max(0,Math.min(snaps.length-1,Math.round(((px-PAD.left)/CW)*(snaps.length-1))));}
     SL_AXIS={leftOffset:PAD.left,W:W,H:H,PAD:PAD,CW:CW,snaps:snaps,lo:lo,hi:hi,idxByDate:dateIdx,xOf:xOf,xOfDate:xOfDate,nearestSnapIdx:nearestSnapIdx};
 
-    // Crosshair + floating day card track the cursor across the price chart.
-    cv.addEventListener('mousemove',function(e){var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.clientX-rect.left,e);});
-    cv.addEventListener('mouseleave',function(){slCrosshairLeave();});
-    // Touch (mobile): scrub the shared guide + day card.
-    cv.addEventListener('touchstart',function(e){if(!e.touches.length||!SL_SHOW_CLUSTERS)return;var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.touches[0].clientX-rect.left,e.touches[0]);},{passive:true});
-    cv.addEventListener('touchmove',function(e){if(!e.touches.length||!SL_SHOW_CLUSTERS)return;var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.touches[0].clientX-rect.left,e.touches[0]);e.preventDefault();},{passive:false});
+    // Shared guide tracks the cursor across the price chart (the day card is for
+    // cluster-bubble hover; price mass-dots use their own popup — no overlap).
+    cv.addEventListener('mousemove',function(e){var rect=cv.getBoundingClientRect();slMoveCrosshair(e.clientX-rect.left);});
+    cv.addEventListener('mouseleave',function(){var cr=document.getElementById('sl-crosshair');if(cr)cr.style.opacity='0';});
+    cv.addEventListener('touchstart',function(e){if(!e.touches.length||!SL_SHOW_CLUSTERS)return;var rect=cv.getBoundingClientRect();slMoveCrosshair(e.touches[0].clientX-rect.left);},{passive:true});
+    cv.addEventListener('touchmove',function(e){if(!e.touches.length||!SL_SHOW_CLUSTERS)return;var rect=cv.getBoundingClientRect();slMoveCrosshair(e.touches[0].clientX-rect.left);e.preventDefault();},{passive:false});
 
     // Draw the cluster lanes on this same mapping (after axis is stashed).
     if(SL_SHOW_CLUSTERS)slDrawClusters();
@@ -1211,11 +1236,20 @@
       var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
       var hit=null,best=1e9;dotHits.forEach(function(h){var dd=Math.hypot(mx-h.cx,my-h.cy);if(dd<h.r+3&&dd<best){best=dd;hit=h;}});
       cv.style.cursor=hit?'pointer':'default';
-      slCrosshairAtPx(mx,e);
+      slMoveCrosshair(mx);
+      // Card shows ONLY when hovering an actual cluster bubble — avoids overlap.
+      if(hit)slShowDayCard((hit.d.date||'').slice(0,10),e); else slHideDayCard();
     });
     cv.addEventListener('mouseleave',function(){slCrosshairLeave();});
-    cv.addEventListener('touchstart',function(e){if(!e.touches.length)return;var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.touches[0].clientX-rect.left,e.touches[0]);},{passive:true});
-    cv.addEventListener('touchmove',function(e){if(!e.touches.length)return;var rect=cv.getBoundingClientRect();slCrosshairAtPx(e.touches[0].clientX-rect.left,e.touches[0]);e.preventDefault();},{passive:false});
+    function clusterTouch(e){
+      if(!e.touches.length)return;var rect=cv.getBoundingClientRect();
+      var mx=e.touches[0].clientX-rect.left,my=e.touches[0].clientY-rect.top;
+      slMoveCrosshair(mx);
+      var hit=null,best=1e9;dotHits.forEach(function(h){var dd=Math.hypot(mx-h.cx,my-h.cy);if(dd<h.r+6&&dd<best){best=dd;hit=h;}});
+      if(hit)slShowDayCard((hit.d.date||'').slice(0,10),e.touches[0]); else slHideDayCard();
+    }
+    cv.addEventListener('touchstart',function(e){clusterTouch(e);},{passive:true});
+    cv.addEventListener('touchmove',function(e){clusterTouch(e);e.preventDefault();},{passive:false});
   }
 
   // Position the shared vertical guide at a date (canvas x reused from price map).
@@ -1241,19 +1275,20 @@
     if(y+ch>r.height-6) y=Math.max(6,r.height-ch-6);
     card.style.left=x+'px';card.style.top=y+'px';
   }
-  function slCrosshairAtPx(px,ev){
-    if(!SL_AXIS||!SL_SHOW_CLUSTERS)return;
+  // Move the shared guide only (no card) — used on general price/lane hover.
+  function slMoveCrosshair(px){
+    if(!SL_AXIS||!SL_SHOW_CLUSTERS)return null;
     var i=SL_AXIS.nearestSnapIdx(px);
     var ds=(SL_AXIS.snaps[i].snapshot_date||'').slice(0,10);
     slPositionCrosshair(ds);
-    slShowRail(ds);
-    if(ev)slPositionCard(ev);
-    // The floating card replaces the small price tip when clusters are on.
-    var t=document.getElementById('sl-chart-tip');if(t)t.style.opacity='0';
+    return ds;
   }
+  // Show the floating day card for a date near the cursor (cluster-bubble hover only).
+  function slShowDayCard(ds,ev){ if(!SL_SHOW_CLUSTERS)return; slShowRail(ds); if(ev)slPositionCard(ev); }
+  function slHideDayCard(){ var card=document.getElementById('sl-day-card');if(card)card.classList.remove('visible'); }
   function slCrosshairLeave(){
     var cross=document.getElementById('sl-crosshair');if(cross)cross.style.opacity='0';
-    var card=document.getElementById('sl-day-card');if(card)card.classList.remove('visible');
+    slHideDayCard();
   }
 
   // Forward price reaction from the daily bars: close[t+h]/close[t]-1.
@@ -1287,15 +1322,17 @@
     card.classList.add('visible');
     var dt=new Date(ds+'T12:00:00');
     var dEl=document.getElementById('sl-rail-date');if(dEl)dEl.textContent=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    var rx=slReaction(ds,SL_HORIZON);
-    var rxEl=document.getElementById('sl-rail-rx');
-    if(rxEl){
-      if(rx&&rx.ret!=null){rxEl.textContent=(rx.ret>=0?'+':'')+(rx.ret*100).toFixed(2)+'%';rxEl.className='sl-rail-rx '+(rx.ret>0?'up':rx.ret<0?'down':'flat');}
-      else{rxEl.textContent=rx&&rx.partial?'pending':'n/a';rxEl.className='sl-rail-rx flat';}
-    }
-    var lblEl=document.getElementById('sl-dc-rxlbl');if(lblEl)lblEl.textContent=SL_HORIZON+'D reaction';
+    // All three forward horizons in the one box.
+    var dayClose=null;
+    [[1,'sl-rx-1'],[5,'sl-rx-5'],[20,'sl-rx-20']].forEach(function(p){
+      var el=document.getElementById(p[1]);if(!el)return;
+      var rx=slReaction(ds,p[0]);
+      if(rx&&rx.price!=null)dayClose=rx.price;
+      if(rx&&rx.ret!=null){el.textContent=(rx.ret>=0?'+':'')+(rx.ret*100).toFixed(1)+'%';el.className='sl-dc-v '+(rx.ret>0?'up':rx.ret<0?'down':'flat');}
+      else{el.textContent='pending';el.className='sl-dc-v flat';}
+    });
     var px=document.getElementById('sl-rail-px');
-    if(px){var spy=slSpyClose(ds);px.innerHTML=(rx&&rx.price!=null?('$'+rx.price.toFixed(2)):'&mdash;')+(spy!=null?'<small>SPY $'+spy.toFixed(2)+'</small>':'');}
+    if(px){var spy=slSpyClose(ds);px.innerHTML=(dayClose!=null?('$'+dayClose.toFixed(2)):'&mdash;')+(spy!=null?'<small>SPY $'+spy.toFixed(2)+'</small>':'');}
 
     // Themes active that day, ranked by story count — top 3.
     var dayDots=(SL_CLUSTERS?SL_CLUSTERS.dots:[]).filter(function(d){return (d.date||'').slice(0,10)===ds;})
@@ -1389,6 +1426,29 @@
     SL_CLUSTER_TICKER=ticker;
     return SL_CLUSTERS;
   }
+
+  // Per-day most-authoritative narrative for the ticker (binds the mass dots).
+  async function slLoadDayNarratives(ticker){
+    if(SL_DAY_NARR_TICKER===ticker&&SL_DAY_NARR)return SL_DAY_NARR;
+    try{
+      var res=await fetch('/api/ticker-day-narratives?ticker='+encodeURIComponent(ticker)+'&days=400');
+      var j=await res.json();
+      if(!res.ok)throw new Error(j&&j.error?j.error:'day-narratives fetch failed');
+      SL_DAY_NARR=(j&&j.byDate)?j.byDate:{};
+    }catch(e){console.warn('[SL] day-narratives fetch failed:',e);SL_DAY_NARR={};}
+    SL_DAY_NARR_TICKER=ticker;
+    return SL_DAY_NARR;
+  }
+  // ── Forensic-Timeline-matched formatting (so a mass dot's card reads the same) ──
+  function slAuthTier(auth){ if(auth==null)return ''; return auth>=70?'high':auth>=45?'mid':'low'; }
+  function slCredFromBs(bs){
+    if(bs==null)return {phrase:'Not scored',color:'#8A93A0'};
+    var b=Number(bs);
+    if(b>=0.7)return {phrase:'Likely air',color:'#FF4D4D'};
+    if(b>=0.45)return {phrase:'Mixed',color:'#FFB800'};
+    return {phrase:'Looks grounded',color:'#00DE94'};
+  }
+  function slDirColor(dir){ if(dir==='bullish')return '#00DE94'; if(dir==='bearish')return '#FF4D4D'; if(dir==='neutral')return '#8A93A0'; return '#6B7280'; }
 
   // ── Regime detection ──
   // Authoritative source for the current regime. Stashes the result on window
@@ -1556,7 +1616,7 @@
       .then(function(rows){ if(ticker===SL_TICKER && Array.isArray(rows)) SL_KEYWORDS=rows; })
       .catch(function(e){ console.warn('[SL] keywords fetch failed:',e); });
     // Reset cluster state for the new ticker and lazy-load its theme history.
-    SL_CLUSTERS=null;SL_CLUSTER_TICKER='';SL_LAST_DAY=null;SL_CLUSTER_EXPAND=false;
+    SL_CLUSTERS=null;SL_CLUSTER_TICKER='';SL_LAST_DAY=null;SL_CLUSTER_EXPAND=false;SL_DAY_NARR={};SL_DAY_NARR_TICKER='';
     var _cardEl=document.getElementById('sl-day-card');if(_cardEl)_cardEl.classList.remove('visible');
     try{
       document.getElementById('sl-chart-outer').innerHTML='<div class="sl-no-data">Loading '+slEsc(ticker)+'...</div>';
@@ -1571,6 +1631,8 @@
         if(ticker!==SL_TICKER)return;
         if(SL_SHOW_CLUSTERS&&SL_SNAPS.length)slRenderChart();
       });
+      // Per-day narratives for the mass-dot cards (no redraw needed — read on hover).
+      slLoadDayNarratives(ticker);
     }catch(err){document.getElementById('sl-chart-outer').innerHTML='<div class="sl-no-data" style="color:var(--mp-red);">'+slEsc(err.message)+'</div>';}
   }
 
@@ -1746,13 +1808,6 @@
       if(!SL_SHOW_CLUSTERS){if(cross)cross.style.opacity='0';if(card)card.classList.remove('visible');}
       if(SL_SNAPS.length)slRenderChart();
     });
-    // Forward-return horizon selector (1D / 5D / 20D) — refresh the card if it's open
-    document.querySelectorAll('#sl-rail-hz button').forEach(function(b){b.addEventListener('click',function(){
-      document.querySelectorAll('#sl-rail-hz button').forEach(function(x){x.classList.remove('active');});
-      b.classList.add('active');SL_HORIZON=parseInt(b.dataset.hz,10)||5;
-      var card=document.getElementById('sl-day-card');
-      if(SL_LAST_DAY&&card&&card.classList.contains('visible'))slShowRail(SL_LAST_DAY);
-    });});
     // Expand / collapse cluster lanes
     var expB=document.getElementById('sl-cluster-expand');
     if(expB)expB.addEventListener('click',function(){SL_CLUSTER_EXPAND=!SL_CLUSTER_EXPAND;if(SL_SNAPS.length&&SL_SHOW_CLUSTERS)slDrawClusters();});
