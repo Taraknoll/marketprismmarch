@@ -10417,7 +10417,7 @@ function ftlRender() {
       (_ftlScored ? ' scored' : '') + ' narrative' + (points.length === 1 ? '' : 's') + ' in range' + perDayTxt + '.');
     parts.push('Credibility scores are sparse before 2026; the newest ~20 trading days are intentionally still unresolved (no verdict yet).');
   }
-  parts.push('Tip: scroll or drag a box to zoom in (spreads the dots); double-click to reset.');
+  parts.push('Tip: scroll to zoom in (spreads the dots), then drag to move around; Shift+drag to zoom a box; double-click to reset.');
   if (note) note.textContent = parts.join(' ');
 
   var wide = (_ftlDays === '180' || _ftlDays === 'all');
@@ -10482,9 +10482,10 @@ function ftlRender() {
         legend: { display: false },
         tooltip: { enabled: false, external: ftlTooltip },
         zoom: {
+          pan: { enabled: true, mode: 'xy', threshold: 5 },
           zoom: {
             wheel: { enabled: true },
-            drag: { enabled: true, backgroundColor: 'rgba(0,174,255,0.12)', borderColor: 'rgba(0,174,255,0.55)', borderWidth: 1 },
+            drag: { enabled: true, modifierKey: 'shift', backgroundColor: 'rgba(0,174,255,0.12)', borderColor: 'rgba(0,174,255,0.55)', borderWidth: 1 },
             mode: 'xy'
           },
           limits: { x: { min: 'original', max: 'original' }, y: { min: 'original', max: 'original' } }
@@ -10658,7 +10659,7 @@ function nclRender() {
 
   if (note) note.textContent = dots.length.toLocaleString() + ' theme-days across ' + n +
     ' theme' + (n === 1 ? '' : 's') + ' in range. Bubble size = stories in that cluster; lanes ordered by total activity. ' +
-    'Tip: scroll or drag a box to zoom in; double-click to reset.';
+    'Tip: scroll to zoom in, then drag to move around; Shift+drag to zoom a box; double-click to reset.';
 
   var xMax = Date.now();
   var xMin = (_nclDays === 'all') ? undefined : (xMax - parseInt(_nclDays, 10) * DAY);
@@ -10710,9 +10711,10 @@ function nclRender() {
         legend: { display: false },
         tooltip: { enabled: false, external: nclTooltip },
         zoom: {
+          pan: { enabled: true, mode: 'xy', threshold: 5 },
           zoom: {
             wheel: { enabled: true },
-            drag: { enabled: true, backgroundColor: 'rgba(0,174,255,0.12)', borderColor: 'rgba(0,174,255,0.55)', borderWidth: 1 },
+            drag: { enabled: true, modifierKey: 'shift', backgroundColor: 'rgba(0,174,255,0.12)', borderColor: 'rgba(0,174,255,0.55)', borderWidth: 1 },
             mode: 'xy'
           },
           limits: { x: { min: 'original', max: 'original' }, y: { min: 'original', max: 'original' } }
