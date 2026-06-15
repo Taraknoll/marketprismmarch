@@ -10335,6 +10335,11 @@ function ftlRender() {
   if (note) note.textContent = parts.join(' ');
 
   var wide = (_ftlDays === '180' || _ftlDays === 'all');
+  // Pin the x-axis to the requested window (… → today) so the axis always
+  // reaches the present and a "6mo" view actually spans 6 months — instead of
+  // collapsing to wherever dots happen to land.
+  var xMax = Date.now();
+  var xMin = (_ftlDays === 'all') ? undefined : (xMax - parseInt(_ftlDays, 10) * DAY);
   var yScale = impact ? {
     min: -M, max: M,
     grid: { color: function (c) { return (c.tick && c.tick.value === 0) ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)'; } },
@@ -10367,6 +10372,7 @@ function ftlRender() {
       scales: {
         x: {
           type: 'linear',
+          min: xMin, max: xMax,
           grid: { color: 'rgba(255,255,255,0.05)' },
           ticks: {
             color: '#A0A8B0', font: { family: 'Inter', size: 11 }, maxTicksLimit: 7,
