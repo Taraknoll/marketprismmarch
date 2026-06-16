@@ -26,9 +26,36 @@ from supabase import create_client
 # ── CONFIG ───────────────────────────────────────────────────────────────────
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_KEY = os.environ["SUPABASE_KEY"]          # service role key for writes
+SUPABASE_KEY = os.environ["SUPABASE_KEY"]          # MUST be the service-role key (anon is RLS-blocked on writes)
 ANTHROPIC_KEY = os.environ["ANTHROPIC_API_KEY"]
 MODEL = "claude-sonnet-4-6"
+
+
+def _supabase_key_role(jwt_key):
+    """Return the 'role' claim of a Supabase JWT key, or None if undecodable
+    (e.g. the newer sb_secret_... non-JWT key format)."""
+    try:
+        import base64
+        payload_b64 = jwt_key.split(".")[1]
+        payload_b64 += "=" * (-len(payload_b64) % 4)  # restore base64url padding
+        return json.loads(base64.urlsafe_b64decode(payload_b64)).get("role")
+    except Exception:
+        return None
+
+
+# Fail loudly BEFORE generating an article. blog_posts has RLS enabled with no
+# anon INSERT policy (the 2026-06-10 rls_remediation_phase1_close_public_writes
+# migration dropped the public insert policy), so an anon/empty key makes every
+# insert 403 — silently freezing the blog. Catch that here, not after a wasted
+# Claude generation.
+if not SUPABASE_KEY:
+    sys.exit("FATAL: SUPABASE_KEY is empty — set the GitHub secret SUPABASE_SERVICE_KEY.")
+if _supabase_key_role(SUPABASE_KEY) == "anon":
+    sys.exit(
+        "FATAL: SUPABASE_KEY is the anon key — blog_posts RLS blocks anon inserts, "
+        "so no post can publish. Use the service-role key (GitHub secret "
+        "SUPABASE_SERVICE_KEY)."
+    )
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 claude = anthropic.Anthropic(api_key=ANTHROPIC_KEY)

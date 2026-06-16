@@ -51,7 +51,11 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON }}
+          # Service-role key — writes only. The anon key is blocked by RLS on
+          # blog_posts (the 2026-06-10 rls_remediation migration dropped the
+          # public insert policy), so anon inserts silently 403 and no post
+          # publishes. Must be the service-role key.
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           ARGS=""
           if [ -n "${{ github.event.inputs.topic }}" ]; then
