@@ -5843,9 +5843,10 @@ function renderWarranted(p) {
   var warranted = Math.round((evidence * 0.45) + ((100 - frag) * 0.25) + ((100 - valStr) * 0.20) + ((100 - pressure) * 0.10));
   var hype      = 100 - warranted;
 
-  var gradColor = warranted >= 60
-    ? 'linear-gradient(90deg, var(--mp-green) 0%, var(--mp-blue) ' + warranted + '%, rgba(217,68,68,0.3) 100%)'
-    : 'linear-gradient(90deg, rgba(43,168,126,0.3) 0%, var(--mp-amber) ' + warranted + '%, var(--mp-red) 100%)';
+  // Static warranted(left/green) -> hype(right/red) spectrum. The white marker
+  // is a needle: the dominant side pulls it toward itself, so its position is
+  // the hype share (warranted 81 -> needle at 19% -> sits near the WARRANTED end).
+  var gradColor = 'linear-gradient(90deg, var(--mp-green) 0%, var(--mp-blue) 50%, var(--mp-red) 100%)';
 
   var reversalRisk = Math.round(Math.min(100, frag * 0.6 + pressure * 0.4));
   var fragPct = Math.round(frag);
@@ -5862,7 +5863,7 @@ function renderWarranted(p) {
     + '</div>'
     + '<div class="tug-bar-track">'
     +   '<div class="tug-bar-fill" style="width:100%;background:' + gradColor + ';"></div>'
-    +   '<div class="tug-bar-marker" style="left:calc(' + warranted + '% - 2px);"></div>'
+    +   '<div class="tug-bar-marker" style="left:calc(' + hype + '% - 2px);"></div>'
     + '</div>'
     + '<div class="tug-stats-grid">'
     +   '<div class="tug-stat-item"><div class="tug-stat-val" style="color:var(--mp-green);">' + evidence + '</div><div class="tug-stat-lbl">Evidence</div></div>'

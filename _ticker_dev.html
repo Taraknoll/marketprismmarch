@@ -4818,9 +4818,10 @@ function renderWarranted(p) {
   var warranted = Math.round((evidence * 0.45) + ((100 - frag) * 0.25) + ((100 - valStr) * 0.20) + ((100 - pressure) * 0.10));
   var hype      = 100 - warranted;
 
-  var gradColor = warranted >= 60
-    ? 'linear-gradient(90deg, #00DE94 0%, #00AEFF ' + warranted + '%, rgba(255,77,77,0.3) 100%)'
-    : 'linear-gradient(90deg, rgba(0,222,148,0.3) 0%, #FFB800 ' + warranted + '%, #FF4D4D 100%)';
+  // Static warranted(left/green) -> hype(right/red) spectrum. The white marker
+  // is a needle: the dominant side pulls it toward itself, so its position is
+  // the hype share (warranted 81 -> needle at 19% -> sits near the WARRANTED end).
+  var gradColor = 'linear-gradient(90deg, #00DE94 0%, #00AEFF 50%, #FF4D4D 100%)';
 
   var summary = warranted >= 60
     ? 'Price movement appears evidence-backed rather than hype-driven.'
@@ -4833,7 +4834,7 @@ function renderWarranted(p) {
     + '</div>'
     + '<div class="tug-bar-track">'
     +   '<div class="tug-bar-fill" style="width:100%;background:' + gradColor + ';"></div>'
-    +   '<div class="tug-bar-marker" style="left:calc(' + warranted + '% - 2px);"></div>'
+    +   '<div class="tug-bar-marker" style="left:calc(' + hype + '% - 2px);"></div>'
     + '</div>'
     + '<div class="tug-detail-row">'
     +   '<div class="tug-detail"><div class="tug-detail-label">Evidence</div><div class="tug-detail-val">' + evidence + '</div></div>'
