@@ -5758,6 +5758,14 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
            was suppressing it), and removes the 300ms double-tap-to-zoom delay
            on the dots. Page can still be pinch-zoomed. */
         #tab-prism .prism-svg{display:block;width:100%;height:auto;user-select:none;touch-action:manipulation;}
+        /* Zoom controls (spread-the-dots zoom: +/-/reset, plus wheel + drag-pan) */
+        #tab-prism .prism-zoom-ctl{position:absolute;right:14px;bottom:14px;z-index:4;display:flex;flex-direction:column;gap:6px;}
+        #tab-prism .prism-zoom-ctl button{width:34px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,0.14);background:rgba(18,18,18,0.82);backdrop-filter:blur(6px);color:#E6EAF0;font-family:var(--font-body);font-size:18px;font-weight:500;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;box-shadow:0 4px 14px rgba(0,0,0,0.35);}
+        #tab-prism .prism-zoom-ctl button:hover{border-color:rgba(0,174,255,0.5);color:#4DC8F0;background:rgba(0,174,255,0.12);}
+        #tab-prism .prism-zoom-ctl button:active{transform:translateY(1px);}
+        #tab-prism .prism-zoom-ctl #prism-zoom-reset{font-size:15px;}
+        #tab-prism .prism-zoom-hint{position:absolute;left:14px;bottom:14px;z-index:4;font-family:var(--font-body);font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.03em;pointer-events:none;background:rgba(18,18,18,0.6);padding:4px 9px;border-radius:7px;}
+        @media (max-width:720px){ #tab-prism .prism-zoom-hint{display:none;} }
         #tab-prism .prism-bg{fill:#121212;}
         #tab-prism .prism-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-body);font-size:13px;color:rgba(255,255,255,0.55);z-index:3;}
         #tab-prism .prism-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;padding:10px 16px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;}
@@ -5860,6 +5868,12 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
               <g id="prism-dots"></g>
             </g>
           </svg>
+          <div class="prism-zoom-ctl" role="group" aria-label="Zoom controls">
+            <button id="prism-zoom-in" type="button" title="Zoom in (or scroll)" aria-label="Zoom in">+</button>
+            <button id="prism-zoom-out" type="button" title="Zoom out" aria-label="Zoom out">&minus;</button>
+            <button id="prism-zoom-reset" type="button" title="Reset zoom (double-click)" aria-label="Reset zoom">&#10226;</button>
+          </div>
+          <div class="prism-zoom-hint" id="prism-zoom-hint">Scroll to zoom · drag to pan</div>
           <div class="prism-popup" id="prism-popup" style="display:none;"></div>
         </div>
 
@@ -6125,28 +6139,32 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 
         function renderDots(rows){
           var g = document.getElementById('prism-dots'); if(!g) return;
+          // Counter-scale every dot/ring/label by the current zoom so the group's
+          // scale(zoom) cancels out → dots stay a constant readable size while their
+          // POSITIONS spread apart as you zoom in (instead of ballooning). Re-rendered
+          // on zoom change via redrawDots(); panning needs no re-render.
+          var z = state.zoom || 1;
           var parts = [];
           rows.forEach(function(r, idx){
             var cx = xFor(r.dte) + (r._jitter||0);
             var cy = yFor(r.mass);
-            var rr = massRadius(r.mass);
+            var baseR = massRadius(r.mass);
+            var rr = baseR / z;
+            var sw15 = (1.5/z).toFixed(3), sw1 = (1/z).toFixed(3);
             var color = wksColor(r.wks);
             var op = srsOpacity(r.srs);
             var ev = entryVerdict(r);
             if(ev.ideal){
-              parts.push('<circle cx="'+cx+'" cy="'+cy+'" r="'+(rr+6)+'" fill="none" stroke="#00DE94" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.9" pointer-events="none"/>');
+              parts.push('<circle cx="'+cx+'" cy="'+cy+'" r="'+(rr+6/z)+'" fill="none" stroke="#00DE94" stroke-width="'+sw15+'" stroke-dasharray="'+(3/z)+' '+(3/z)+'" opacity="0.9" pointer-events="none"/>');
             }
             if(r.coord >= 60){
-              parts.push('<circle class="pr-pulse" cx="'+cx+'" cy="'+cy+'" r="'+(rr+3)+'" fill="none" stroke="#00AEFF" stroke-width="1.5" pointer-events="none"/>');
+              parts.push('<circle class="pr-pulse" cx="'+cx+'" cy="'+cy+'" r="'+(rr+3/z)+'" fill="none" stroke="#00AEFF" stroke-width="'+sw15+'" pointer-events="none"/>');
             }
-            // Transparent hit circle so finger taps land — visible dot is
-            // 5–15 viewBox units (~1–3 CSS px on a phone), well below the
-            // ~44px tap-target minimum. The larger circle stays underneath
-            // so the painted dot is what the user visually targets.
-            parts.push('<circle class="pr-hit" data-idx="'+idx+'" cx="'+cx+'" cy="'+cy+'" r="'+Math.max(rr+10, 18)+'" fill="transparent" pointer-events="all" style="cursor:pointer;"/>');
-            parts.push('<circle class="pr-dot" data-idx="'+idx+'" cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="'+color+'" opacity="'+op.toFixed(2)+'" stroke="rgba(0,0,0,0.55)" stroke-width="1" style="cursor:pointer;"><title>'+r.ticker+' · DTE '+r.dte+'d · WKS '+r.wks.toFixed(1)+'</title></circle>');
-            if(BIG_CAPS[r.ticker] && rr>=6){
-              parts.push('<text x="'+cx+'" y="'+(cy+3)+'" text-anchor="middle" fill="#fff" font-family="Inter,sans-serif" font-size="10" font-weight="700" pointer-events="none" style="paint-order:stroke;stroke:rgba(0,0,0,0.55);stroke-width:2;">'+r.ticker+'</text>');
+            // Transparent hit circle so finger taps land — visible dot is small.
+            parts.push('<circle class="pr-hit" data-idx="'+idx+'" cx="'+cx+'" cy="'+cy+'" r="'+Math.max(rr+10/z, 18/z)+'" fill="transparent" pointer-events="all" style="cursor:pointer;"/>');
+            parts.push('<circle class="pr-dot" data-idx="'+idx+'" cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="'+color+'" opacity="'+op.toFixed(2)+'" stroke="rgba(0,0,0,0.55)" stroke-width="'+sw1+'" style="cursor:pointer;"><title>'+r.ticker+' · DTE '+r.dte+'d · WKS '+r.wks.toFixed(1)+'</title></circle>');
+            if(BIG_CAPS[r.ticker] && baseR>=6){
+              parts.push('<text x="'+cx+'" y="'+(cy+3/z)+'" text-anchor="middle" fill="#fff" font-family="Inter,sans-serif" font-size="'+(10/z)+'" font-weight="700" pointer-events="none" style="paint-order:stroke;stroke:rgba(0,0,0,0.55);stroke-width:'+(2/z)+';">'+r.ticker+'</text>');
             }
           });
           g.innerHTML = parts.join('');
@@ -6254,10 +6272,17 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
           var rows = applyDteWindow(state.rows);
           rows = applyFilter(rows);
           computeJitter(rows);
+          state.renderedRows = rows;
           renderAxes();
           renderFireZone();
           renderDots(rows);
           updateKPIs(rows);
+        }
+        // Re-draw just the dots at the current zoom (constant size, spread positions).
+        // Synchronous on purpose — ~hundreds of dots rebuild in ~1ms, and it stays
+        // reliable in backgrounded/hidden tabs where requestAnimationFrame is paused.
+        function redrawDots(){
+          if(state.renderedRows) renderDots(state.renderedRows);
         }
 
         var controlsBound = false;
@@ -6277,7 +6302,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
           var sf = document.getElementById('prism-sector');
           if(sf) sf.addEventListener('change', function(){ state.sector = sf.value; render(); });
           var rb = document.getElementById('prism-reset');
-          if(rb) rb.addEventListener('click', function(){ state.zoom=1; state.panX=0; state.panY=0; applyTransform(); });
+          if(rb) rb.addEventListener('click', function(){ state.zoom=1; state.panX=0; state.panY=0; applyTransform(); redrawDots(); });
           var svg = document.getElementById('prism-svg');
           if(svg){
             // Convert a clientX/clientY to SVG viewBox (user) coordinates via
@@ -6314,26 +6339,39 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
               if(state.panY > 0) state.panY = 0;
               if(state.panY < minY) state.panY = minY;
             }
-            svg.addEventListener('wheel', function(e){
-              e.preventDefault();
-              var dz = e.deltaY<0 ? 1.12 : 1/1.12;
-              // Floor at 1.0 — zooming below the natural fit just leaves the
-              // chart drifting in empty space wherever the cursor happened to
-              // be when the user scrolled out.
-              var newZoom = Math.max(1, Math.min(6, state.zoom*dz));
+            // Zoom to `target`, keeping the focal point (fx,fy in viewBox units)
+            // stationary, then spread the dots (redrawDots) at the new zoom.
+            function doZoom(target, fx, fy){
+              var newZoom = Math.max(1, Math.min(6, target));
               if(newZoom === state.zoom) return;
               var actualDz = newZoom / state.zoom;
-              var pt = clientToView(e.clientX, e.clientY);
-              // Keep the point under the cursor stationary while scaling.
-              state.panX = pt.x - actualDz * (pt.x - state.panX);
-              state.panY = pt.y - actualDz * (pt.y - state.panY);
+              state.panX = fx - actualDz * (fx - state.panX);
+              state.panY = fy - actualDz * (fy - state.panY);
               state.zoom = newZoom;
               clampPan();
               applyTransform();
+              redrawDots();
+            }
+            // Center of the currently-visible region, in viewBox units (focal for buttons).
+            function viewCenter(){
+              var vb = svg.viewBox && svg.viewBox.baseVal;
+              var W=(vb&&vb.width)||1600, H=(vb&&vb.height)||700;
+              return { x:(W/2 - state.panX)/state.zoom, y:(H/2 - state.panY)/state.zoom };
+            }
+            svg.addEventListener('wheel', function(e){
+              e.preventDefault();
+              var dz = e.deltaY<0 ? 1.12 : 1/1.12;
+              var pt = clientToView(e.clientX, e.clientY);
+              doZoom(state.zoom*dz, pt.x, pt.y);
             }, {passive:false});
             svg.addEventListener('dblclick', function(){
-              state.zoom=1; state.panX=0; state.panY=0; applyTransform();
+              state.zoom=1; state.panX=0; state.panY=0; applyTransform(); redrawDots();
             });
+            // Visible zoom controls (+ / − / reset) — discoverable + touch-friendly.
+            var zin=document.getElementById('prism-zoom-in'), zout=document.getElementById('prism-zoom-out'), zrst=document.getElementById('prism-zoom-reset');
+            if(zin)  zin.addEventListener('click', function(){ var c=viewCenter(); doZoom(state.zoom*1.5, c.x, c.y); });
+            if(zout) zout.addEventListener('click', function(){ var c=viewCenter(); doZoom(state.zoom/1.5, c.x, c.y); });
+            if(zrst) zrst.addEventListener('click', function(){ state.zoom=1; state.panX=0; state.panY=0; applyTransform(); redrawDots(); });
             var drag = null;
             svg.addEventListener('mousedown', function(e){
               if(state.zoom<=1.01) return;
