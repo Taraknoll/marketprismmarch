@@ -6579,10 +6579,11 @@ async function loadStrategyData() {
     if (pubContainer) {
       if (usedPerTickerPub) {
         pubContainer.innerHTML = pubs.slice(0, 8).map(p => {
-          const hitRate = p.hit_rate != null ? (p.hit_rate * 100).toFixed(1) + '%' : '—';
+          // strategy_pub_breakdown RPC returns hit_rate already as a percentage (0-100), not a 0-1 fraction
           const hitVal = p.hit_rate || 0;
-          const hitColor = hitVal >= 0.5 ? '#00DE94' : hitVal >= 0.2 ? '#FFB800' : '#FF4D4D';
-          const barW = Math.min(hitVal * 100, 100);
+          const hitRate = p.hit_rate != null ? hitVal.toFixed(1) + '%' : '—';
+          const hitColor = hitVal >= 50 ? '#00DE94' : hitVal >= 20 ? '#FFB800' : '#FF4D4D';
+          const barW = Math.min(hitVal, 100);
           const bearN = p.bearish_count || 0;
           const bullN = p.bullish_count || 0;
           let skewText = 'mixed';
@@ -6590,7 +6591,7 @@ async function loadStrategyData() {
           if (bearN > bullN * 1.5) { skewText = bearN + ' bearish'; skewCls = ' bearish-skew'; }
           else if (bullN > bearN * 1.5) { skewText = bullN + ' bullish'; }
           return '<div class="pub-row">' +
-            '<div class="pr-name"' + (hitVal >= 0.5 ? ' style="color:#00DE94;"' : '') + '>' + esc(p.publication_name) + (hitVal >= 0.5 ? ' ⭐' : '') + '</div>' +
+            '<div class="pr-name"' + (hitVal >= 50 ? ' style="color:#00DE94;"' : '') + '>' + esc(p.publication_name) + (hitVal >= 50 ? ' ⭐' : '') + '</div>' +
             '<div class="pr-bar-wrap"><div class="pr-bar-track"><div class="pr-bar-fill" style="width:' + barW + '%;background:' + hitColor + ';"></div></div></div>' +
             '<div class="pr-hit" style="color:' + hitColor + ';">' + hitRate + '</div>' +
             '<div class="pr-articles">' + (p.article_count || 0) + ' art.</div>' +

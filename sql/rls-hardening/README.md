@@ -53,12 +53,14 @@ together close the bot/scraper bulk-extraction surface.
 | 3 | Tightens 9 reference/scoring tables: drop wide-open policies, replace with `authenticated`-only read | Low | 2 min |
 | 4 | **Crown jewels** — drops the wide-open policies on `narrative_scorecard`, `narrative_analyses`, `figure_calls`, `ticker_snapshots`, replaces with `authenticated`-only. Drops misleading "Service role full access" policies that were actually wide-open on `narrative_dots`, `analyst_ticker_scores`, `prediction_scores`, `search_query_log`, `source_registry` (service_role bypasses RLS by default; no policy needed) | **Medium-high** | 5 min |
 | 5 | Converts 10 SECURITY DEFINER views to `security_invoker` so they respect underlying-table RLS instead of bypassing it | Medium | 1 min |
+| 6 | Re-enables two read-path RPCs (`strategy_pub_breakdown`, `strategy_theme_breakdown`) that broke when `articles` was locked: makes them `SECURITY DEFINER` w/ pinned `search_path` so they read `articles` internally and return only aggregates — without exposing the table to anon | Low | 1 min |
 
 ## What this does NOT cover
 
-- The 15+15 SECURITY DEFINER **functions** flagged as anon/authenticated-
-  executable. Lower-risk than the views and the tables; defer to a
-  follow-up audit.
+- The remaining SECURITY DEFINER **functions** flagged as anon/authenticated-
+  executable (Phase 6 handled only the two strategy RPCs that needed to read
+  the now-locked `articles`). Lower-risk than the views and the tables; defer
+  the rest to a follow-up audit.
 - The 8 materialized views exposed via the API. Same — defer.
 - Public storage buckets (2) — separate concern.
 
@@ -84,4 +86,8 @@ phase_04_rollback.sql
 phase_05_convert_views_to_invoker.sql      ← run 5th
 phase_05_verify.sql
 phase_05_rollback.sql
+
+phase_06_definer_strategy_rpcs.sql         ← run 6th  (independent follow-up)
+phase_06_verify.sql
+phase_06_rollback.sql
 ```
