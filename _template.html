@@ -14026,25 +14026,36 @@ function renderStratCards(filter){
   }
 }
 
-// ── Fetch live prices from Massive API (batch) ──
-async function fetchMassiveBatchPrices(tickers){
-  var MASSIVE_KEY=(window.__env||{}).MASSIVE_API||'';
-  if(!MASSIVE_KEY||!tickers.length)return{};
-  var priceMap={};
-  var to=new Date().toISOString().slice(0,10);
-  var from=new Date();from.setDate(from.getDate()-5);var fromStr=from.toISOString().slice(0,10);
-  await Promise.all(tickers.map(function(t){
-    var url='https://api.massive.com/v2/aggs/ticker/'+encodeURIComponent(t)+'/range/1/day/'+fromStr+'/'+to+'?adjusted=true&sort=desc&limit=2&apiKey='+encodeURIComponent(MASSIVE_KEY);
-    return fetch(url).then(function(r){return r.ok?r.json():null;}).then(function(j){
-      if(j&&j.results&&j.results.length){
-        var latest=j.results[0];
-        var prev=j.results[1]||latest;
-        var chg=prev.c?((latest.c-prev.c)/prev.c)*100:0;
-        priceMap[t]={price:latest.c,price_change_pct:chg};
-      }
-    }).catch(function(){});
-  }));
-  return priceMap;
+// ── Overlay live prices onto trade cards (non-blocking) ──
+// Pulls every ticker in ONE request via the shared /api/live-quotes-batch
+// endpoint (chunked to 100 server-side, edge-cached so concurrent viewers
+// share a single upstream call), then re-renders once with live values.
+// Replaces the old fetchMassiveBatchPrices, which fired one Massive API
+// request PER ticker and was awaited BEFORE the first render — so the whole
+// gallery blocked on that fan-out (and hung for many seconds on a slow host).
+async function overlayLiveStratPrices(rows){
+  try{
+    var tickers=rows.map(function(r){return r.ticker;}).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
+    if(!tickers.length)return;
+    // Reuse quotes already fetched by the page-wide live-quote system if they
+    // cover every ticker, so we don't fire a duplicate batch call.
+    var quotes=window.__LIVE_QUOTES_CACHE||null;
+    var haveAll=quotes&&tickers.every(function(t){return quotes[t];});
+    if(!haveAll){
+      var res=await fetch('/api/live-quotes-batch?tickers='+encodeURIComponent(tickers.join(',')));
+      if(!res.ok)return;
+      var data=await res.json();
+      quotes=(data&&data.quotes)||{};
+    }
+    var changed=false;
+    rows.forEach(function(r){
+      var q=quotes[r.ticker];
+      if(!q)return;
+      if(q.price!=null){r.price=q.price;changed=true;}
+      if(q.changePct!=null){r.price_change_pct=q.changePct;}
+    });
+    if(changed)renderStratCards(STRAT_FILTER);
+  }catch(_){}
 }
 
 async function loadStrategyData(){
@@ -14063,20 +14074,12 @@ async function loadStrategyData(){
     if(!res.ok)throw new Error('trade_cards_live fetch failed: '+res.status);
     var rows=await res.json();
 
-    // Overlay live prices from Massive API
-    var tickers=rows.map(function(r){return r.ticker;}).filter(function(v,i,a){return a.indexOf(v)===i;});
-    var livePrices=await fetchMassiveBatchPrices(tickers);
-    rows.forEach(function(r){
-      var lp=livePrices[r.ticker];
-      if(lp){
-        r.price=lp.price;
-        r.price_change_pct=lp.price_change_pct;
-      }
-    });
-
+    // Paint cards immediately using the precomputed price from trade_cards_live,
+    // then overlay live prices in the background (one batched, edge-cached call).
     STRAT_DATA=rows;
     renderStratCards(STRAT_FILTER);
     loadCollectionStats();
+    overlayLiveStratPrices(rows);
   }catch(e){
     console.warn('[MP] Trade cards gallery load failed:',e);
     STRAT_DATA=[];
