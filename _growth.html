@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
+<!-- Vercel Web Analytics -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Investment Growth Calculator — Market Prism™</title>
+<meta name="description" content="See what any stock investment would be worth today, and how it compared to the S&P 500.">
+<meta name="robots" content="index, follow, max-snippet:-1">
+<link rel="canonical" href="https://marketprism.co/growth-calculator">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<!-- SEO_INJECT -->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root {
+  --bg:        #0B0F14;
+  --surface:   #131920;
+  --surface2:  #181f28;
+  --border:    rgba(255,255,255,0.06);
+  --border-h:  rgba(255,255,255,0.14);
+  --blue:      #00AEFF;
+  --teal:      #38C8B8;
+  --green:     #00DE94;
+  --red:       #FF4D4D;
+  --amber:     #FFB800;
+  --tx1:       #F5F7FA;
+  --tx2:       #A0A8B0;
+  --tx3:       #4A5578;
+  --font-display: 'Instrument Serif', 'DM Serif Display', Georgia, serif;
+  --font-body:    'Inter', 'DM Sans', system-ui, sans-serif;
+}
+html{background:var(--bg);color:var(--tx1);font-family:var(--font-body);scroll-behavior:smooth;}
+body{background:var(--bg);min-height:100vh;}
+
+/* Nav */
+.gc-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;}
+.gc-nav-logo{font-family:var(--font-body);font-weight:700;font-size:16px;color:var(--tx1);text-decoration:none;display:flex;align-items:center;gap:8px;}
+.gc-nav-logo img{height:22px;}
+.gc-nav-links{display:flex;gap:24px;}
+.gc-nav-links a{font-size:13px;color:var(--tx2);text-decoration:none;transition:color .2s;}
+.gc-nav-links a:hover{color:var(--tx1);}
+
+/* Hero */
+.gc-hero{text-align:center;padding:56px 24px 28px;max-width:760px;margin:0 auto;}
+.gc-hero h1{font-family:var(--font-display);font-size:clamp(30px,3.6vw,46px);font-weight:400;letter-spacing:-0.025em;margin-bottom:10px;}
+.gc-hero .gc-accent{font-family:var(--font-display);font-style:italic;color:#4DC8F0;font-size:clamp(24px,2.8vw,34px);}
+.gc-hero p{font-size:15px;color:var(--tx2);line-height:1.7;max-width:540px;margin:14px auto 0;}
+
+/* Shell */
+.gc-wrap{max-width:880px;margin:0 auto;padding:0 24px 80px;}
+
+/* Input card */
+.gc-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;position:relative;}
+.gc-card::before{content:'';position:absolute;inset:0;border-radius:16px;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;opacity:.5;}
+.gc-inputs{display:grid;grid-template-columns:1.1fr 1fr 1fr auto;gap:14px;align-items:end;position:relative;}
+.gc-field{display:flex;flex-direction:column;gap:6px;}
+.gc-field label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--tx2);}
+.gc-field input{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:var(--font-body);font-size:16px;color:var(--tx1);width:100%;transition:border-color .2s;}
+.gc-field input:focus{outline:none;border-color:var(--blue);}
+.gc-field input::placeholder{color:var(--tx3);}
+.gc-amt-wrap{position:relative;}
+.gc-amt-wrap input{padding-left:24px;}
+.gc-amt-wrap::before{content:'$';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:15px;pointer-events:none;}
+.gc-btn{background:linear-gradient(135deg,var(--blue),#0077cc);color:#fff;border:none;border-radius:10px;padding:12px 22px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .2s;white-space:nowrap;height:44px;}
+.gc-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,174,255,.3);}
+.gc-btn:active{transform:translateY(0);}
+.gc-btn:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none;}
+
+/* Chips */
+.gc-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;position:relative;align-items:center;}
+.gc-chips .gc-chip-lbl{font-size:11px;color:var(--tx3);margin-right:2px;}
+.gc-chip{font-size:12px;font-weight:500;padding:5px 13px;border-radius:18px;border:1px solid var(--border);color:var(--tx2);cursor:pointer;background:transparent;transition:all .18s;}
+.gc-chip:hover{color:var(--tx1);border-color:var(--blue);background:rgba(0,174,255,.08);}
+.gc-chip.amt{margin-left:0;}
+.gc-chips .gc-sep{width:1px;height:18px;background:var(--border);margin:0 4px;}
+
+/* Status */
+.gc-status{margin-top:18px;font-size:13px;color:var(--tx2);min-height:18px;text-align:center;}
+.gc-status.err{color:var(--red);}
+.gc-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--blue);border-radius:50%;animation:gcspin .7s linear infinite;vertical-align:-2px;margin-right:7px;}
+@keyframes gcspin{to{transform:rotate(360deg);}}
+
+/* Result */
+.gc-result{margin-top:28px;display:none;}
+.gc-result.show{display:block;animation:gcfade .4s ease;}
+@keyframes gcfade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+.gc-headline{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px 24px;text-align:center;position:relative;overflow:hidden;}
+.gc-headline .bar{position:absolute;top:0;left:0;right:0;height:2px;background:var(--green);}
+.gc-headline.loss .bar{background:var(--red);}
+.gc-hl-sub{font-size:13px;color:var(--tx2);line-height:1.5;}
+.gc-hl-sub b{color:var(--tx1);font-weight:600;}
+.gc-hl-value{font-family:var(--font-display);font-weight:400;font-size:clamp(44px,7vw,68px);line-height:1.05;letter-spacing:-.02em;margin:6px 0 4px;color:var(--green);}
+.gc-headline.loss .gc-hl-value{color:var(--red);}
+.gc-hl-delta{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:center;font-size:14px;font-weight:600;margin-top:4px;}
+.gc-hl-delta .up{color:var(--green);}
+.gc-hl-delta .down{color:var(--red);}
+.gc-hl-delta .dot{color:var(--tx3);font-weight:400;}
+
+/* Stat grid */
+.gc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px;}
+.gc-stats.six{grid-template-columns:repeat(3,1fr);}
+.gc-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 16px;}
+.gc-stat .k{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--tx2);margin-bottom:7px;}
+.gc-stat .v{font-size:22px;font-weight:600;color:var(--tx1);font-variant-numeric:tabular-nums;}
+.gc-stat .v.up{color:var(--green);}
+.gc-stat .v.down{color:var(--red);}
+
+/* Chart */
+.gc-chartcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px 14px;margin-top:14px;position:relative;}
+.gc-chart-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+.gc-chart-title{font-family:var(--font-display);font-size:18px;font-weight:400;color:var(--tx1);}
+.gc-legend{display:flex;gap:16px;align-items:center;}
+.gc-leg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);}
+.gc-leg .sw{width:14px;height:3px;border-radius:2px;}
+.gc-chart{position:relative;width:100%;}
+.gc-chart svg{display:block;width:100%;height:auto;overflow:visible;}
+.gc-tip{position:absolute;pointer-events:none;background:var(--surface2);border:1px solid var(--border-h);border-radius:8px;padding:8px 11px;font-size:12px;color:var(--tx1);line-height:1.5;white-space:nowrap;opacity:0;transition:opacity .12s;transform:translate(-50%,-115%);z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+.gc-tip .d{color:var(--tx2);font-size:11px;margin-bottom:3px;}
+.gc-tip .row{display:flex;align-items:center;gap:6px;}
+.gc-tip .row .sw{width:9px;height:9px;border-radius:2px;}
+.gc-tip .row b{font-variant-numeric:tabular-nums;}
+
+/* Note + CTA */
+.gc-note{font-size:12px;color:var(--tx3);line-height:1.6;margin-top:18px;text-align:center;max-width:680px;margin-left:auto;margin-right:auto;}
+.gc-cta{margin-top:26px;text-align:center;}
+.gc-cta a{display:inline-block;background:var(--surface2);border:1px solid var(--border-h);color:var(--tx1);text-decoration:none;font-size:14px;font-weight:600;padding:13px 26px;border-radius:12px;transition:all .2s;}
+.gc-cta a:hover{border-color:var(--blue);background:rgba(0,174,255,.08);}
+.gc-cta .sub{display:block;font-size:12px;color:var(--tx3);margin-top:10px;}
+
+/* Footer */
+.gc-footer{text-align:center;padding:36px 24px;border-top:1px solid var(--border);max-width:760px;margin:0 auto;}
+.gc-footer p{font-size:13px;color:var(--tx3);line-height:1.7;}
+.gc-footer a{color:var(--blue);text-decoration:none;}
+
+@media(max-width:760px){
+  .gc-nav{padding:12px 16px;}
+  .gc-nav-links{gap:16px;}
+  .gc-hero{padding:36px 16px 20px;}
+  .gc-wrap{padding:0 16px 60px;}
+  .gc-inputs{grid-template-columns:1fr 1fr;}
+  .gc-inputs .gc-field.tk{grid-column:1 / -1;}
+  .gc-btn{grid-column:1 / -1;width:100%;}
+  .gc-stats,.gc-stats.six{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<nav class="gc-nav">
+  <a href="/" class="gc-nav-logo"><img src="/assets/Market-Prism-Favicon.png" alt="Market Prism">Market Prism</a>
+  <div class="gc-nav-links">
+    <a href="/blog">Blog</a>
+    <a href="/methodology">Methodology</a>
+    <a href="/pricing">Pricing</a>
+    <a href="/login">Sign In</a>
+  </div>
+</nav>
+
+<div class="gc-hero">
+  <h1>Stock Investment Calculator</h1>
+  <div class="gc-accent">What if you'd invested?</div>
+  <p>See what any amount in any stock would be worth today — and how it stacked up against the S&amp;P 500.</p>
+</div>
+
+<div class="gc-wrap">
+  <div class="gc-card">
+    <div class="gc-inputs">
+      <div class="gc-field tk">
+        <label for="gc-ticker">Ticker</label>
+        <input id="gc-ticker" type="text" autocomplete="off" spellcheck="false" placeholder="NVDA" maxlength="10">
+      </div>
+      <div class="gc-field">
+        <label for="gc-amount">Initial investment</label>
+        <div class="gc-amt-wrap">
+          <input id="gc-amount" type="text" inputmode="numeric" placeholder="10,000" value="10,000">
+        </div>
+      </div>
+      <div class="gc-field">
+        <label for="gc-date">Invested on</label>
+        <input id="gc-date" type="date">
+      </div>
+      <button class="gc-btn" id="gc-go">Calculate</button>
+    </div>
+    <div class="gc-chips">
+      <span class="gc-chip-lbl">Try:</span>
+      <button class="gc-chip" data-tk="NVDA">NVDA</button>
+      <button class="gc-chip" data-tk="AAPL">AAPL</button>
+      <button class="gc-chip" data-tk="TSLA">TSLA</button>
+      <button class="gc-chip" data-tk="MSFT">MSFT</button>
+      <button class="gc-chip" data-tk="AMZN">AMZN</button>
+      <span class="gc-sep"></span>
+      <button class="gc-chip amt" data-amt="1000">$1K</button>
+      <button class="gc-chip amt" data-amt="10000">$10K</button>
+      <button class="gc-chip amt" data-amt="100000">$100K</button>
+    </div>
+    <div class="gc-status" id="gc-status"></div>
+  </div>
+
+  <div class="gc-result" id="gc-result">
+    <div class="gc-headline" id="gc-headline">
+      <div class="bar"></div>
+      <div class="gc-hl-sub" id="gc-hl-sub"></div>
+      <div class="gc-hl-value" id="gc-hl-value"></div>
+      <div class="gc-hl-delta" id="gc-hl-delta"></div>
+    </div>
+
+    <div class="gc-stats" id="gc-stats"></div>
+
+    <div class="gc-chartcard">
+      <div class="gc-chart-head">
+        <div class="gc-chart-title">Value over time</div>
+        <div class="gc-legend" id="gc-legend"></div>
+      </div>
+      <div class="gc-chart" id="gc-chart">
+        <div class="gc-tip" id="gc-tip"></div>
+      </div>
+    </div>
+
+    <p class="gc-note">
+      Figures use split-adjusted closing prices and exclude dividends, so total returns for dividend-paying stocks are understated. History is limited to the most recent ~10 years. Past performance does not predict future results. For educational purposes only — not investment advice.
+    </p>
+
+    <div class="gc-cta">
+      <a href="/dashboard">See today's narrative signals →</a>
+      <span class="sub">Market Prism tracks which stories are real and which are hype — daily.</span>
+    </div>
+  </div>
+</div>
+
+<footer class="gc-footer">
+  <p>
+    © Market Prism. Data via Polygon.io. &nbsp;·&nbsp;
+    <a href="/methodology">Methodology</a> &nbsp;·&nbsp;
+    <a href="/faq">FAQ</a> &nbsp;·&nbsp;
+    <a href="/pricing">Pricing</a>
+  </p>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  var MAX_DAYS = 3650; // matches /api/price-history cap
+
+  // ---- helpers ----
+  var fmtUSD0  = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+  var fmtUSDc  = new Intl.NumberFormat('en-US',{notation:'compact',style:'currency',currency:'USD',maximumFractionDigits:1});
+  function fmtPct(x){ return (x>=0?'+':'') + (x*100).toFixed(1) + '%'; }
+  function fmtMult(x){ return x.toFixed(x>=10?0:1) + '×'; }
+  function pad(n){ return n<10 ? '0'+n : ''+n; }
+  function toYMD(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function prettyDate(ymd){ var p=ymd.split('-'); return MONTHS[(+p[1])-1]+' '+(+p[2])+', '+p[0]; }
+  function monthYear(ymd){ var p=ymd.split('-'); return MONTHS[(+p[1])-1]+' '+p[0]; }
+  function parseAmount(s){ return Math.max(0, Number(String(s).replace(/[^0-9.]/g,'')) || 0); }
+
+  // ---- elements ----
+  var $tk=document.getElementById('gc-ticker'), $amt=document.getElementById('gc-amount'),
+      $date=document.getElementById('gc-date'), $go=document.getElementById('gc-go'),
+      $status=document.getElementById('gc-status'), $result=document.getElementById('gc-result'),
+      $headline=document.getElementById('gc-headline'), $hlSub=document.getElementById('gc-hl-sub'),
+      $hlVal=document.getElementById('gc-hl-value'), $hlDelta=document.getElementById('gc-hl-delta'),
+      $stats=document.getElementById('gc-stats'), $legend=document.getElementById('gc-legend'),
+      $chart=document.getElementById('gc-chart'), $tip=document.getElementById('gc-tip');
+
+  // date bounds
+  var today=new Date();
+  var minDate=new Date(today.getTime()); minDate.setDate(minDate.getDate()-MAX_DAYS);
+  $date.max=toYMD(today); $date.min=toYMD(minDate);
+
+  // ---- data ----
+  var cache={};
+  function loadSeries(ticker){
+    if(cache[ticker]) return Promise.resolve(cache[ticker]);
+    return fetch('/api/price-history?ticker='+encodeURIComponent(ticker)+'&days='+MAX_DAYS)
+      .then(function(r){ if(!r.ok) throw new Error('No price data for '+ticker); return r.json(); })
+      .then(function(j){
+        var s=(j.series||[]).filter(function(d){ return d && d.price_close>0; });
+        if(!s.length) throw new Error('No price data for '+ticker);
+        cache[ticker]=s; return s;
+      });
+  }
+
+  // pick start index = first bar on/after startYMD (clamp to earliest)
+  function startIndex(series, startYMD){
+    for(var i=0;i<series.length;i++){ if(series[i].snapshot_date>=startYMD) return i; }
+    return -1;
+  }
+  function endIndex(series, endYMD){
+    for(var i=series.length-1;i>=0;i--){ if(series[i].snapshot_date<=endYMD) return i; }
+    return series.length-1;
+  }
+
+  // Compute the value path for `amount` invested at startYMD, bounded to a date window.
+  function computePath(series, amount, startYMD, endYMD){
+    var si=startIndex(series, startYMD);
+    var clamped=false;
+    if(si<0){ si=0; }
+    if(series[si].snapshot_date>startYMD && si===0){ clamped=true; }
+    var ei=endIndex(series, endYMD); if(ei<=si) ei=series.length-1;
+    var slice=series.slice(si, ei+1);
+    var startPx=slice[0].price_close, shares=amount/startPx;
+    var pts=slice.map(function(d){ return {t:Date.parse(d.snapshot_date), ymd:d.snapshot_date, v:shares*d.price_close}; });
+    var finalValue=pts[pts.length-1].v;
+    var startReal=slice[0].snapshot_date, endReal=slice[slice.length-1].snapshot_date;
+    var years=(Date.parse(endReal)-Date.parse(startReal))/(365.25*864e5);
+    var totalReturn=finalValue/amount-1;
+    var cagr=years>0.05 ? Math.pow(finalValue/amount,1/years)-1 : totalReturn;
+    var peak=-Infinity, mdd=0;
+    for(var k=0;k<pts.length;k++){ if(pts[k].v>peak)peak=pts[k].v; var dd=pts[k].v/peak-1; if(dd<mdd)mdd=dd; }
+    return {pts:pts, startPx:startPx, shares:shares, finalValue:finalValue, totalReturn:totalReturn,
+            cagr:cagr, years:years, mdd:mdd, startReal:startReal, endReal:endReal, clamped:clamped, multiple:finalValue/amount};
+  }
+
+  // ---- run ----
+  var lastRender=null;
+  function setStatus(msg, isErr, spin){
+    $status.className='gc-status'+(isErr?' err':'');
+    $status.innerHTML=(spin?'<span class="gc-spinner"></span>':'')+(msg||'');
+  }
+
+  function run(){
+    var ticker=($tk.value||'').trim().toUpperCase().replace(/[^A-Z0-9.\-]/g,'');
+    var amount=parseAmount($amt.value);
+    var startYMD=$date.value||$date.min;
+    if(!ticker){ setStatus('Enter a ticker symbol to begin.', true); $tk.focus(); return; }
+    if(!amount){ setStatus('Enter an investment amount.', true); $amt.focus(); return; }
+
+    $go.disabled=true; setStatus('Crunching '+ticker+'…', false, true);
+    var endYMD=toYMD(today);
+    var wantSpy = ticker!=='SPY';
+
+    Promise.all([ loadSeries(ticker), wantSpy ? loadSeries('SPY').catch(function(){return null;}) : Promise.resolve(null) ])
+      .then(function(res){
+        var series=res[0], spySeries=res[1];
+        var tk=computePath(series, amount, startYMD, endYMD);
+        // benchmark over the SAME realized window so the comparison is apples-to-apples
+        var spy=spySeries ? computePath(spySeries, amount, tk.startReal, tk.endReal) : null;
+        render(ticker, amount, tk, spy);
+        setStatus('');
+        $go.disabled=false;
+        // shareable URL
+        try{
+          var qs='?ticker='+encodeURIComponent(ticker)+'&amount='+Math.round(amount)+'&start='+tk.startReal;
+          history.replaceState(null,'',qs);
+        }catch(e){}
+        try{ gtag('event','growth_calc',{ticker:ticker,amount:Math.round(amount)}); }catch(e){}
+      })
+      .catch(function(err){
+        $go.disabled=false;
+        $result.classList.remove('show');
+        setStatus(err.message||('Could not load data for '+ticker)+'. Check the symbol and try again.', true);
+      });
+  }
+
+  function statCard(k,v,cls){ return '<div class="gc-stat"><div class="k">'+k+'</div><div class="v'+(cls?(' '+cls):'')+'">'+v+'</div></div>'; }
+
+  function render(ticker, amount, tk, spy){
+    var gain=tk.finalValue>=amount;
+    $headline.className='gc-headline'+(gain?'':' loss');
+    $hlSub.innerHTML='<b>'+fmtUSD0.format(amount)+'</b> in <b>'+ticker+'</b> on '+prettyDate(tk.startReal)+
+      (tk.clamped?' (earliest data available)':'')+' would be worth';
+    $hlVal.textContent=fmtUSD0.format(tk.finalValue);
+    var deltaParts=['<span class="'+(gain?'up':'down')+'">'+fmtPct(tk.totalReturn)+' total</span>',
+                    '<span class="dot">·</span>',
+                    '<span class="'+(tk.cagr>=0?'up':'down')+'">'+fmtPct(tk.cagr)+'/yr</span>'];
+    $hlDelta.innerHTML=deltaParts.join('');
+
+    var cards=[
+      statCard('Total return', fmtPct(tk.totalReturn), tk.totalReturn>=0?'up':'down'),
+      statCard('Per year (CAGR)', fmtPct(tk.cagr), tk.cagr>=0?'up':'down'),
+      statCard('Multiple', fmtMult(tk.multiple), tk.multiple>=1?'up':'down'),
+      statCard('Max drawdown', fmtPct(tk.mdd), 'down')
+    ];
+    if(spy){
+      var diff=tk.finalValue-spy.finalValue;
+      var beat=diff>=0;
+      cards.push(statCard('S&amp;P 500 result', fmtUSD0.format(spy.finalValue)));
+      cards.push(statCard('vs S&amp;P 500', (beat?'+':'−')+fmtUSD0.format(Math.abs(diff)).replace('$','$'), beat?'up':'down'));
+    }
+    $stats.classList.toggle('six', !!spy);
+    $stats.innerHTML=cards.join('');
+
+    drawChart(ticker, tk, spy);
+    $result.classList.add('show');
+  }
+
+  // ---- chart ----
+  var COLOR_TK_UP='#00DE94', COLOR_TK_DOWN='#FF4D4D', COLOR_SPY='#6B7685', COLOR_BASE='rgba(255,255,255,0.18)';
+  function drawChart(ticker, tk, spy){
+    var W=860,H=380, padL=58,padR=18,padT=18,padB=34;
+    var plotW=W-padL-padR, plotH=H-padT-padB;
+    var tkColor=tk.finalValue>=tk.pts[0].v?COLOR_TK_UP:COLOR_TK_DOWN;
+    var allPts=tk.pts.slice(); if(spy) allPts=allPts.concat(spy.pts);
+    var t0=allPts[0].t, t1=allPts[0].t, vmin=allPts[0].v, vmax=allPts[0].v;
+    for(var i=0;i<allPts.length;i++){ var p=allPts[i]; if(p.t<t0)t0=p.t; if(p.t>t1)t1=p.t; if(p.v<vmin)vmin=p.v; if(p.v>vmax)vmax=p.v; }
+    var base=tk.pts[0].v; if(base<vmin)vmin=base; if(base>vmax)vmax=base;
+    var span=vmax-vmin||1; vmin-=span*0.06; vmax+=span*0.06; if(vmin<0)vmin=0;
+    var tspan=t1-t0||1;
+    function sx(t){ return padL+(t-t0)/tspan*plotW; }
+    function sy(v){ return padT+(1-(v-vmin)/(vmax-vmin))*plotH; }
+
+    function lineStr(pts){ var d=''; for(var j=0;j<pts.length;j++){ d+=(j?'L':'M')+sx(pts[j].t).toFixed(1)+' '+sy(pts[j].v).toFixed(1); } return d; }
+    var tkLine=lineStr(tk.pts);
+    var areaD=tkLine+'L'+sx(tk.pts[tk.pts.length-1].t).toFixed(1)+' '+sy(vmin).toFixed(1)+'L'+sx(tk.pts[0].t).toFixed(1)+' '+sy(vmin).toFixed(1)+'Z';
+
+    // y gridlines (4)
+    var grid='';
+    for(var g=0;g<=3;g++){
+      var gv=vmin+(vmax-vmin)*g/3, gy=sy(gv);
+      grid+='<line x1="'+padL+'" y1="'+gy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+gy.toFixed(1)+'" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>';
+      grid+='<text x="'+(padL-8)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" font-family="Inter,sans-serif" font-size="11" fill="#6B7685">'+fmtUSDc.format(gv)+'</text>';
+    }
+    // baseline (initial investment)
+    var by=sy(base);
+    grid+='<line x1="'+padL+'" y1="'+by.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+by.toFixed(1)+'" stroke="'+COLOR_BASE+'" stroke-width="1" stroke-dasharray="4 4"/>';
+
+    // x labels (start, mid, end)
+    var xl='';
+    [t0,(t0+t1)/2,t1].forEach(function(tt,idx){
+      var anchor=idx===0?'start':(idx===2?'end':'middle');
+      var ymd=new Date(tt).toISOString().slice(0,10);
+      xl+='<text x="'+sx(tt).toFixed(1)+'" y="'+(H-12)+'" text-anchor="'+anchor+'" font-family="Inter,sans-serif" font-size="11" fill="#6B7685">'+monthYear(ymd)+'</text>';
+    });
+
+    var spyLine = spy ? '<path d="'+lineStr(spy.pts)+'" fill="none" stroke="'+COLOR_SPY+'" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.85"/>' : '';
+    var endX=sx(tk.pts[tk.pts.length-1].t), endY=sy(tk.pts[tk.pts.length-1].v);
+
+    var svg=''+
+      '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Investment value over time">'+
+      '<defs><linearGradient id="gcArea" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0%" stop-color="'+tkColor+'" stop-opacity="0.28"/>'+
+        '<stop offset="100%" stop-color="'+tkColor+'" stop-opacity="0"/>'+
+      '</linearGradient></defs>'+
+      grid+
+      '<path d="'+areaD+'" fill="url(#gcArea)"/>'+
+      spyLine+
+      '<path d="'+tkLine+'" fill="none" stroke="'+tkColor+'" stroke-width="2.4" stroke-linejoin="round"/>'+
+      '<circle cx="'+endX.toFixed(1)+'" cy="'+endY.toFixed(1)+'" r="4" fill="'+tkColor+'"/>'+
+      xl+
+      '<rect id="gc-hit" x="'+padL+'" y="'+padT+'" width="'+plotW+'" height="'+plotH+'" fill="transparent" style="cursor:crosshair"/>'+
+      '<line id="gc-cross" x1="0" y1="'+padT+'" x2="0" y2="'+(padT+plotH)+'" stroke="rgba(255,255,255,0.25)" stroke-width="1" style="display:none"/>'+
+      '<circle id="gc-dot-tk" r="4.5" fill="'+tkColor+'" stroke="#0B0F14" stroke-width="1.5" style="display:none"/>'+
+      (spy?'<circle id="gc-dot-spy" r="4" fill="'+COLOR_SPY+'" stroke="#0B0F14" stroke-width="1.5" style="display:none"/>':'')+
+      '</svg>';
+
+    // keep the tooltip node, replace the svg
+    var old=$chart.querySelector('svg'); if(old) old.remove();
+    $chart.insertAdjacentHTML('afterbegin', svg);
+
+    $legend.innerHTML='<span class="gc-leg"><span class="sw" style="background:'+tkColor+'"></span>'+ticker+'</span>'+
+      (spy?'<span class="gc-leg"><span class="sw" style="background:'+COLOR_SPY+'"></span>S&amp;P 500</span>':'');
+
+    // hover interaction
+    lastRender={tk:tk, spy:spy, ticker:ticker, sx:sx, sy:sy, t0:t0, t1:t1, tspan:tspan, padL:padL, plotW:plotW, W:W, tkColor:tkColor};
+    wireHover();
+  }
+
+  function nearestPoint(pts, t){
+    // binary-ish linear scan is fine (<=2500 pts)
+    var best=pts[0], bd=Math.abs(pts[0].t-t);
+    for(var i=1;i<pts.length;i++){ var d=Math.abs(pts[i].t-t); if(d<bd){bd=d;best=pts[i];} }
+    return best;
+  }
+
+  function wireHover(){
+    var svg=$chart.querySelector('svg'); if(!svg||!lastRender) return;
+    var hit=svg.querySelector('#gc-hit'), cross=svg.querySelector('#gc-cross'),
+        dotTk=svg.querySelector('#gc-dot-tk'), dotSpy=svg.querySelector('#gc-dot-spy');
+    var R=lastRender;
+    function onMove(ev){
+      var rect=svg.getBoundingClientRect();
+      var clientX=(ev.touches?ev.touches[0].clientX:ev.clientX);
+      var px=(clientX-rect.left)/rect.width*R.W;            // back to viewBox coords
+      var frac=Math.max(0,Math.min(1,(px-R.padL)/R.plotW));
+      var t=R.t0+frac*R.tspan;
+      var ptk=nearestPoint(R.tk.pts, t);
+      var x=R.sx(ptk.t);
+      cross.setAttribute('x1',x); cross.setAttribute('x2',x); cross.style.display='';
+      dotTk.setAttribute('cx',x); dotTk.setAttribute('cy',R.sy(ptk.v)); dotTk.style.display='';
+      var rows='<div class="d">'+prettyDate(ptk.ymd)+'</div>'+
+        '<div class="row"><span class="sw" style="background:'+R.tkColor+'"></span>'+R.ticker+' <b>'+fmtUSD0.format(ptk.v)+'</b></div>';
+      if(R.spy && dotSpy){
+        var pspy=nearestPoint(R.spy.pts, t);
+        dotSpy.setAttribute('cx',R.sx(pspy.t)); dotSpy.setAttribute('cy',R.sy(pspy.v)); dotSpy.style.display='';
+        rows+='<div class="row"><span class="sw" style="background:'+COLOR_SPY+'"></span>S&amp;P 500 <b>'+fmtUSD0.format(pspy.v)+'</b></div>';
+      }
+      $tip.innerHTML=rows;
+      // position tooltip in pixel space of the chart container
+      var contRect=$chart.getBoundingClientRect();
+      $tip.style.left=((x/R.W)*contRect.width)+'px';
+      $tip.style.top=((R.sy(ptk.v)/380)*(svg.getBoundingClientRect().height))+'px';
+      $tip.style.opacity='1';
+    }
+    function onLeave(){ cross.style.display='none'; dotTk.style.display='none'; if(dotSpy)dotSpy.style.display='none'; $tip.style.opacity='0'; }
+    hit.addEventListener('mousemove',onMove);
+    hit.addEventListener('mouseleave',onLeave);
+    hit.addEventListener('touchmove',onMove,{passive:true});
+    hit.addEventListener('touchend',onLeave);
+  }
+
+  // ---- input wiring ----
+  $go.addEventListener('click', run);
+  [$tk,$amt,$date].forEach(function(el){ el.addEventListener('keydown',function(e){ if(e.key==='Enter') run(); }); });
+  $tk.addEventListener('input',function(){ $tk.value=$tk.value.toUpperCase(); });
+  $amt.addEventListener('blur',function(){ var v=parseAmount($amt.value); if(v) $amt.value=v.toLocaleString('en-US'); });
+  document.querySelectorAll('.gc-chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      if(c.dataset.tk){ $tk.value=c.dataset.tk; }
+      if(c.dataset.amt){ $amt.value=Number(c.dataset.amt).toLocaleString('en-US'); }
+      run();
+    });
+  });
+
+  // ---- init from URL / defaults ----
+  function init(){
+    var q=new URLSearchParams(location.search);
+    var qt=q.get('ticker'), qa=q.get('amount'), qs=q.get('start');
+    $tk.value=(qt||'NVDA').toUpperCase();
+    $amt.value=(qa?parseAmount(qa):10000).toLocaleString('en-US');
+    if(qs && /^\d{4}-\d{2}-\d{2}$/.test(qs)){
+      $date.value = qs < $date.min ? $date.min : (qs > $date.max ? $date.max : qs);
+    } else {
+      $date.value=$date.min; // default: as far back as data allows
+    }
+    run();
+  }
+  init();
+})();
+</script>
+</body>
+</html>

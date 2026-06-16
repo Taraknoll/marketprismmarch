@@ -137,6 +137,10 @@
       "destination": "/api/faq"
     },
     {
+      "source": "/growth-calculator",
+      "destination": "/api/growth"
+    },
+    {
       "source": "/why-is-:ticker-stock-down",
       "destination": "/api/seo-why-down"
     },
@@ -264,6 +268,9 @@
     },
     "api/faq.js": {
       "includeFiles": "_faq.html"
+    },
+    "api/growth.js": {
+      "includeFiles": "_growth.html"
     },
     "api/casestudy.js": {
       "includeFiles": "casestudy/*.html"
