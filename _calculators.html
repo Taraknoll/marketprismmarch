@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
+<!-- Vercel Web Analytics -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Stock Tools &amp; Calculators — Market Prism™</title>
+<meta name="description" content="Free stock market calculators from Market Prism: investment growth, position sizing, and more. No login required.">
+<meta name="robots" content="index, follow, max-snippet:-1">
+<link rel="canonical" href="https://marketprism.co/calculators">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<!-- SEO_INJECT -->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root {
+  --bg:        #0B0F14;
+  --surface:   #131920;
+  --surface2:  #181f28;
+  --border:    rgba(255,255,255,0.06);
+  --border-h:  rgba(255,255,255,0.14);
+  --blue:      #00AEFF;
+  --teal:      #38C8B8;
+  --green:     #00DE94;
+  --red:       #FF4D4D;
+  --amber:     #FFB800;
+  --tx1:       #F5F7FA;
+  --tx2:       #A0A8B0;
+  --tx3:       #4A5578;
+  --font-display: 'Instrument Serif', 'DM Serif Display', Georgia, serif;
+  --font-body:    'Inter', 'DM Sans', system-ui, sans-serif;
+}
+html{background:var(--bg);color:var(--tx1);font-family:var(--font-body);scroll-behavior:smooth;}
+body{background:var(--bg);min-height:100vh;}
+
+.ct-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;}
+.ct-nav-logo{font-family:var(--font-body);font-weight:700;font-size:16px;color:var(--tx1);text-decoration:none;display:flex;align-items:center;gap:8px;}
+.ct-nav-logo img{height:22px;}
+.ct-nav-links{display:flex;gap:24px;}
+.ct-nav-links a{font-size:13px;color:var(--tx2);text-decoration:none;transition:color .2s;}
+.ct-nav-links a:hover{color:var(--tx1);}
+
+.ct-hero{text-align:center;padding:60px 24px 36px;max-width:760px;margin:0 auto;}
+.ct-hero h1{font-family:var(--font-display);font-size:clamp(30px,3.6vw,46px);font-weight:400;letter-spacing:-0.025em;margin-bottom:10px;}
+.ct-hero .ct-accent{font-family:var(--font-display);font-style:italic;color:#4DC8F0;font-size:clamp(24px,2.8vw,34px);}
+.ct-hero p{font-size:15px;color:var(--tx2);line-height:1.7;max-width:540px;margin:14px auto 0;}
+
+.ct-wrap{max-width:920px;margin:0 auto;padding:0 24px 70px;}
+.ct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+
+.ct-card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;text-decoration:none;color:inherit;position:relative;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s;}
+.ct-card .bar{position:absolute;top:0;left:0;right:0;height:2px;}
+.ct-card:hover{transform:translateY(-4px);border-color:var(--border-h);box-shadow:0 10px 28px rgba(0,0,0,.45);}
+.ct-card.soon{opacity:.58;pointer-events:none;}
+.ct-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;background:var(--surface2);}
+.ct-ico svg{width:22px;height:22px;}
+.ct-title{font-family:var(--font-display);font-size:22px;font-weight:400;color:var(--tx1);line-height:1.15;margin-bottom:8px;}
+.ct-desc{font-size:13px;color:var(--tx2);line-height:1.55;flex:1;}
+.ct-go{margin-top:16px;font-size:13px;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:6px;}
+.ct-badge{position:absolute;top:14px;right:14px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;}
+
+.ct-foot-note{text-align:center;font-size:13px;color:var(--tx2);line-height:1.7;margin-top:34px;}
+.ct-foot-note a{color:var(--blue);text-decoration:none;}
+
+.ct-footer{text-align:center;padding:36px 24px;border-top:1px solid var(--border);max-width:760px;margin:0 auto;}
+.ct-footer p{font-size:13px;color:var(--tx3);line-height:1.7;}
+.ct-footer a{color:var(--blue);text-decoration:none;}
+
+@media(max-width:600px){
+  .ct-nav{padding:12px 16px;}
+  .ct-hero{padding:40px 16px 24px;}
+  .ct-wrap{padding:0 16px 56px;}
+}
+</style>
+</head>
+<body>
+
+<nav class="ct-nav">
+  <a href="/" class="ct-nav-logo"><img src="/assets/Market-Prism-Favicon.png" alt="Market Prism">Market Prism</a>
+  <div class="ct-nav-links">
+    <a href="/methodology">Methodology</a>
+    <a href="/blog">Blog</a>
+    <a href="/pricing">Pricing</a>
+    <a href="/login">Sign In</a>
+  </div>
+</nav>
+
+<div class="ct-hero">
+  <h1>Free Stock Tools</h1>
+  <div class="ct-accent">Run the numbers in seconds.</div>
+  <p>A growing set of free calculators powered by Market Prism's market data. No login, no catch.</p>
+</div>
+
+<div class="ct-wrap">
+  <div class="ct-grid">
+
+    <a class="ct-card" href="/growth-calculator">
+      <div class="bar" style="background:var(--green)"></div>
+      <div class="ct-ico" style="color:var(--green)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg>
+      </div>
+      <div class="ct-title">Growth of $10K</div>
+      <div class="ct-desc">See what any stock investment would be worth today — total return, CAGR, max drawdown, and a live S&amp;P 500 comparison.</div>
+      <div class="ct-go">Open calculator →</div>
+    </a>
+
+    <a class="ct-card" href="/position-size-calculator">
+      <div class="bar" style="background:var(--blue)"></div>
+      <div class="ct-ico" style="color:var(--blue)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M5 8h14"></path><circle cx="7" cy="14" r="3"></circle><circle cx="17" cy="14" r="3"></circle></svg>
+      </div>
+      <div class="ct-title">Position Size &amp; Risk</div>
+      <div class="ct-desc">Size any trade off your account and risk tolerance. Get share count, capital at risk, stop distance, and reward-to-risk.</div>
+      <div class="ct-go">Open calculator →</div>
+    </a>
+
+    <div class="ct-card soon">
+      <span class="ct-badge">Soon</span>
+      <div class="ct-ico" style="color:var(--tx3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"></path></svg>
+      </div>
+      <div class="ct-title">Expected Move</div>
+      <div class="ct-desc">Turn a stock's historical volatility into expected daily, weekly, and monthly move ranges.</div>
+      <div class="ct-go" style="color:var(--tx3)">Coming soon</div>
+    </div>
+
+    <div class="ct-card soon">
+      <span class="ct-badge">Soon</span>
+      <div class="ct-ico" style="color:var(--tx3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6v12"></path><path d="M3 9c4 0 4 6 8 6s4-9 9-9"></path></svg>
+      </div>
+      <div class="ct-title">Dollar-Cost Averaging</div>
+      <div class="ct-desc">Invest a fixed amount on a schedule and compare it to going all-in with a lump sum.</div>
+      <div class="ct-go" style="color:var(--tx3)">Coming soon</div>
+    </div>
+
+  </div>
+
+  <p class="ct-foot-note">
+    Want a tool we haven't built yet? Market Prism members get the full platform —
+    <a href="/dashboard">daily narrative signals, trading cards, and the leaderboard</a>.
+  </p>
+</div>
+
+<footer class="ct-footer">
+  <p>
+    © Market Prism. &nbsp;·&nbsp;
+    <a href="/methodology">Methodology</a> &nbsp;·&nbsp;
+    <a href="/faq">FAQ</a> &nbsp;·&nbsp;
+    <a href="/pricing">Pricing</a>
+  </p>
+</footer>
+
+</body>
+</html>

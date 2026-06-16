@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
+<!-- Vercel Web Analytics -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Position Size Calculator — Market Prism™</title>
+<meta name="description" content="Free position size and risk calculator. Find how many shares to trade based on your account size, risk per trade, entry, and stop-loss.">
+<meta name="robots" content="index, follow, max-snippet:-1">
+<link rel="canonical" href="https://marketprism.co/position-size-calculator">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<!-- SEO_INJECT -->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root {
+  --bg:        #0B0F14;
+  --surface:   #131920;
+  --surface2:  #181f28;
+  --border:    rgba(255,255,255,0.06);
+  --border-h:  rgba(255,255,255,0.14);
+  --blue:      #00AEFF;
+  --teal:      #38C8B8;
+  --green:     #00DE94;
+  --red:       #FF4D4D;
+  --amber:     #FFB800;
+  --tx1:       #F5F7FA;
+  --tx2:       #A0A8B0;
+  --tx3:       #4A5578;
+  --font-display: 'Instrument Serif', 'DM Serif Display', Georgia, serif;
+  --font-body:    'Inter', 'DM Sans', system-ui, sans-serif;
+}
+html{background:var(--bg);color:var(--tx1);font-family:var(--font-body);scroll-behavior:smooth;}
+body{background:var(--bg);min-height:100vh;}
+
+/* Nav */
+.ps-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);max-width:1200px;margin:0 auto;}
+.ps-nav-logo{font-family:var(--font-body);font-weight:700;font-size:16px;color:var(--tx1);text-decoration:none;display:flex;align-items:center;gap:8px;}
+.ps-nav-logo img{height:22px;}
+.ps-nav-links{display:flex;gap:24px;}
+.ps-nav-links a{font-size:13px;color:var(--tx2);text-decoration:none;transition:color .2s;}
+.ps-nav-links a:hover{color:var(--tx1);}
+
+/* Hero */
+.ps-hero{text-align:center;padding:56px 24px 28px;max-width:760px;margin:0 auto;}
+.ps-hero h1{font-family:var(--font-display);font-size:clamp(30px,3.6vw,46px);font-weight:400;letter-spacing:-0.025em;margin-bottom:10px;}
+.ps-hero .ps-accent{font-family:var(--font-display);font-style:italic;color:#4DC8F0;font-size:clamp(24px,2.8vw,34px);}
+.ps-hero p{font-size:15px;color:var(--tx2);line-height:1.7;max-width:560px;margin:14px auto 0;}
+
+/* Shell */
+.ps-wrap{max-width:880px;margin:0 auto;padding:0 24px 80px;}
+
+/* Input card */
+.ps-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;position:relative;}
+.ps-card::before{content:'';position:absolute;inset:0;border-radius:16px;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;opacity:.5;}
+.ps-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;position:relative;}
+.ps-field{display:flex;flex-direction:column;gap:6px;}
+.ps-field label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--tx2);}
+.ps-field label .opt{color:var(--tx3);font-weight:500;text-transform:none;letter-spacing:0;}
+.ps-field input{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:var(--font-body);font-size:16px;color:var(--tx1);width:100%;transition:border-color .2s;}
+.ps-field input:focus{outline:none;border-color:var(--blue);}
+.ps-field input::placeholder{color:var(--tx3);}
+.ps-pre{position:relative;}
+.ps-pre input{padding-left:24px;}
+.ps-pre::before{content:'$';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:15px;pointer-events:none;}
+.ps-pre.pct input{padding-left:12px;padding-right:26px;}
+.ps-pre.pct::before{content:none;}
+.ps-pre.pct::after{content:'%';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:15px;pointer-events:none;}
+
+/* Chips */
+.ps-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;position:relative;align-items:center;}
+.ps-chips .ps-chip-lbl{font-size:11px;color:var(--tx3);margin-right:2px;}
+.ps-chip{font-size:12px;font-weight:500;padding:5px 13px;border-radius:18px;border:1px solid var(--border);color:var(--tx2);cursor:pointer;background:transparent;transition:all .18s;}
+.ps-chip:hover{color:var(--tx1);border-color:var(--blue);background:rgba(0,174,255,.08);}
+.ps-chips .ps-sep{width:1px;height:18px;background:var(--border);margin:0 4px;}
+
+/* Status / hint */
+.ps-hint{margin-top:18px;font-size:13px;color:var(--tx2);min-height:18px;text-align:center;}
+.ps-hint.warn{color:var(--amber);}
+
+/* Result */
+.ps-result{margin-top:28px;display:none;}
+.ps-result.show{display:block;animation:psfade .4s ease;}
+@keyframes psfade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+.ps-headline{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px 24px;text-align:center;position:relative;overflow:hidden;}
+.ps-headline .bar{position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);}
+.ps-hl-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:6px;margin-bottom:10px;}
+.ps-hl-tag.long{color:var(--green);background:rgba(0,222,148,.12);}
+.ps-hl-tag.short{color:var(--red);background:rgba(255,77,77,.12);}
+.ps-hl-value{font-family:var(--font-display);font-weight:400;font-size:clamp(44px,7vw,68px);line-height:1.05;letter-spacing:-.02em;margin:2px 0 4px;color:var(--tx1);}
+.ps-hl-sub{font-size:13px;color:var(--tx2);line-height:1.5;}
+.ps-hl-sub b{color:var(--tx1);font-weight:600;}
+
+/* Stat grid */
+.ps-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px;}
+.ps-stats.five{grid-template-columns:repeat(5,1fr);}
+.ps-stats.six{grid-template-columns:repeat(3,1fr);}
+.ps-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 16px;}
+.ps-stat .k{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--tx2);margin-bottom:7px;}
+.ps-stat .v{font-size:22px;font-weight:600;color:var(--tx1);font-variant-numeric:tabular-nums;}
+.ps-stat .v.up{color:var(--green);}
+.ps-stat .v.down{color:var(--red);}
+.ps-stat .v.warn{color:var(--amber);}
+
+/* Risk/reward ladder */
+.ps-ladder{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 22px 16px;margin-top:14px;}
+.ps-ladder-title{font-family:var(--font-display);font-size:18px;font-weight:400;color:var(--tx1);margin-bottom:18px;}
+.ps-ladder svg{display:block;width:100%;height:auto;overflow:visible;}
+
+/* Note + CTA */
+.ps-note{font-size:12px;color:var(--tx3);line-height:1.6;margin-top:18px;text-align:center;max-width:680px;margin-left:auto;margin-right:auto;}
+.ps-cta{margin-top:26px;text-align:center;}
+.ps-cta a{display:inline-block;background:var(--surface2);border:1px solid var(--border-h);color:var(--tx1);text-decoration:none;font-size:14px;font-weight:600;padding:13px 26px;border-radius:12px;transition:all .2s;}
+.ps-cta a:hover{border-color:var(--blue);background:rgba(0,174,255,.08);}
+.ps-cta .sub{display:block;font-size:12px;color:var(--tx3);margin-top:10px;}
+
+/* Footer */
+.ps-footer{text-align:center;padding:36px 24px;border-top:1px solid var(--border);max-width:760px;margin:0 auto;}
+.ps-footer p{font-size:13px;color:var(--tx3);line-height:1.7;}
+.ps-footer a{color:var(--blue);text-decoration:none;}
+
+@media(max-width:760px){
+  .ps-nav{padding:12px 16px;}
+  .ps-nav-links{gap:16px;}
+  .ps-hero{padding:36px 16px 20px;}
+  .ps-wrap{padding:0 16px 60px;}
+  .ps-stats,.ps-stats.five,.ps-stats.six{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<nav class="ps-nav">
+  <a href="/" class="ps-nav-logo"><img src="/assets/Market-Prism-Favicon.png" alt="Market Prism">Market Prism</a>
+  <div class="ps-nav-links">
+    <a href="/calculators">Tools</a>
+    <a href="/methodology">Methodology</a>
+    <a href="/pricing">Pricing</a>
+    <a href="/login">Sign In</a>
+  </div>
+</nav>
+
+<div class="ps-hero">
+  <h1>Position Size Calculator</h1>
+  <div class="ps-accent">Risk a fixed amount, never guess size.</div>
+  <p>Enter your account size, how much you're willing to risk, and your entry and stop. We'll size the trade so a stop-out costs exactly what you intended.</p>
+</div>
+
+<div class="ps-wrap">
+  <div class="ps-card">
+    <div class="ps-inputs">
+      <div class="ps-field">
+        <label for="ps-account">Account size</label>
+        <div class="ps-pre"><input id="ps-account" type="text" inputmode="decimal" placeholder="25,000" value="25,000"></div>
+      </div>
+      <div class="ps-field">
+        <label for="ps-risk">Risk per trade</label>
+        <div class="ps-pre pct"><input id="ps-risk" type="text" inputmode="decimal" placeholder="1" value="1"></div>
+      </div>
+      <div class="ps-field">
+        <label for="ps-entry">Entry price</label>
+        <div class="ps-pre"><input id="ps-entry" type="text" inputmode="decimal" placeholder="100.00"></div>
+      </div>
+      <div class="ps-field">
+        <label for="ps-stop">Stop-loss</label>
+        <div class="ps-pre"><input id="ps-stop" type="text" inputmode="decimal" placeholder="95.00"></div>
+      </div>
+      <div class="ps-field">
+        <label for="ps-target">Target <span class="opt">(optional)</span></label>
+        <div class="ps-pre"><input id="ps-target" type="text" inputmode="decimal" placeholder="115.00"></div>
+      </div>
+    </div>
+    <div class="ps-chips">
+      <span class="ps-chip-lbl">Risk:</span>
+      <button class="ps-chip" data-risk="0.5">0.5%</button>
+      <button class="ps-chip" data-risk="1">1%</button>
+      <button class="ps-chip" data-risk="2">2%</button>
+      <span class="ps-sep"></span>
+      <span class="ps-chip-lbl">Account:</span>
+      <button class="ps-chip" data-acct="10000">$10K</button>
+      <button class="ps-chip" data-acct="25000">$25K</button>
+      <button class="ps-chip" data-acct="100000">$100K</button>
+    </div>
+    <div class="ps-hint" id="ps-hint">Enter an entry price and a stop-loss to size your trade.</div>
+  </div>
+
+  <div class="ps-result" id="ps-result">
+    <div class="ps-headline" id="ps-headline">
+      <div class="bar"></div>
+      <div class="ps-hl-tag" id="ps-hl-tag"></div>
+      <div class="ps-hl-value" id="ps-hl-value"></div>
+      <div class="ps-hl-sub" id="ps-hl-sub"></div>
+    </div>
+
+    <div class="ps-stats" id="ps-stats"></div>
+
+    <div class="ps-ladder" id="ps-ladder-wrap">
+      <div class="ps-ladder-title">Risk / reward</div>
+      <div id="ps-ladder"></div>
+    </div>
+
+    <p class="ps-note">
+      Sizing assumes whole shares and excludes commissions, slippage, and gaps through your stop. A stop is not guaranteed to fill at its price. For educational purposes only — not investment advice.
+    </p>
+
+    <div class="ps-cta">
+      <a href="/calculators">← Back to all tools</a>
+      <span class="sub">More free calculators from Market Prism.</span>
+    </div>
+  </div>
+</div>
+
+<footer class="ps-footer">
+  <p>
+    © Market Prism. &nbsp;·&nbsp;
+    <a href="/calculators">Free Tools</a> &nbsp;·&nbsp;
+    <a href="/methodology">Methodology</a> &nbsp;·&nbsp;
+    <a href="/pricing">Pricing</a>
+  </p>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  var fmtUSD0=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+  var fmtUSD2=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
+  function num(s){ var v=Number(String(s==null?'':s).replace(/[^0-9.\-]/g,'')); return isFinite(v)?v:NaN; }
+  function fmtShares(n){ return n.toLocaleString('en-US'); }
+
+  var $acct=document.getElementById('ps-account'), $risk=document.getElementById('ps-risk'),
+      $entry=document.getElementById('ps-entry'), $stop=document.getElementById('ps-stop'),
+      $target=document.getElementById('ps-target'), $hint=document.getElementById('ps-hint'),
+      $result=document.getElementById('ps-result'), $headline=document.getElementById('ps-headline'),
+      $tag=document.getElementById('ps-hl-tag'), $val=document.getElementById('ps-hl-value'),
+      $sub=document.getElementById('ps-hl-sub'), $stats=document.getElementById('ps-stats'),
+      $ladderWrap=document.getElementById('ps-ladder-wrap'), $ladder=document.getElementById('ps-ladder');
+
+  function setHint(msg, warn){ $hint.className='ps-hint'+(warn?' warn':''); $hint.textContent=msg; }
+  function statCard(k,v,cls){ return '<div class="ps-stat"><div class="k">'+k+'</div><div class="v'+(cls?(' '+cls):'')+'">'+v+'</div></div>'; }
+
+  function compute(){
+    var account=num($acct.value), risk=num($risk.value), entry=num($entry.value),
+        stop=num($stop.value), target=num($target.value);
+
+    if(!(account>0) || !(risk>0) || !(entry>0) || !(stop>0)){
+      $result.classList.remove('show');
+      setHint('Enter an entry price and a stop-loss to size your trade.');
+      return;
+    }
+    if(entry===stop){
+      $result.classList.remove('show');
+      setHint('Entry and stop can’t be the same price — there’s no risk to size against.', true);
+      return;
+    }
+
+    var isLong=stop<entry;
+    var perShareRisk=Math.abs(entry-stop);
+    var riskAmount=account*(risk/100);
+    var sharesExact=riskAmount/perShareRisk;
+    var shares=Math.floor(sharesExact);
+    var positionValue=shares*entry;
+    var pctOfAccount=positionValue/account*100;
+    var stopDistPct=perShareRisk/entry*100;
+    var actualRisk=shares*perShareRisk;
+
+    setHint('');
+    $headline.querySelector('.bar').style.background = isLong ? 'var(--green)' : 'var(--red)';
+    $tag.className='ps-hl-tag '+(isLong?'long':'short');
+    $tag.textContent=isLong?'Long':'Short';
+    $val.textContent=fmtShares(shares)+(shares===1?' share':' shares');
+    $sub.innerHTML='Risking <b>'+fmtUSD0.format(riskAmount)+'</b> ('+(+risk)+'% of '+fmtUSD0.format(account)+
+      ') with a <b>'+fmtUSD2.format(perShareRisk)+'</b>/share stop';
+
+    var cards=[
+      statCard('Position value', fmtUSD0.format(positionValue), pctOfAccount>100?'warn':''),
+      statCard('% of account', pctOfAccount.toFixed(0)+'%', pctOfAccount>100?'warn':''),
+      statCard('Capital at risk', fmtUSD0.format(actualRisk)),
+      statCard('Stop distance', stopDistPct.toFixed(1)+'%')
+    ];
+
+    var hasTarget = target>0 && target!==entry;
+    var validTarget = hasTarget && ((isLong && target>entry) || (!isLong && target<entry));
+    if(hasTarget && validTarget){
+      var perShareReward=Math.abs(target-entry);
+      var rr=perShareReward/perShareRisk;
+      var potentialProfit=shares*perShareReward;
+      cards.push(statCard('Reward : risk', rr.toFixed(2)+' : 1', rr>=2?'up':(rr<1?'down':'')));
+      cards.push(statCard('Potential profit', fmtUSD0.format(potentialProfit), 'up'));
+    }
+
+    $stats.className='ps-stats'+(cards.length===6?' six':(cards.length===5?' five':''));
+    $stats.innerHTML=cards.join('');
+
+    drawLadder(entry, stop, (hasTarget&&validTarget)?target:null, isLong);
+    $ladderWrap.style.display = (perShareRisk>0) ? '' : 'none';
+    $result.classList.add('show');
+
+    if(pctOfAccount>100){
+      setHint('Heads up: this position is larger than your account — it would require '+(pctOfAccount/100).toFixed(1)+'× leverage.', true);
+    }
+
+    try{
+      var p=new URLSearchParams();
+      p.set('account',Math.round(account)); p.set('risk',risk); p.set('entry',entry); p.set('stop',stop);
+      if(hasTarget&&validTarget) p.set('target',target);
+      history.replaceState(null,'','?'+p.toString());
+    }catch(e){}
+  }
+
+  function drawLadder(entry, stop, target, isLong){
+    var W=820,H=120, padL=14,padR=14, axisY=70, tickH=20;
+    var lo=Math.min(entry,stop,(target!=null?target:entry));
+    var hi=Math.max(entry,stop,(target!=null?target:entry));
+    var pad=(hi-lo)*0.12||1; lo-=pad; hi+=pad;
+    function sx(p){ return padL+(p-lo)/(hi-lo)*(W-padL-padR); }
+
+    var xEntry=sx(entry), xStop=sx(stop), xTarget=(target!=null?sx(target):null);
+    // risk band (entry<->stop) red, reward band (entry<->target) green
+    var riskX1=Math.min(xEntry,xStop), riskW=Math.abs(xEntry-xStop);
+    var bands='<rect x="'+riskX1.toFixed(1)+'" y="'+(axisY-9)+'" width="'+riskW.toFixed(1)+'" height="18" fill="rgba(255,77,77,0.16)"/>';
+    if(xTarget!=null){
+      var rewX1=Math.min(xEntry,xTarget), rewW=Math.abs(xEntry-xTarget);
+      bands='<rect x="'+rewX1.toFixed(1)+'" y="'+(axisY-9)+'" width="'+rewW.toFixed(1)+'" height="18" fill="rgba(0,222,148,0.16)"/>'+bands;
+    }
+    function marker(x,color,label,sub,above){
+      var ly=above?(axisY-18):(axisY+30);
+      var ty=above?(axisY-24):(axisY+44);
+      return '<line x1="'+x.toFixed(1)+'" y1="'+(axisY-tickH/2)+'" x2="'+x.toFixed(1)+'" y2="'+(axisY+tickH/2)+'" stroke="'+color+'" stroke-width="2.5"/>'+
+        '<text x="'+x.toFixed(1)+'" y="'+ty+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="'+color+'">'+label+'</text>'+
+        '<text x="'+x.toFixed(1)+'" y="'+(ty+(above?-14:14))+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#A0A8B0">'+sub+'</text>';
+    }
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Risk and reward by price">'+
+      '<line x1="'+padL+'" y1="'+axisY+'" x2="'+(W-padR)+'" y2="'+axisY+'" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>'+
+      bands+
+      marker(xEntry,'#00AEFF','Entry','$'+entry.toFixed(2),true)+
+      marker(xStop,'#FF4D4D','Stop','$'+stop.toFixed(2),false)+
+      (xTarget!=null?marker(xTarget,'#00DE94','Target','$'+target.toFixed(2),false):'')+
+      '</svg>';
+    $ladder.innerHTML=svg;
+  }
+
+  // ---- wiring ----
+  [$acct,$risk,$entry,$stop,$target].forEach(function(el){ el.addEventListener('input',compute); });
+  $acct.addEventListener('blur',function(){ var v=num($acct.value); if(v>0) $acct.value=v.toLocaleString('en-US'); });
+  document.querySelectorAll('.ps-chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      if(c.dataset.risk){ $risk.value=c.dataset.risk; }
+      if(c.dataset.acct){ $acct.value=Number(c.dataset.acct).toLocaleString('en-US'); }
+      compute();
+    });
+  });
+
+  // ---- init from URL ----
+  (function init(){
+    var q=new URLSearchParams(location.search);
+    if(q.get('account')) $acct.value=num(q.get('account')).toLocaleString('en-US');
+    if(q.get('risk'))    $risk.value=q.get('risk');
+    if(q.get('entry'))   $entry.value=q.get('entry');
+    if(q.get('stop'))    $stop.value=q.get('stop');
+    if(q.get('target'))  $target.value=q.get('target');
+    compute();
+  })();
+})();
+</script>
+</body>
+</html>

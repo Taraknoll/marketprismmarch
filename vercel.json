@@ -141,6 +141,14 @@
       "destination": "/api/growth"
     },
     {
+      "source": "/position-size-calculator",
+      "destination": "/api/position-size"
+    },
+    {
+      "source": "/calculators",
+      "destination": "/api/calculators"
+    },
+    {
       "source": "/why-is-:ticker-stock-down",
       "destination": "/api/seo-why-down"
     },
@@ -271,6 +279,12 @@
     },
     "api/growth.js": {
       "includeFiles": "_growth.html"
+    },
+    "api/position-size.js": {
+      "includeFiles": "_position_size.html"
+    },
+    "api/calculators.js": {
+      "includeFiles": "_calculators.html"
     },
     "api/casestudy.js": {
       "includeFiles": "casestudy/*.html"
