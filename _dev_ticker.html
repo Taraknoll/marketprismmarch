@@ -3694,8 +3694,8 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
       <div class="breakdown-grid">
         <div class="breakdown-card">
           <div class="bk-header">
-            <div class="bk-title">Narrative Themes</div>
-            <div class="bk-count">5d return after articles by theme</div>
+            <div class="bk-title">Signal Keywords</div>
+            <div class="bk-count">5d return after articles by keyword</div>
           </div>
           <div id="strat-theme-rows"></div>
           <div class="insight-footer" id="strat-theme-insight"></div>
@@ -3703,7 +3703,7 @@ window.MP_DOMAINS={NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadc
         <div class="breakdown-card">
           <div class="bk-header">
             <div class="bk-title">Publication Signal Quality</div>
-            <div class="bk-count">10d directional hit rate by source</div>
+            <div class="bk-count" id="strat-pub-sub">10d directional hit rate by source</div>
           </div>
           <div id="strat-pub-rows"></div>
           <div class="insight-footer" id="strat-pub-insight"></div>
@@ -4054,6 +4054,11 @@ function esc(s) {
   return s ? String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
+}
+// Display-only: turn raw snake_case keyword values (consumer_health) into
+// "consumer health". Preserves source casing (AI / EV stay upper).
+function prettyLabel(s) {
+  return s ? String(s).replace(/_/g, ' ').trim() : '';
 }
 function fmtPrice(p) {
   if (p == null) return '—';
@@ -6373,11 +6378,29 @@ async function loadStrategyData() {
   const signCls = v => v != null ? (v >= 0 ? 'pos' : 'neg') : '';
 
   try {
-    // Fetch strategy summary + article_outcomes breakdowns in parallel
-    const [summaryRows, themeRows, pubRows] = await Promise.all([
+    // Fetch strategy summary + signal-keyword breakdown + publication breakdowns.
+    //   • kwRows  → keyword_price_impact, curated title_signal set only (daily,
+    //     per-ticker). Replaces the old strategy_theme_breakdown RPC + stale
+    //     ticker_strategy_summary theme fallback (noisy free-text thematic_theme).
+    //   • srcRows → source_scores global publication-quality ranking, allowlisted;
+    //     fallback for the pub panel when this ticker lacks a per-ticker hit rate.
+    const [summaryRows, kwRows, pubRows, srcRows] = await Promise.all([
       sbFetch('ticker_strategy_summary', { ticker: `eq.${TICKER}`, limit: '1' }),
-      sbFetch('rpc/strategy_theme_breakdown', { ticker_param: TICKER }).catch(() => []),
-      sbFetch('rpc/strategy_pub_breakdown',   { ticker_param: TICKER }).catch(() => [])
+      sbFetch('keyword_price_impact', {
+        select: 'keyword,article_count,avg_return_5d',
+        ticker: `eq.${TICKER}`,
+        keyword_type: 'eq.title_signal',
+        article_count: 'gte.5',
+        order: 'avg_return_5d.desc'
+      }).catch(() => []),
+      sbFetch('rpc/strategy_pub_breakdown', { ticker_param: TICKER }).catch(() => []),
+      sbFetch('source_scores', {
+        select: 'source_name,srs,srs_band,pub_class,wilson_lb',
+        tier_id: 'not.is.null',
+        is_excluded: 'eq.false',
+        order: 'srs.desc',
+        limit: '3'
+      }).catch(() => [])
     ]);
 
     const d = Array.isArray(summaryRows) ? summaryRows[0] : null;
@@ -6502,50 +6525,59 @@ async function loadStrategyData() {
       zonePriceEl.textContent = fmtUsd(d.latest_price_usd) + (drawdown != null ? ' · ' + fmtPct(drawdown) + ' from 60d peak' : '');
     }
 
-    // ── Theme Breakdown (from article_outcomes RPC or fallback to summary) ──
+    // ── Signal Keywords (keyword_price_impact · curated title_signal set) ──
+    // Highlights the most-covered, most-bullish and most-bearish curated keywords
+    // for this ticker. avg_return_5d is already a percentage (e.g. -4.36 = -4.36%),
+    // so format it directly — do NOT pass through fmtPct (which ×100).
     const themeContainer = document.getElementById('strat-theme-rows');
+    const themeInsight = document.getElementById('strat-theme-insight');
+    const kws = (Array.isArray(kwRows) ? kwRows : []).filter(k => k.avg_return_5d != null);
     if (themeContainer) {
-      const themes = Array.isArray(themeRows) && themeRows.length > 0 ? themeRows : [];
-      if (themes.length > 0) {
-        const maxAbs = Math.max(...themes.map(t => Math.abs(t.avg_return_5d || 0)), 0.01);
-        themeContainer.innerHTML = themes.slice(0, 8).map(t => {
-          const ret = t.avg_return_5d || 0;
+      if (kws.length > 0) {
+        const byRet = kws.slice().sort((a, b) => Number(b.avg_return_5d) - Number(a.avg_return_5d));
+        const topPos = byRet[0];
+        const topNeg = byRet[byRet.length - 1];
+        const mostCovered = kws.slice().sort((a, b) => (b.article_count || 0) - (a.article_count || 0))[0];
+        const maxAbs = Math.max(...kws.map(k => Math.abs(Number(k.avg_return_5d) || 0)), 0.01);
+        const seen = new Set();
+        const highlights = [
+          { kw: mostCovered, label: 'Most Covered' },
+          { kw: topPos, label: 'Top Positive' },
+          { kw: topNeg, label: 'Top Negative' }
+        ].filter(h => h.kw && !seen.has(h.kw.keyword) && seen.add(h.kw.keyword));
+        themeContainer.innerHTML = highlights.map(h => {
+          const t = h.kw;
+          const ret = Number(t.avg_return_5d) || 0;
           const barW = Math.min(Math.abs(ret) / maxAbs * 100, 100);
           const barColor = ret >= 0 ? '#00DE94' : '#FF4D4D';
+          const retText = (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
           return '<div class="theme-row">' +
-            '<div class="tr-name">' + esc(t.thematic_theme || 'unclassified') + '</div>' +
-            '<div class="tr-articles">' + (t.article_count || 0) + ' art.</div>' +
+            '<div class="tr-name">' + esc(prettyLabel(t.keyword)) + '</div>' +
+            '<div class="tr-articles">' + esc(h.label) + ' · ' + (t.article_count || 0) + ' art.</div>' +
             '<div class="tr-bar-wrap"><div class="tr-bar" style="width:' + barW + '%;background:' + barColor + ';"></div></div>' +
-            '<div class="tr-return ' + signCls(ret) + '">' + fmtPct(ret) + '</div>' +
+            '<div class="tr-return ' + signCls(ret) + '">' + retText + '</div>' +
             '</div>';
         }).join('');
       } else {
-        // Fallback: show summary fields
-        const fallbackThemes = [
-          { name: d.most_influential_theme, label: 'Most Influential' },
-          { name: d.top_positive_theme, label: 'Top Positive' },
-          { name: d.top_negative_theme, label: 'Top Negative' }
-        ].filter(t => t.name);
-        themeContainer.innerHTML = fallbackThemes.map(t =>
-          '<div class="theme-row"><div class="tr-name">' + esc(t.name) + '</div><div class="tr-articles" style="color:var(--mp-text-muted);">' + esc(t.label) + '</div></div>'
-        ).join('') || '<div class="theme-row"><div class="tr-name" style="color:var(--mp-text-muted);">No theme data available</div></div>';
+        themeContainer.innerHTML = '<div class="theme-row"><div class="tr-name" style="color:var(--mp-text-muted);">No keyword data available</div></div>';
       }
     }
-    // Theme insight
-    const themeInsight = document.getElementById('strat-theme-insight');
+    // Keyword insight
     if (themeInsight) {
-      if (d.top_negative_theme) {
-        themeInsight.innerHTML = '⚠️ <strong style="color:#FFB800;">' + esc(d.top_negative_theme) + '</strong> is the most reliably bearish theme for ' + TICKER + '. When this dominates the feed, expect downside.';
+      const worst = kws.length ? kws.slice().sort((a, b) => Number(a.avg_return_5d) - Number(b.avg_return_5d))[0] : null;
+      if (worst && Number(worst.avg_return_5d) < 0) {
+        themeInsight.innerHTML = '⚠️ <strong style="color:#FFB800;">' + esc(prettyLabel(worst.keyword)) + '</strong> is the most reliably bearish signal for ' + TICKER + ' — articles carrying this keyword precede an average ' + Number(worst.avg_return_5d).toFixed(2) + '% 5-day return.';
       } else {
-        themeInsight.innerHTML = 'Theme breakdown based on resolved 5-day returns after article publication.';
+        themeInsight.innerHTML = 'Signal strength based on resolved 5-day returns after articles containing each curated keyword.';
       }
     }
 
     // ── Publication Breakdown (from article_outcomes RPC or fallback) ──
     const pubContainer = document.getElementById('strat-pub-rows');
+    const pubs = Array.isArray(pubRows) && pubRows.length > 0 ? pubRows : [];
+    const usedPerTickerPub = pubs.length > 0;
     if (pubContainer) {
-      const pubs = Array.isArray(pubRows) && pubRows.length > 0 ? pubRows : [];
-      if (pubs.length > 0) {
+      if (usedPerTickerPub) {
         pubContainer.innerHTML = pubs.slice(0, 8).map(p => {
           const hitRate = p.hit_rate != null ? (p.hit_rate * 100).toFixed(1) + '%' : '—';
           const hitVal = p.hit_rate || 0;
@@ -6566,22 +6598,35 @@ async function loadStrategyData() {
             '</div>';
         }).join('');
       } else {
-        // Fallback
-        const fallbackPubs = [
-          { name: d.most_influential_publication, label: 'Most Influential' },
-          { name: d.top_positive_publication, label: 'Top Positive' },
-          { name: d.top_negative_publication, label: 'Top Negative' }
-        ].filter(p => p.name);
-        pubContainer.innerHTML = fallbackPubs.map(p =>
-          '<div class="pub-row"><div class="pr-name">' + esc(p.name) + '</div><div class="pr-articles" style="color:var(--mp-text-muted);">' + esc(p.label) + '</div></div>'
-        ).join('') || '<div class="pub-row"><div class="pr-name" style="color:var(--mp-text-muted);">No publication data available</div></div>';
+        // Fallback: global source-quality ranking (source_scores allowlist).
+        // Too few resolved articles for a per-ticker hit rate, so show the daily-
+        // refreshed, allowlisted publication-reliability scores (SRS = material-
+        // discrepancy-free rate vs. SEC filings) instead of stale summary names.
+        const srcs = Array.isArray(srcRows) ? srcRows : [];
+        if (srcs.length) {
+          pubContainer.innerHTML = srcs.map(s => {
+            const srs = s.srs != null ? Number(s.srs).toFixed(0) : '—';
+            const srsColor = (s.srs != null && Number(s.srs) >= 70) ? '#00DE94' : (s.srs != null && Number(s.srs) >= 50) ? '#FFB800' : '#A0A8B0';
+            return '<div class="pub-row">' +
+              '<div class="pr-name">' + esc(s.source_name) + '</div>' +
+              '<div class="pr-hit" style="color:' + srsColor + ';">SRS ' + srs + '</div>' +
+              '<div class="pr-skew">' + esc(s.srs_band || s.pub_class || '') + '</div>' +
+              '</div>';
+          }).join('');
+        } else {
+          pubContainer.innerHTML = '<div class="pub-row"><div class="pr-name" style="color:var(--mp-text-muted);">No publication data available</div></div>';
+        }
       }
     }
-    // Publication insight
+    // Publication subtitle + insight — reflect per-ticker vs global mode.
+    const pubSubEl = document.getElementById('strat-pub-sub');
+    if (pubSubEl) pubSubEl.textContent = usedPerTickerPub ? '10d directional hit rate by source' : 'Global source reliability (SRS)';
     const pubInsight = document.getElementById('strat-pub-insight');
     if (pubInsight) {
-      if (d.most_influential_publication) {
+      if (usedPerTickerPub && d.most_influential_publication) {
         pubInsight.innerHTML = '📰 <strong style="color:#00AEFF;">' + esc(d.most_influential_publication) + '</strong> is the most impactful source for ' + TICKER + ' based on historical 5-day returns after coverage.';
+      } else if (!usedPerTickerPub && Array.isArray(srcRows) && srcRows.length) {
+        pubInsight.innerHTML = '📰 Not enough ' + TICKER + '-specific coverage for a per-ticker read — showing the most reliable sources overall (SRS = forensic claim-verification score vs. SEC filings).';
       } else {
         pubInsight.innerHTML = 'Publication accuracy based on 10-day directional hit rate with minimum 3 articles.';
       }
