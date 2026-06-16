@@ -3739,6 +3739,35 @@
   }
   .hero-delta { font-size: 14px; font-family: var(--font-body); margin-top: 4px; }
 
+  /* ── Save-to-watchlist button (lives in the hero, top-right, under the price) ── */
+  .hero-fav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 14px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    border: 1.5px solid var(--mp-cyan, #00AEFF);
+    background: rgba(0,174,255,0.10);
+    color: var(--mp-cyan, #00AEFF);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .25s cubic-bezier(0.16,1,0.3,1);
+  }
+  .hero-fav-btn:hover {
+    background: rgba(0,174,255,0.18);
+    box-shadow: 0 4px 14px rgba(0,174,255,0.20);
+    transform: translateY(-1px);
+  }
+  .hero-fav-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+  /* Saved state — paint() also sets inline red color/border so this composes cleanly */
+  .hero-fav-btn[aria-pressed="true"] { background: rgba(255,77,77,0.12); }
+
   /* ── Live price indicator ── */
   .live-price-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 2px; }
   .live-dot {
@@ -4556,11 +4585,8 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
   <!-- Action bar -->
   <div class="action-bar" id="action-bar" style="display:none;">
     <div class="action-bar-spacer"></div>
-    <!-- Save to watchlist — hidden until the watchlist API confirms this user can use it -->
-    <button class="action-btn" id="mp-fav-btn" type="button" onclick="mpToggleFavorite()" aria-pressed="false" title="Save to your watchlist" style="display:none;">
-      <svg id="mp-fav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.6-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.4 12 21 12 21z"/></svg>
-      <span id="mp-fav-label">Save</span>
-    </button>
+    <!-- Save to watchlist now lives in the hero (top-right, next to the live price)
+         so it's prominent rather than buried among the export/meme actions. -->
     <button class="action-btn" onclick="exportReport()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6m0 0l-3-3m3 3l3-3"/><path d="M3 17v1a2 2 0 002 2h14a2 2 0 002-2v-1"/><path d="M7 3h10l4 4v3H3V7l4-4z"/></svg>
       Export Report
@@ -4623,20 +4649,29 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
         else toast('Could not update watchlist — try again.');
       }).finally(function(){ busy=false; });
     };
+    var revealChecked=false, canUse=false;
+    // The button now lives inside the JS-rendered hero, so init() is called from
+    // loadHero() (via window.mpFavInit) AFTER the hero exists — not just on
+    // DOMContentLoaded. It's re-entrant: the watchlist reveal-check runs once,
+    // and any later call just re-applies the known state to the (re)rendered node.
     function init(){
       btn=document.getElementById('mp-fav-btn'); if(!btn) return;
       icon=document.getElementById('mp-fav-icon'); label=document.getElementById('mp-fav-label');
       var t=tkr(); if(!t) return;
+      if(revealChecked){ if(canUse){ btn.style.display=''; paint(); } return; }
+      revealChecked=true;
       // Reveal the Save button only for users who can actually use the watchlist.
       fetch('/api/watchlist',{credentials:'same-origin'}).then(function(r){
         return r.ok ? r.json() : null;
       }).then(function(d){
         if(!d||!Array.isArray(d.items)) return; // 401/402/403 → leave the button hidden
+        canUse=true;
         btn.style.display='';
         saved = d.items.some(function(it){ return String(it.ticker||'').toUpperCase()===t; });
         paint();
       }).catch(function(){});
     }
+    window.mpFavInit = init;
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
   })();
   </script>
@@ -6978,6 +7013,12 @@ async function loadHero() {
         <div class="live-change ${delta.cls}" id="live-change">${delta.txt}</div>
         <div class="live-ah" id="live-ah" style="display:none;font-size:12px;color:var(--mp-text-tertiary);font-family:var(--font-body);margin-top:2px;"></div>
         <div class="live-meta" id="live-meta"></div>
+        <!-- Save to watchlist — prominent, top-of-page. Hidden until the watchlist
+             API confirms this user can use it (wired by mpFavInit after render). -->
+        <button class="hero-fav-btn" id="mp-fav-btn" type="button" onclick="mpToggleFavorite()" aria-pressed="false" title="Save to your watchlist" style="display:none;">
+          <svg id="mp-fav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.6-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.4 12 21 12 21z"/></svg>
+          <span id="mp-fav-label">Save</span>
+        </button>
       </div>`;
 
     // Hero DOM now exists — populate the live price immediately from the
@@ -6985,6 +7026,9 @@ async function loadHero() {
     // prefetch failed). Without this, the first price update has to wait for
     // the poll interval in scheduleLivePrice (30s during market hours, 2m otherwise).
     try { fetchLivePrice(); } catch(e){}
+
+    // Wire up the Save-to-watchlist button now that the hero (its host) exists.
+    try { window.mpFavInit && window.mpFavInit(); } catch(e){}
 
     // Update feed ticker
     const feedTicker = document.getElementById('tk-feed-ticker');
@@ -9883,7 +9927,14 @@ function populateShareCard() {
 
   // Clone hero
   var hero = document.getElementById('hero');
-  if (hero) body.appendChild(hero.cloneNode(true));
+  if (hero) {
+    var heroClone = hero.cloneNode(true);
+    // Strip the Save-to-watchlist button — it's a live interactive control and
+    // must not appear in the shared image / PDF export.
+    var favClone = heroClone.querySelector('#mp-fav-btn');
+    if (favClone) favClone.remove();
+    body.appendChild(heroClone);
+  }
 
   // Active-horizon chip — drops in just above the cloned verdict banner so
   // the share card reads "DAY TRADE · 1D" instead of the noisy tab row.
