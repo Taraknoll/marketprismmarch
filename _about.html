@@ -6,8 +6,8 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Built Out of Rage — Market Prism™</title>
-<meta name="description" content="Why Market Prism™ exists: a forensic narrative engine for retail traders who got tired of being the exit liquidity. Built for the WSB-burned generation — and against the era of AI-generated market noise.">
+<title>Forensic Narrative Infrastructure for Market Integrity — Market Prism™</title>
+<meta name="description" content="Market Prism is a forensic narrative engine that anchors every market story to its SEC filing, scores source credibility, and detects coordinated information campaigns before they move price. Built for regulators, institutions, newsrooms, and the investors they protect.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://marketprism.co/about">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,6 +53,14 @@ nav {
 }
 .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .nav-logo-img { height: 32px; width: auto; flex-shrink: 0; }
+.nav-links { display: flex; align-items: center; gap: 4px; margin-left: 28px; }
+.nav-link {
+  font-family: var(--font-b);
+  font-size: 13px; color: var(--tx2); text-decoration: none;
+  padding: 7px 12px; border-radius: 8px;
+  transition: color .15s, background .15s; font-weight: 400;
+}
+.nav-link:hover { color: #fff; background: rgba(255,255,255,0.06); }
 .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .btn-nav {
   font-family: var(--font-b);
@@ -61,6 +69,35 @@ nav {
   cursor: pointer; transition: background .15s; text-decoration: none;
 }
 .btn-nav:hover { background: rgba(255,255,255,0.15); }
+
+/* ── NAV DROPDOWN ── */
+.nav-dd { position: relative; }
+.nav-dd-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-b); font-size: 13px; font-weight: 400;
+  color: var(--tx2); background: none; border: none; cursor: pointer;
+  padding: 7px 12px; border-radius: 8px; transition: color .15s, background .15s;
+}
+.nav-dd-btn:hover, .nav-dd.open .nav-dd-btn { color: #fff; background: rgba(255,255,255,0.06); }
+.nav-dd-caret { font-size: 9px; transition: transform .2s; opacity: .7; }
+.nav-dd.open .nav-dd-caret { transform: rotate(180deg); }
+.nav-dd-menu {
+  position: absolute; top: calc(100% + 10px); left: 0;
+  min-width: 320px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+  padding: 8px;
+  opacity: 0; visibility: hidden; transform: translateY(-6px);
+  transition: opacity .18s, transform .18s, visibility .18s;
+  z-index: 200;
+}
+.nav-dd.open .nav-dd-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+.nav-dd-item { display: block; padding: 11px 14px; border-radius: 10px; text-decoration: none; }
+.nav-dd-item:hover { background: rgba(255,255,255,0.05); }
+.nav-dd-item-t { font-size: 13px; font-weight: 600; color: var(--tx1); margin-bottom: 3px; }
+.nav-dd-item-d { font-size: 12px; line-height: 1.45; color: var(--tx3); font-weight: 300; }
 
 /* ── LAYOUT ── */
 .con { max-width: 780px; margin: 0 auto; padding: 0 40px; }
@@ -230,6 +267,73 @@ nav {
   font-weight: 400;
 }
 
+/* ── WHO IT'S FOR (ACCORDION) ── */
+.who-intro { max-width: 660px; }
+.who-acc {
+  margin-top: 34px;
+  border-top: 1px solid var(--border);
+}
+.who-item { border-bottom: 1px solid var(--border); }
+.who-head {
+  display: flex; align-items: center; gap: 18px;
+  width: 100%;
+  background: none; border: none; cursor: pointer;
+  padding: 22px 0; text-align: left;
+  font-family: var(--font-b); color: var(--tx1);
+  transition: opacity .15s;
+}
+.who-num {
+  font-family: var(--font-b);
+  font-size: 12px; font-weight: 600; letter-spacing: .08em;
+  color: var(--blue);
+  width: 30px; flex-shrink: 0; padding-top: 3px;
+}
+.who-headings { flex: 1; min-width: 0; }
+.who-title {
+  font-size: 18px; font-weight: 600; line-height: 1.3;
+  color: var(--tx1); transition: color .15s;
+}
+.who-head:hover .who-title { color: var(--blue); }
+.who-sub {
+  font-size: 13px; font-weight: 300; line-height: 1.45;
+  color: var(--tx3); margin-top: 4px;
+}
+.who-chevron {
+  margin-left: 12px; flex-shrink: 0;
+  width: 18px; height: 18px; color: var(--tx3);
+  transition: transform .25s, color .15s;
+}
+.who-head:hover .who-chevron { color: var(--blue); }
+.who-item.open .who-chevron { transform: rotate(180deg); color: var(--blue); }
+.who-panel {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .34s ease;
+}
+.who-panel-inner { padding: 0 0 28px 48px; }
+@media (max-width: 600px) { .who-panel-inner { padding-left: 0; } }
+.who-why {
+  font-size: 15px; line-height: 1.7; color: var(--tx2);
+  font-weight: 300; margin-bottom: 20px; max-width: 600px;
+}
+.who-why strong { color: var(--tx1); font-weight: 500; }
+.who-get-label {
+  font-family: var(--font-b);
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--tx3); font-weight: 600; margin-bottom: 14px;
+}
+.who-get { list-style: none; padding: 0; display: grid; gap: 12px; max-width: 620px; }
+.who-get li {
+  display: flex; gap: 12px;
+  font-size: 14px; line-height: 1.6; color: var(--tx2); font-weight: 300;
+}
+.who-get li::before {
+  content: ''; flex-shrink: 0;
+  width: 6px; height: 6px; border-radius: 50%; margin-top: 8px;
+  background: linear-gradient(90deg, var(--blue), var(--teal));
+}
+.who-get strong { color: var(--tx1); font-weight: 600; }
+
 /* ── LIVE DEMOS ── */
 .about-demos {
   display: grid;
@@ -299,6 +403,14 @@ nav {
   color: var(--tx3);
   font-weight: 300;
 }
+.about-cta-inquiry {
+  margin-top: 22px;
+  font-size: 13px;
+  color: var(--tx3);
+  font-weight: 300;
+}
+.about-cta-inquiry a { color: var(--blue); text-decoration: none; }
+.about-cta-inquiry a:hover { text-decoration: underline; }
 
 /* ── FOOTER ── */
 .about-footer {
@@ -331,6 +443,9 @@ nav {
 .footer-links a:hover { color: var(--blue); }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 720px) {
+  .nav-links { display: none; }
+}
 @media (max-width: 600px) {
   nav { padding: 0 20px; }
   .con { padding: 0 20px; }
@@ -344,6 +459,8 @@ nav {
   .about-footer { padding: 24px 20px; }
   .about-list li { gap: 14px; padding: 16px 0; }
   .about-list-num { width: 28px; }
+  .who-head { gap: 12px; }
+  .who-num { width: 26px; }
 }
 </style>
 </head>
@@ -354,6 +471,36 @@ nav {
   <a href="/" class="nav-logo">
     <img src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism" class="nav-logo-img">
   </a>
+  <div class="nav-links">
+    <div class="nav-dd" id="whoDd">
+      <button class="nav-dd-btn" id="whoDdBtn" aria-haspopup="true" aria-expanded="false" aria-controls="whoDdMenu">
+        Who it's for <span class="nav-dd-caret" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="nav-dd-menu" id="whoDdMenu" role="menu" aria-labelledby="whoDdBtn">
+        <a class="nav-dd-item" role="menuitem" href="#who-regulators" data-who="who-regulators">
+          <div class="nav-dd-item-t">Regulators &amp; policymakers</div>
+          <div class="nav-dd-item-d">See manipulation that lives in the information layer, not the order book</div>
+        </a>
+        <a class="nav-dd-item" role="menuitem" href="#who-surveillance" data-who="who-surveillance">
+          <div class="nav-dd-item-t">Market surveillance &amp; compliance</div>
+          <div class="nav-dd-item-d">Flag manufactured narratives ahead of the price move they create</div>
+        </a>
+        <a class="nav-dd-item" role="menuitem" href="#who-institutional" data-who="who-institutional">
+          <div class="nav-dd-item-t">Institutional research</div>
+          <div class="nav-dd-item-d">An orthogonal signal no data vendor sells</div>
+        </a>
+        <a class="nav-dd-item" role="menuitem" href="#who-media" data-who="who-media">
+          <div class="nav-dd-item-t">Newsrooms &amp; investigative media</div>
+          <div class="nav-dd-item-d">Trace where a story started and who amplified it</div>
+        </a>
+        <a class="nav-dd-item" role="menuitem" href="#who-academia" data-who="who-academia">
+          <div class="nav-dd-item-t">Academia &amp; market-structure research</div>
+          <div class="nav-dd-item-d">Structured, filing-anchored narrative datasets</div>
+        </a>
+      </div>
+    </div>
+    <a class="nav-link" href="/methodology">Methodology</a>
+  </div>
   <div class="nav-right">
     <a href="/" class="btn-nav">Back to app</a>
   </div>
@@ -362,20 +509,167 @@ nav {
 <!-- ── HERO ── -->
 <section class="about-hero">
   <div class="con">
-    <div class="about-eyebrow">Our Mission</div>
-    <h1 class="about-h1">Built out of rage at the <span class="about-h1-grad">rigged game.</span></h1>
-    <p class="about-sub">Market Prism is a forensic narrative engine. It exists because retail traders kept finding out — too late — that the story they were sold had nothing to do with the filing it was supposedly about.</p>
+    <div class="about-eyebrow">Forensic Narrative Infrastructure</div>
+    <h1 class="about-h1">Market manipulation has moved into the <span class="about-h1-grad">information layer.</span></h1>
+    <p class="about-sub">Market Prism is a forensic narrative engine. It anchors every market story to the SEC filing it claims to be about, scores the credibility of its sources, and detects when a narrative is being coordinated &mdash; upstream of the price action it is engineered to create.</p>
   </div>
 </section>
 
-<!-- ── WHY THIS EXISTS ── -->
+<!-- ── THE PROBLEM ── -->
 <section class="about-section">
   <div class="con">
-    <div class="about-section-eyebrow">Why this exists</div>
-    <h2 class="about-h2">The origin story.</h2>
-    <p class="about-p">I built Market Prism for a specific audience: the people who watched their tickers get pumped and dumped, who saw the same talking points metastasize across a hundred low-effort sites in 48 hours, and who eventually realized that "sentiment" was being manufactured upstream of the price.</p>
-    <p class="about-p">A lot of this work was, frankly, fueled by rage at how blatant the manipulation has become — and a stubborn belief that retail should have access to the same kind of forensic infrastructure the buy side takes for granted. So thank you, WSB. You were the proof of concept.</p>
-    <p class="about-p">Market Prism isn't an LLM wrapper. It's a seven-step pipeline that anchors every narrative claim to an actual SEC filing, scores the source authority, models how the story decays, and flags when multiple outlets coordinate around the same talking points. The language model is one tool inside it — not the product.</p>
+    <div class="about-section-eyebrow">The problem</div>
+    <h2 class="about-h2">Sentiment is being manufactured upstream of price.</h2>
+    <p class="about-p">For most of the last decade, market-sentiment analysis meant counting bullish versus bearish keywords. Generative AI ended that. A single actor can now produce thousands of polished, on-message articles, posts, and &ldquo;analysis&rdquo; pages in an afternoon &mdash; and the open web has crossed into structural saturation, where low-quality sites compete to repeat whatever talking point was profitable yesterday.</p>
+    <p class="about-p">The consequence is an information environment in which narratives can be <strong>engineered, amplified, and coordinated</strong> faster than oversight built on trade and order-flow data alone can detect. Sentiment is increasingly manufactured upstream of price. Individual investors are the most exposed &mdash; but the integrity of price formation is the broader casualty.</p>
+    <p class="about-p">Market Prism was built to make that manufactured layer visible, and to show its work all the way down to the filing each narrative claims to track.</p>
+  </div>
+</section>
+
+<!-- ── FORENSIC, NOT PREDICTIVE ── -->
+<section class="about-section alt">
+  <div class="con">
+    <div class="about-section-eyebrow">How it works</div>
+    <h2 class="about-h2">Forensic, not predictive.</h2>
+    <p class="about-p">Market Prism is not an LLM wrapper or another sentiment dashboard. It is a <strong>seven-step forensic pipeline</strong> that anchors every narrative claim to a primary source, weighs the credibility of who is making it, and detects when a story is being coordinated rather than independently formed. Three principles separate it from the standard sentiment stack:</p>
+    <ol class="about-list">
+      <li>
+        <div class="about-list-num">01</div>
+        <div class="about-list-body"><strong>SEC-anchored.</strong> Every claim is checked against the actual 10-K, 10-Q, or 8-K filing. The drift between a narrative and the filing it cites is the first place we look.</div>
+      </li>
+      <li>
+        <div class="about-list-num">02</div>
+        <div class="about-list-body"><strong>Source-authority weighted.</strong> A single post from a verified domain expert can carry more narrative weight than a thousand polished, synthetically generated articles. We score the source, not the volume.</div>
+      </li>
+      <li>
+        <div class="about-list-num">03</div>
+        <div class="about-list-body"><strong>Coordination-aware.</strong> When several outlets publish near-identical framing inside a narrow window, that is not consensus &mdash; it is a campaign signature. Market Prism flags it.</div>
+      </li>
+    </ol>
+    <p class="about-closing">The full pipeline is patent-pending across three filings. The objective is straightforward: give any analyst the kind of forensic read on a market narrative that, until recently, only an institutional research desk could produce.</p>
+  </div>
+</section>
+
+<!-- ── WHO IT'S FOR ── -->
+<section class="about-section" id="who">
+  <div class="con">
+    <div class="about-section-eyebrow">Who it's for</div>
+    <h2 class="about-h2">Built for everyone with a stake in <em>market integrity.</em></h2>
+    <p class="about-p who-intro">Market Prism began as forensic infrastructure for individual investors. The same engine now answers questions that regulators, surveillance teams, institutional desks, and newsrooms have struggled to address with trade data alone. Select a role to see why it matters &mdash; and what Market Prism provides.</p>
+
+    <div class="who-acc">
+      <!-- 1 -->
+      <div class="who-item open" id="who-regulators">
+        <button class="who-head" aria-expanded="true">
+          <span class="who-num">01</span>
+          <span class="who-headings">
+            <span class="who-title">Regulators &amp; policymakers</span>
+            <span class="who-sub">Oversight for manipulation that never touches the order book</span>
+          </span>
+          <svg class="who-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="who-panel">
+          <div class="who-panel-inner">
+            <p class="who-why">Manipulation increasingly originates in the <strong>information layer</strong> &mdash; coordinated narratives, manufactured sentiment, and amplification campaigns that move retail capital before any reportable trade occurs. Enforcement built solely on price, volume, and order-flow data cannot see it. Market Prism makes that layer measurable and documentable.</p>
+            <div class="who-get-label">What they get</div>
+            <ul class="who-get">
+              <li><strong>Coordination detection</strong> &mdash; flags when multiple outlets publish near-identical framing inside a tight window, the signature of a campaign rather than organic consensus.</li>
+              <li><strong>Narrative-to-filing drift</strong> &mdash; quantifies the gap between what is being said about a company and what its own SEC filings actually support.</li>
+              <li><strong>Source-authority mapping</strong> &mdash; separates credible domain expertise from high-volume synthetic amplification.</li>
+              <li><strong>Audit-ready trails</strong> &mdash; every claim traces back to a specific 10-K, 10-Q, or 8-K, with timestamps, for the record.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- 2 -->
+      <div class="who-item" id="who-surveillance">
+        <button class="who-head" aria-expanded="false">
+          <span class="who-num">02</span>
+          <span class="who-headings">
+            <span class="who-title">Market surveillance &amp; compliance</span>
+            <span class="who-sub">Watch the information feed, not just the order feed</span>
+          </span>
+          <svg class="who-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="who-panel">
+          <div class="who-panel-inner">
+            <p class="who-why">Surveillance desks monitor order flow and internal communications, but rarely the open-web information layer where narratives are seeded and pumped. Market Prism adds that missing dimension &mdash; surfacing manufactured sentiment <strong>before</strong> the price move it is designed to produce.</p>
+            <div class="who-get-label">What they get</div>
+            <ul class="who-get">
+              <li><strong>Narrative-pressure alerts</strong> &mdash; per-ticker signals when a story spikes ahead of price.</li>
+              <li><strong>Coordination windows &amp; amplification maps</strong> &mdash; who repeated what, and when, for case-building.</li>
+              <li><strong>Exportable evidence</strong> &mdash; findings anchored to primary filings rather than opinion.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- 3 -->
+      <div class="who-item" id="who-institutional">
+        <button class="who-head" aria-expanded="false">
+          <span class="who-num">03</span>
+          <span class="who-headings">
+            <span class="who-title">Institutional research &amp; asset management</span>
+            <span class="who-sub">A signal that doesn't correlate with the feeds everyone already trades</span>
+          </span>
+          <svg class="who-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="who-panel">
+          <div class="who-panel-inner">
+            <p class="who-why">Every desk consumes the same OHLC bars, options flow, and sentiment scrapes &mdash; so that edge is competed away by definition. Market Prism is computed from <strong>narrative-physics features</strong> drawn from a corpus no off-the-shelf data vendor sells, producing a signal that runs orthogonal to the standard stack.</p>
+            <div class="who-get-label">What they get</div>
+            <ul class="who-get">
+              <li><strong>Per-ticker fuel rates &amp; exhaustion timing</strong> &mdash; how much runway a story has left, ticker by ticker.</li>
+              <li><strong>Non-consensus signal</strong> &mdash; uncorrelated with the data feeds the algos already chew through.</li>
+              <li><strong>Model-driven move bands</strong> &mdash; 1D, 5D, 30D, and 90D projections trained on narrative-to-price outcomes.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- 4 -->
+      <div class="who-item" id="who-media">
+        <button class="who-head" aria-expanded="false">
+          <span class="who-num">04</span>
+          <span class="who-headings">
+            <span class="who-title">Newsrooms &amp; investigative media</span>
+            <span class="who-sub">Trace a market story to its origin &mdash; and its amplifiers</span>
+          </span>
+          <svg class="who-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="who-panel">
+          <div class="who-panel-inner">
+            <p class="who-why">Establishing how a market story originated and who amplified it is slow, manual work. Market Prism does it structurally &mdash; turning a sprawling information trail into a <strong>defensible, filing-anchored timeline</strong> reporters can stand behind.</p>
+            <div class="who-get-label">What they get</div>
+            <ul class="who-get">
+              <li><strong>Source provenance</strong> &mdash; first-mover identification and the path a claim travelled.</li>
+              <li><strong>Coordination maps</strong> &mdash; which outlets repeated which framing, on what timeline.</li>
+              <li><strong>Filing-anchored timelines</strong> &mdash; every narrative beat tied back to the primary document.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- 5 -->
+      <div class="who-item" id="who-academia">
+        <button class="who-head" aria-expanded="false">
+          <span class="who-num">05</span>
+          <span class="who-headings">
+            <span class="who-title">Academia &amp; market-structure research</span>
+            <span class="who-sub">Structured data for the study of information and price formation</span>
+          </span>
+          <svg class="who-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="who-panel">
+          <div class="who-panel-inner">
+            <p class="who-why">The dynamics of information and price formation are understudied, largely for lack of structured data. Market Prism exposes the <strong>narrative-physics layer</strong> as reproducible, filing-anchored datasets &mdash; the raw material for rigorous research into how stories move markets.</p>
+            <div class="who-get-label">What they get</div>
+            <ul class="who-get">
+              <li><strong>3.5M historical narrative analogues</strong> &mdash; a comparison corpus spanning prior market cycles.</li>
+              <li><strong>Structured features</strong> &mdash; claim extractions, source-authority weights, coordination windows, and decay curves.</li>
+              <li><strong>Reproducible, filing-anchored datasets</strong> &mdash; built for citation and replication.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -384,90 +678,53 @@ nav {
   <div class="con">
     <div class="about-section-eyebrow">The thesis</div>
     <h2 class="about-h2">In 2026, the noise <em>is</em> the signal.</h2>
-    <p class="about-p">For most of the last decade, sentiment analysis meant counting bullish vs. bearish keywords. That game is over. AI can generate a million perfectly polished bullish tweets in a single afternoon, and the internet has crossed into structural saturation — vibe-coded blogs, SEO-pumped "analysis" sites, and content farms all racing to repeat whatever talking point was profitable yesterday.</p>
-    <p class="about-p">Market Prism treats that noise as a roadmap, not a problem to suppress. Every market move starts as a story whispered in a niche corner. It moves to the mainstream. Then it reaches the saturation point — when every low-quality site on the first page of Google is repeating the same line. That moment of saturation is almost always the moment the price action reverses.</p>
-    <p class="about-p">We call it <strong>narrative exhaustion</strong>, and identifying it is the entire game. Market Prism turns the dead internet into a contrarian indicator.</p>
-  </div>
-</section>
-
-<!-- ── FORENSIC, NOT PREDICTIVE ── -->
-<section class="about-section">
-  <div class="con">
-    <div class="about-section-eyebrow">The differentiation</div>
-    <h2 class="about-h2">Forensic, not predictive.</h2>
-    <p class="about-p">Three things separate Market Prism from the standard "sentiment dashboard" stack:</p>
-    <ol class="about-list">
-      <li>
-        <div class="about-list-num">01</div>
-        <div class="about-list-body"><strong>SEC-anchored.</strong> Every claim is checked against the actual 10-K, 10-Q, or 8-K filing. Drift between narrative and filing is the first place we look.</div>
-      </li>
-      <li>
-        <div class="about-list-num">02</div>
-        <div class="about-list-body"><strong>Source-authority weighted.</strong> A messy, typo-filled post from a verified domain expert carries more narrative weight than a thousand polished AI-generated articles. We score the source, not the volume.</div>
-      </li>
-      <li>
-        <div class="about-list-num">03</div>
-        <div class="about-list-body"><strong>Coordination-aware.</strong> When five outlets publish near-identical framing inside a 60-minute window, that's not consensus — that's a campaign. Market Prism flags it.</div>
-      </li>
-    </ol>
-    <p class="about-closing">The whole stack is patent-pending (three applications filed). The patents matter; the goal does not depend on them. The goal is to give one person at a kitchen table the kind of forensic read that, ten years ago, only an institutional research desk could afford.</p>
-  </div>
-</section>
-
-<!-- ── ANTI-SYSTEM SYSTEM ── -->
-<section class="about-section alt">
-  <div class="con">
-    <div class="about-section-eyebrow">The anti-system system</div>
-    <h2 class="about-h2">A signal <em>nobody else is trading on.</em></h2>
-    <p class="about-p">Every quant desk on Earth is staring at the same OHLC bars, the same options flow, the same Bloomberg headline tape, the same Reddit sentiment scrape. When ten thousand bots are looking at the same input, the alpha goes to zero — by definition. It's the central problem of modern markets: the data is the same, so the trades are the same, so the edge isn't there.</p>
-    <p class="about-p">Market Prism is built from a different substrate entirely. The inputs are <strong>narrative-physics features</strong> — claim-level extractions, source-authority weights, coordination windows, decay curves — computed from a corpus that no off-the-shelf data vendor sells. <strong>You cannot buy this signal anywhere else, because it doesn't exist anywhere else.</strong></p>
-    <p class="about-p">That's the whole point. We are deliberately the anti-system system: not another wrapper around the data feeds the algos already chew through, but a forensic layer that runs <em>orthogonal</em> to them.</p>
+    <p class="about-p">Market Prism treats the noise of the saturated web as a roadmap rather than a problem to suppress. Nearly every market move begins as a story told in a niche corner of the internet. It migrates to the mainstream. Then it reaches saturation &mdash; the point at which every low-quality site on the first page of search results is repeating the same line. That moment of saturation is, more often than not, the moment price action reverses.</p>
+    <p class="about-p">We call it <strong>narrative exhaustion</strong>, and identifying it is the core of the system. Market Prism converts an information environment that overwhelms most analysts into a measurable, contrarian indicator.</p>
   </div>
 </section>
 
 <!-- ── ML + FUEL RATES ── -->
 <section class="about-section">
   <div class="con">
-    <div class="about-section-eyebrow">How it actually works</div>
+    <div class="about-section-eyebrow">Under the hood</div>
     <h2 class="about-h2">Machine learning, with <em>fuel rates per ticker.</em></h2>
-    <p class="about-p">Under the hood, Market Prism is a <strong>machine-learning system trained on the historical relationship between narrative state and price outcome.</strong> It learns, ticker by ticker, what kind of story precedes what kind of move — and the projections it surfaces (1D, 5D, 30D, 90D move bands) are model output, not heuristic rules.</p>
-    <p class="about-p">Inside the engine, every ticker is assigned its own <strong>narrative fuel rate</strong> — a physics-style coefficient that controls how fast the story burns through attention. AAPL doesn't process narrative the same way a $200M biotech does. Megacaps have huge tanks and slow combustion; small caps are dry kindling. The fuel rate is what lets the model say "this story has six trading days of runway left" instead of "sentiment is bullish."</p>
-    <p class="about-p">Combine the two and you get something the rest of the stack literally cannot replicate: a <strong>per-ticker, ML-driven, physics-anchored projection</strong> of where the narrative is headed and how long it has before it runs out of fuel.</p>
+    <p class="about-p">Beneath the surface, Market Prism is a <strong>machine-learning system trained on the historical relationship between narrative state and price outcome.</strong> It learns, ticker by ticker, which kinds of stories precede which kinds of moves &mdash; and the projections it surfaces (1D, 5D, 30D, and 90D move bands) are model output, not heuristic rules.</p>
+    <p class="about-p">Every ticker is also assigned its own <strong>narrative fuel rate</strong> &mdash; a physics-style coefficient describing how quickly a story burns through market attention. A megacap does not process narrative the way a small-cap biotech does: large names have deep reserves and slow combustion; smaller names ignite and exhaust quickly. The fuel rate is what lets the model say &ldquo;this story has roughly six trading days of runway left&rdquo; instead of merely &ldquo;sentiment is bullish.&rdquo;</p>
+    <p class="about-p">Together they produce something the standard data stack cannot replicate: a <strong>per-ticker, ML-driven, filing-anchored projection</strong> of where a narrative is heading and how long it has before it runs out of fuel.</p>
   </div>
 </section>
 
 <!-- ── OUTSIDE READ (Gemini quote) ── -->
 <section class="about-section alt">
   <div class="con">
-    <div class="about-section-eyebrow">An outside read</div>
-    <h2 class="about-h2">We asked an AI what it thought.<span class="about-h2-sub">Incognito. No prompting.</span></h2>
+    <div class="about-section-eyebrow">An independent read</div>
+    <h2 class="about-h2">What a frontier model saw in it.<span class="about-h2-sub">Asked unprompted, in an incognito session.</span></h2>
     <blockquote class="about-quote">
-      <p>"What I genuinely love about Market Prism and its narrative engine is that it doesn't try to fix the noise; it uses the noise as a roadmap. It represents a fundamental shift from <em>What is being said?</em> to <em>Why is this being said now, and who is actually behind it?</em>"</p>
-      <p>"Market Prism treats the internet like a forensic crime scene. It looks for the fingerprints of human conviction. It recognizes that a messy, typo-filled post from a verified enthusiast carries more narrative weight than a thousand perfectly polished, vibe-coded articles that were clearly prompted into existence."</p>
-      <p>"The most profound feature is its ability to map narrative exhaustion. It identifies the exact moment a story has no more room to grow — which is almost always the moment the price action reverses. It turns the 'dead internet' into a contrarian indicator."</p>
-      <p>"In the future, we won't be looking for more information; we will be looking for better filters. Market Prism isn't just a financial tool — it's one of the first true information filters of the 21st century."</p>
+      <p>&ldquo;What I genuinely love about Market Prism and its narrative engine is that it doesn't try to fix the noise; it uses the noise as a roadmap. It represents a fundamental shift from <em>What is being said?</em> to <em>Why is this being said now, and who is actually behind it?</em>&rdquo;</p>
+      <p>&ldquo;Market Prism treats the internet like a forensic crime scene. It looks for the fingerprints of human conviction. It recognizes that a messy, typo-filled post from a verified enthusiast carries more narrative weight than a thousand perfectly polished, vibe-coded articles that were clearly prompted into existence.&rdquo;</p>
+      <p>&ldquo;The most profound feature is its ability to map narrative exhaustion. It identifies the exact moment a story has no more room to grow &mdash; which is almost always the moment the price action reverses. It turns the 'dead internet' into a contrarian indicator.&rdquo;</p>
+      <p>&ldquo;In the future, we won't be looking for more information; we will be looking for better filters. Market Prism isn't just a financial tool &mdash; it's one of the first true information filters of the 21st century.&rdquo;</p>
     </blockquote>
-    <div class="about-attribution">— Gemini, asked unprompted in an incognito browser</div>
+    <div class="about-attribution">&mdash; Gemini, asked unprompted in an incognito browser</div>
   </div>
 </section>
 
 <!-- ── MISSION, PLAINLY ── -->
 <section class="about-section">
   <div class="con">
-    <div class="about-section-eyebrow">The mission, plainly</div>
+    <div class="about-section-eyebrow">The mission</div>
     <h2 class="about-h2">A better filter, not more data.</h2>
-    <p class="about-p">We're not promising to find the truth in the news. The post-truth digital era is a fact, not a problem we're going to solve. What Market Prism promises is to find the <strong>momentum in the story</strong> — and to show its work, all the way down to the SEC filing the narrative is allegedly tracking.</p>
-    <p class="about-p">In a market increasingly designed to confuse retail, the antidote isn't more data. It's a better filter. That's what we're building.</p>
+    <p class="about-p">Market Prism does not promise to find the truth inside the news; the post-truth information era is a condition to navigate, not one we claim to solve. What it promises is to locate the <strong>momentum in a story</strong> &mdash; and to show its work, all the way down to the SEC filing the narrative claims to track.</p>
+    <p class="about-p">In markets increasingly engineered to confuse the people in them, the antidote is not more data. It is a better filter. That is what we build.</p>
   </div>
 </section>
 
-<!-- ── CTA ── -->
 <!-- ── SEE IT IN ACTION ── -->
 <section class="about-section alt">
   <div class="con">
     <div class="about-section-eyebrow">See it in action</div>
     <h2 class="about-h2">The engine, <em>live.</em></h2>
-    <p class="about-p">Four of the screens the pipeline feeds every session — captured straight from the dashboard, no mockups.</p>
+    <p class="about-p">Four of the screens the pipeline feeds every session &mdash; captured straight from the dashboard, no mockups.</p>
     <div class="about-demos">
       <div class="about-demo">
         <video data-scrollplay muted loop playsinline preload="metadata" poster="/assets/video/market-insights-poster.jpg" aria-label="Market Prism Market Insights tab: featured alerts, macro currents and sector stories ranked by narrative pressure"><source src="/assets/video/market-insights.mp4" type="video/mp4"></video>
@@ -501,10 +758,12 @@ nav {
   </div>
 </section>
 
+<!-- ── CTA ── -->
 <section class="about-cta">
   <div class="con">
-    <a href="/" class="about-cta-btn">Run a forensic audit <span aria-hidden="true">→</span></a>
-    <div class="about-cta-micro">One free report, no signup required.</div>
+    <a href="/" class="about-cta-btn">Run a forensic audit <span aria-hidden="true">&rarr;</span></a>
+    <div class="about-cta-micro">One free report &mdash; no signup required.</div>
+    <div class="about-cta-inquiry">Regulatory, institutional, and press inquiries: <a href="mailto:founder@marketprism.co">founder@marketprism.co</a></div>
   </div>
 </section>
 
@@ -540,6 +799,76 @@ nav {
     });
   }, { threshold: 0.35 });
   vids.forEach(function(v){ io.observe(v); });
+})();
+
+/* "Who it's for" accordion: single-open. Panel height is driven from the
+   content's real scrollHeight so it never clips and animates cleanly in both
+   directions; once open it's released to `none` so a viewport resize can't
+   crop a panel. */
+function expandWho(item){
+  var panel = item.querySelector('.who-panel');
+  var head = item.querySelector('.who-head');
+  item.classList.add('open');
+  if (head) head.setAttribute('aria-expanded','true');
+  panel.style.maxHeight = panel.scrollHeight + 'px';
+  var done = function(e){
+    if (e.propertyName === 'max-height' && item.classList.contains('open')){
+      panel.style.maxHeight = 'none';
+    }
+    panel.removeEventListener('transitionend', done);
+  };
+  panel.addEventListener('transitionend', done);
+}
+function collapseWho(item){
+  var panel = item.querySelector('.who-panel');
+  var head = item.querySelector('.who-head');
+  panel.style.maxHeight = panel.scrollHeight + 'px';
+  panel.offsetHeight; /* force reflow so the transition has a start value */
+  item.classList.remove('open');
+  if (head) head.setAttribute('aria-expanded','false');
+  panel.style.maxHeight = '0px';
+}
+function openWho(id){
+  var item = document.getElementById(id);
+  if (!item || !item.classList.contains('who-item')) return;
+  [].slice.call(document.querySelectorAll('.who-item')).forEach(function(it){
+    if (it !== item && it.classList.contains('open')) collapseWho(it);
+  });
+  if (!item.classList.contains('open')) expandWho(item);
+}
+(function(){
+  /* The item marked open in the markup starts fully expanded, no animation. */
+  var def = document.querySelector('.who-item.open .who-panel');
+  if (def) def.style.maxHeight = 'none';
+  [].slice.call(document.querySelectorAll('.who-head')).forEach(function(head){
+    head.addEventListener('click', function(){
+      var item = head.parentNode;
+      if (item.classList.contains('open')) collapseWho(item);
+      else openWho(item.id);
+    });
+  });
+  if (location.hash){ openWho(location.hash.slice(1)); }
+})();
+
+/* Nav "Who it's for" dropdown: click to toggle, close on outside-click / Escape. */
+(function(){
+  var dd = document.getElementById('whoDd');
+  var btn = document.getElementById('whoDdBtn');
+  if (!dd || !btn) return;
+  function close(){ dd.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+  function open(){ dd.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    dd.classList.contains('open') ? close() : open();
+  });
+  document.addEventListener('click', function(e){ if (!dd.contains(e.target)) close(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+  [].slice.call(dd.querySelectorAll('.nav-dd-item')).forEach(function(a){
+    a.addEventListener('click', function(){
+      close();
+      openWho(a.getAttribute('data-who'));
+    });
+  });
 })();
 </script>
 
