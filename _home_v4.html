@@ -1616,6 +1616,47 @@ footer{
   @keyframes flow-move{ 0%{ top:0; left:50%; opacity:0; } 12%{ opacity:1; } 88%{ opacity:1; } 100%{ top:100%; left:50%; opacity:0; } }
 }
 @media(prefers-reduced-motion:reduce){ .flow-pulse{ animation:none; opacity:1; } }
+
+/* ════════════════ ROBINHOOD-FLAVORED LAYER ════════════════ */
+/* Pill-shaped CTAs (Robinhood signature) */
+.ent .hero-cta-primary, .ent .hero-cta-secondary, .ent .btn-primary, .ent .btn-ghost,
+.ent .search-btn, .ent .pricing-btn, .ent .screen-cta, .ent .r-cta-primary,
+.ent .ent-cta-actions a{ border-radius:999px; }
+
+/* Bright full-bleed conversion band (Robinhood's lime section, in MP green) */
+.ent-cta-band{
+  background:
+    radial-gradient(circle at 82% -30%, rgba(255,255,255,0.22), transparent 46%),
+    radial-gradient(circle at 0% 125%, rgba(0,110,74,0.20), transparent 48%),
+    #00DE94;
+  border-top:none; color:#06140E;
+}
+.ent-cta-band .ent-cta-inner h2{ color:#06140E; }
+.ent-cta-band .ent-cta-inner p{ color:rgba(6,20,14,0.78); }
+.ent .ent-cta-band .hero-cta-primary{ background:#06140E; color:#fff; box-shadow:0 8px 22px rgba(0,0,0,0.20); }
+.ent .ent-cta-band .hero-cta-primary:hover{ background:#0E2C1F; }
+.ent-cta-band .hero-cta-secondary{ background:transparent; border:1px solid rgba(6,20,14,0.38); color:#06140E; }
+.ent-cta-band .hero-cta-secondary:hover{ background:rgba(6,20,14,0.07); border-color:rgba(6,20,14,0.62); color:#06140E; }
+
+/* Line-icon "standard" grid (Robinhood's protection-guarantee layout) */
+.std-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:30px; }
+@media(max-width:860px){ .std-grid{ grid-template-columns:repeat(2,1fr); gap:34px 24px; } }
+@media(max-width:520px){ .std-grid{ grid-template-columns:1fr; } }
+.std-cell{ text-align:center; }
+.std-ico{ width:54px; height:54px; margin:0 auto 16px; border-radius:15px; display:flex; align-items:center; justify-content:center; background:rgba(0,174,255,0.10); color:#0094DB; }
+.std-ico svg{ width:26px; height:26px; }
+.std-h{ font-family:var(--font-body); font-size:16px; font-weight:700; letter-spacing:-0.01em; color:var(--mp-text-primary); margin-bottom:8px; }
+.std-p{ font-size:13px; line-height:1.6; color:var(--mp-text-tertiary); }
+
+/* Giant brand wordmark sign-off in the footer (Robinhood-style) */
+.footer-wordmark{
+  margin-top:40px; text-align:center; line-height:0.84;
+  font-family:var(--font-body); font-weight:800; letter-spacing:-0.045em;
+  font-size:clamp(46px,15.5vw,220px); white-space:nowrap; overflow:hidden;
+  background:linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.035));
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  user-select:none;
+}
 </style>
 </head>
 <body class="ent">
@@ -1896,6 +1937,39 @@ footer{
   </div>
 </section>
 
+<!-- ── THE STANDARD (line-icon grid · Robinhood "protection" layout) ── -->
+<section class="below ent-light std-section">
+  <div class="container">
+    <div style="text-align:center;">
+      <div class="section-eyebrow" style="display:inline-flex;">The Market Prism standard</div>
+    </div>
+    <h2 class="section-title" style="text-align:center;">Built to be <em>audited.</em></h2>
+    <p class="section-sub" style="text-align:center;margin:0 auto 46px;">Four commitments behind every score on the platform.</p>
+    <div class="std-grid">
+      <div class="std-cell">
+        <div class="std-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11.5 17.5 16 13"/></svg></div>
+        <div class="std-h">Traced to the filing</div>
+        <div class="std-p">Every claim is anchored to a real SEC document — 10-K, 10-Q, 8-K, or the call transcript.</div>
+      </div>
+      <div class="std-cell">
+        <div class="std-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5z"/><polyline points="9 12 11.5 14.5 16 10"/></svg></div>
+        <div class="std-h">Source-weighted</div>
+        <div class="std-p">A verified analyst outweighs a content farm. Authority is scored, not raw volume.</div>
+      </div>
+      <div class="std-cell">
+        <div class="std-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></div>
+        <div class="std-h">Publicly tracked</div>
+        <div class="std-p">Every pick is logged through entry, exit, and alpha-vs-SPY — hits and misses both.</div>
+      </div>
+      <div class="std-cell">
+        <div class="std-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></div>
+        <div class="std-h">Reproducible</div>
+        <div class="std-p">Same input, same score, down to the hash. You can show your work — and audit ours.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ── FAQ ── -->
 <section class="below ent-light" id="faq-section">
   <div class="container">
@@ -2034,6 +2108,7 @@ footer{
       Market Prism is a research and analytics platform. All content, signals, and scores are generated using proprietary models and historical data and are provided for informational and educational purposes only. Nothing on this platform constitutes investment advice. Past results are not indicative of future performance. Users should conduct their own due diligence and consult a licensed financial advisor before making investment decisions.
     </div>
   </div>
+  <div class="footer-wordmark" aria-hidden="true">Market Prism</div>
 </footer>
 
 <script>
@@ -2841,7 +2916,7 @@ footer{
   }
 
   // Staggered groups: [selector, per-item delay in ms]
-  [['.ent-hero .hero-copy > *',90],['.demo-section .section-eyebrow, .demo-section .section-title, .demo-section .section-sub',80],['.ent-cred-row span',55],['.engine-stat',80],['.flow-node',90],['.screen-row',60],['.diff-card',90],['.faq-item',55],['.search-chip',45]].forEach(function(g){
+  [['.ent-hero .hero-copy > *',90],['.demo-section .section-eyebrow, .demo-section .section-title, .demo-section .section-sub',80],['.ent-cred-row span',55],['.engine-stat',80],['.flow-node',90],['.std-cell',70],['.screen-row',60],['.diff-card',90],['.faq-item',55],['.search-chip',45]].forEach(function(g){
     var els = document.querySelectorAll(g[0]);
     for (var i=0;i<els.length;i++) tag(els[i], Math.min(i,6)*g[1]);
   });
@@ -2850,6 +2925,7 @@ footer{
   var intros = document.querySelectorAll(
     '.demo-section .search-panel, .ent-engine .engine-copy, .ent-engine .engine-code,' +
     '.flow-section .section-eyebrow, .flow-section .section-title, .flow-section .section-sub,' +
+    '.std-section .section-eyebrow, .std-section .section-title, .std-section .section-sub,' +
     '#product-section .section-eyebrow, #product-section .section-title, #product-section .section-sub,' +
     '#compare-teaser .section-eyebrow, #compare-teaser .section-title, #compare-teaser .section-sub,' +
     '#faq-section .section-eyebrow, #faq-section .section-title, #faq-section .section-sub,' +
