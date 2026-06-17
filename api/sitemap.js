@@ -9,6 +9,7 @@ module.exports = async (req, res) => {
     // Static pages — PUBLIC only (no dashboard, ticker, daily, heatmap)
     const staticPages = [
       { loc: '/', priority: '1.0', changefreq: 'daily' },
+      { loc: '/stocks', priority: '0.9', changefreq: 'daily' },
       { loc: '/blog', priority: '0.9', changefreq: 'daily' },
       { loc: '/casestudies', priority: '0.8', changefreq: 'weekly' },
       { loc: '/pricing', priority: '0.7', changefreq: 'monthly' },

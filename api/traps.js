@@ -1,0 +1,21 @@
+const resolveTemplate = require('./_resolve-template');
+
+module.exports = (req, res) => {
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL || '';
+    const supabaseAnon = process.env.SUPABASE_ANON || '';
+
+    let html = resolveTemplate('_traps.html');
+
+    html = html.replace(
+      "window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '' };",
+      `window.__env = { SUPABASE_URL: '${supabaseUrl}', SUPABASE_ANON: '${supabaseAnon}' };`
+    );
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=3600');
+    res.status(200).send(html);
+  } catch (err) {
+    res.status(500).send('Traps page error: ' + err.message);
+  }
+};

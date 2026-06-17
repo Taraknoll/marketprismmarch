@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>%%SEO_TITLE%%</title>
+%%SEO_META%%
+<script type="application/ld+json">%%SCHEMA_WEBPAGE%%</script>
+<script type="application/ld+json">%%SCHEMA_ITEMLIST%%</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --mp-obsidian:#080B11;--mp-surface:#0C1018;--mp-border:rgba(255,255,255,0.06);--mp-border-hover:rgba(255,255,255,0.14);
+  --mp-text-primary:#FFFFFF;--mp-text-secondary:rgba(255,255,255,0.7);--mp-text-tertiary:#A0A8B0;--mp-text-muted:rgba(255,255,255,0.3);
+  --mp-cyan:#00AEFF;--font-b:'Inter','DM Sans',system-ui,sans-serif;
+}
+html{font-size:16px;scroll-behavior:smooth;}
+body{font-family:var(--font-b);background:var(--mp-obsidian);color:var(--mp-text-primary);line-height:1.6;-webkit-font-smoothing:antialiased;}
+nav{position:sticky;top:0;z-index:100;background:rgba(8,11,17,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--mp-border);height:56px;display:flex;align-items:center;padding:0 40px;}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+.nav-logo-img{height:32px;width:auto;}
+.nav-links{display:flex;align-items:center;gap:4px;flex:1;}
+.nav-link{font-size:13px;color:var(--mp-text-tertiary);text-decoration:none;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s;}
+.nav-link:hover{color:var(--mp-text-secondary);background:var(--mp-surface);}
+.nav-right{margin-left:auto;}
+.btn-nav{font-size:13px;color:#fff;background:var(--mp-cyan);border:none;border-radius:8px;padding:7px 18px;text-decoration:none;}
+.con{max-width:1000px;margin:0 auto;padding:0 40px;}
+.hero{padding:56px 0 32px;border-bottom:1px solid var(--mp-border);}
+.hero-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-cyan);margin-bottom:14px;}
+.hero-h1{font-family:var(--font-b);font-size:clamp(30px,4.5vw,46px);font-weight:700;letter-spacing:-0.02em;line-height:1.1;color:var(--mp-text-primary);margin-bottom:14px;}
+.hero-sub{font-size:16px;color:var(--mp-text-secondary);max-width:620px;line-height:1.6;}
+.grid-wrap{padding:36px 0 56px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.tk-card{display:block;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;padding:14px 16px;text-decoration:none;transition:border-color .15s,transform .15s;}
+.tk-card:hover{border-color:var(--mp-border-hover);transform:translateY(-2px);}
+.tk-sym{font-size:15px;font-weight:700;color:var(--mp-text-primary);letter-spacing:.02em;}
+.tk-name{font-size:12px;color:var(--mp-text-secondary);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tk-sector{font-size:11px;color:var(--mp-text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.footer{border-top:1px solid var(--mp-border);padding:28px 0;text-align:center;}
+.footer-text{font-size:10px;color:var(--mp-text-tertiary);}
+.footer-text a{color:var(--mp-text-secondary);text-decoration:none;}
+@media(max-width:768px){.con{padding:0 20px;}nav{padding:0 16px;}.nav-links{display:none;}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo"><img class="nav-logo-img" src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism"></a>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Home</a>
+    <a href="/stocks" class="nav-link">Stocks</a>
+    <a href="/calculators" class="nav-link">Calculators</a>
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <a href="/blog" class="nav-link">Blog</a>
+  </div>
+  <div class="nav-right"><a href="/login#register" class="btn-nav">Get full access</a></div>
+</nav>
+
+<header class="hero">
+  <div class="con">
+    <div class="hero-eyebrow">Narrative Intelligence · Updated %%DATE%%</div>
+    <h1 class="hero-h1">Stock Narrative Analysis</h1>
+    <p class="hero-sub">Forensic narrative intelligence on %%COUNT%% stocks — what the market believes about each name, how loud the story is, and how far it has drifted from the fundamentals. Updated daily.</p>
+  </div>
+</header>
+
+<main class="grid-wrap">
+  <div class="con">
+    <div class="grid">
+      %%TICKER_GRID%%
+    </div>
+  </div>
+</main>
+
+<div class="footer">
+  <div class="footer-text"><a href="/">Market Prism</a> · Patent Pending: 63/971,470 &amp; 63/971,478 · &copy; 2025–2026</div>
+</div>
+</body>
+</html>

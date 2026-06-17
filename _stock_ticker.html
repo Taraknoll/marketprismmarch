@@ -14,6 +14,7 @@
 %%SEO_META%%
 <script type="application/ld+json">%%SCHEMA_WEBPAGE%%</script>
 <script type="application/ld+json">%%SCHEMA_BREADCRUMB%%</script>
+<script type="application/ld+json">%%SCHEMA_FAQ%%</script>
 <script type="application/ld+json">%%SCHEMA_PAYWALL%%</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,22 +42,10 @@
   --font-b:'Inter','DM Sans',system-ui,sans-serif;
 }
 html{font-size:16px;scroll-behavior:smooth;}
-body{
-  font-family:var(--font-b);
-  background:var(--mp-obsidian);
-  color:var(--mp-text-primary);
-  line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-}
+body{font-family:var(--font-b);background:var(--mp-obsidian);color:var(--mp-text-primary);line-height:1.6;-webkit-font-smoothing:antialiased;}
 
 /* ── NAV ── */
-nav{
-  position:sticky;top:0;z-index:100;
-  background:rgba(8,11,17,0.92);
-  backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--mp-border);
-  height:56px;display:flex;align-items:center;padding:0 40px;
-}
+nav{position:sticky;top:0;z-index:100;background:rgba(8,11,17,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--mp-border);height:56px;display:flex;align-items:center;padding:0 40px;}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
 .nav-logo-img{height:32px;width:auto;flex-shrink:0;}
 .nav-links{display:flex;align-items:center;gap:4px;flex:1;}
@@ -68,22 +57,8 @@ nav{
 
 /* ── LAYOUT ── */
 .con{max-width:840px;margin:0 auto;padding:0 40px;}
-
-/* shared card pattern */
-.card{
-  position:relative;
-  background:var(--mp-surface);
-  border:1px solid var(--mp-border);
-  border-radius:16px;
-  padding:20px;
-  overflow:hidden;
-  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));
-}
-.card::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
-  background-size:48px 48px;opacity:.6;
-}
+.card{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:20px;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.card::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:48px 48px;opacity:.6;}
 .card>*{position:relative;}
 .card-accent{position:absolute;top:0;left:0;right:0;height:2px;}
 
@@ -91,9 +66,11 @@ nav{
 .hero{padding:48px 0 28px;border-bottom:1px solid var(--mp-border);}
 .hero-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-cyan);margin-bottom:14px;}
 .hero-top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;}
-.hero-id{display:flex;flex-direction:column;gap:6px;}
+.hero-id{display:flex;flex-direction:column;gap:4px;}
 .hero-ticker{font-family:var(--font-d);font-size:clamp(40px,7vw,64px);font-weight:700;letter-spacing:-0.03em;line-height:1;color:var(--mp-text-primary);}
-.hero-name{font-size:14px;color:var(--mp-text-tertiary);}
+.hero-name{font-size:15px;color:var(--mp-text-secondary);font-weight:500;}
+.hero-sector{font-size:12px;color:var(--mp-text-muted);margin-top:2px;}
+.hero-sector:empty{display:none;}
 .hero-price-wrap{text-align:right;}
 .hero-price{font-size:34px;font-weight:600;letter-spacing:-0.01em;color:var(--mp-text-primary);line-height:1.1;}
 .hero-change{font-size:16px;font-weight:500;margin-top:4px;}
@@ -112,7 +89,19 @@ nav{
 .section-title{font-family:var(--font-d);font-size:24px;font-weight:700;letter-spacing:-0.01em;line-height:1.25;color:var(--mp-text-primary);margin-bottom:8px;}
 .section-sub{font-size:13px;color:var(--mp-text-tertiary);margin-bottom:18px;}
 .narrative-read{font-size:16px;line-height:1.7;color:var(--mp-text-secondary);}
-.narrative-read strong{color:var(--mp-text-primary);font-weight:600;}
+
+/* ── REALITY-BELIEF ── */
+.rbi-card{margin-top:4px;}
+.rbi-wrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap;}
+.rbi-gauge{flex:0 0 auto;}
+.rbi-readout{flex:1;min-width:220px;}
+.rbi-zone{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;}
+.rbi-value{font-size:40px;font-weight:700;color:var(--mp-text-primary);line-height:1;}
+.rbi-value-max{font-size:16px;color:var(--mp-text-tertiary);font-weight:500;margin-left:2px;}
+.rbi-explain{font-size:14px;color:var(--mp-text-secondary);line-height:1.6;margin-top:10px;}
+.rbi-theme{margin-top:12px;}
+.rbi-theme-k{color:var(--mp-text-muted);text-transform:uppercase;letter-spacing:.06em;font-size:11px;}
+.rbi-theme-v{color:var(--mp-text-secondary);border:1px solid var(--mp-border);border-radius:999px;padding:3px 10px;margin-left:4px;font-size:12px;}
 
 /* ── CHART ── */
 .chart-card{margin-top:4px;}
@@ -132,6 +121,13 @@ nav{
 .stat-value{font-size:20px;font-weight:600;color:var(--mp-text-primary);line-height:1.2;}
 .stat-meta{font-size:11px;color:var(--mp-text-muted);margin-top:4px;}
 
+/* ── TOOLS ── */
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.tool-card{display:block;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;padding:18px;text-decoration:none;transition:border-color .15s,transform .15s;}
+.tool-card:hover{border-color:var(--mp-border-hover);transform:translateY(-2px);}
+.tool-title{font-size:15px;font-weight:600;color:var(--mp-text-primary);margin-bottom:6px;}
+.tool-sub{font-size:12px;color:var(--mp-text-tertiary);line-height:1.5;}
+
 /* ── LOCKED ── */
 .locked-card{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border-hover);border-radius:16px;padding:24px;overflow:hidden;margin-top:4px;}
 .locked-accent{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--mp-violet),var(--mp-cyan));}
@@ -148,6 +144,12 @@ nav{
 .lock-secondary{font-size:12px;color:var(--mp-text-tertiary);text-decoration:none;}
 .lock-secondary:hover{color:var(--mp-text-secondary);}
 
+/* ── FAQ ── */
+.faq-list{display:flex;flex-direction:column;gap:12px;}
+.faq-item{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;padding:16px 18px;}
+.faq-q{font-size:15px;font-weight:600;color:var(--mp-text-primary);margin-bottom:6px;line-height:1.35;}
+.faq-a{font-size:14px;color:var(--mp-text-secondary);line-height:1.6;margin:0;}
+
 /* ── RELATED ── */
 .related-grid{display:flex;flex-wrap:wrap;gap:10px;}
 .related-grid a{font-size:13px;color:var(--mp-cyan);text-decoration:none;padding:8px 14px;border:1px solid var(--mp-border);border-radius:9px;transition:border-color .15s;}
@@ -160,6 +162,7 @@ nav{
 
 /* ── DISCLAIMER / FOOTER ── */
 .disclaimer{font-size:12px;color:var(--mp-text-muted);line-height:1.6;padding:22px 0;}
+.disclaimer a{color:var(--mp-text-tertiary);}
 .footer{border-top:1px solid var(--mp-border);padding:28px 0;text-align:center;}
 .footer-text{font-size:10px;color:var(--mp-text-tertiary);}
 .footer-text a{color:var(--mp-text-secondary);text-decoration:none;}
@@ -171,6 +174,7 @@ nav{
   .hero{padding:32px 0 24px;}
   .hero-price-wrap{text-align:left;}
   .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .tools-grid{grid-template-columns:1fr;}
   .section-title{font-size:21px;}
 }
 </style>
@@ -184,9 +188,10 @@ nav{
   </a>
   <div class="nav-links">
     <a href="/" class="nav-link">Home</a>
+    <a href="/stocks" class="nav-link">Stocks</a>
+    <a href="/calculators" class="nav-link">Calculators</a>
     <a href="/dashboard" class="nav-link">Dashboard</a>
     <a href="/blog" class="nav-link">Blog</a>
-    <a href="/methodology" class="nav-link">Methodology</a>
   </div>
   <div class="nav-right">
     <a href="/login#register" class="btn-nav">Get full access</a>
@@ -201,6 +206,7 @@ nav{
       <div class="hero-id">
         <div class="hero-ticker">%%TICKER%%</div>
         <div class="hero-name">%%COMPANY%%</div>
+        <div class="hero-sector">%%SECTOR_LINE%%</div>
       </div>
       <div class="hero-price-wrap">
         <div class="hero-price" id="live-price">%%PRICE%%</div>
@@ -219,11 +225,14 @@ nav{
 <!-- ── NARRATIVE READ (free, indexable) ── -->
 <section class="section">
   <div class="con">
-    <h1 class="section-title">What the market believes about %%TICKER%%</h1>
-    <div class="section-sub">Market Prism reads the story driving the price — not a buy or sell rating.</div>
+    <h1 class="section-title">%%H1%%</h1>
+    <div class="section-sub">What the market believes about %%TICKER%% right now — a forensic read of the story, not a buy or sell rating.</div>
     <p class="narrative-read">%%NARRATIVE_READ%%</p>
   </div>
 </section>
+
+<!-- ── REALITY vs BELIEF (free) ── -->
+%%RBI_SECTION%%
 
 <!-- ── 7-DAY SIGNAL CHART (free) ── -->
 <section class="section">
@@ -253,6 +262,9 @@ nav{
   </div>
 </section>
 
+<!-- ── NARRATIVE DETAIL SECTIONS (free, indexable) ── -->
+%%CONTENT_SECTIONS%%
+
 <!-- ── LOCKED: projected price + trade signal ── -->
 <section class="section">
   <div class="con">
@@ -277,6 +289,31 @@ nav{
   </div>
 </section>
 
+<!-- ── TOOLS / CALCULATORS (free) ── -->
+<section class="section">
+  <div class="con">
+    <h2 class="section-title">Tools for %%TICKER%%</h2>
+    <div class="section-sub">Free calculators, pre-filled for %%TICKER%%.</div>
+    <div class="tools-grid">
+      <a class="tool-card" href="%%CALC_GROWTH_HREF%%" data-track="stock_calc_growth">
+        <div class="tool-title">Growth of $10K in %%TICKER%%</div>
+        <div class="tool-sub">See what an investment in %%TICKER%% would be worth over time.</div>
+      </a>
+      <a class="tool-card" href="%%CALC_POS_HREF%%" data-track="stock_calc_position">
+        <div class="tool-title">Size a %%TICKER%% position</div>
+        <div class="tool-sub">Risk-based share count at %%TICKER%%'s current price.</div>
+      </a>
+      <a class="tool-card" href="/calculators" data-track="stock_calc_all">
+        <div class="tool-title">All free tools</div>
+        <div class="tool-sub">Every Market Prism calculator in one place.</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ (free, AEO) ── -->
+%%FAQ_BLOCK%%
+
 <!-- ── RELATED ── -->
 <section class="section">
   <div class="con">
@@ -293,7 +330,7 @@ nav{
   <div class="disclaimer">
     Market Prism provides forensic narrative intelligence for informational purposes only. This is not financial advice.
     Projected values reflect narrative-implied modeling, not price predictions, and may be incomplete or unavailable for some tickers.
-    All investment decisions should be made with independent verification and professional financial counsel.
+    See our <a href="/methodology">methodology</a>. All investment decisions should be made with independent verification and professional financial counsel.
   </div>
 </div>
 </main>
@@ -345,7 +382,6 @@ nav{
     var plotW = W - padL - padR, plotH = H - padT - padB;
     var n = SERIES.length;
 
-    // gridlines
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     for(var g=0; g<=3; g++){
@@ -373,7 +409,6 @@ nav{
         grad.addColorStop(0, fill); grad.addColorStop(1,'rgba(0,0,0,0)');
         ctx.fillStyle = grad; ctx.fill();
       }
-      // end dot
       var ex = padL + (n===1?plotW/2:plotW), ey = padT + plotH - nv[n-1]*plotH;
       ctx.beginPath(); ctx.arc(ex,ey,3.5,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
     }
@@ -381,7 +416,6 @@ nav{
     plot(SERIES.map(function(d){ return d.force; }), '#FFB800', 'rgba(255,184,0,0.12)');
     plot(SERIES.map(function(d){ return d.pressure; }), '#FF4D4D', null);
 
-    // date labels (first + last)
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.font = '11px Inter, sans-serif';
     ctx.textBaseline = 'bottom';
