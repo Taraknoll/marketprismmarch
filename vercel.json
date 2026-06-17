@@ -217,6 +217,14 @@
       "destination": "/api/daily-plays-v2"
     },
     {
+      "source": "/traps",
+      "destination": "/api/traps"
+    },
+    {
+      "source": "/herb",
+      "destination": "/api/traps"
+    },
+    {
       "source": "/((?!assets/).*)",
       "destination": "/api/index"
     }
@@ -340,6 +348,9 @@
     },
     "api/stocks-index.js": {
       "includeFiles": "{_stocks_index.html,lib/**}"
+    },
+    "api/traps.js": {
+      "includeFiles": "_traps.html"
     }
   },
   "headers": [
