@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
+<!-- Vercel Web Analytics -->
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>%%SEO_TITLE%%</title>
+%%SEO_META%%
+<script type="application/ld+json">%%SCHEMA_WEBPAGE%%</script>
+<script type="application/ld+json">%%SCHEMA_BREADCRUMB%%</script>
+<script type="application/ld+json">%%SCHEMA_PAYWALL%%</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --mp-obsidian:#080B11;
+  --mp-surface:#0C1018;
+  --mp-surface2:#111927;
+  --mp-border:rgba(255,255,255,0.06);
+  --mp-border-hover:rgba(255,255,255,0.14);
+  --mp-text-primary:#FFFFFF;
+  --mp-text-secondary:rgba(255,255,255,0.7);
+  --mp-text-tertiary:#A0A8B0;
+  --mp-text-muted:rgba(255,255,255,0.3);
+  --mp-cyan:#00AEFF;
+  --mp-teal:#38C8B8;
+  --mp-green:#00DE94;
+  --mp-red:#FF4D4D;
+  --mp-amber:#FFB800;
+  --mp-violet:#7B61FF;
+  --font-d:'Inter','DM Sans',system-ui,sans-serif;
+  --font-b:'Inter','DM Sans',system-ui,sans-serif;
+}
+html{font-size:16px;scroll-behavior:smooth;}
+body{
+  font-family:var(--font-b);
+  background:var(--mp-obsidian);
+  color:var(--mp-text-primary);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,11,17,0.92);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--mp-border);
+  height:56px;display:flex;align-items:center;padding:0 40px;
+}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+.nav-logo-img{height:32px;width:auto;flex-shrink:0;}
+.nav-links{display:flex;align-items:center;gap:4px;flex:1;}
+.nav-link{font-size:13px;color:var(--mp-text-tertiary);text-decoration:none;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s;}
+.nav-link:hover{color:var(--mp-text-secondary);background:var(--mp-surface);}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.btn-nav{font-size:13px;color:#fff;background:var(--mp-cyan);border:none;border-radius:8px;padding:7px 18px;cursor:pointer;transition:opacity .15s;text-decoration:none;}
+.btn-nav:hover{opacity:.88;}
+
+/* ── LAYOUT ── */
+.con{max-width:840px;margin:0 auto;padding:0 40px;}
+
+/* shared card pattern */
+.card{
+  position:relative;
+  background:var(--mp-surface);
+  border:1px solid var(--mp-border);
+  border-radius:16px;
+  padding:20px;
+  overflow:hidden;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+}
+.card::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+  background-size:48px 48px;opacity:.6;
+}
+.card>*{position:relative;}
+.card-accent{position:absolute;top:0;left:0;right:0;height:2px;}
+
+/* ── HERO ── */
+.hero{padding:48px 0 28px;border-bottom:1px solid var(--mp-border);}
+.hero-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-cyan);margin-bottom:14px;}
+.hero-top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+.hero-id{display:flex;flex-direction:column;gap:6px;}
+.hero-ticker{font-family:var(--font-d);font-size:clamp(40px,7vw,64px);font-weight:700;letter-spacing:-0.03em;line-height:1;color:var(--mp-text-primary);}
+.hero-name{font-size:14px;color:var(--mp-text-tertiary);}
+.hero-price-wrap{text-align:right;}
+.hero-price{font-size:34px;font-weight:600;letter-spacing:-0.01em;color:var(--mp-text-primary);line-height:1.1;}
+.hero-change{font-size:16px;font-weight:500;margin-top:4px;}
+.hero-change.up{color:var(--mp-green);}
+.hero-change.down{color:var(--mp-red);}
+.hero-change.flat{color:var(--mp-text-tertiary);}
+.hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;}
+.badge{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:999px;border:1px solid var(--mp-border-hover);}
+.badge.bull{color:var(--mp-green);border-color:rgba(0,222,148,0.4);background:rgba(0,222,148,0.10);}
+.badge.bear{color:var(--mp-red);border-color:rgba(255,77,77,0.4);background:rgba(255,77,77,0.10);}
+.badge.neutral{color:var(--mp-cyan);border-color:rgba(0,174,255,0.4);background:rgba(0,174,255,0.10);}
+.badge.state{color:var(--mp-text-secondary);background:var(--mp-surface);}
+
+/* ── SECTION ── */
+.section{padding:36px 0;border-bottom:1px solid var(--mp-border);}
+.section-title{font-family:var(--font-d);font-size:24px;font-weight:700;letter-spacing:-0.01em;line-height:1.25;color:var(--mp-text-primary);margin-bottom:8px;}
+.section-sub{font-size:13px;color:var(--mp-text-tertiary);margin-bottom:18px;}
+.narrative-read{font-size:16px;line-height:1.7;color:var(--mp-text-secondary);}
+.narrative-read strong{color:var(--mp-text-primary);font-weight:600;}
+
+/* ── CHART ── */
+.chart-card{margin-top:4px;}
+.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
+.chart-title{font-family:var(--font-d);font-size:18px;font-weight:600;color:var(--mp-text-primary);}
+.chart-range{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-tertiary);padding:4px 10px;border:1px solid var(--mp-border);border-radius:999px;}
+.chart-legend{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mp-text-tertiary);}
+.legend-dot{width:10px;height:3px;border-radius:2px;}
+.chart-canvas-wrap{width:100%;height:240px;}
+#signal-canvas{width:100%;height:100%;display:block;}
+
+/* ── STAT GRID ── */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.stat{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:12px;padding:16px;}
+.stat-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-tertiary);margin-bottom:8px;}
+.stat-value{font-size:20px;font-weight:600;color:var(--mp-text-primary);line-height:1.2;}
+.stat-meta{font-size:11px;color:var(--mp-text-muted);margin-top:4px;}
+
+/* ── LOCKED ── */
+.locked-card{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border-hover);border-radius:16px;padding:24px;overflow:hidden;margin-top:4px;}
+.locked-accent{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--mp-violet),var(--mp-cyan));}
+.locked-blur{filter:blur(9px);pointer-events:none;user-select:none;opacity:.85;}
+.locked-blur .lp-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--mp-border);font-size:15px;}
+.locked-blur .lp-label{color:var(--mp-text-tertiary);}
+.locked-blur .lp-value{color:var(--mp-text-primary);font-weight:600;}
+.locked-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:24px;background:radial-gradient(circle at center,rgba(12,16,24,0.55),rgba(12,16,24,0.88));}
+.lock-pill{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mp-violet);background:rgba(123,97,255,0.14);border:1px solid rgba(123,97,255,0.4);border-radius:999px;padding:5px 12px;}
+.lock-head{font-family:var(--font-d);font-size:22px;font-weight:600;color:var(--mp-text-primary);max-width:420px;line-height:1.3;}
+.lock-sub{font-size:13px;color:var(--mp-text-tertiary);max-width:420px;line-height:1.6;}
+.lock-cta{display:inline-block;font-size:14px;font-weight:600;color:#fff;background:var(--mp-cyan);padding:11px 28px;border-radius:9px;text-decoration:none;transition:opacity .15s;margin-top:4px;}
+.lock-cta:hover{opacity:.88;}
+.lock-secondary{font-size:12px;color:var(--mp-text-tertiary);text-decoration:none;}
+.lock-secondary:hover{color:var(--mp-text-secondary);}
+
+/* ── RELATED ── */
+.related-grid{display:flex;flex-wrap:wrap;gap:10px;}
+.related-grid a{font-size:13px;color:var(--mp-cyan);text-decoration:none;padding:8px 14px;border:1px solid var(--mp-border);border-radius:9px;transition:border-color .15s;}
+.related-grid a:hover{border-color:var(--mp-border-hover);}
+.loud-list{display:flex;flex-direction:column;gap:10px;}
+.loud-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:10px;text-decoration:none;transition:border-color .15s;}
+.loud-item:hover{border-color:var(--mp-border-hover);}
+.loud-tkr{font-size:14px;font-weight:700;color:var(--mp-text-primary);}
+.loud-txt{font-size:12px;color:var(--mp-text-tertiary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── DISCLAIMER / FOOTER ── */
+.disclaimer{font-size:12px;color:var(--mp-text-muted);line-height:1.6;padding:22px 0;}
+.footer{border-top:1px solid var(--mp-border);padding:28px 0;text-align:center;}
+.footer-text{font-size:10px;color:var(--mp-text-tertiary);}
+.footer-text a{color:var(--mp-text-secondary);text-decoration:none;}
+
+@media(max-width:768px){
+  .con{padding:0 20px;}
+  nav{padding:0 16px;}
+  .nav-links{display:none;}
+  .hero{padding:32px 0 24px;}
+  .hero-price-wrap{text-align:left;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .section-title{font-size:21px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="/" class="nav-logo">
+    <img class="nav-logo-img" src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+  </a>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Home</a>
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <a href="/blog" class="nav-link">Blog</a>
+    <a href="/methodology" class="nav-link">Methodology</a>
+  </div>
+  <div class="nav-right">
+    <a href="/login#register" class="btn-nav">Get full access</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<header class="hero">
+  <div class="con">
+    <div class="hero-eyebrow">Narrative Intelligence · Updated %%DATE%%</div>
+    <div class="hero-top">
+      <div class="hero-id">
+        <div class="hero-ticker">%%TICKER%%</div>
+        <div class="hero-name">%%COMPANY%%</div>
+      </div>
+      <div class="hero-price-wrap">
+        <div class="hero-price" id="live-price">%%PRICE%%</div>
+        <div class="hero-change flat" id="live-change">&nbsp;</div>
+      </div>
+    </div>
+    <div class="hero-badges">
+      <span class="badge %%SENTIMENT_CLASS%%">%%SENTIMENT_LABEL%%</span>
+      <span class="badge state">%%STATE_LABEL%%</span>
+      <span class="badge state">%%VERDICT%%</span>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ── NARRATIVE READ (free, indexable) ── -->
+<section class="section">
+  <div class="con">
+    <h1 class="section-title">What the market believes about %%TICKER%%</h1>
+    <div class="section-sub">Market Prism reads the story driving the price — not a buy or sell rating.</div>
+    <p class="narrative-read">%%NARRATIVE_READ%%</p>
+  </div>
+</section>
+
+<!-- ── 7-DAY SIGNAL CHART (free) ── -->
+<section class="section">
+  <div class="con">
+    <div class="card chart-card">
+      <div class="card-accent" style="background:linear-gradient(90deg,var(--mp-amber),var(--mp-cyan));"></div>
+      <div class="chart-head">
+        <div class="chart-title">Signal Lab — last 7 days</div>
+        <span class="chart-range">7D</span>
+      </div>
+      <div class="chart-canvas-wrap"><canvas id="signal-canvas"></canvas></div>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--mp-amber);"></span>Narrative Force</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--mp-red);"></span>Risk Pressure</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── KEY SIGNALS (free) ── -->
+<section class="section">
+  <div class="con">
+    <h2 class="section-title">Key signals</h2>
+    <div class="stat-grid">
+      %%STAT_ROWS%%
+    </div>
+  </div>
+</section>
+
+<!-- ── LOCKED: projected price + trade signal ── -->
+<section class="section">
+  <div class="con">
+    <h2 class="section-title">Projected price &amp; trade signal</h2>
+    <div class="locked-card" data-mp-locked="true">
+      <div class="locked-accent"></div>
+      <div class="locked-blur" aria-hidden="true">
+        <div class="lp-row"><span class="lp-label">Narrative-implied fair value</span><span class="lp-value">$ 0,000.00</span></div>
+        <div class="lp-row"><span class="lp-label">Projected target</span><span class="lp-value">$ 0,000.00</span></div>
+        <div class="lp-row"><span class="lp-label">Direction</span><span class="lp-value">████████</span></div>
+        <div class="lp-row"><span class="lp-label">Entry · Stop</span><span class="lp-value">$ 000 · $ 000</span></div>
+        <div class="lp-row" style="border-bottom:none;"><span class="lp-label">Conviction</span><span class="lp-value">██ / 100</span></div>
+      </div>
+      <div class="locked-overlay">
+        <span class="lock-pill">🔒 Members only</span>
+        <div class="lock-head">See %%TICKER%%'s projected price &amp; full trade signal</div>
+        <div class="lock-sub">Fair value, projected targets, direction, and conviction are part of the full %%TICKER%% analysis.</div>
+        <a href="/login#register" class="lock-cta" data-track="stock_unlock_full">Unlock full analysis →</a>
+        <a href="/login" class="lock-secondary" data-track="stock_sign_in">Already a member? Sign in</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── RELATED ── -->
+<section class="section">
+  <div class="con">
+    <h2 class="section-title">Loudest stories right now</h2>
+    <div class="loud-list">%%LOUDEST%%</div>
+    <div class="related-grid" style="margin-top:20px;">
+      %%RELATED_LINKS%%
+    </div>
+  </div>
+</section>
+
+<!-- ── DISCLAIMER ── -->
+<div class="con">
+  <div class="disclaimer">
+    Market Prism provides forensic narrative intelligence for informational purposes only. This is not financial advice.
+    Projected values reflect narrative-implied modeling, not price predictions, and may be incomplete or unavailable for some tickers.
+    All investment decisions should be made with independent verification and professional financial counsel.
+  </div>
+</div>
+</main>
+
+<!-- ── FOOTER ── -->
+<div class="footer">
+  <div class="footer-text">
+    <a href="/">Market Prism</a> · Patent Pending: 63/971,470 &amp; 63/971,478 · &copy; 2025–2026
+  </div>
+</div>
+
+<script>
+(function(){
+  var TICKER = "%%TICKER%%";
+
+  /* ── live price (anon Polygon proxy) ── */
+  function fmtUsd(n){ return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  fetch('/api/live-quote?ticker=' + encodeURIComponent(TICKER), { credentials:'same-origin' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(!d) return;
+      var price = d.price != null ? d.price : (d.last != null ? d.last : null);
+      var chg = d.changePct != null ? d.changePct : (d.change_pct != null ? d.change_pct : null);
+      if(price != null){ document.getElementById('live-price').textContent = fmtUsd(price); }
+      if(chg != null){
+        var el = document.getElementById('live-change');
+        var v = Number(chg);
+        el.textContent = (v>0?'+':'') + v.toFixed(2) + '%';
+        el.className = 'hero-change ' + (v>0?'up':(v<0?'down':'flat'));
+      }
+    })
+    .catch(function(){});
+
+  /* ── lightweight 7-day signal chart ── */
+  var SERIES = window.__MP_CHART || [];
+  function drawChart(){
+    var canvas = document.getElementById('signal-canvas');
+    if(!canvas || !SERIES.length) return;
+    var wrap = canvas.parentNode;
+    var dpr = window.devicePixelRatio || 1;
+    var W = wrap.clientWidth, H = wrap.clientHeight;
+    if(!W || !H) return;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,W,H);
+
+    var padL=8, padR=8, padT=14, padB=26;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = SERIES.length;
+
+    // gridlines
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for(var g=0; g<=3; g++){
+      var gy = padT + (plotH/3)*g;
+      ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(W-padR,gy); ctx.stroke();
+    }
+
+    function norm(vals){
+      var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+      var rng = (mx-mn) || 1;
+      return vals.map(function(v){ return (v-mn)/rng; });
+    }
+    function plot(vals, color, fill){
+      var nv = norm(vals);
+      ctx.beginPath();
+      for(var i=0;i<n;i++){
+        var x = padL + (n===1?plotW/2:(plotW*i/(n-1)));
+        var y = padT + plotH - nv[i]*plotH;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.lineJoin='round'; ctx.stroke();
+      if(fill){
+        ctx.lineTo(padL+plotW, padT+plotH); ctx.lineTo(padL, padT+plotH); ctx.closePath();
+        var grad = ctx.createLinearGradient(0,padT,0,padT+plotH);
+        grad.addColorStop(0, fill); grad.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle = grad; ctx.fill();
+      }
+      // end dot
+      var ex = padL + (n===1?plotW/2:plotW), ey = padT + plotH - nv[n-1]*plotH;
+      ctx.beginPath(); ctx.arc(ex,ey,3.5,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+    }
+
+    plot(SERIES.map(function(d){ return d.force; }), '#FFB800', 'rgba(255,184,0,0.12)');
+    plot(SERIES.map(function(d){ return d.pressure; }), '#FF4D4D', null);
+
+    // date labels (first + last)
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textBaseline = 'bottom';
+    ctx.textAlign = 'left';
+    ctx.fillText(SERIES[0].date, padL, H-6);
+    ctx.textAlign = 'right';
+    ctx.fillText(SERIES[n-1].date, W-padR, H-6);
+  }
+  function ready(fn){ if(document.readyState!=='loading'){ fn(); } else { document.addEventListener('DOMContentLoaded',fn); } }
+  ready(drawChart);
+  window.addEventListener('resize', drawChart);
+})();
+</script>
+
+</body>
+</html>

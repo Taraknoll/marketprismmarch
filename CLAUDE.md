@@ -5,29 +5,30 @@
 These rules apply to ALL UI work. Never deviate without explicit user approval.
 
 ### Display / Hero Font — CRITICAL
-- Font: `'Instrument Serif', 'DM Serif Display', Georgia, serif`
+- **NEVER use a serif font ANYWHERE on the product** — not for hero titles, headings, accents, body, or fallbacks. No `Instrument Serif`, no `DM Serif Display`, no `Georgia`, no generic `serif`. See Banned Fonts below.
+- Font: `'Inter', 'DM Sans', system-ui, sans-serif`
 - Use for: page hero titles, section headers, any large editorial headline
-- Style: font-weight 400 (not bold — the serif carries the weight)
-- Italic variant: use for accent lines (e.g. "Every morning.") in brand cyan `#4DC8F0`
-- Size: `clamp(28px, 3.2vw, 42px)` for primary, `clamp(32px, 3.8vw, 50px)` for italic accent
+- Style: font-weight 600–700 (Inter carries display weight through size + weight, never a serif face)
+- Accent lines (e.g. "Every morning."): brand cyan `#4DC8F0`, weight 600 — do NOT use an italic serif
+- Size: `clamp(28px, 3.2vw, 42px)` for primary, `clamp(32px, 3.8vw, 50px)` for large accent
 - Letter-spacing: `-0.025em` (tight tracking for editorial feel)
-- NEVER use Inter/DM Sans/mono for hero-level headings
-- Section titles within pages: Instrument Serif at 24px, weight 400
-- Panel titles: Instrument Serif at 18px, weight 400
+- Section titles within pages: Inter at 24px, weight 700
+- Panel titles: Inter at 18px, weight 600
 
 ### Font Stack
 | Role | Font | Fallback |
 |------|------|----------|
-| Display / Hero | `Instrument Serif` | `DM Serif Display`, Georgia, serif |
+| Display / Hero | `Inter` (weight 600–700) | `DM Sans`, system-ui, sans-serif |
 | Body / UI | `Inter` | `DM Sans`, system-ui, sans-serif |
 | ~~Mono / Data~~ | **BANNED** — do not use `Geist Mono`, `DM Mono`, or any monospace font. Use `Inter` for all data/numbers. |
 | Card Commands | `Anton` | Impact, sans-serif |
 
 ### Banned Fonts — NEVER USE
+- **Any serif font — NEVER, ANYWHERE.** Specifically `Instrument Serif`, `DM Serif Display`, `Georgia`, and the generic `serif` family. Do not use them as a `font-family`, a fallback in a stack, or in a Google Fonts import. All headings/display use `Inter` (weight 600–700).
 - `Geist Mono` — removed from codebase, do not reintroduce
 - `DM Mono` — removed from codebase, do not reintroduce
 - Any `monospace` font-family — all data, labels, badges, chart axes, and canvas text must use `Inter` or `var(--font-body)`
-- Do not add monospace to Google Fonts imports
+- Do not add serif or monospace fonts to Google Fonts imports
 - Do not use `var(--font-mono)`, `var(--mono)`, or `var(--font-m)` CSS variables
 
 ### Font Size Minimums — NO EXCEPTIONS

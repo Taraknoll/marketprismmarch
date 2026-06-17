@@ -161,6 +161,14 @@
       "destination": "/api/seo-should-buy"
     },
     {
+      "source": "/stocks/:ticker",
+      "destination": "/api/stock"
+    },
+    {
+      "source": "/stock-og/:ticker",
+      "destination": "/api/stock-og?ticker=:ticker"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },
@@ -322,6 +330,9 @@
     },
     "api/seo-should-buy.js": {
       "includeFiles": "{_seo_ticker.html,lib/**}"
+    },
+    "api/stock.js": {
+      "includeFiles": "{_stock_ticker.html,lib/**}"
     }
   },
   "headers": [

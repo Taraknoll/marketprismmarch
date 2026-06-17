@@ -95,6 +95,14 @@ module.exports = async (req, res) => {
         ? new Date(t.date).toISOString().split('T')[0]
         : '';
 
+      // Public stock landing page (richer / shareable) — higher priority.
+      xml += '  <url>\n';
+      xml += `    <loc>${siteUrl}/stocks/${t.ticker}</loc>\n`;
+      if (lastmod) xml += `    <lastmod>${lastmod}</lastmod>\n`;
+      xml += '    <changefreq>daily</changefreq>\n';
+      xml += '    <priority>0.8</priority>\n';
+      xml += '  </url>\n';
+
       const seoPages = [
         `/why-is-${tickerLower}-stock-down`,
         `/is-${tickerLower}-overvalued`,
