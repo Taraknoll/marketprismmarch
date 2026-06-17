@@ -225,6 +225,10 @@
       "destination": "/api/traps"
     },
     {
+      "source": "/herbtraps",
+      "destination": "/api/herbtraps"
+    },
+    {
       "source": "/((?!assets/).*)",
       "destination": "/api/index"
     }
@@ -351,6 +355,9 @@
     },
     "api/traps.js": {
       "includeFiles": "_traps.html"
+    },
+    "api/herbtraps.js": {
+      "includeFiles": "_herbtraps.html"
     }
   },
   "headers": [
