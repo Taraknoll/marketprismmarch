@@ -161,6 +161,10 @@
       "destination": "/api/seo-should-buy"
     },
     {
+      "source": "/stocks",
+      "destination": "/api/stocks-index"
+    },
+    {
       "source": "/stocks/:ticker",
       "destination": "/api/stock"
     },
@@ -333,6 +337,9 @@
     },
     "api/stock.js": {
       "includeFiles": "{_stock_ticker.html,lib/**}"
+    },
+    "api/stocks-index.js": {
+      "includeFiles": "{_stocks_index.html,lib/**}"
     }
   },
   "headers": [
