@@ -6,6 +6,8 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Enable scroll-reveal only when JS runs, so content is never stuck hidden if it doesn't. Set before paint to avoid a flash. -->
+<script>document.documentElement.classList.add('js-anim');</script>
 <title>Forensic Narrative Infrastructure for Market Integrity — Market Prism™</title>
 <meta name="description" content="Market Prism is a forensic narrative engine that anchors every market story to its SEC filing, scores source credibility, and detects coordinated information campaigns before they move price. Built for regulators, institutions, newsrooms, and the investors they protect.">
 <meta name="robots" content="index, follow">
@@ -442,6 +444,39 @@ nav {
 }
 .footer-links a:hover { color: var(--blue); }
 
+/* ── SCROLL REVEAL ── */
+/* Each section's content fades + rises as the section enters the viewport.
+   Gated on .js-anim (added by an early script) so content stays visible when
+   JS is off, and disabled entirely under reduced-motion. */
+.js-anim .about-hero > .con > *,
+.js-anim .about-section > .con > *,
+.js-anim .about-cta > .con > * {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+}
+.js-anim .about-hero.in > .con > *,
+.js-anim .about-section.in > .con > *,
+.js-anim .about-cta.in > .con > * {
+  opacity: 1;
+  transform: none;
+}
+/* Gentle stagger within each section. */
+.js-anim .con > *:nth-child(2) { transition-delay: .08s; }
+.js-anim .con > *:nth-child(3) { transition-delay: .16s; }
+.js-anim .con > *:nth-child(4) { transition-delay: .24s; }
+.js-anim .con > *:nth-child(5) { transition-delay: .32s; }
+.js-anim .con > *:nth-child(n+6) { transition-delay: .40s; }
+@media (prefers-reduced-motion: reduce) {
+  .js-anim .about-hero > .con > *,
+  .js-anim .about-section > .con > *,
+  .js-anim .about-cta > .con > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 720px) {
   .nav-links { display: none; }
@@ -869,6 +904,24 @@ function openWho(id){
       openWho(a.getAttribute('data-who'));
     });
   });
+})();
+
+/* Section reveal-on-scroll: add `.in` as each section enters the viewport.
+   One-shot (unobserve after revealing — no re-hide on scroll-up). The hidden
+   start-state and reduced-motion handling live in CSS. */
+(function(){
+  var sections = [].slice.call(document.querySelectorAll('.about-hero, .about-section, .about-cta'));
+  if (!sections.length) return;
+  if (!('IntersectionObserver' in window)){
+    sections.forEach(function(s){ s.classList.add('in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+  sections.forEach(function(s){ io.observe(s); });
 })();
 </script>
 
