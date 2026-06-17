@@ -1805,21 +1805,16 @@ footer{
           <li><span class="engine-li-ico">✓</span> Deterministic — same input, same score, reproducible to the hash</li>
         </ul>
       </div>
-      <div class="engine-code">
-        <div class="engine-code-bar"><span></span><span></span><span></span><em>forensic_score.json</em></div>
-        <pre class="engine-code-body"><code>{
-  <span class="k">"ticker"</span>: <span class="s">"NVDA"</span>,
-  <span class="k">"bias"</span>: <span class="s">"bullish"</span>,
-  <span class="k">"conviction"</span>: <span class="n">0.78</span>,
-  <span class="k">"hype_score"</span>: <span class="n">41</span>,
-  <span class="k">"fundamental_disconnect"</span>: <span class="s">"low"</span>,
-  <span class="k">"coordination_flag"</span>: <span class="b">false</span>,
-  <span class="k">"projection"</span>: {
-    <span class="k">"5d"</span>: <span class="s">"+2.1%"</span>,
-    <span class="k">"30d"</span>: <span class="s">"+6.4%"</span>
-  },
-  <span class="k">"hash"</span>: <span class="s">"a3f9c1e…"</span>
-}</code></pre>
+      <div class="engine-code mp-anim" role="img" aria-label="Animated diagram of the Market Prism scoring pipeline: source narratives flow through SEC grounding, narrative audit and coordination detection into the physics engine, then split into forensic verdicts and a trade-signal rail.">
+        <div class="engine-code-bar"><span></span><span></span><span></span><em>narrative_pipeline.live</em><button type="button" class="mp-toggle" id="mpx-play" aria-label="Pause animation">Pause</button></div>
+        <div class="mp-stage"><canvas id="mpx-canvas"></canvas></div>
+        <div class="mp-legend">
+          <span><i style="background:rgba(255,255,255,0.34)"></i>Unscored</span>
+          <span><i style="background:#FF5F57"></i>Trap</span>
+          <span><i style="background:#FFB800"></i>Risk</span>
+          <span><i style="background:#00DE94"></i>Supported</span>
+          <span><i style="background:#9B86FF"></i>Coordination / signal</span>
+        </div>
       </div>
     </div>
     <div class="engine-stats">
@@ -1830,6 +1825,122 @@ footer{
     </div>
   </div>
 </section>
+
+<style>
+.mp-anim .engine-code-bar .mp-toggle{ margin-left:auto; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.65); font-size:11px; line-height:1; padding:5px 11px; border-radius:6px; cursor:pointer; font-family:inherit; letter-spacing:.02em; }
+.mp-anim .engine-code-bar .mp-toggle:hover{ background:rgba(255,255,255,0.12); color:#fff; }
+.mp-anim .mp-stage{ position:relative; width:100%; }
+.mp-anim .mp-stage canvas{ display:block; width:100%; }
+.mp-anim .mp-legend{ display:flex; flex-wrap:wrap; gap:8px 16px; padding:12px 18px 14px; border-top:1px solid rgba(255,255,255,0.07); font-size:12px; color:rgba(255,255,255,0.5); }
+.mp-anim .mp-legend span{ display:inline-flex; align-items:center; gap:6px; }
+.mp-anim .mp-legend i{ width:8px; height:8px; border-radius:50%; display:inline-block; flex:0 0 auto; }
+</style>
+<script>
+(function(){
+  var canvas=document.getElementById('mpx-canvas');
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d');
+  var wrap=canvas.parentElement;
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var H=320;
+  var W=wrap.clientWidth||560;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var C={bg:'#070C16',sep:'rgba(255,255,255,0.06)',lab:'rgba(255,255,255,0.42)',lab2:'rgba(255,255,255,0.58)',rail:'rgba(155,134,255,0.32)',neutral:'rgba(255,255,255,0.34)',trap:'#FF5F57',risk:'#FFB800',support:'#00DE94',mon:'rgba(255,255,255,0.34)',core:'#4DC8F0',link:'#9B86FF'};
+  var b=[0,0.12,0.30,0.48,0.63,0.80,1.0];
+  function coreX(){return 0.71*W;}
+  var labels=[{t:'Sources',f:0.06},{t:'SEC ground',f:0.21},{t:'Narrative audit',f:0.39},{t:'Coordination',f:0.555},{t:'Verdict',f:0.90}];
+  function binY(v){var f={trap:0.20,risk:0.39,support:0.60,mon:0.80}[v];return f*H;}
+  var weights=[['mon',0.50],['support',0.18],['risk',0.18],['trap',0.14]];
+  function pickVerdict(){var r=Math.random(),a=0;for(var i=0;i<weights.length;i++){a+=weights[i][1];if(r<=a)return weights[i][0];}return 'mon';}
+  function vColor(v){return v==='trap'?C.trap:v==='risk'?C.risk:v==='support'?C.support:C.mon;}
+  function railY(){return H-15;}
+  var parts=[],sigs=[];
+  var CAP=150;
+  var tick=0,spawnAcc=0,raf=0;
+  var playing=!reduce;
+  function score(p){
+    p.scored=true;p.verdict=pickVerdict();p.flash=1;p.baseY=binY(p.verdict)+(Math.random()*14-7);
+    if(Math.random()<0.22){sigs.push({x:coreX(),y:railY(),vx:1.4+Math.random()*0.6,alpha:1});}
+  }
+  function spawn(seed){
+    var p={x:seed?(6+Math.random()*(0.78*W)):6,y:24+Math.random()*(H-58),r:1.8+Math.random()*1.5,vx:0.9+Math.random()*0.5,scored:false,verdict:null,alpha:1,flash:0,baseY:0};
+    if(seed&&p.x>coreX())score(p);
+    parts.push(p);
+  }
+  function stepSim(){
+    tick++;
+    spawnAcc+=1;
+    while(spawnAcc>=5){spawnAcc-=5;if(parts.length<CAP)spawn(false);}
+    var cx=coreX();
+    for(var i=0;i<parts.length;i++){
+      var p=parts[i];
+      p.x+=p.vx;
+      if(!p.scored&&p.x>=cx)score(p);
+      if(p.scored){p.y+=(p.baseY-p.y)*0.06;if(p.x>0.9*W)p.alpha-=0.012;}
+      if(p.flash>0)p.flash*=0.92;
+    }
+    parts=parts.filter(function(p){return p.alpha>0.02&&p.x<W+12;});
+    for(var j=0;j<sigs.length;j++){var s=sigs[j];s.x+=s.vx;if(s.x>0.94*W)s.alpha-=0.02;}
+    sigs=sigs.filter(function(s){return s.alpha>0.02&&s.x<W+12;});
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+    ctx.save();ctx.strokeStyle=C.sep;ctx.lineWidth=1;ctx.setLineDash([4,5]);
+    for(var i=1;i<b.length-1;i++){var x=b[i]*W;ctx.beginPath();ctx.moveTo(x,26);ctx.lineTo(x,H-26);ctx.stroke();}
+    ctx.restore();
+    ctx.font='11px system-ui,-apple-system,"Segoe UI",sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.fillStyle=C.lab;
+    for(var k=0;k<labels.length;k++)ctx.fillText(labels[k].t,labels[k].f*W,15);
+    var ry=railY();
+    ctx.strokeStyle=C.rail;ctx.lineWidth=1;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(b[4]*W,ry);ctx.lineTo(W-6,ry);ctx.stroke();
+    ctx.fillStyle=C.lab;ctx.textAlign='left';
+    ctx.fillText('trading layer · signal → book',b[4]*W,ry-6);
+    var band=[];
+    for(var a=0;a<parts.length;a++){var pp=parts[a];if(!pp.scored&&pp.x>b[3]*W&&pp.x<b[4]*W)band.push(pp);}
+    ctx.strokeStyle=C.link;
+    for(var u=0;u<band.length;u++)for(var w=u+1;w<band.length;w++){
+      var dx=band[u].x-band[w].x,dy=band[u].y-band[w].y;
+      if(Math.abs(dx)<46&&Math.abs(dy)<24){var d=Math.hypot(dx,dy);ctx.globalAlpha=Math.max(0,0.5-d/110);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(band[u].x,band[u].y);ctx.lineTo(band[w].x,band[w].y);ctx.stroke();}
+    }
+    ctx.globalAlpha=1;
+    var px=coreX(),py=H*0.46,pulse=reduce?0:Math.sin(tick*0.06)*3;
+    ctx.globalAlpha=0.16;ctx.fillStyle=C.core;ctx.beginPath();ctx.arc(px,py,12,0,7);ctx.fill();
+    ctx.globalAlpha=0.7;ctx.strokeStyle=C.core;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(px,py,14+pulse,0,7);ctx.stroke();
+    ctx.globalAlpha=1;ctx.fillStyle=C.lab2;ctx.textAlign='center';
+    ctx.fillText('physics engine',px,py-20);
+    ctx.fillStyle=C.lab;ctx.fillText('step 5 · scoring',px,py+28);
+    for(var t=0;t<parts.length;t++){
+      var q=parts[t];
+      ctx.globalAlpha=q.alpha;ctx.fillStyle=q.scored?vColor(q.verdict):C.neutral;
+      ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,7);ctx.fill();
+      if(q.flash>0.05){ctx.globalAlpha=q.alpha*q.flash*0.8;ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=1;ctx.beginPath();ctx.arc(q.x,q.y,q.r+6*(1-q.flash)+2,0,7);ctx.stroke();}
+    }
+    ctx.globalAlpha=1;
+    for(var g=0;g<sigs.length;g++){ctx.globalAlpha=sigs[g].alpha;ctx.fillStyle=C.link;ctx.beginPath();ctx.arc(sigs[g].x,sigs[g].y,2.4,0,7);ctx.fill();}
+    ctx.globalAlpha=1;
+    ctx.textAlign='right';ctx.fillStyle=C.lab2;
+    var bl=[['narrative trap','trap'],['narrative risk','risk'],['supported','support'],['monitoring','mon']];
+    for(var z=0;z<bl.length;z++)ctx.fillText(bl[z][0],W-8,binY(bl[z][1])-10);
+  }
+  function frame(){ stepSim(); draw(); raf=requestAnimationFrame(frame); }
+  function resize(){ W=wrap.clientWidth||560; canvas.style.height=H+'px'; canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+  var seedN=Math.min(80,Math.round(W/8));
+  for(var s0=0;s0<seedN;s0++)spawn(true);
+  resize();
+  if(window.ResizeObserver){ new ResizeObserver(resize).observe(wrap); } else { window.addEventListener('resize',resize); }
+  var playBtn=document.getElementById('mpx-play');
+  if(playBtn){
+    if(reduce) playBtn.textContent='Play';
+    playBtn.addEventListener('click',function(){
+      if(playing){ playing=false; if(raf){cancelAnimationFrame(raf);raf=0;} draw(); playBtn.textContent='Play'; playBtn.setAttribute('aria-label','Play animation'); }
+      else { playing=true; if(!raf) raf=requestAnimationFrame(frame); playBtn.textContent='Pause'; playBtn.setAttribute('aria-label','Pause animation'); }
+    });
+  }
+  if(!reduce) raf=requestAnimationFrame(frame);
+})();
+</script>
 
 <!-- ── SECTION 3 · THREE-SCREENSHOT TOUR (replaces "What you get with Pro") ── -->
 <section class="below ent-light" id="product-section">
