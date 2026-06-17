@@ -2045,7 +2045,7 @@
   .mp-share-card-brand { display: flex; align-items: center; gap: 10px; }
   .mp-share-card-mark { color: #00AEFF; font-size: 18px; line-height: 1; }
   .mp-share-card-brandtxt {
-    font-family: 'Instrument Serif','DM Serif Display',Georgia,serif;
+    font-family: 'Inter','DM Sans',system-ui,sans-serif;
     font-size: 22px; font-weight: 400; letter-spacing: 0.04em; color: #FFFFFF;
   }
   .mp-share-card-sep { color: rgba(255,255,255,0.30); font-size: 14px; }
@@ -2199,7 +2199,7 @@
     margin-bottom: 20px;
   }
   .mp-modal-title {
-    font-family: 'Instrument Serif', 'DM Serif Display', Georgia, serif;
+    font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
     font-size: 22px; font-weight: 400; letter-spacing: -0.02em;
   }
   .mp-modal-close {
@@ -4154,7 +4154,7 @@
     animation: fadeUp .4s ease both; padding: 20px;
   }
   .kpi-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
-  .kpi-title { font-family: 'Instrument Serif', 'DM Serif Display', Georgia, serif; font-size: 18px; font-weight: 400; color: var(--mp-text-primary); letter-spacing: -0.015em; }
+  .kpi-title { font-family: 'Inter', 'DM Sans', system-ui, sans-serif; font-size: 18px; font-weight: 400; color: var(--mp-text-primary); letter-spacing: -0.015em; }
   .kpi-sub { font-size: 12px; color: var(--mp-text-tertiary); margin-top: 4px; }
   .kpi-toggle { display: inline-flex; gap: 2px; background: var(--mp-surface2); border: 1px solid var(--mp-border); border-radius: 8px; padding: 2px; }
   .kpi-tab { background: transparent; border: none; color: var(--mp-text-tertiary); font-family: var(--font-body); font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
@@ -6697,7 +6697,7 @@ function renderTickerNotFound() {
     hero.outerHTML =
       '<div class="ticker-notfound" style="max-width:640px;margin:48px auto;padding:32px 28px;background:var(--mp-surface);border:1px solid rgba(255,255,255,0.08);border-radius:16px;text-align:center;position:relative;">'
       + '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:#FFB800;border-radius:16px 16px 0 0;opacity:0.85;"></div>'
-      + '<div style="font-family:\'Instrument Serif\',Georgia,serif;font-size:32px;font-weight:400;letter-spacing:-0.02em;color:var(--mp-text-primary);margin-bottom:12px;">' + esc(TICKER) + ' isn’t in our system yet</div>'
+      + '<div style="font-family:\'Inter\',system-ui,sans-serif;font-size:32px;font-weight:400;letter-spacing:-0.02em;color:var(--mp-text-primary);margin-bottom:12px;">' + esc(TICKER) + ' isn’t in our system yet</div>'
       + '<div style="font-size:14px;line-height:1.6;color:var(--mp-text-secondary);margin-bottom:24px;">Market Prism tracks a curated universe of tickers with active narrative coverage. We don’t have analysis for <strong style="color:var(--mp-text-primary);">' + esc(TICKER) + '</strong> right now.</div>'
       + '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">'
       + '<a href="/" style="font-size:13px;padding:10px 18px;border-radius:8px;background:var(--mp-cyan);color:#0B0F1A;text-decoration:none;font-weight:600;">Back to Daily Plays</a>'

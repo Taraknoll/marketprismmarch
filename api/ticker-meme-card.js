@@ -419,7 +419,7 @@ function renderCard(ticker, variant, accent, composed) {
         el('div', {
           style: {
             fontSize: '48px', fontWeight: 700, color: accent,
-            fontFamily: 'serif', letterSpacing: '-0.02em', display: 'flex',
+            fontFamily: 'sans-serif', letterSpacing: '-0.02em', display: 'flex',
           },
         }, [ticker]),
         priceLine && el('div', {
@@ -441,7 +441,7 @@ function renderCard(ticker, variant, accent, composed) {
       el('div', {
         style: {
           fontSize: '160px', fontWeight: 700, color: accent,
-          fontFamily: 'serif', letterSpacing: '-0.04em', lineHeight: 1, display: 'flex',
+          fontFamily: 'sans-serif', letterSpacing: '-0.04em', lineHeight: 1, display: 'flex',
         },
       }, [headlineValue]),
       el('div', {
@@ -488,7 +488,7 @@ function renderCard(ticker, variant, accent, composed) {
     // Closer line
     el('div', {
       style: {
-        fontSize: '38px', fontStyle: 'italic', fontFamily: 'serif',
+        fontSize: '38px', fontStyle: 'italic', fontFamily: 'sans-serif',
         color: accent, letterSpacing: '-0.01em', display: 'flex',
         marginBottom: '40px',
       },

@@ -64,7 +64,7 @@ export default async function handler(req) {
           background: 'linear-gradient(135deg, #0B0F14 0%, #131920 100%)',
           padding: '64px 72px',
           position: 'relative',
-          fontFamily: 'serif',
+          fontFamily: 'sans-serif',
           color: '#F5F7FA',
         },
         children: [

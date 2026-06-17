@@ -27,7 +27,7 @@
 <link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
 <script>try{if(localStorage.getItem('mp-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
 <meta http-equiv="x-dns-prefetch-control" content="on">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Anton&family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Geist:wght@300;400;500;600&family=Anton&family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{opacity:0;transition:opacity 0.2s;}
@@ -103,7 +103,7 @@ body{opacity:0;transition:opacity 0.2s;}
   --mp-text-tertiary:#6B7280;
   --mp-text-muted:rgba(0,0,0,0.40);
   --mp-card-shadow:0 4px 20px rgba(0,0,0,0.08);
-  --font-display:'Instrument Serif','DM Serif Display',Georgia,serif;
+  --font-display:'Inter','DM Sans',system-ui,sans-serif;
   --font-body:'Inter','DM Sans',system-ui,sans-serif;
   --font-mono:'Inter','DM Sans',system-ui,sans-serif;
 }
@@ -484,7 +484,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 }
 .billing-overview-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
 .billing-overview-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,0.5);margin-bottom:10px;}
-.billing-overview-title{font-family:'Instrument Serif',var(--font-display),Georgia,serif;font-size:24px;font-weight:400;letter-spacing:-0.02em;color:var(--mp-text-primary);}
+.billing-overview-title{font-family:'Inter',var(--font-display),system-ui,sans-serif;font-size:24px;font-weight:400;letter-spacing:-0.02em;color:var(--mp-text-primary);}
 .billing-overview-copy{font-size:13px;color:var(--mp-text-secondary);margin-top:6px;max-width:520px;line-height:1.6;}
 .billing-status-badge{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
 .billing-status-badge.active{color:#9ef0c6;border-color:rgba(0,222,148,0.24);background:rgba(0,222,148,0.10);}
@@ -509,7 +509,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 .feature-lock-card.pro{border-color:rgba(0,222,148,0.18);}
 .feature-lock-card.standard{border-color:rgba(0,174,255,0.18);}
 .feature-lock-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mp-text-tertiary);margin-bottom:12px;}
-.feature-lock-title{font-family:'Instrument Serif',var(--font-display),Georgia,serif;font-size:28px;line-height:1.05;letter-spacing:-0.02em;color:var(--mp-text-primary);margin-bottom:10px;}
+.feature-lock-title{font-family:'Inter',var(--font-display),system-ui,sans-serif;font-size:28px;line-height:1.05;letter-spacing:-0.02em;color:var(--mp-text-primary);margin-bottom:10px;}
 .feature-lock-copy{font-size:14px;line-height:1.7;color:var(--mp-text-secondary);max-width:620px;}
 .feature-lock-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;}
 .feature-lock-button{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);color:var(--mp-text-primary);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;transition:border-color .2s,transform .2s,background .2s;}
@@ -597,13 +597,13 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 .daily-section-eyebrow{font-family:var(--font-body);font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:var(--mp-text-secondary);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
 .daily-section-eyebrow::before{content:'';width:16px;height:2px;background:#00AEFF;opacity:.35;border-radius:1px;}
 .daily-section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;}
-.daily-section-title{font-family:'Instrument Serif',var(--font-display),Georgia,serif;font-size:24px;font-weight:400;color:var(--mp-text-primary);letter-spacing:-0.02em;}
+.daily-section-title{font-family:'Inter',var(--font-display),system-ui,sans-serif;font-size:24px;font-weight:400;color:var(--mp-text-primary);letter-spacing:-0.02em;}
 .daily-section-sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mp-text-tertiary);}
 /* Daily intel grid */
 .daily-intel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;align-items:stretch;}
 .daily-panel{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
 .daily-panel-head{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid var(--mp-border);}
-.daily-panel-title{font-family:'Instrument Serif',var(--font-display),Georgia,serif;font-size:18px;font-weight:400;color:var(--mp-text-primary);letter-spacing:-0.01em;}
+.daily-panel-title{font-family:'Inter',var(--font-display),system-ui,sans-serif;font-size:18px;font-weight:400;color:var(--mp-text-primary);letter-spacing:-0.01em;}
 .daily-panel-sub{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mp-text-primary);margin-top:3px;}
 /* Opp rows */
 .daily-orow{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--mp-border);cursor:pointer;transition:background 0.1s;min-width:0;overflow:hidden;}
@@ -734,7 +734,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 .disc-lt-input{width:100%;background:var(--mp-surface2);border:1px solid var(--mp-border);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--mp-text-primary);font-family:var(--font-body);outline:none;transition:border-color .2s;}
 .disc-lt-input:focus{border-color:#00AEFF;}
 .disc-feed-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.disc-feed-title{font-family:'Instrument Serif',var(--font-display),Georgia,serif;font-size:20px;font-weight:400;letter-spacing:-.02em;}
+.disc-feed-title{font-family:'Inter',var(--font-display),system-ui,sans-serif;font-size:20px;font-weight:400;letter-spacing:-.02em;}
 .disc-feed-count{font-size:11px;color:var(--mp-text-muted);}
 .disc-controls{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
 .disc-f-chip{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,0.14);color:var(--mp-text-secondary);background:transparent;cursor:pointer;transition:all .15s;font-family:var(--font-body);}
@@ -916,7 +916,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 }
 .system-notice-body{flex:1;min-width:0;}
 .system-notice-title{
-  font-family:'Instrument Serif','DM Serif Display',Georgia,serif;
+  font-family:'Inter','DM Sans',system-ui,sans-serif;
   font-size:18px;font-weight:400;letter-spacing:-0.01em;
   color:#FFB800;margin-bottom:4px;
 }
@@ -1338,7 +1338,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
   width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
 .mw-card-icon svg{width:18px;height:18px;}
-.mw-card-title{font-family:'Instrument Serif','DM Serif Display',Georgia,serif;font-size:18px;font-weight:400;color:var(--mp-text-primary);margin-bottom:2px;}
+.mw-card-title{font-family:'Inter','DM Sans',system-ui,sans-serif;font-size:18px;font-weight:400;color:var(--mp-text-primary);margin-bottom:2px;}
 .mw-card-type{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--mp-text-secondary);}
 .mw-card-badges{display:flex;gap:6px;flex-shrink:0;align-items:flex-start;flex-wrap:wrap;}
 .mw-badge{
@@ -3952,7 +3952,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
   padding:16px 18px 0 18px;
 }
 .nf-feed-title{
-  font-family:'Instrument Serif','DM Serif Display',Georgia,serif;
+  font-family:'Inter','DM Sans',system-ui,sans-serif;
   font-size:18px;font-weight:400;color:var(--mp-text-primary);
   letter-spacing:-0.025em;
 }
@@ -4375,7 +4375,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 
 /* 2. "Today's Biggest Narratives" — same light blue serif as "Every morning" */
 .nf-feed-title{
-  font-family:'Instrument Serif','DM Serif Display',Georgia,serif !important;
+  font-family:'Inter','DM Sans',system-ui,sans-serif !important;
   font-size:clamp(28px,3vw,42px) !important;
   font-weight:400 !important;
   color:#4DC8F0 !important;
@@ -4699,7 +4699,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 
       <!-- Dashboard data error banner (shown when loadData() throws — e.g. dashboard-data 500, RLS blocks, missing keys) -->
       <div id="daily-error-banner" style="display:none;background:rgba(255,77,77,0.10);border:1px solid rgba(255,77,77,0.32);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#FF8B8B;line-height:1.55;">
-        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:18px;color:#FF4D4D;margin-bottom:6px;letter-spacing:-0.01em;">Live data unavailable</div>
+        <div style="font-family:'Inter',system-ui,sans-serif;font-size:18px;color:#FF4D4D;margin-bottom:6px;letter-spacing:-0.01em;">Live data unavailable</div>
         <div id="daily-error-banner-msg">We couldn't load today's trade ideas or signal counts. Static sector cards below are seed data — prices and verdicts won't be current until the data pipeline recovers.</div>
         <div id="daily-error-banner-detail" style="font-size:11px;color:rgba(255,139,139,0.7);margin-top:8px;font-family:var(--font-body);"></div>
       </div>
@@ -5575,7 +5575,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
       </div>
       <!-- Leaderboard data error banner (shown when board fetches fail — e.g. RLS lockdown, dashboard-data 500, missing keys) -->
       <div id="lb-error-banner" style="display:none;background:rgba(255,77,77,0.10);border:1px solid rgba(255,77,77,0.32);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#FF8B8B;line-height:1.55;">
-        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:18px;color:#FF4D4D;margin-bottom:6px;letter-spacing:-0.01em;">Live rankings unavailable</div>
+        <div style="font-family:'Inter',system-ui,sans-serif;font-size:18px;color:#FF4D4D;margin-bottom:6px;letter-spacing:-0.01em;">Live rankings unavailable</div>
         <div id="lb-error-banner-msg">Several leaderboards couldn't load. This usually means the data pipeline is down or table permissions were recently changed.</div>
         <div id="lb-error-banner-detail" style="font-size:11px;color:rgba(255,139,139,0.7);margin-top:8px;font-family:var(--font-body);"></div>
       </div>
@@ -6679,7 +6679,7 @@ function switchTab(id, btn){
       sg.style.cssText = 'position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,transparent 0%,rgba(10,10,10,0.7) 30%,rgba(10,10,10,0.95) 70%);backdrop-filter:blur(2px);';
       sg.innerHTML = '<div style="text-align:center;max-width:400px;padding:40px 24px;">'
         +'<div style="font-family:Inter,system-ui,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#00AEFF;margin-bottom:12px;">Free Account</div>'
-        +'<div style="font-family:\'Instrument Serif\',Georgia,serif;font-size:24px;color:#fff;margin-bottom:12px;">Create a free account to unlock this view</div>'
+        +'<div style="font-family:\'Inter\',system-ui,sans-serif;font-size:24px;color:#fff;margin-bottom:12px;">Create a free account to unlock this view</div>'
         +'<div style="font-family:Inter,sans-serif;font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:24px;line-height:1.5;">170 tickers analyzed daily. Narrative traps, momentum signals, and forensic scores — all free.</div>'
         +'<a href="/login#register" style="display:inline-block;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:12px 28px;border-radius:8px;background:linear-gradient(135deg,#00AEFF,#00DE94);color:#fff;text-decoration:none;margin-bottom:12px;">Start Free →</a>'
         +'<br><button class="soft-gate-dismiss" style="font-family:Inter,sans-serif;font-size:12px;color:rgba(255,255,255,0.35);background:none;border:none;cursor:pointer;margin-top:8px;padding:4px 12px;">Continue browsing →</button>'
@@ -18192,10 +18192,10 @@ async function exportBoardImage(boardId){
         var footer = doc.createElement('div');
         footer.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:18px 20px 16px;border-top:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.15);position:relative;z-index:2;';
         footer.innerHTML = '<div style="display:flex;flex-direction:column;gap:2px;">'
-          + '<span style="font-family:\'Instrument Serif\', \'DM Serif Display\', Georgia, serif;font-size:20px;font-weight:400;color:#FFFFFF;letter-spacing:-0.025em;line-height:1;">Market Prism</span>'
+          + '<span style="font-family:\'Inter\', \'DM Sans\', system-ui, sans-serif;font-size:20px;font-weight:400;color:#FFFFFF;letter-spacing:-0.025em;line-height:1;">Market Prism</span>'
           + '<span style="font-size:10px;color:rgba(255,255,255,0.45);font-family:Inter,system-ui,sans-serif;letter-spacing:0.04em;text-transform:uppercase;">Forensic narrative intelligence</span>'
           + '</div>'
-          + '<div style="font-family:\'Instrument Serif\', Georgia, serif;font-style:italic;font-size:16px;color:#4DC8F0;letter-spacing:-0.01em;">marketprism.co</div>';
+          + '<div style="font-family:\'Inter\', system-ui, sans-serif;font-style:italic;font-size:16px;color:#4DC8F0;letter-spacing:-0.01em;">marketprism.co</div>';
         s.appendChild(footer);
       }
     });
