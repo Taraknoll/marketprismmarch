@@ -324,12 +324,12 @@ nav {
 }
 .who-get { list-style: none; padding: 0; display: grid; gap: 12px; max-width: 620px; }
 .who-get li {
-  display: flex; gap: 12px;
+  position: relative; padding-left: 20px;
   font-size: 14px; line-height: 1.6; color: var(--tx2); font-weight: 300;
 }
 .who-get li::before {
-  content: ''; flex-shrink: 0;
-  width: 6px; height: 6px; border-radius: 50%; margin-top: 8px;
+  content: ''; position: absolute; left: 0; top: 9px;
+  width: 6px; height: 6px; border-radius: 50%;
   background: linear-gradient(90deg, var(--blue), var(--teal));
 }
 .who-get strong { color: var(--tx1); font-weight: 600; }
