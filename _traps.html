@@ -444,6 +444,18 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
     try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'}); }
     catch(_){ return String(d); }
   }
+  // Current business week (Mon–Fri) from today, formatted "Week of June 15 to June 19".
+  // Computed live so the label auto-advances each week and never goes stale.
+  function weekRangeLabel(){
+    var today = new Date();
+    var dow = today.getDay();                                  // 0=Sun … 6=Sat
+    var mon = new Date(today);
+    mon.setDate(today.getDate() + (dow === 0 ? -6 : 1 - dow)); // back up to Monday
+    var fri = new Date(mon);
+    fri.setDate(mon.getDate() + 4);                            // Friday of the same week
+    var opt = {month:'long', day:'numeric'};
+    return 'Week of ' + mon.toLocaleDateString('en-US', opt) + ' to ' + fri.toLocaleDateString('en-US', opt);
+  }
 
   // ── GA4 events (same pattern as the homepage) ────────────────────────
   function track(name, params){
@@ -545,10 +557,9 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
       latest.sort(function(a, b){ return (b.fvd_pct || 0) - (a.fvd_pct || 0); });
     }
 
-    // Week range chip
-    var dates = latest.map(function(t){ return t.snapshot_date; }).sort();
+    // Week range chip — always the current Mon–Fri week, auto-advancing.
     var range = document.getElementById('week-range');
-    if (range) range.textContent = 'Week of ' + fmtDate(dates[0]) + ' – ' + fmtDate(dates[dates.length - 1]) + ' · ' + latest.length + ' tickers flagged';
+    if (range) range.textContent = weekRangeLabel();
 
     // Stat strip
     var severe = latest.filter(function(t){ return (t.fvd_pct || 0) >= 150; }).length;
