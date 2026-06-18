@@ -71,8 +71,9 @@
   #ht-root .sect{text-align:right;line-height:1.5}
   #ht-root .sect .e{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);font-weight:500}
   #ht-root .sect .t{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-top:3px}
-  #ht-root .spectrum{height:3px;width:100%;background:linear-gradient(90deg,#2BE8D0 0%,#00D2CE 26%,#00A6C2 52%,#1E5A8C 78%,#1B2A4A 100%);border-radius:2px;margin:16px 0 22px}
-  #ht-root .subhead{font-style:italic;font-weight:400;font-size:20px;line-height:1.35;color:#D7DCE6;margin:0 0 22px;letter-spacing:.005em}
+  #ht-root .spectrum{height:3px;width:100%;background:linear-gradient(90deg,#2BE8D0 0%,#00D2CE 26%,#00A6C2 52%,#1E5A8C 78%,#1B2A4A 100%);border-radius:2px;margin:16px 0 20px}
+  #ht-root .title{font-weight:700;font-size:34px;line-height:1.05;letter-spacing:-.025em;color:var(--text);margin:0 0 8px}
+  #ht-root .subhead{font-style:italic;font-weight:400;font-size:18px;line-height:1.35;color:#D7DCE6;margin:0 0 22px;letter-spacing:.005em}
   #ht-root .subhead .ac{font-style:italic;color:var(--accent);font-weight:600}
   #ht-root .list{display:flex;flex-direction:column}
   #ht-root .row{display:grid;grid-template-columns:30px 1fr auto auto;align-items:center;gap:16px;padding:15px 0;border-top:1px solid var(--hair)}
@@ -89,15 +90,15 @@
 
   /* ── Format variants (all 728px wide so the preview width stays constant) ── */
   /* Square (1:1, social) — flex column fills the card to a square; rows breathe */
-  #ht-root .card.fmt-square{min-height:728px;display:flex;flex-direction:column;padding:52px 50px 32px}
+  #ht-root .card.fmt-square{min-height:728px;display:flex;flex-direction:column;padding:44px 50px 26px}
   #ht-root .card.fmt-square .list{flex:1 1 auto;justify-content:space-between}
-  #ht-root .card.fmt-square .row{padding:18px 0}
-  #ht-root .card.fmt-square .subhead{font-size:22px;margin-bottom:26px}
+  #ht-root .card.fmt-square .title{font-size:40px}
 
   /* Footer banner (wide, short sign-off) — traps collapse to a chip strip */
   #ht-root .card.fmt-footer{padding:26px 44px 20px}
-  #ht-root .card.fmt-footer .spectrum{margin:14px 0 16px}
-  #ht-root .card.fmt-footer .subhead{font-size:15px;line-height:1.4;margin:0 0 16px}
+  #ht-root .card.fmt-footer .spectrum{margin:14px 0 14px}
+  #ht-root .card.fmt-footer .title{font-size:22px;margin:0 0 4px}
+  #ht-root .card.fmt-footer .subhead{font-size:14px;line-height:1.4;margin:0 0 14px}
   #ht-root .card.fmt-footer .list{flex-direction:row;flex-wrap:wrap;gap:10px;justify-content:center}
   #ht-root .card.fmt-footer .row{display:flex;align-items:center;gap:9px;padding:8px 14px;border:1px solid var(--hair);border-radius:999px}
   #ht-root .card.fmt-footer .row:last-child{border-bottom:1px solid var(--hair)}
@@ -132,6 +133,8 @@
       <h1>Narrative Traps — weekly</h1>
       <p class="sub">One graphic, five traps. Edit the week's signals, then download a Substack-ready PNG (1456px wide).</p>
 
+      <div class="grp"><label>Title / headline</label>
+        <input type="text" id="c-title"></div>
       <div class="grp"><label>Section / week line</label>
         <input type="text" id="c-week"></div>
       <div class="grp"><label>Subhead</label>
@@ -176,6 +179,7 @@
             </div>
           </div>
           <div class="spectrum"></div>
+          <div class="title" id="ht-title"></div>
           <div class="subhead" id="ht-subhead"></div>
           <div class="list" id="ht-list"></div>
           <div class="foot">
@@ -243,6 +247,7 @@
   ];
 
   var state = {
+    title: 'Narrative Traps',
     week: 'Week of Jun 16, 2026',
     subhead: "Five stories that didn't survive the filings.",
     src: 'marketprism.co · Walsh Narrative Decay Engine',
@@ -266,8 +271,11 @@
 
   function renderCard() {
     document.documentElement.style.setProperty('--accent', state.accent);
+    document.getElementById('ht-title').textContent = state.title;
+    document.getElementById('ht-title').style.display = state.title.trim() ? '' : 'none';
     document.getElementById('ht-week').textContent = state.week;
     document.getElementById('ht-subhead').innerHTML = accentItalic(state.subhead);
+    document.getElementById('ht-subhead').style.display = state.subhead.trim() ? '' : 'none';
     document.getElementById('ht-src').textContent = state.src;
     document.getElementById('ht-logo-img').src = state.logo;
 
@@ -371,11 +379,13 @@
     if (inited) return;
     inited = true;
 
+    document.getElementById('c-title').value = state.title;
     document.getElementById('c-week').value = state.week;
     document.getElementById('c-subhead').value = state.subhead;
     document.getElementById('c-src').value = state.src;
     document.getElementById('c-accent').value = state.accent;
 
+    document.getElementById('c-title').addEventListener('input', function (e) { state.title = e.target.value; renderCard(); });
     document.getElementById('c-week').addEventListener('input', function (e) { state.week = e.target.value; renderCard(); });
     document.getElementById('c-subhead').addEventListener('input', function (e) { state.subhead = e.target.value; renderCard(); });
     document.getElementById('c-src').addEventListener('input', function (e) { state.src = e.target.value; renderCard(); });
