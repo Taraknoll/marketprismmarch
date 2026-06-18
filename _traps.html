@@ -197,6 +197,10 @@ nav.topnav{
 .trap-claim em{color:var(--mp-text-secondary);}
 .trap-claim-l,.trap-verify-l{display:block;font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;margin-bottom:6px;}
 .trap-claim-l{color:var(--sev-color,var(--mp-red));}
+.trap-src{font-size:12px;color:var(--mp-text-muted);margin:6px 0 12px;padding-left:2px;}
+.trap-src strong{color:var(--mp-text-tertiary);font-weight:600;}
+.trap-src a{color:var(--mp-cyan);font-weight:600;text-decoration:none;border-bottom:1px solid rgba(0,174,255,0.3);}
+.trap-src a:hover{border-bottom-color:var(--mp-cyan);}
 .trap-verify{
   font-size:14px;line-height:1.55;color:var(--mp-text-secondary);
   padding:14px 16px;border-left:2px solid var(--mp-cyan);
@@ -446,32 +450,43 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
   var EDITORIAL = [
     {
       ticker:'TSLA', sector:'Autos/EV',
-      statement:'Robotaxi euphoria has the stock priced at roughly 5× the model\'s fair value — even with a federal Full Self-Driving safety review running in the background.',
-      rebuttal:'At +393% FVD the tape is ~5× fair value. The robotaxi story capitalizes an autonomous fleet that isn\'t deployed at scale; disclosures still describe FSD as a supervised driver-assist feature under active safety review, not approved self-driving.',
+      statement:'Robotaxi hype at ~5× fair value — as senators seek a review of its "misleading" FSD safety data.',
+      source:'Investing.com (carrying Reuters), Jun 16',
+      url:'https://www.investing.com/news/stock-market-news/us-senators-ask-for-review-of-teslas-full-selfdriving-safety-data-citing-reuters-report-4745048',
+      rebuttal:'At +393% FVD the tape is ~5× the model\'s fair value. The robotaxi re-rating prices an autonomous fleet that isn\'t deployed at scale — and lawmakers are now pressing regulators over the safety data behind the FSD claims it leans on.',
       figure:'+393% FVD', badge:'Narrative Trap'
     },
     {
       ticker:'COIN', sector:'Crypto',
-      statement:'The "let AI trade for you" super-app pivot is being sold as a re-rating catalyst, leaning on a CLARITY Act the company\'s own filings never cite.',
-      rebuttal:'Omission score 75/100: the bull case rests on pending federal crypto market-structure legislation that appears nowhere in the risk factors or MD&A, and an AI-trading "super-app" that reads as roadmap rather than disclosed revenue.',
+      statement:'A "financial super-app" re-rating built on AI agents and the CLARITY Act — neither of which is in the filings yet.',
+      source:'Barron\'s, Jun 17',
+      url:'https://www.barrons.com/advisor/articles/coinbase-ai-financial-advisor-trader-bd13ef95',
+      source2:'CLARITY Act: TIKR, Jun 17',
+      rebuttal:'Omission score 75/100: the re-rating leans on AI-agent trading and pending market-structure legislation, but neither shows up as disclosed revenue or in the risk factors. It\'s a roadmap narrative, not reported fundamentals.',
       figure:'Omission 75', badge:'Narrative Trap'
     },
     {
-      ticker:'MP', sector:'Rare-earth / Materials',
-      statement:'"Could reach new heights on two supercharged trends" — the framing pairs the EV-magnet demand wave with the reshoring of rare-earth supply away from China.',
-      rebuttal:'Even crediting both trends, the model puts price at ~3.2× fair value (+221% FVD). Magnet production is early-stage and capital-intensive — a multi-year build, not the cash flows today\'s price already implies.',
+      ticker:'MP', sector:'Rare-earth',
+      statement:'"2 supercharged trends could send MP to new heights" — the EV-magnet demand wave plus the reshoring of rare-earth supply away from China.',
+      source:'AOL.com, Jun 17',
+      url:'https://www.aol.com/articles/2-supercharged-trends-could-send-155000000.html',
+      rebuttal:'The headline concedes the gap: the model puts price ~3.2× fair value (+221% FVD). Both trends are real but early and capital-intensive — a multi-year build, not the cash flows the price already implies.',
       figure:'+221% FVD', badge:'Narrative Trap'
     },
     {
       ticker:'BA', sector:'Aerospace',
-      statement:'Sell-side targets stretch to $1,000 — with one bull case as high as $3,240 — framing Boeing as a recovering jetmaker with clear skies ahead.',
-      rebuttal:'Those targets sit ~3.2× the model\'s fair value (+217% FVD). They extrapolate a clean production ramp the filings don\'t guarantee; delivery cadence, free cash flow and the 737/787 schedule remain the gating risks management still flags.',
+      statement:'"16% undervalued after the peace deal" — a recovering-jetmaker thesis on a company still posting losses.',
+      source:'Yahoo Finance, Jun 17',
+      url:'https://finance.yahoo.com/markets/stocks/articles/boeing-ba-stock-could-16-221507212.html',
+      rebuttal:'The forensic model reads the opposite of "16% undervalued": price sits ~3.2× fair value (+217% FVD). The bull case extrapolates a clean production ramp the filings don\'t guarantee, with delivery cadence and free cash flow still the gating risks.',
       figure:'+217% FVD', badge:'Narrative Trap'
     },
     {
-      ticker:'TXN', sector:'Semiconductors',
-      statement:'An analog chipmaker that "will dethrone Nvidia by 2026" — a generational AI-leadership claim the 10-K never makes.',
-      rebuttal:'At ~2.9× fair value (+188% FVD), the framing imports a market the company doesn\'t compete in. Texas Instruments is an analog and embedded leader, not an AI-accelerator rival to Nvidia.',
+      ticker:'TXN', sector:'Semis',
+      statement:'"Texas Instruments is smashing Nvidia in 2026 — rotational fluke, or paradigm shift?"',
+      source:'AOL.com, Jun 11',
+      url:'https://www.aol.com/articles/texas-instruments-smashing-nvidia-2026-190301000.html',
+      rebuttal:'At ~2.9× fair value (+188% FVD), "smashing Nvidia" conflates a sector rotation with a competitive win. TI is an analog and embedded leader, not an AI-accelerator rival — the framing imports a market it doesn\'t compete in.',
       figure:'+188% FVD', badge:'Narrative Trap'
     }
   ];
@@ -550,6 +565,10 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
         '</span>' +
       '</div>' +
       '<div class="trap-claim"><span class="trap-claim-l">The narrative</span>' + esc(t.statement) + '</div>' +
+      (t.source ? '<div class="trap-src">As published &middot; ' +
+        (t.url ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener" data-track="traps_source_click">' + esc(t.source) + '</a>' : '<strong>' + esc(t.source) + '</strong>') +
+        (t.source2 ? ' &middot; ' + esc(t.source2) : '') +
+      '</div>' : '') +
       (t.rebuttal ? '<div class="trap-verify"><span class="trap-verify-l">What the filings show</span>' + esc(t.rebuttal) + '</div>' : '') +
       '<div class="trap-foot">' +
         '<span class="trap-figure"><span class="tfig-l">Forensic figure</span><span class="tfig-v" style="color:' + color + ';">' + esc(t.figure) + '</span></span>' +
