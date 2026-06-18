@@ -57,6 +57,10 @@
   #ht-root .dl:hover{filter:brightness(1.07)}
   #ht-root .dl:disabled{opacity:.5;cursor:wait}
   #ht-root .mini{font-size:11px;color:var(--muted-2);text-align:center;margin-top:9px;line-height:1.5}
+  #ht-root .fmt-seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+  #ht-root .fmt-seg button{font-family:var(--body);font-size:11.5px;font-weight:600;padding:9px 6px;border-radius:8px;border:1px solid var(--hair);background:#070910;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+  #ht-root .fmt-seg button:hover{color:var(--text)}
+  #ht-root .fmt-seg button.on{background:rgba(20,214,194,.12);border-color:var(--accent);color:var(--text)}
   #ht-root .stage-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 12px 4px;font-weight:600}
   #ht-root .stage{overflow:auto;padding:6px}
 
@@ -82,6 +86,27 @@
   #ht-root .foot .src{font-size:10px;letter-spacing:.05em;color:var(--muted-2);line-height:1.6}
   #ht-root .foot .src b{color:var(--muted);font-weight:600}
   #ht-root .foot .disc{font-size:9.5px;color:var(--muted-2);text-align:right;max-width:240px;line-height:1.45}
+
+  /* ── Format variants (all 728px wide so the preview width stays constant) ── */
+  /* Square (1:1, social) — flex column fills the card to a square; rows breathe */
+  #ht-root .card.fmt-square{min-height:728px;display:flex;flex-direction:column;padding:52px 50px 32px}
+  #ht-root .card.fmt-square .list{flex:1 1 auto;justify-content:space-between}
+  #ht-root .card.fmt-square .row{padding:18px 0}
+  #ht-root .card.fmt-square .subhead{font-size:22px;margin-bottom:26px}
+
+  /* Footer banner (wide, short sign-off) — traps collapse to a chip strip */
+  #ht-root .card.fmt-footer{padding:26px 44px 20px}
+  #ht-root .card.fmt-footer .spectrum{margin:14px 0 16px}
+  #ht-root .card.fmt-footer .subhead{font-size:15px;line-height:1.4;margin:0 0 16px}
+  #ht-root .card.fmt-footer .list{flex-direction:row;flex-wrap:wrap;gap:10px;justify-content:center}
+  #ht-root .card.fmt-footer .row{display:flex;align-items:center;gap:9px;padding:8px 14px;border:1px solid var(--hair);border-radius:999px}
+  #ht-root .card.fmt-footer .row:last-child{border-bottom:1px solid var(--hair)}
+  #ht-root .card.fmt-footer .idx,#ht-root .card.fmt-footer .ds{display:none}
+  #ht-root .card.fmt-footer .tk{font-size:14px}
+  #ht-root .card.fmt-footer .metric{font-size:12px;color:var(--muted);text-align:left}
+  /* Verdict pill shrinks to a colored dot — currentColor is the inline verdict color */
+  #ht-root .card.fmt-footer .pill{order:-1;width:9px;height:9px;min-width:9px;padding:0;font-size:0;border-radius:50%;border:0;background:currentColor!important}
+  #ht-root .card.fmt-footer .foot{margin-top:16px}
 </style>
 </head>
 <body>
@@ -126,8 +151,16 @@
           <input id="c-logo" type="file" accept="image/png,image/svg+xml,image/jpeg"></div>
       </div>
 
+      <div class="grp"><label>Export format</label>
+        <div class="fmt-seg" id="ht-fmt">
+          <button type="button" data-fmt="standard" class="on">Standard</button>
+          <button type="button" data-fmt="square">Square</button>
+          <button type="button" data-fmt="footer">Footer</button>
+        </div>
+        <div class="hint">Square = social 1:1 · Footer = wide sign-off banner.</div></div>
+
       <button class="dl" id="c-download">Download PNG</button>
-      <p class="mini">Logo embedded · exports at 2× (1456px wide).</p>
+      <p class="mini">Logo embedded · exports the selected format at 2×.</p>
     </div>
 
     <!-- preview -->
@@ -187,7 +220,9 @@
   });
   var hasAccess = false;
   try { hasAccess = sessionStorage.getItem(ACCESS_KEY) === '1'; } catch (e) {}
-  if (hasAccess) { unlock(); } else { document.getElementById('gate-code').focus(); }
+  if (!hasAccess) { document.getElementById('gate-code').focus(); }
+  // NOTE: auto-unlock for an already-granted session runs at the very end of this
+  // IIFE (see below) — unlock() -> init() reads `state`, which isn't defined yet here.
 
   /* ── Generator ── */
   var VERDICT = {
@@ -212,6 +247,7 @@
     subhead: "Five stories that didn't survive the filings.",
     src: 'marketprism.co · Walsh Narrative Decay Engine',
     accent: '#14D6C2',
+    format: 'standard',
     logo: document.getElementById('ht-logo-img').getAttribute('src'),
     traps: SEED.map(function (t) { return Object.assign({}, t); })
   };
@@ -249,6 +285,14 @@
         '<div class="pill" style="color:' + col + ';border-color:' + col + ';background:' + col + '1F">' + esc(t.v) + '</div>' +
         '</div>';
     }).join('');
+  }
+
+  function applyFormat() {
+    document.getElementById('ht-card').className = 'card fmt-' + state.format;
+    var seg = document.getElementById('ht-fmt');
+    Array.prototype.forEach.call(seg.querySelectorAll('button'), function (b) {
+      b.classList.toggle('on', b.getAttribute('data-fmt') === state.format);
+    });
   }
 
   function buildControls() {
@@ -311,7 +355,7 @@
       })
       .then(function (canvas) {
         var a = document.createElement('a');
-        a.download = 'narrative-traps_' + new Date().toISOString().slice(0, 10) + '.png';
+        a.download = 'narrative-traps_' + state.format + '_' + new Date().toISOString().slice(0, 10) + '.png';
         a.href = canvas.toDataURL('image/png');
         a.click();
       })
@@ -347,9 +391,20 @@
 
     document.getElementById('c-download').addEventListener('click', download);
 
+    document.getElementById('ht-fmt').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-fmt]');
+      if (!b) return;
+      state.format = b.getAttribute('data-fmt');
+      applyFormat();
+    });
+
     buildControls();
+    applyFormat();
     renderCard();
   }
+
+  // Now that `state` and `init` are defined, honor an already-granted session.
+  if (hasAccess) { unlock(); }
 })();
 </script>
 </body>
