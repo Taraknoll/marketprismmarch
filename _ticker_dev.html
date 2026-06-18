@@ -4414,6 +4414,19 @@ async function loadNarratives() {
       allCitations: t.allCitations
     }));
 
+    // ── Suppress boilerplate "omission" summaries ──
+    // The upstream narrative writer frequently stamps the SAME "what the article
+    // omits" text onto several distinct narratives for one ticker. An omission
+    // only means something when it's specific to a single cluster, so hide any
+    // that appears on more than one of the displayed clusters. (Root cause is
+    // upstream in marketscholar-scraper.)
+    const _normOmission = s => String(s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    const omissionClusterCount = {};
+    top.forEach(n => {
+      const key = _normOmission(n.omission_summary);
+      if (key) omissionClusterCount[key] = (omissionClusterCount[key] || 0) + 1;
+    });
+
     document.getElementById('narr-list').innerHTML = top.map((n, idx) => {
       // Verdict class
       const v = (n.verdict || '').toUpperCase();
@@ -4469,11 +4482,15 @@ async function loadNarratives() {
             ${n.claim_timeframe ? `<span class="narr-claim-tf">${esc(n.claim_timeframe)}</span>` : ''}
           </div>` : '';
 
-      // Flag if discrepancy
-      const flagHtml = n.material_discrepancy || n.omission_summary
+      // Flag if discrepancy. Only surface the omission when it's specific to
+      // THIS cluster — shared (boilerplate) omissions are suppressed so the
+      // same red box doesn't repeat across unrelated stories.
+      const omissionKey = _normOmission(n.omission_summary);
+      const showOmission = !!omissionKey && omissionClusterCount[omissionKey] === 1;
+      const flagHtml = n.material_discrepancy || showOmission
         ? `<div class="narr-flag">
             ${n.material_discrepancy ? `⚠ Material discrepancy detected` : ''}
-            ${n.omission_summary ? `<br>${esc(n.omission_summary)}` : ''}
+            ${showOmission ? `${n.material_discrepancy ? '<br>' : ''}${esc(n.omission_summary)}` : ''}
            </div>` : '';
 
       // Date + price at time of article
