@@ -209,6 +209,10 @@ nav.topnav{
 .tstat-sub{font-size:11px;color:var(--mp-text-muted);margin-top:2px;}
 .trap-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;}
 .trap-flagged{font-size:12px;color:var(--mp-text-muted);}
+.trap-idx{font-size:13px;font-weight:600;color:var(--mp-text-muted);font-variant-numeric:tabular-nums;}
+.trap-figure{display:flex;flex-direction:column;gap:3px;}
+.tfig-l{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);}
+.tfig-v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;}
 .trap-open{
   font-size:13px;font-weight:600;color:var(--mp-cyan);text-decoration:none;
   display:inline-flex;align-items:center;gap:6px;
@@ -426,6 +430,28 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
   var SUPABASE_URL  = env.SUPABASE_URL  || '';
   var SUPABASE_ANON = env.SUPABASE_ANON || '';
 
+  // ── EDITORIAL SLATE ──────────────────────────────────────────────────
+  // Hand-picked "Narrative Traps of the week" — the same five that drive the
+  // /herbtraps share card. Statement / figure / badge are editorial copy; the
+  // live price and the /stocks link stay dynamic per ticker.
+  var EDITORIAL = [
+    { ticker:'TXN',  statement:'An analog chipmaker "will dethrone Nvidia by 2026" — a paradigm shift the 10-K never claims', figure:'+173% FVD',  badge:'Plausible — Unverified' },
+    { ticker:'MU',   statement:'$1,500 targets and "the next Nvidia" on a stock already tripled, days before earnings',       figure:'+216% FVD',  badge:'Narrative Trap' },
+    { ticker:'MRVL', statement:'"Next trillion-dollar AI stock" on a "stunning Nvidia endorsement" — screens say 107% rich',  figure:'Omission 75', badge:'Narrative Trap' },
+    { ticker:'SOFI', statement:'"SoFi doubles in a year" — four outlets, one fading and exhausting tape',                     figure:'Energy 23%',  badge:'Exhausting' },
+    { ticker:'COIN', statement:'"Let AI trade for you" super-app pivot leans on a CLARITY Act the filing can\'t cite',        figure:'Drift 60',    badge:'Narrative Risk' }
+  ];
+
+  // Badge → accent color (established Market Prism verdict palette).
+  var BADGE_COLOR = {
+    'Narrative Trap':         '#FF4D4D',
+    'Narrative Risk':         '#FF8C00',
+    'Coordinated Campaign':   '#FF6A3D',
+    'Plausible — Unverified': '#FFB800',
+    'Needs Validation':       '#A0A8B0',
+    'Exhausting':             '#00DE94'
+  };
+
   function esc(s){
     return s == null ? '' : (s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -438,11 +464,6 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
     if (v == null || isNaN(v)) return '—';
     dp = dp == null ? 1 : dp;
     return (v > 0 ? '+' : '') + Number(v).toFixed(dp) + '%';
-  }
-  function fmtDate(d){
-    if (!d) return '—';
-    try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'}); }
-    catch(_){ return String(d); }
   }
   // Current business week (Mon–Fri) from today, formatted "Week of June 15 to June 19".
   // Computed live so the label auto-advances each week and never goes stale.
@@ -467,19 +488,6 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
     track(el.getAttribute('data-track'), { link_url: el.getAttribute('href') || '' });
   });
 
-  // ── Severity / coordination labels — same thresholds as the dashboard ─
-  function severity(fvd){
-    if (fvd >= 150) return { label:'Severe', cls:'severe', color:'#FF4D4D' };
-    if (fvd >= 80)  return { label:'Moderate', cls:'moderate', color:'#FFB800' };
-    return { label:'Low risk', cls:'low', color:'#00DE94' };
-  }
-  function coordLabel(cls, advVerdict){
-    if (advVerdict === 'COORDINATED_CAMPAIGN') return { label:'Coordinated campaign', cls:'coord' };
-    if (cls === 'LIKELY_COORDINATED') return { label:'Coordinated', cls:'coord' };
-    if (cls === 'SUSPICIOUS_PATTERN') return { label:'Suspicious coverage', cls:'suspicious' };
-    return { label:'Organic spread', cls:'organic' };
-  }
-
   function rest(path){
     return fetch(SUPABASE_URL + '/rest/v1/' + path, {
       headers: { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + SUPABASE_ANON, Accept: 'application/json' }
@@ -489,162 +497,84 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
     });
   }
 
-  function fail(msg){
-    var el = document.getElementById('traps-loading');
-    if (el) el.textContent = msg;
-  }
-
   function statCell(id, v){
     var el = document.getElementById(id);
     if (el) el.textContent = v;
   }
 
-  function cardHTML(t, firstFlag, quote){
-    var sev = severity(t.fvd_pct || 0);
-    var coord = coordLabel(t.coordination_class, t.advanced_verdict);
-    var flagDate = firstFlag ? firstFlag.snapshot_date : t.snapshot_date;
-    var flagPrice = firstFlag ? Number(firstFlag.current_price) : Number(t.current_price);
-    var livePrice = quote && quote.price != null ? Number(quote.price) : Number(t.current_price);
-    var sinceFlag = (flagPrice && livePrice) ? ((livePrice - flagPrice) / flagPrice) * 100 : null;
-    var dayPct = quote && quote.changePct != null ? Number(quote.changePct) : null;
-    var exhaust = t.predicted_exhaustion_days != null ? Math.round(Number(t.predicted_exhaustion_days)) : null;
-    var prereq = (t.prerequisites_met != null && t.prerequisites_total)
-      ? t.prerequisites_met + ' of ' + t.prerequisites_total : '—';
-
-    return '<article class="trap-card" style="--sev-color:' + sev.color + ';">' +
+  function cardHTML(t, n){
+    var color = BADGE_COLOR[t.badge] || '#FF4D4D';
+    var idx = '0' + (n + 1);
+    return '<article class="trap-card" style="--sev-color:' + color + ';">' +
       '<div class="trap-top">' +
+        '<span class="trap-idx">' + idx + '</span>' +
         '<span class="trap-tk">' + esc(t.ticker) + '</span>' +
-        '<span class="trap-live">' + fmtUsd(livePrice) +
-          (dayPct != null ? ' <span class="' + (dayPct >= 0 ? 'pos' : 'neg') + '">' + fmtPct(dayPct, 2) + '</span>' : '') +
-        '</span>' +
+        '<span class="trap-live" id="trap-live-' + esc(t.ticker) + '"></span>' +
         '<span class="trap-badges">' +
-          '<span class="badge ' + sev.cls + '">' + sev.label + '</span>' +
-          '<span class="badge ' + coord.cls + '">' + coord.label + '</span>' +
+          '<span class="badge" style="color:' + color + ';border-color:' + color + '66;background:' + color + '1A;">' + esc(t.badge) + '</span>' +
         '</span>' +
       '</div>' +
-      '<div class="trap-claim">&ldquo;' + esc(t.narrative || '') + '&rdquo;</div>' +
-      '<div class="trap-src">The claim, as published &middot; Source: <strong>' + esc(t.source_outlet || 'multiple outlets') + '</strong>' +
-        (t.analyst_firm && t.analyst_firm !== t.source_outlet ? ' &middot; ' + esc(t.analyst_firm) : '') +
-      '</div>' +
-      '<div class="trap-stats">' +
-        '<div><div class="tstat-l">Fair-value gap</div><div class="tstat-v ' + (sev.cls === 'severe' ? 'red' : sev.cls === 'moderate' ? 'amber' : 'green') + '">' + fmtPct(t.fvd_pct) + '</div>' +
-          '<div class="tstat-sub">model FV ' + fmtUsd(t.fair_value) + ' vs ' + fmtUsd(livePrice) + '</div></div>' +
-        '<div><div class="tstat-l">Since first flagged</div><div class="tstat-v ' + (sinceFlag == null ? '' : sinceFlag >= 0 ? 'green' : 'red') + '">' + fmtPct(sinceFlag) + '</div>' +
-          '<div class="tstat-sub">flagged ' + fmtDate(flagDate) + ' at ' + fmtUsd(flagPrice) + '</div></div>' +
-        '<div><div class="tstat-l">Story velocity</div><div class="tstat-v">' + (t.vms != null ? Math.round(t.vms) : '—') + '</div>' +
-          '<div class="tstat-sub">drift ' + (t.drift_score != null ? Math.round(t.drift_score) : '—') + ' / 100</div></div>' +
-        '<div><div class="tstat-l">Est. exhaustion</div><div class="tstat-v">' + (exhaust != null ? exhaust + 'd' : '—') + '</div>' +
-          '<div class="tstat-sub">prerequisites met: ' + prereq + '</div></div>' +
-      '</div>' +
+      '<div class="trap-claim">' + esc(t.statement) + '</div>' +
       '<div class="trap-foot">' +
-        '<span class="trap-flagged">First flagged ' + fmtDate(flagDate) + ' &middot; last confirmed ' + fmtDate(t.snapshot_date) + '</span>' +
+        '<span class="trap-figure"><span class="tfig-l">Forensic figure</span><span class="tfig-v" style="color:' + color + ';">' + esc(t.figure) + '</span></span>' +
         '<a class="trap-open" href="/stocks/' + encodeURIComponent(t.ticker) + '" data-track="traps_ticker_click">See the chart &amp; signals <span aria-hidden="true">→</span></a>' +
       '</div>' +
     '</article>';
   }
 
-  function render(latest, firstFlags, quotes, curated){
+  // Cards come from the editorial slate, so they render immediately and never
+  // depend on the data connection.
+  function renderCards(){
     var list = document.getElementById('trap-list');
-    if (!latest.length){
-      list.innerHTML = '<div class="traps-empty">No narrative traps flagged in the past seven days. The pipeline runs daily — check back tomorrow.</div>';
-      return;
-    }
-
-    if (curated){
-      // Hand-picked slate: honor the editor's display_rank, FV gap as tiebreak.
-      latest.sort(function(a, b){ return (a.__rank || 9999) - (b.__rank || 9999) || (b.fvd_pct || 0) - (a.fvd_pct || 0); });
-    } else {
-      latest.sort(function(a, b){ return (b.fvd_pct || 0) - (a.fvd_pct || 0); });
-    }
-
-    // Week range chip — always the current Mon–Fri week, auto-advancing.
+    if (list) list.innerHTML = EDITORIAL.map(cardHTML).join('');
     var range = document.getElementById('week-range');
     if (range) range.textContent = weekRangeLabel();
-
-    // Stat strip
-    var severe = latest.filter(function(t){ return (t.fvd_pct || 0) >= 150; }).length;
-    var coordN = latest.filter(function(t){
-      return t.coordination_class === 'SUSPICIOUS_PATTERN' || t.coordination_class === 'LIKELY_COORDINATED' || t.advanced_verdict === 'COORDINATED_CAMPAIGN';
-    }).length;
-    var gaps = latest.map(function(t){ return t.fvd_pct; }).filter(function(v){ return v != null; }).sort(function(a,b){ return a-b; });
-    var median = gaps.length ? gaps[Math.floor(gaps.length / 2)] : null;
-    statCell('st-count', latest.length);
-    statCell('st-severe', severe);
-    statCell('st-coord', coordN);
-    statCell('st-gap', median != null ? '+' + Math.round(median) + '%' : '—');
-
-    list.innerHTML = latest.map(function(t){
-      return cardHTML(t, firstFlags[t.ticker], quotes[t.ticker]);
-    }).join('');
-
-    track('traps_page_loaded', { tickers: latest.length, curated: !!curated });
+    track('traps_page_loaded', { tickers: EDITORIAL.length, curated: true });
   }
 
-  function load(){
-    if (!SUPABASE_URL || !SUPABASE_ANON){ fail('Data connection unavailable.'); return; }
-
-    var since = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-    var cols = 'ticker,narrative,snapshot_date,genesis_date,days_elapsed,current_price,fair_value,fvd_pct,vms,drift_score,coordination_class,advanced_verdict,predicted_exhaustion_days,prerequisites_met,prerequisites_total,source_outlet,analyst_firm';
-
-    var trapsQ = rest('narrative_traps?select=' + cols + '&snapshot_date=gte.' + since + '&order=snapshot_date.desc&limit=300');
-    // Editorial overlay — read-only curation table. Absent/empty = auto slate.
-    var curationQ = rest('narrative_traps_curation?select=ticker,featured,display_rank').catch(function(){ return []; });
-
-    Promise.all([trapsQ, curationQ])
-      .then(function(arr){
-        var rows = arr[0] || [];
-        var curation = arr[1] || [];
-
-        // Latest row per ticker (rows already newest-first)
-        var latest = [], seen = {};
-        rows.forEach(function(r){
-          if (!seen[r.ticker]){ seen[r.ticker] = true; latest.push(r); }
-        });
-        if (!latest.length){ render([], {}, {}, false); return; }
-
-        // ── Curation overlay ──────────────────────────────────────────────
-        // If any ticker in this week's window is flagged featured, show ONLY
-        // those (hand-picked slate, e.g. the Herb Greenberg share), ordered by
-        // display_rank. Otherwise fall back to the automatic full slate.
-        var curMap = {};
-        curation.forEach(function(c){ if (c && c.ticker) curMap[String(c.ticker).toUpperCase()] = c; });
-        var featured = latest.filter(function(t){
-          var c = curMap[String(t.ticker).toUpperCase()];
-          return c && c.featured;
-        });
-        var curated = featured.length > 0;
-        var shown = curated ? featured : latest;
-        if (curated){
-          shown.forEach(function(t){
-            var c = curMap[String(t.ticker).toUpperCase()];
-            t.__rank = (c && c.display_rank != null) ? Number(c.display_rank) : 9999;
-          });
-        }
-
-        var tickers = shown.map(function(t){ return t.ticker; });
-
-        // Earliest-ever flag per ticker (for the "since first flagged" delta)
-        var firstQ = rest('narrative_traps?select=ticker,snapshot_date,current_price&ticker=in.(' + tickers.map(encodeURIComponent).join(',') + ')&order=snapshot_date.asc&limit=1000')
-          .then(function(all){
-            var first = {};
-            all.forEach(function(r){ if (!first[r.ticker]) first[r.ticker] = r; });
-            return first;
-          })
-          .catch(function(){ return {}; });
-
-        // Live prices (same public endpoint the homepage ticker strip uses)
-        var quotesQ = fetch('/api/live-quotes-batch?tickers=' + tickers.join(','))
-          .then(function(r){ return r.ok ? r.json() : {}; })
-          .then(function(data){ return (data && data.quotes) || data || {}; })
-          .catch(function(){ return {}; });
-
-        return Promise.all([firstQ, quotesQ]).then(function(res){
-          render(shown, res[0], res[1], curated);
+  // Live price per featured ticker (same public endpoint the homepage uses).
+  function fillQuotes(){
+    var tickers = EDITORIAL.map(function(t){ return t.ticker; });
+    fetch('/api/live-quotes-batch?tickers=' + tickers.join(','))
+      .then(function(r){ return r.ok ? r.json() : {}; })
+      .then(function(data){
+        var q = (data && data.quotes) || data || {};
+        EDITORIAL.forEach(function(t){
+          var quote = q[t.ticker];
+          var el = document.getElementById('trap-live-' + t.ticker);
+          if (!el || !quote || quote.price == null) return;
+          var dayPct = quote.changePct != null ? Number(quote.changePct) : null;
+          el.innerHTML = fmtUsd(quote.price) +
+            (dayPct != null ? ' <span class="' + (dayPct >= 0 ? 'pos' : 'neg') + '">' + fmtPct(dayPct, 2) + '</span>' : '');
         });
       })
-      .catch(function(e){
-        fail('Could not load this week’s traps (' + e.message + '). Refresh to retry.');
-      });
+      .catch(function(){});
+  }
+
+  // Stat strip — week-level summary of the full pipeline output, as context for
+  // the featured slate. Degrades silently to "—" if the data connection is down.
+  function fillStats(){
+    if (!SUPABASE_URL || !SUPABASE_ANON) return;
+    var since = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    var cols = 'ticker,fvd_pct,coordination_class,advanced_verdict,snapshot_date';
+    rest('narrative_traps?select=' + cols + '&snapshot_date=gte.' + since + '&order=snapshot_date.desc&limit=300')
+      .then(function(rows){
+        rows = rows || [];
+        var latest = [], seen = {};
+        rows.forEach(function(r){ if (!seen[r.ticker]){ seen[r.ticker] = true; latest.push(r); } });
+        if (!latest.length) return;
+        var severe = latest.filter(function(t){ return (t.fvd_pct || 0) >= 150; }).length;
+        var coordN = latest.filter(function(t){
+          return t.coordination_class === 'SUSPICIOUS_PATTERN' || t.coordination_class === 'LIKELY_COORDINATED' || t.advanced_verdict === 'COORDINATED_CAMPAIGN';
+        }).length;
+        var gaps = latest.map(function(t){ return t.fvd_pct; }).filter(function(v){ return v != null; }).sort(function(a, b){ return a - b; });
+        var median = gaps.length ? gaps[Math.floor(gaps.length / 2)] : null;
+        statCell('st-count', latest.length);
+        statCell('st-severe', severe);
+        statCell('st-coord', coordN);
+        statCell('st-gap', median != null ? '+' + Math.round(median) + '%' : '—');
+      })
+      .catch(function(){});
   }
 
   // ── Ref-gated co-sign ribbon (e.g. traffic arriving from Herb Greenberg) ──
@@ -662,15 +592,19 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
     }
   })();
 
-  // Exposed for local preview harnesses to re-trigger after injecting env.
-  window.__mpTrapsReload = function(){
+  function boot(){
     env = window.__env || {};
     SUPABASE_URL  = env.SUPABASE_URL  || '';
     SUPABASE_ANON = env.SUPABASE_ANON || '';
-    load();
-  };
+    renderCards();
+    fillQuotes();
+    fillStats();
+  }
 
-  load();
+  // Exposed for local preview harnesses to re-trigger after injecting env.
+  window.__mpTrapsReload = boot;
+
+  boot();
 })();
 </script>
 </body>

@@ -231,6 +231,7 @@
   /* ── Generator ── */
   var VERDICT = {
     'Narrative Trap':         '#E5484D',
+    'Narrative Risk':         '#FF8C00',
     'Coordinated Campaign':   '#FF6A3D',
     'Plausible — Unverified': '#E3A93C',
     'Needs Validation':       '#9AA3B5',
@@ -239,11 +240,11 @@
   var VK = Object.keys(VERDICT);
 
   var SEED = [
-    { tk:'CCJ',  ds:'Uranium supply story, amplified by 9 sources, zero filing support', m:'+499% FV',   v:'Coordinated Campaign' },
-    { tk:'SMCI', ds:'AI server demand thesis outrunning disclosed margins',             m:'NRS 61',     v:'Narrative Trap' },
-    { tk:'LUNR', ds:'Contract-win headlines without revenue confirmation',              m:'Drift 100%', v:'Narrative Trap' },
-    { tk:'PLTR', ds:'Government-AI framing detaching from guidance',                    m:'88x P/E',    v:'Plausible — Unverified' },
-    { tk:'RGTI', ds:'Quantum breakthrough cycle losing media energy',                  m:'Decay −1.8', v:'Exhausting' }
+    { tk:'TXN',  ds:'An analog chipmaker "will dethrone Nvidia by 2026" — a paradigm shift the 10-K never claims', m:'+173% FVD',  v:'Plausible — Unverified' },
+    { tk:'MU',   ds:'$1,500 targets and "the next Nvidia" on a stock already tripled, days before earnings',       m:'+216% FVD',  v:'Narrative Trap' },
+    { tk:'MRVL', ds:'"Next trillion-dollar AI stock" on a "stunning Nvidia endorsement" — screens say 107% rich',  m:'Omission 75', v:'Narrative Trap' },
+    { tk:'SOFI', ds:'"SoFi doubles in a year" — four outlets, one fading and exhausting tape',                     m:'Energy 23%',  v:'Exhausting' },
+    { tk:'COIN', ds:'"Let AI trade for you" super-app pivot leans on a CLARITY Act the filing can\'t cite',        m:'Drift 60',    v:'Narrative Risk' }
   ];
 
   // Monday of the current week, formatted "Week of Mon D, YYYY".
