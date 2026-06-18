@@ -195,8 +195,16 @@ nav.topnav{
   margin-bottom:10px;
 }
 .trap-claim em{color:var(--mp-text-secondary);}
-.trap-src{font-size:12px;color:var(--mp-text-muted);margin-bottom:16px;}
-.trap-src strong{color:var(--mp-text-tertiary);font-weight:600;}
+.trap-claim-l,.trap-verify-l{display:block;font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;margin-bottom:6px;}
+.trap-claim-l{color:var(--sev-color,var(--mp-red));}
+.trap-verify{
+  font-size:14px;line-height:1.55;color:var(--mp-text-secondary);
+  padding:14px 16px;border-left:2px solid var(--mp-cyan);
+  background:rgba(0,174,255,0.04);border-radius:0 10px 10px 0;
+  margin-bottom:10px;
+}
+.trap-verify-l{color:var(--mp-cyan);}
+.trap-verify strong{color:var(--mp-text-primary);font-weight:600;}
 .trap-stats{
   display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
   padding-top:16px;border-top:1px solid var(--mp-border);
@@ -436,11 +444,36 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
   // /herbtraps share card. Statement / figure / badge are editorial copy; the
   // live price and the /stocks link stay dynamic per ticker.
   var EDITORIAL = [
-    { ticker:'TSLA', sector:'Autos/EV',               statement:'Robotaxi hype at ~5× fair value, FSD-safety review underway',                          figure:'+393% FVD',   badge:'Narrative Trap' },
-    { ticker:'COIN', sector:'Crypto',                 statement:'"Let AI trade for you" super-app pivot leans on a CLARITY Act the filing can\'t cite', figure:'Omission 75', badge:'Narrative Trap' },
-    { ticker:'MP',   sector:'Rare-earth / Materials', statement:'"Could reach new heights on two supercharged trends"',                                 figure:'+221% FVD',   badge:'Narrative Trap' },
-    { ticker:'BA',   sector:'Aerospace',              statement:'Boeing "can reach $1,000" / a "$3,240 case" on a recovering jetmaker',                 figure:'+217% FVD',   badge:'Narrative Trap' },
-    { ticker:'TXN',  sector:'Semiconductors',         statement:'An analog chipmaker "will dethrone Nvidia by 2026"',                                   figure:'+188% FVD',   badge:'Narrative Trap' }
+    {
+      ticker:'TSLA', sector:'Autos/EV',
+      statement:'Robotaxi euphoria has the stock priced at roughly 5× the model\'s fair value — even with a federal Full Self-Driving safety review running in the background.',
+      rebuttal:'At +393% FVD the tape is ~5× fair value. The robotaxi story capitalizes an autonomous fleet that isn\'t deployed at scale; disclosures still describe FSD as a supervised driver-assist feature under active safety review, not approved self-driving.',
+      figure:'+393% FVD', badge:'Narrative Trap'
+    },
+    {
+      ticker:'COIN', sector:'Crypto',
+      statement:'The "let AI trade for you" super-app pivot is being sold as a re-rating catalyst, leaning on a CLARITY Act the company\'s own filings never cite.',
+      rebuttal:'Omission score 75/100: the bull case rests on pending federal crypto market-structure legislation that appears nowhere in the risk factors or MD&A, and an AI-trading "super-app" that reads as roadmap rather than disclosed revenue.',
+      figure:'Omission 75', badge:'Narrative Trap'
+    },
+    {
+      ticker:'MP', sector:'Rare-earth / Materials',
+      statement:'"Could reach new heights on two supercharged trends" — the framing pairs the EV-magnet demand wave with the reshoring of rare-earth supply away from China.',
+      rebuttal:'Even crediting both trends, the model puts price at ~3.2× fair value (+221% FVD). Magnet production is early-stage and capital-intensive — a multi-year build, not the cash flows today\'s price already implies.',
+      figure:'+221% FVD', badge:'Narrative Trap'
+    },
+    {
+      ticker:'BA', sector:'Aerospace',
+      statement:'Sell-side targets stretch to $1,000 — with one bull case as high as $3,240 — framing Boeing as a recovering jetmaker with clear skies ahead.',
+      rebuttal:'Those targets sit ~3.2× the model\'s fair value (+217% FVD). They extrapolate a clean production ramp the filings don\'t guarantee; delivery cadence, free cash flow and the 737/787 schedule remain the gating risks management still flags.',
+      figure:'+217% FVD', badge:'Narrative Trap'
+    },
+    {
+      ticker:'TXN', sector:'Semiconductors',
+      statement:'An analog chipmaker that "will dethrone Nvidia by 2026" — a generational AI-leadership claim the 10-K never makes.',
+      rebuttal:'At ~2.9× fair value (+188% FVD), the framing imports a market the company doesn\'t compete in. Texas Instruments is an analog and embedded leader, not an AI-accelerator rival to Nvidia.',
+      figure:'+188% FVD', badge:'Narrative Trap'
+    }
   ];
 
   // Badge → accent color (established Market Prism verdict palette).
@@ -516,7 +549,8 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
           '<span class="badge" style="color:' + color + ';border-color:' + color + '66;background:' + color + '1A;">' + esc(t.badge) + '</span>' +
         '</span>' +
       '</div>' +
-      '<div class="trap-claim">' + esc(t.statement) + '</div>' +
+      '<div class="trap-claim"><span class="trap-claim-l">The narrative</span>' + esc(t.statement) + '</div>' +
+      (t.rebuttal ? '<div class="trap-verify"><span class="trap-verify-l">What the filings show</span>' + esc(t.rebuttal) + '</div>' : '') +
       '<div class="trap-foot">' +
         '<span class="trap-figure"><span class="tfig-l">Forensic figure</span><span class="tfig-v" style="color:' + color + ';">' + esc(t.figure) + '</span></span>' +
         '<a class="trap-open" href="/stocks/' + encodeURIComponent(t.ticker) + '" data-track="traps_ticker_click">See the chart &amp; signals <span aria-hidden="true">→</span></a>' +
