@@ -246,9 +246,19 @@
     { tk:'RGTI', ds:'Quantum breakthrough cycle losing media energy',                  m:'Decay −1.8', v:'Exhausting' }
   ];
 
+  // Monday of the current week, formatted "Week of Mon D, YYYY".
+  // Auto-computed so the label never goes stale week to week (still editable below).
+  function currentWeekLabel() {
+    var d = new Date();
+    var dow = d.getDay();                    // 0=Sun … 6=Sat
+    d.setDate(d.getDate() + (dow === 0 ? -6 : 1 - dow));  // back up to Monday
+    var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return 'Week of ' + mons[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+
   var state = {
     title: 'Narrative Traps',
-    week: 'Week of Jun 16, 2026',
+    week: currentWeekLabel(),
     subhead: "Five stories that didn't survive the filings.",
     src: 'marketprism.co · Walsh Narrative Decay Engine',
     accent: '#14D6C2',
