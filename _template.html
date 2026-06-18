@@ -6029,11 +6029,11 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
             </g>
           </svg>
           <div class="prism-zoom-ctl" role="group" aria-label="Zoom controls">
-            <button id="prism-zoom-in" type="button" title="Zoom in (or scroll)" aria-label="Zoom in">+</button>
+            <button id="prism-zoom-in" type="button" title="Zoom in (or pinch / Ctrl-scroll)" aria-label="Zoom in">+</button>
             <button id="prism-zoom-out" type="button" title="Zoom out" aria-label="Zoom out">&minus;</button>
             <button id="prism-zoom-reset" type="button" title="Reset zoom (double-click)" aria-label="Reset zoom">&#10226;</button>
           </div>
-          <div class="prism-zoom-hint" id="prism-zoom-hint">Scroll to zoom · drag to pan</div>
+          <div class="prism-zoom-hint" id="prism-zoom-hint">Pinch or Ctrl-scroll to zoom · drag to pan</div>
           <div class="prism-popup" id="prism-popup" style="display:none;"></div>
         </div>
 
@@ -6518,8 +6518,16 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
               return { x:(W/2 - state.panX)/state.zoom, y:(H/2 - state.panY)/state.zoom };
             }
             svg.addEventListener('wheel', function(e){
+              // Plain wheel must scroll the PAGE — hijacking it trapped the user
+              // on a tall dashboard (cursor over the plot → page wouldn't scroll,
+              // it just zoomed). Only zoom when the user opts in with a modifier.
+              // A trackpad pinch fires wheel events with ctrlKey set, so this also
+              // makes pinch-to-zoom Just Work while normal scroll passes through.
+              if(!(e.ctrlKey || e.metaKey)) return;
               e.preventDefault();
-              var dz = e.deltaY<0 ? 1.12 : 1/1.12;
+              // Proportional to deltaY so a mouse notch steps gently and a
+              // fine-grained trackpad pinch zooms smoothly (vs a fixed jump).
+              var dz = Math.pow(1.0012, -e.deltaY);
               var pt = clientToView(e.clientX, e.clientY);
               doZoom(state.zoom*dz, pt.x, pt.y);
             }, {passive:false});
