@@ -289,9 +289,33 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
   font-size:12px;color:var(--mp-text-muted);
 }
 .footer-disclaimer{margin-top:14px;font-size:11px;line-height:1.6;color:var(--mp-text-muted);}
+
+/* ── ACCESS GATE (client-side wall, same pattern as /herbtraps) ── */
+.gate{position:fixed;inset:0;background:var(--mp-obsidian);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;}
+.gate-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:40px 36px;width:380px;max-width:90vw;text-align:center;}
+.gate-logo{height:30px;width:auto;margin:0 auto 20px;display:block;}
+.gate-title{font-weight:700;font-size:20px;letter-spacing:-0.02em;margin:0 0 6px;}
+.gate-sub{font-size:13px;color:var(--mp-text-tertiary);margin:0 0 24px;line-height:1.5;}
+.gate-input{font-family:var(--font-body);font-size:16px;padding:11px 16px;border-radius:10px;border:1px solid var(--mp-border);background:var(--mp-obsidian);color:var(--mp-text-primary);width:100%;text-align:center;outline:none;margin-bottom:12px;}
+.gate-input:focus{border-color:var(--mp-cyan);}
+.gate-btn{font-family:var(--font-body);font-size:14px;font-weight:700;padding:12px 32px;border-radius:10px;border:0;cursor:pointer;color:#fff;width:100%;background:linear-gradient(135deg,var(--mp-green),var(--mp-cyan));box-shadow:0 4px 14px rgba(0,174,255,0.25);transition:transform .15s,box-shadow .15s;}
+.gate-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,174,255,0.35);}
+.gate-error{font-size:12px;color:var(--mp-red);margin-top:12px;display:none;}
 </style>
 </head>
 <body>
+
+<!-- ── ACCESS GATE (client-side wall, same pattern as /herbtraps) ── -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <img class="gate-logo" src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+    <h1 class="gate-title">Narrative Traps</h1>
+    <p class="gate-sub">This week's slate is access-protected. Enter the code to view.</p>
+    <input class="gate-input" id="gate-code" type="password" placeholder="Access code" autocomplete="off">
+    <button class="gate-btn" id="gate-submit">View the traps</button>
+    <p class="gate-error" id="gate-error">Incorrect code — try again.</p>
+  </div>
+</div>
 
 <!-- ── HERB CO-SIGN RIBBON (revealed only when ?ref=herb or /herb) ── -->
 <div class="cosign" id="cosign" hidden>
@@ -656,10 +680,39 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
     fillStats();
   }
 
-  // Exposed for local preview harnesses to re-trigger after injecting env.
-  window.__mpTrapsReload = boot;
+  // ── Access gate (client-side wall, same pattern as /herbtraps) ──
+  var ACCESS_KEY = 'mp-traps-access';
+  var CODE = 'herbtraps26';
+  var booted = false;
+  function unlock(){
+    var g = document.getElementById('gate');
+    if (g) g.style.display = 'none';
+    if (!booted){ booted = true; boot(); }
+  }
+  function checkCode(){
+    var input = document.getElementById('gate-code');
+    var v = ((input && input.value) || '').trim();
+    if (v.toLowerCase() === CODE){
+      try { sessionStorage.setItem(ACCESS_KEY, '1'); } catch(_){}
+      unlock();
+    } else {
+      var err = document.getElementById('gate-error');
+      if (err) err.style.display = 'block';
+      if (input){ input.value = ''; input.focus(); }
+    }
+  }
+  var submitBtn = document.getElementById('gate-submit');
+  if (submitBtn) submitBtn.onclick = checkCode;
+  var codeInput = document.getElementById('gate-code');
+  if (codeInput) codeInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') checkCode(); });
 
-  boot();
+  var hasAccess = false;
+  try { hasAccess = sessionStorage.getItem(ACCESS_KEY) === '1'; } catch(_){}
+  if (hasAccess) unlock();
+  else if (codeInput) codeInput.focus();
+
+  // Exposed for local preview harnesses to re-trigger after injecting env.
+  window.__mpTrapsReload = function(){ booted = false; unlock(); };
 })();
 </script>
 </body>
