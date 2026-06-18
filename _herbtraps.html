@@ -80,6 +80,7 @@
   #ht-root .row:last-child{border-bottom:1px solid var(--hair)}
   #ht-root .idx{font-size:13px;color:var(--muted-2);font-weight:500;font-variant-numeric:tabular-nums}
   #ht-root .tk{font-weight:700;font-size:20px;letter-spacing:.01em;line-height:1.1;font-variant-numeric:tabular-nums}
+  #ht-root .sec{font-weight:500;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2);margin-left:9px}
   #ht-root .ds{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.35}
   #ht-root .metric{font-weight:600;font-size:18px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
   #ht-root .pill{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:6px 11px;border-radius:999px;white-space:nowrap;border:1px solid;justify-self:end}
@@ -240,11 +241,11 @@
   var VK = Object.keys(VERDICT);
 
   var SEED = [
-    { tk:'TXN',  ds:'An analog chipmaker "will dethrone Nvidia by 2026" — a paradigm shift the 10-K never claims', m:'+173% FVD',   v:'Narrative Trap' },
-    { tk:'MU',   ds:'$1,500 targets and "the next Nvidia" on a stock already tripled, days before earnings',       m:'+216% FVD',   v:'Narrative Trap' },
-    { tk:'MRVL', ds:'"Next trillion-dollar AI stock" on a "stunning Nvidia endorsement" — screens say 107% rich',  m:'Omission 75', v:'Narrative Trap' },
-    { tk:'SOFI', ds:'"SoFi doubles in a year" — four outlets, one fading and exhausting tape',                     m:'Energy 23%',  v:'Narrative Trap' },
-    { tk:'COIN', ds:'"Let AI trade for you" super-app pivot leans on a CLARITY Act the filing can\'t cite',        m:'Drift 60',    v:'Narrative Trap' }
+    { tk:'TSLA', sec:'Autos/EV',               ds:'Robotaxi hype at ~5× fair value, FSD-safety review underway',                          m:'+393% FVD',   v:'Narrative Trap' },
+    { tk:'COIN', sec:'Crypto',                 ds:'"Let AI trade for you" super-app pivot leans on a CLARITY Act the filing can\'t cite', m:'Omission 75', v:'Narrative Trap' },
+    { tk:'MP',   sec:'Rare-earth / Materials', ds:'"Could reach new heights on two supercharged trends"',                                 m:'+221% FVD',   v:'Narrative Trap' },
+    { tk:'BA',   sec:'Aerospace',              ds:'Boeing "can reach $1,000" / a "$3,240 case" on a recovering jetmaker',                 m:'+217% FVD',   v:'Narrative Trap' },
+    { tk:'TXN',  sec:'Semiconductors',         ds:'An analog chipmaker "will dethrone Nvidia by 2026"',                                   m:'+188% FVD',   v:'Narrative Trap' }
   ];
 
   // Monday of the current week, formatted "Week of Mon D, YYYY".
@@ -298,7 +299,7 @@
       var idx = '0' + (n + 1);
       return '<div class="row">' +
         '<div class="idx">' + idx + '</div>' +
-        '<div><div class="tk">' + esc(t.tk) + '</div>' +
+        '<div><div class="tk">' + esc(t.tk) + (t.sec ? '<span class="sec">' + esc(t.sec) + '</span>' : '') + '</div>' +
         '<div class="ds">' + esc(t.ds) + '</div></div>' +
         '<div class="metric">' + esc(t.m) + '</div>' +
         '<div class="pill" style="color:' + col + ';border-color:' + col + ';background:' + col + '1F">' + esc(t.v) + '</div>' +
@@ -326,6 +327,9 @@
         '<div class="r2">' +
           '<input type="text" data-k="tk" placeholder="Ticker" value="' + esc(t.tk) + '">' +
           '<input type="text" data-k="m" placeholder="Key metric" value="' + esc(t.m) + '">' +
+        '</div>' +
+        '<div class="grp" style="margin:8px 0 0">' +
+          '<input type="text" data-k="sec" placeholder="Sector" value="' + esc(t.sec || '') + '">' +
         '</div>' +
         '<div class="grp" style="margin:8px 0 0">' +
           '<input type="text" data-k="ds" placeholder="One-line narrative" value="' + esc(t.ds) + '">' +

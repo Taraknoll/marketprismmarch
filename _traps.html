@@ -173,6 +173,7 @@ nav.topnav{
 .trap-card:hover{border-color:var(--mp-border-hover);transform:translateY(-2px);}
 .trap-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
 .trap-tk{font-size:20px;font-weight:800;letter-spacing:-0.01em;}
+.trap-sector{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-tertiary);border:1px solid var(--mp-border);border-radius:99px;padding:3px 9px;}
 .trap-live{font-size:16px;font-weight:600;color:var(--mp-text-secondary);font-variant-numeric:tabular-nums;}
 .trap-live .pos{color:var(--mp-green);}
 .trap-live .neg{color:var(--mp-red);}
@@ -435,11 +436,11 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
   // /herbtraps share card. Statement / figure / badge are editorial copy; the
   // live price and the /stocks link stay dynamic per ticker.
   var EDITORIAL = [
-    { ticker:'TXN',  statement:'An analog chipmaker "will dethrone Nvidia by 2026" — a paradigm shift the 10-K never claims', figure:'+173% FVD',   badge:'Narrative Trap' },
-    { ticker:'MU',   statement:'$1,500 targets and "the next Nvidia" on a stock already tripled, days before earnings',       figure:'+216% FVD',   badge:'Narrative Trap' },
-    { ticker:'MRVL', statement:'"Next trillion-dollar AI stock" on a "stunning Nvidia endorsement" — screens say 107% rich',  figure:'Omission 75', badge:'Narrative Trap' },
-    { ticker:'SOFI', statement:'"SoFi doubles in a year" — four outlets, one fading and exhausting tape',                     figure:'Energy 23%',  badge:'Narrative Trap' },
-    { ticker:'COIN', statement:'"Let AI trade for you" super-app pivot leans on a CLARITY Act the filing can\'t cite',        figure:'Drift 60',    badge:'Narrative Trap' }
+    { ticker:'TSLA', sector:'Autos/EV',               statement:'Robotaxi hype at ~5× fair value, FSD-safety review underway',                          figure:'+393% FVD',   badge:'Narrative Trap' },
+    { ticker:'COIN', sector:'Crypto',                 statement:'"Let AI trade for you" super-app pivot leans on a CLARITY Act the filing can\'t cite', figure:'Omission 75', badge:'Narrative Trap' },
+    { ticker:'MP',   sector:'Rare-earth / Materials', statement:'"Could reach new heights on two supercharged trends"',                                 figure:'+221% FVD',   badge:'Narrative Trap' },
+    { ticker:'BA',   sector:'Aerospace',              statement:'Boeing "can reach $1,000" / a "$3,240 case" on a recovering jetmaker',                 figure:'+217% FVD',   badge:'Narrative Trap' },
+    { ticker:'TXN',  sector:'Semiconductors',         statement:'An analog chipmaker "will dethrone Nvidia by 2026"',                                   figure:'+188% FVD',   badge:'Narrative Trap' }
   ];
 
   // Badge → accent color (established Market Prism verdict palette).
@@ -509,6 +510,7 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
       '<div class="trap-top">' +
         '<span class="trap-idx">' + idx + '</span>' +
         '<span class="trap-tk">' + esc(t.ticker) + '</span>' +
+        (t.sector ? '<span class="trap-sector">' + esc(t.sector) + '</span>' : '') +
         '<span class="trap-live" id="trap-live-' + esc(t.ticker) + '"></span>' +
         '<span class="trap-badges">' +
           '<span class="badge" style="color:' + color + ';border-color:' + color + '66;background:' + color + '1A;">' + esc(t.badge) + '</span>' +
