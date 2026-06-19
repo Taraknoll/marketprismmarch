@@ -14084,7 +14084,13 @@ async function loadStrategyData(){
       +'story_claim,forensic_rebuttal,primary_driver,fair_value,pct_above_fair_value,pe_ratio,'
       +'energy,nrs,vms,coordination_class,dark_pool_signal,dark_pool_direction,narrative_tone,'
       +'signal_regime,regime_direction';
+    // Tier guard: only collectible tiers (matches the gallery filter chips +
+    // the curated card_predictions log). Upstream began publishing STANDARD-tier
+    // (low-conviction) cards into trade_cards_live, which the gallery has no
+    // limit/floor to suppress — exclude them so the count reflects conviction
+    // cards only. Remove this filter if upstream stops emitting STANDARD.
     var cardUrl=SUPABASE_URL+'/rest/v1/trade_cards_live?select='+cols
+      +'&card_tier=in.(UNICORN,PLATINUM,GOLD,SURPRISE)'
       +'&order=trade_score.desc';
     var res=await fetch(cardUrl,{headers:hdrs});
     if(!res.ok)throw new Error('trade_cards_live fetch failed: '+res.status);
