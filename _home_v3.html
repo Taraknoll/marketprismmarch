@@ -2015,15 +2015,23 @@ footer{
   function neighborHTML(n){
     var dt = n.observed_at ? fmtDate(n.observed_at) : '—';
     var simPct = n.similarity != null ? Math.round(Number(n.similarity) * 100) + '% similar' : '';
-    var r10 = n.return_10d;
+    // Resolution is "known" once ANY forward horizon has matured. Prefer the
+    // 10d outcome, but fall back to 20d (a later, even-more-resolved read) and
+    // then 5d (the earliest). An analogue can carry a 20d return with a NULL
+    // 10d (older backfills filled 20d only) — keying off 10d alone mislabeled a
+    // genuinely-resolved analogue as "Unresolved".
+    var rv = null, rh = null;
+    if (n.return_10d != null && !isNaN(n.return_10d))      { rv = Number(n.return_10d); rh = 10; }
+    else if (n.return_20d != null && !isNaN(n.return_20d)) { rv = Number(n.return_20d); rh = 20; }
+    else if (n.return_5d  != null && !isNaN(n.return_5d))  { rv = Number(n.return_5d);  rh = 5;  }
     var narr = n.narrative || '—';
     if (narr.length > 240) narr = narr.slice(0, 240) + '…';
     var oc, reason;
-    if (r10 == null || isNaN(r10)) {
+    if (rv == null) {
       oc = { cls:'flat', text:'Unresolved' };
       reason = 'Similar story, outcome not yet resolved.';
     } else {
-      var pct = Number(r10) * 100;
+      var pct = rv * 100;
       if (pct >= 2)       { oc = { cls:'win',  text:'Winner' }; reason = 'Similar story, market followed through to the upside.'; }
       else if (pct <= -2) { oc = { cls:'lose', text:'Loser'  }; reason = 'Similar story, market faded the narrative.'; }
       else                { oc = { cls:'flat', text:'Flat'   }; reason = 'Similar story, no meaningful follow-through.'; }
@@ -2039,7 +2047,7 @@ footer{
       '<div class="r-nb-narr">'+esc(narr)+'</div>' +
       '<div class="r-nb-foot">' +
         '<span>Source: '+esc(n.speaker || '—')+'</span>' +
-        '<span>10d return <span class="r-nb-ret '+dirClass(r10)+'">'+fmtPct(r10)+'</span></span>' +
+        '<span>'+(rh||10)+'d return <span class="r-nb-ret '+dirClass(rv)+'">'+fmtPct(rv)+'</span></span>' +
       '</div>' +
       '<div class="r-nb-reason">'+esc(reason)+'</div>' +
     '</div>';

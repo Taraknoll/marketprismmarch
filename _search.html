@@ -1634,6 +1634,16 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       if (pct <= -2) return { cls: 'lose', text: 'Loser'  };
       return                 { cls: 'flat', text: 'Flat'   };
     }
+    // Resolution is "known" once ANY forward horizon has matured. Prefer 10d;
+    // fall back to 20d (a later, even-more-resolved read) then 5d. An analogue
+    // can carry a 20d return with a NULL 10d (older backfills filled 20d only),
+    // so keying the badge off 10d alone mislabeled resolved cases "Unresolved".
+    function resolvedReturn(n){
+      if (n.return_10d != null && !isNaN(n.return_10d)) return { v: Number(n.return_10d), h: 10 };
+      if (n.return_20d != null && !isNaN(n.return_20d)) return { v: Number(n.return_20d), h: 20 };
+      if (n.return_5d  != null && !isNaN(n.return_5d))  return { v: Number(n.return_5d),  h: 5  };
+      return { v: null, h: null };
+    }
     function nbReason(o){
       if (o.cls === 'win')  return 'Similar story, market followed through to the upside.';
       if (o.cls === 'lose') return 'Similar story, market faded the narrative.';
@@ -1644,8 +1654,8 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       ? nbs.map(function(n){
           var dt = n.observed_at ? new Date(n.observed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
           var simPct = n.similarity != null ? Math.round(Number(n.similarity) * 100) + '% similar' : '';
-          var r10 = n.return_10d;
-          var oc = outcomeBadge(r10);
+          var rr = resolvedReturn(n);
+          var oc = outcomeBadge(rr.v);
           return '<div class="neighbor">' +
             '<div class="nb-top">' +
               '<div><span class="nb-tk">' + esc(n.ticker || '—') + '</span><span class="nb-date">' + esc(dt) + '</span></div>' +
@@ -1656,7 +1666,7 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
             '</div>' +
             '<div class="nb-narr">' + esc(n.narrative || '—') + (n.narrative && n.narrative.length >= 200 ? '…' : '') + '</div>' +
             '<div class="nb-foot">' +
-              '<span>10d return: <span class="v ' + dirClass(r10) + '">' + fmtPct(r10) + '</span></span>' +
+              '<span>' + (rr.h || 10) + 'd return: <span class="v ' + dirClass(rr.v) + '">' + fmtPct(rr.v) + '</span></span>' +
               '<span>Source: <strong style="color:var(--mp-text-secondary);">' + esc(n.speaker || '—') + '</strong></span>' +
             '</div>' +
             '<div class="nb-reason">' + esc(nbReason(oc)) + '</div>' +
