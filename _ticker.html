@@ -8034,11 +8034,16 @@ function drawChart(snaps, narrs, drawCandles) {
     ctx.fillText((p >= 100 ? '$' + p.toFixed(0) : '$' + p.toFixed(2)), PAD.left - 4, y + 3);
   }
 
-  // X axis labels — target ~10 ticks, or per-day on <=14D views.
+  // X axis labels — target ~10 ticks, or per-day on <=14D views, but never
+  // more than the canvas width can hold without labels overlapping. Each
+  // "Jun 18" label needs ~46px of horizontal room (smaller screens fit fewer).
   ctx.textAlign = 'center';
   const axisDays = getActiveDays();
-  const targetTicks = (axisDays > 0 && axisDays <= 14) ? N : 10;
-  const every = Math.max(1, Math.floor(N / targetTicks));
+  const minLabelPx = 46;
+  const maxTicks = Math.max(2, Math.floor(CW / minLabelPx));
+  const desiredTicks = (axisDays > 0 && axisDays <= 14) ? N : 10;
+  const targetTicks = Math.min(desiredTicks, maxTicks);
+  const every = Math.max(1, Math.ceil(N / targetTicks));
   let lastRenderedIdx = -Infinity;
   snaps.forEach((s, i) => {
     if (i % every !== 0 && i !== N-1) return;
