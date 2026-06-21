@@ -82,7 +82,36 @@ nav{position:sticky;top:0;z-index:100;background:rgba(8,11,17,0.92);backdrop-fil
 .badge.bull{color:var(--mp-green);border-color:rgba(0,222,148,0.4);background:rgba(0,222,148,0.10);}
 .badge.bear{color:var(--mp-red);border-color:rgba(255,77,77,0.4);background:rgba(255,77,77,0.10);}
 .badge.neutral{color:var(--mp-cyan);border-color:rgba(0,174,255,0.4);background:rgba(0,174,255,0.10);}
+.badge.caution{color:var(--mp-amber);border-color:rgba(255,184,0,0.4);background:rgba(255,184,0,0.10);}
 .badge.state{color:var(--mp-text-secondary);background:var(--mp-surface);}
+
+/* ── ANSWER BOX (answer-first / AEO hook) ── */
+.answer-card{position:relative;background:linear-gradient(180deg,rgba(0,174,255,0.06),rgba(12,16,24,0.4));border:1px solid var(--mp-border-hover);border-radius:16px;padding:24px 26px;overflow:hidden;margin:18px 0 6px;}
+.answer-accent{position:absolute;top:0;left:0;right:0;height:3px;}
+.answer-accent.bull{background:linear-gradient(90deg,var(--mp-green),var(--mp-cyan));}
+.answer-accent.bear{background:linear-gradient(90deg,var(--mp-red),var(--mp-amber));}
+.answer-accent.caution{background:linear-gradient(90deg,var(--mp-amber),var(--mp-cyan));}
+.answer-accent.neutral{background:linear-gradient(90deg,var(--mp-cyan),var(--mp-violet));}
+.answer-eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mp-text-tertiary);margin-bottom:12px;flex-wrap:wrap;}
+.answer-verdict{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 11px;border-radius:999px;}
+.answer-verdict.bull{color:var(--mp-green);background:rgba(0,222,148,0.12);}
+.answer-verdict.bear{color:var(--mp-red);background:rgba(255,77,77,0.12);}
+.answer-verdict.caution{color:var(--mp-amber);background:rgba(255,184,0,0.12);}
+.answer-verdict.neutral{color:var(--mp-cyan);background:rgba(0,174,255,0.12);}
+.answer-text{font-size:18px;line-height:1.55;color:var(--mp-text-primary);font-weight:400;letter-spacing:-0.01em;}
+.answer-prov{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.prov-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mp-text-tertiary);background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:999px;padding:5px 11px;}
+.prov-dot{width:6px;height:6px;border-radius:50%;background:var(--mp-green);box-shadow:0 0 0 3px rgba(0,222,148,0.18);}
+
+/* ── CTA BANNER ── */
+.cta-banner{position:relative;background:linear-gradient(135deg,rgba(0,174,255,0.10),rgba(123,97,255,0.08));border:1px solid var(--mp-border-hover);border-radius:16px;padding:32px;text-align:center;overflow:hidden;}
+.cta-head{font-family:var(--font-d);font-size:24px;font-weight:700;letter-spacing:-0.01em;color:var(--mp-text-primary);margin-bottom:10px;line-height:1.25;}
+.cta-sub{font-size:14px;color:var(--mp-text-secondary);line-height:1.6;max-width:520px;margin:0 auto 22px;}
+.cta-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+.cta-primary{display:inline-block;font-size:15px;font-weight:600;color:#fff;background:var(--mp-cyan);padding:12px 30px;border-radius:10px;text-decoration:none;transition:opacity .15s;}
+.cta-primary:hover{opacity:.88;}
+.cta-secondary{display:inline-block;font-size:14px;font-weight:500;color:var(--mp-text-secondary);background:var(--mp-surface);border:1px solid var(--mp-border-hover);padding:12px 24px;border-radius:10px;text-decoration:none;transition:border-color .15s,color .15s;}
+.cta-secondary:hover{border-color:var(--mp-cyan);color:var(--mp-text-primary);}
 
 /* ── SHARE BAR ── */
 .share-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;}
@@ -226,7 +255,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(8,11,17,0.92);backdrop-fil
     <div class="hero-badges">
       <span class="badge %%SENTIMENT_CLASS%%">%%SENTIMENT_LABEL%%</span>
       <span class="badge state">%%STATE_LABEL%%</span>
-      <span class="badge state">%%VERDICT%%</span>
+      <span class="badge %%VERDICT_CLASS%%">%%VERDICT%%</span>
     </div>
     <div class="share-bar">
       <button class="share-btn primary" type="button" data-share="native">↗ Share</button>
@@ -244,6 +273,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(8,11,17,0.92);backdrop-fil
   <div class="con">
     <h1 class="section-title">%%H1%%</h1>
     <div class="section-sub">What the market believes about %%TICKER%% right now — a forensic read of the story, not a buy or sell rating.</div>
+    %%ANSWER_BLOCK%%
     <p class="narrative-read">%%NARRATIVE_READ%%</p>
   </div>
 </section>
@@ -330,6 +360,20 @@ nav{position:sticky;top:0;z-index:100;background:rgba(8,11,17,0.92);backdrop-fil
 
 <!-- ── FAQ (free, AEO) ── -->
 %%FAQ_BLOCK%%
+
+<!-- ── BIG CTA ── -->
+<section class="section">
+  <div class="con">
+    <div class="cta-banner">
+      <div class="cta-head">The full picture on %%TICKER%% — updated every day.</div>
+      <p class="cta-sub">Market Prism reverse-engineers the story behind %%TICKER%%'s price: fair value, narrative energy, coordination, and the projected trade signal. Real-time, forensic, and impossible to get from a chatbot.</p>
+      <div class="cta-row">
+        <a href="/login#register" class="cta-primary" data-track="stock_cta_register">Get full access — free to start</a>
+        <a href="/dashboard" class="cta-secondary" data-track="stock_cta_dashboard">Explore the live dashboard</a>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ── RELATED ── -->
 <section class="section">
@@ -479,6 +523,11 @@ nav{position:sticky;top:0;z-index:100;background:rgba(8,11,17,0.92);backdrop-fil
       else if(a === 'linkedin'){ openWin('https://www.linkedin.com/sharing/share-offsite/?url=' + enc(S.url)); track('share','linkedin'); }
       else if(a === 'copy') copyLink();
     });
+  });
+
+  /* ── GA event tracking on CTAs / locked card ── */
+  document.querySelectorAll('[data-track]').forEach(function(el){
+    el.addEventListener('click', function(){ try{ if(typeof gtag==='function') gtag('event', el.getAttribute('data-track'), { ticker: TICKER }); }catch(_){} });
   });
 })();
 </script>

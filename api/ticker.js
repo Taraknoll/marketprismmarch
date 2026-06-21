@@ -81,9 +81,10 @@ module.exports = async (req, res) => {
 
         const controller = new AbortController();
         const seoTimeout = setTimeout(() => controller.abort(), 5000);
-        const [scRes, tcRes] = await Promise.all([
+        const [scRes, tcRes, rbiRes] = await Promise.all([
           fetch(`${supabaseUrl}/rest/v1/narrative_scorecard?ticker=eq.${encodeURIComponent(safeTicker)}&order=snapshot_date.desc&limit=1`, { headers, signal: controller.signal }),
           fetch(`${supabaseUrl}/rest/v1/v_trade_cards?ticker=eq.${encodeURIComponent(safeTicker)}&order=snapshot_date.desc&limit=1`, { headers, signal: controller.signal }),
+          fetch(`${supabaseUrl}/rest/v1/ticker_reality_belief?ticker=eq.${encodeURIComponent(safeTicker)}&select=reality_belief_index,gauge_zone&limit=1`, { headers, signal: controller.signal }).catch(() => null),
         ]).finally(() => clearTimeout(seoTimeout));
 
         if (scRes.ok) {
@@ -110,7 +111,15 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Build narrative for meta description
+        if (rbiRes && rbiRes.ok) {
+          const rows = await rbiRes.json();
+          if (rows.length > 0) {
+            data.rbi = rows[0].reality_belief_index;
+            data.rbiZone = rows[0].gauge_zone;
+          }
+        }
+
+        // Build narrative for meta description + free answer-first summary
         const narr = transformNarrative({ ticker: safeTicker, ...data });
 
         // 1. Inject SEO <title>
@@ -156,6 +165,20 @@ module.exports = async (req, res) => {
         //    inherits the page layout and sits below all tab content
         const aeoHtml = buildAEOBlock(safeTicker, data);
         html = html.replace('</main>', `${aeoHtml}\n</main>`);
+
+        // 4. Free answer-first verdict summary — a plain-English "short answer"
+        //    read shown to ALL logged-in users (incl. free), injected as a
+        //    sibling ABOVE the Pro-gated #verdict-banner so it sits outside the
+        //    body.mp-teaser-locked blur scope. The precise forecast / entry /
+        //    target / stop stay Pro.
+        if (data.verdict) {
+          const { buildAnswerFirst } = require('../lib/answerFirst');
+          const answerHtml = buildAnswerFirst(narr, { esc: escHtml });
+          html = html.replace(
+            '<div class="verdict-banner" id="verdict-banner">',
+            `${answerHtml}\n  <div class="verdict-banner" id="verdict-banner">`
+          );
+        }
 
       } catch (seoErr) {
         // Non-fatal — page still works without SEO/AEO
