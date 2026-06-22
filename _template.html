@@ -19101,6 +19101,30 @@ async function miLiveQuotes(tickers){
     return (data&&data.quotes)||cache||{};
   }catch(_){return cache||{};}
 }
+/* Contentless ticker/profile-page filter — mirrors the backend _PROFILE_NOISE_PATTERNS
+   + _LANDING_TITLE_PATTERNS. Hides aggregator data/profile pages (MarketWatch/GuruFocus/
+   TipRanks/Benzinga quote & profile pages) that carry no thesis. Display-only; never
+   touches the DB. Anchored on page-existence phrasing a real thesis never uses — validated
+   FP-free against the live corpus (458/65,086 analyses matched, 0 thesis co-occurrence). */
+var MP_CONTENTLESS_RX = [
+  /\bprovides?\s+(?:an?\s+|the\s+)?(?:company\s+|general\s+|basic\s+|brief\s+|corporate\s+)*profile\s+(?:of|for)\b/i,
+  /\bgeneral\s+overview\s+of\b/i,
+  /\b(?:company\s+|corporate\s+)?profile\s+(?:is|are)\s+(?:available|accessible|presented|provided)\b/i,
+  /\bavailable\s+financial\s+information\b/i,
+  /\bfinancial\s+information\s+(?:is|are)\s+available\b/i,
+  /\bfor\s+investor\s+research\b/i,
+  /\bprovid(?:es|ing)\s+basic\s+(?:corporate|company)\s+information\b/i,
+  /\bforecast\s+information\s+(?:is|are)\s+available\b/i,
+  /\bis\s+an?\s+entity\s+with\s+a\s+profile\b/i,
+  /\bstock\s+information\s+including\s+price\b/i,
+  /\bstock\s+price,\s*trades\s*(?:and|&)\s*news\b/i,
+  /\bstock\s+(?:price,\s*quote,\s*news\s*(?:and|&)\s*analysis\s+)?information(?:\s+including[^.]*)?\s+(?:is|are)\s+available\b/i
+];
+function mpIsContentless(txt){
+  if(!txt) return false;
+  var s=String(txt);
+  return MP_CONTENTLESS_RX.some(function(rx){return rx.test(s);});
+}
 async function miLoadTopStories(){
   var list=document.getElementById('mi-wks-list');
   try{
@@ -19114,6 +19138,7 @@ async function miLoadTopStories(){
     rows.forEach(function(r){
       if(Number(r.narrative_mass_score)>1&&(r.nrs==null||Number(r.nrs)===0))return;   // wrong-scale rows
       if(/^[A-Z][A-Z.\-]{0,7}\s+narrative\s*:/i.test(String(r.narrative||'')))return; // template stub
+      if(mpIsContentless(r.narrative))return;                                          // contentless ticker/profile page
       r._auth=miAuthority(r);
       r._wks=Number(r.wks_score)||0;
       var cur=best[r.ticker];
@@ -19190,7 +19215,8 @@ async function miLoadStories(){
     // headlines and never get enriched — without the forensic check they're
     // just half-empty cards, so they're excluded outright.
     var rows=await miq('sector_news?select=sector,subsector,headline,source,published_at,associated_ticker,narrative_claim,structural_rebuttal,drift_score,coordination_flag,verdict,sector_trap_active&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative_claim=not.is.null&structural_rebuttal=not.is.null&order=published_at.desc.nullslast&limit=240');
-    rows=(rows||[]).filter(function(r){return String(r.narrative_claim||'').trim()&&String(r.structural_rebuttal||'').trim();});
+    rows=(rows||[]).filter(function(r){return String(r.narrative_claim||'').trim()&&String(r.structural_rebuttal||'').trim();})
+      .filter(function(r){return !mpIsContentless(String(r.headline||'')+' '+String(r.narrative_claim||''));});
     if(!rows.length){miDropPanel('mi-story-grid');if(chips)chips.innerHTML='';return;}
     miStories=rows;miSector='__all__';miStoryCap=12;
     miRenderSectorChips();miRenderStories();
