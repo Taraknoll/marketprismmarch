@@ -53,10 +53,13 @@ module.exports = async (req, res) => {
     // ── Lazy claim-evidence sub-request (isolated; heavy view) ──────────────
     // Only ticker-keyed. Long cache so once computed it's instant on repeat.
     if (section === 'claims') {
+      // mv_claim_evidence_match = materialized v_claim_evidence_match (idx on
+      // ticker,match_rank) — ~1.5ms vs ~70s for the live view; refreshed nightly
+      // by pg_cron job 'refresh-mv-claim-evidence' (07:00 UTC, CONCURRENTLY).
       const ce = await restT(
-        'v_claim_evidence_match?select=claim_id,snapshot_date,claim_excerpt,claim_type,consensus_direction,paper_title,source,source_url,year,match_score,match_rank' +
+        'mv_claim_evidence_match?select=claim_id,snapshot_date,claim_excerpt,claim_type,consensus_direction,paper_title,source,source_url,year,match_score,match_rank' +
         '&ticker=eq.' + T + '&match_rank=lte.5&order=snapshot_date.desc,match_rank.asc&limit=40',
-        20000
+        8000
       );
       res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
       return sendJson(res, 200, { ticker: ticker, claim_evidence: Array.isArray(ce) ? ce : [] });
