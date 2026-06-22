@@ -4771,6 +4771,30 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
 <nav class="side-nav" id="side-nav"></nav>
 <script src="/lib/mp-sidebar.js"></script>
 <script>MP.renderSidebar({ container: '#side-nav', mode: 'tabs', injectStyles: false });</script>
+<script>
+(function(){
+  function injectForensicNav(tries){
+    tries = tries || 0;
+    var nav = document.getElementById('side-nav');
+    var tmpl = nav && nav.querySelector('.nav-item[data-tab="leaderboard"]');
+    if(!tmpl){ if(tries < 25) setTimeout(function(){ injectForensicNav(tries+1); }, 150); return; }
+    if(nav.querySelector('.nav-item[data-tab="forensic"]')) return;
+    var clone = tmpl.cloneNode(true);
+    clone.setAttribute('data-tab','forensic');
+    clone.classList.remove('active');
+    clone.removeAttribute('href');
+    clone.removeAttribute('onclick');
+    var lbl = clone.querySelector('.nav-item-label');
+    if(lbl){ lbl.textContent = 'Forensic Screen'; } else { clone.textContent = 'Forensic Screen'; }
+    var sub = clone.querySelector('.nav-item-sub'); if(sub){ sub.textContent = 'Market-wide red flags'; }
+    var badge = clone.querySelector('.nav-item-badge'); if(badge){ badge.remove(); }
+    clone.onclick = function(){ if(typeof switchTab==='function') switchTab('forensic', clone); };
+    tmpl.parentNode.insertBefore(clone, tmpl.nextSibling);
+  }
+  if(document.readyState !== 'loading'){ injectForensicNav(); }
+  else { document.addEventListener('DOMContentLoaded', function(){ injectForensicNav(); }); }
+})();
+</script>
 <!-- ── MAIN CONTENT ── -->
 <div class="main">
   <!-- Ambient effects -->
