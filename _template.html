@@ -5212,8 +5212,8 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
       <div class="mi-section">
         <div class="mi-sec-head">
           <div>
-            <div class="mi-sec-title">Most Influential Narratives</div>
-            <div class="mi-sec-sub">Today's stories with the strongest grip on price, ranked by WKS — the Walsh kinetic score measuring how much force a narrative is exerting right now.</div>
+            <div class="mi-sec-title">Top Stories</div>
+            <div class="mi-sec-sub">Today's biggest movers that carry a real narrative — ranked by live price &amp; volume right now, with each story's source (SRS) and analyst (ACS) credibility shown alongside.</div>
           </div>
         </div>
         <div class="mi-wks-list" id="mi-wks-list"></div>
@@ -19069,32 +19069,89 @@ async function miLoadMacro(){
   }catch(e){miDropPanel('mi-macro-list');}
 }
 
-/* 3) MOST INFLUENTIAL NARRATIVES — narrative_scorecard by wks_score */
-async function miLoadWks(){
+/* 3) TOP STORIES — biggest LIVE price+volume movers among today's scored
+   narratives. Authority (SRS/ACS/CCP) picks the most credible narrative per
+   ticker and shows alongside; ranking is movement-first. Reuses the .mi-wks-*
+   row styles. */
+// Narrative authority 0-100 from source reliability, analyst credibility, and
+// composite confidence. Reweights if a metric is missing so partial rows still
+// score fairly.
+function miAuthority(r){
+  var srs=Number(r.srs),acs=Number(r.acs),ccp=Number(r.ccp),s=0,w=0;
+  if(isFinite(srs)){s+=0.40*srs;w+=0.40;}
+  if(isFinite(acs)){s+=0.40*acs;w+=0.40;}
+  if(isFinite(ccp)){s+=0.20*ccp;w+=0.20;}
+  return w>0?s/w:0;
+}
+// Live price+volume map for a ticker list. Reuses the page-wide quote cache if
+// it already covers everything, else one batched /api/live-quotes-batch call.
+async function miLiveQuotes(tickers){
+  tickers=tickers.filter(function(v,i,a){return v&&a.indexOf(v)===i;});
+  if(!tickers.length)return {};
+  var cache=window.__LIVE_QUOTES_CACHE||null;
+  if(cache&&tickers.every(function(t){return cache[t];}))return cache;
+  try{
+    var res=await fetch('/api/live-quotes-batch?tickers='+encodeURIComponent(tickers.join(',')));
+    if(!res.ok)return cache||{};
+    var data=await res.json();
+    return (data&&data.quotes)||cache||{};
+  }catch(_){return cache||{};}
+}
+async function miLoadTopStories(){
   var list=document.getElementById('mi-wks-list');
   try{
     var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-wks-list');return;}
-    var rows=await miq('narrative_scorecard?select=ticker,narrative,wks_score,walsh_regime,narrative_energy_absolute,narrative_energy_regime,verdict,nrs,narrative_mass_score,genesis_date&snapshot_date=eq.'+encodeURIComponent(day)+'&wks_score=not.is.null&narrative=not.is.null&order=wks_score.desc&limit=40');
+    var rows=await miq('narrative_scorecard?select=ticker,narrative,srs,acs,ccp,wks_score,verdict,narrative_energy_regime,narrative_mass_score,nrs,genesis_date&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative=not.is.null&ticker='+encodeURIComponent(MP_EXCLUDED_TICKERS)+'&order=wks_score.desc.nullslast&limit=120');
     if(!rows||!rows.length){miDropPanel('mi-wks-list');return;}
-    var seen={},out=[];
+    // Junk filter + collapse to ONE (most credible) narrative per ticker.
+    var best={};
     rows.forEach(function(r){
-      // wrong-scale scorer rows (mass on 0-100 + nrs 0) are broken end-to-end
-      if(Number(r.narrative_mass_score)>1&&(r.nrs==null||Number(r.nrs)===0))return;
-      // scorer fallback template "XYZ narrative: ..." isn't a real story
-      if(/^[A-Z][A-Z.\-]{0,7}\s+narrative\s*:/i.test(String(r.narrative||'')))return;
-      if(seen[r.ticker])return;
-      seen[r.ticker]=1;out.push(r);
+      if(Number(r.narrative_mass_score)>1&&(r.nrs==null||Number(r.nrs)===0))return;   // wrong-scale rows
+      if(/^[A-Z][A-Z.\-]{0,7}\s+narrative\s*:/i.test(String(r.narrative||'')))return; // template stub
+      r._auth=miAuthority(r);
+      r._wks=Number(r.wks_score)||0;
+      var cur=best[r.ticker];
+      if(!cur||r._auth>cur._auth)best[r.ticker]=r;
     });
-    if(!out.length){miDropPanel('mi-wks-list');return;}
-    list.innerHTML=out.slice(0,10).map(function(r,i){
-      var wks=Math.max(0,Math.min(100,Number(r.wks_score)||0));
-      var regime=String(r.narrative_energy_regime||'').toUpperCase();
-      var rc=MI_REGIME[regime]||'#A0A8B0';
+    var cands=Object.keys(best).map(function(t){return best[t];});
+    if(!cands.length){miDropPanel('mi-wks-list');return;}
+    // Bound the live-quote call: rank candidates by narrative significance (WKS)
+    // and quote the top slice — among those, movement decides the order.
+    cands.sort(function(a,b){return b._wks-a._wks;});
+    cands=cands.slice(0,60);
+    var quotes=await miLiveQuotes(cands.map(function(r){return r.ticker;}));
+    var maxPm=0,maxVm=0;
+    cands.forEach(function(r){
+      var q=quotes[r.ticker]||{};r._q=q;
+      r._pm=Math.abs(Number(q.changePct)||0);
+      r._vm=Math.max(0,Number(q.relVolume)||0);
+      if(r._pm>maxPm)maxPm=r._pm;
+      if(r._vm>maxVm)maxVm=r._vm;
+    });
+    var anyMove=(maxPm>0||maxVm>0);
+    cands.forEach(function(r){
+      var pmN=maxPm>0?(r._pm/maxPm)*100:0;
+      var vmN=maxVm>0?(r._vm/maxVm)*100:0;
+      r._move=0.5*pmN+0.5*vmN;
+      // movement-first, authority as a gentle tiebreak. Fall back to pure
+      // authority when live quotes are unavailable (weekend / holiday / API down).
+      r._rank=anyMove?(r._move*1000+r._auth):r._auth;
+    });
+    cands.sort(function(a,b){return b._rank-a._rank;});
+    list.innerHTML=cands.slice(0,10).map(function(r,i){
+      var headline=Math.max(0,Math.min(100,anyMove?r._move:r._auth));
+      var hlbl=anyMove?'MOVE':'AUTH';
+      var q=r._q||{};
+      var cp=(q.changePct!=null)?Number(q.changePct):null;
+      var cpStr=(cp!=null)?((cp>=0?'+':'')+cp.toFixed(2)+'%'):'';
+      var cpCol=(cp==null)?'var(--mp-text-tertiary)':(cp>=0?'#00DE94':'#FF4D4D');
+      var rv=(q.relVolume!=null&&isFinite(Number(q.relVolume)))?Number(q.relVolume):null;
+      var rvStr=(rv!=null&&rv>0)?(rv.toFixed(rv>=10?0:1)+'× vol'):'';
       var vc=miVerdictColor(r.verdict);
-      var energy=Math.round(Number(r.narrative_energy_absolute)||0);
       var gen=miShortDate(r.genesis_date);
+      var srs=Math.round(Number(r.srs)||0),acs=Math.round(Number(r.acs)||0);
       var logo=(typeof logoHTML==='function')?logoHTML(r.ticker,'sm'):'';
       return '<a class="mi-wks-row" href="/ticker/'+encodeURIComponent(r.ticker)+'" style="animation-delay:'+(i*0.05)+'s;">'
         +'<span class="mi-wks-rank'+(i===0?' mi-r1':i===1?' mi-r2':i===2?' mi-r3':'')+'">'+(i+1)+'</span>'
@@ -19102,14 +19159,14 @@ async function miLoadWks(){
         +'<span class="mi-wks-mid"><span class="mi-wks-narr" style="display:block;">'+miEsc(r.narrative)+'</span>'
         +'<span class="mi-wks-meta"><b style="color:var(--mp-text-secondary);font-weight:700;">'+miEsc(r.ticker)+'</b>'
         +'<span data-live-price="'+miEsc(r.ticker)+'" style="font-size:11px;color:var(--mp-text-tertiary);font-weight:500;font-family:var(--font-body);"></span>'
-        +'<span data-live-change="'+miEsc(r.ticker)+'" style="font-size:10px;font-family:var(--font-body);"></span>'
-        +(gen?'<span title="Narrative genesis — when this storyline was first detected">since '+gen+'</span>':'')
+        +(cpStr?'<span style="font-size:11px;font-weight:700;color:'+cpCol+';font-family:var(--font-body);">'+cpStr+'</span>':'')
+        +(rvStr?'<span title="Today\'s volume vs. the prior session">'+rvStr+'</span>':'')
+        +(srs?miPill('SRS '+srs,'#00AEFF'):'')
+        +(acs?miPill('ACS '+acs,'#38C8B8'):'')
         +(r.verdict?miPill(r.verdict,vc):'')
-        +(regime?miPill(regime+' energy',rc):'')
-        +(r.walsh_regime?'<span>'+miEsc(r.walsh_regime)+' regime</span>':'')
-        +(energy?'<span>E '+energy+'</span>':'')
+        +(gen?'<span title="Narrative genesis — when this storyline was first detected">since '+gen+'</span>':'')
         +'</span></span>'
-        +'<span class="mi-wks-score"><span class="mi-wks-num" data-mi-count="'+wks.toFixed(1)+'">0</span><span class="mi-wks-num-lbl">WKS</span><span class="mi-wks-track" style="display:block;"><span class="mi-wks-fill" style="display:block;" data-mi-w="'+wks+'"></span></span></span>'
+        +'<span class="mi-wks-score"><span class="mi-wks-num" data-mi-count="'+headline.toFixed(1)+'">0</span><span class="mi-wks-num-lbl">'+hlbl+'</span><span class="mi-wks-track" style="display:block;"><span class="mi-wks-fill" style="display:block;" data-mi-w="'+headline+'"></span></span></span>'
       +'</a>';
     }).join('');
     miAnimateBars(list);miCountUp(list);
@@ -19227,7 +19284,7 @@ async function loadMarketInsights(opts){
   }
   if(!opts.silent)miSkeleton();
   miDate();
-  await Promise.all([miLoadAlerts(),miLoadNmap(),miLoadMacro(),miLoadWks(),miLoadStories()]);
+  await Promise.all([miLoadAlerts(),miLoadNmap(),miLoadMacro(),miLoadTopStories(),miLoadStories()]);
   miQuietNote();
   _miLastLoad=Date.now();
 }

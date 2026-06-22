@@ -18750,7 +18750,7 @@ async function miLoadTopStories(){
     var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-wks-list');return;}
-    var rows=await miq('narrative_scorecard?select=ticker,narrative,srs,acs,ccp,wks_score,verdict,narrative_energy_regime,narrative_mass_score,nrs,genesis_date&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative=not.is.null&order=wks_score.desc.nullslast&limit=120');
+    var rows=await miq('narrative_scorecard?select=ticker,narrative,srs,acs,ccp,wks_score,verdict,narrative_energy_regime,narrative_mass_score,nrs,genesis_date&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative=not.is.null&ticker='+encodeURIComponent(MP_EXCLUDED_TICKERS)+'&order=wks_score.desc.nullslast&limit=120');
     if(!rows||!rows.length){miDropPanel('mi-wks-list');return;}
     // Junk filter + collapse to ONE (most credible) narrative per ticker.
     var best={};
