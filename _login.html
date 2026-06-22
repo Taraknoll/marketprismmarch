@@ -22,7 +22,7 @@
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --mp-obsidian:#08090F;
+  --mp-obsidian:#080B11;
   --mp-deep:#0A0E1A;
   --mp-surface:rgba(14,18,32,0.55);
   --mp-surface2:rgba(20,29,53,0.6);
@@ -33,10 +33,12 @@
   --mp-text-tertiary:#4A5578;
   --mp-teal:#00DE94;
   --mp-blue:#00AEFF;
-  --mp-red:#E05252;
-  --font-display:'Inter','system-ui',sans-serif;
-  --font-body:'DM Sans','Helvetica Neue',sans-serif;
-  --font-mono:'DM Mono','Fira Code',monospace;
+  --mp-red:#FF4D4D;
+  /* Inter everywhere — no monospace/serif (design standard). All three vars map
+     to Inter so legacy var(--font-mono)/var(--font-body) references render in Inter. */
+  --font-display:'Inter','DM Sans',system-ui,sans-serif;
+  --font-body:'Inter','DM Sans',system-ui,sans-serif;
+  --font-mono:'Inter','DM Sans',system-ui,sans-serif;
 }
 html,body{
   height:100%;font-family:var(--font-body);
@@ -177,9 +179,9 @@ body::before{
 @keyframes fadeIn{0%{opacity:0;transform:translateY(-4px);}100%{opacity:1;transform:translateY(0);}}
 .auth-message.error{
   display:block;
-  background:rgba(224,82,82,0.08);
-  border:1px solid rgba(224,82,82,0.2);
-  color:#FF7070;
+  background:rgba(255,77,77,0.10);
+  border:1px solid rgba(255,77,77,0.25);
+  color:#FF4D4D;
 }
 .auth-message.success{
   display:block;
@@ -196,7 +198,7 @@ body::before{
 /* Footer */
 .login-footer{
   text-align:center;margin-top:20px;
-  font-family:var(--font-mono);font-size:9px;
+  font-family:var(--font-mono);font-size:10px;
   color:var(--mp-text-tertiary);letter-spacing:0.08em;
   text-transform:uppercase;
 }
@@ -218,7 +220,7 @@ body::before{
   border:1px solid rgba(255,184,0,0.28);
   border-radius:12px;
   font-family:var(--font-body);font-size:13px;line-height:1.55;
-  color:#FFD166;
+  color:#FFB800;
   animation:fadeIn 0.3s ease-out;
 }
 .maintenance-banner.active{display:block;}

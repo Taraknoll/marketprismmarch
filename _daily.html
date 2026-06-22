@@ -41,8 +41,7 @@
   --mp-blue-glow:rgba(0,174,255,0.10);
   --mp-cyan:#00FFFF;
   --mp-teal:#00DE94;
-  --mp-red:#38C8B8;
-  --mp-amber:#00DE94;
+  --mp-red:#FF4D4D;
   --mp-text-primary:#E8ECF4;
   --mp-text-secondary:#6B7394;
   --mp-text-tertiary:#3D4466;
@@ -243,13 +242,13 @@ body{
 .analog-conf{font-family:var(--font-mono);font-size:9px;color:var(--mp-text-tertiary);text-align:right;white-space:nowrap;}
 /* ── SECTOR SECTION ── */
 .sector-section{animation:slideUp .7s cubic-bezier(.16,1,.3,1) .3s both;margin-bottom:36px;}
-.sector-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.sector-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:8px;padding:14px 16px;border-left:2px solid transparent;transition:border-color .2s;}
-.sector-card:hover{border-color:rgba(255,255,255,.1);}
-.sc-name{font-size:13px;font-weight:400;color:var(--mp-text-primary);margin-bottom:5px;}
-.sc-bar-track{height:3px;background:var(--mp-border);border-radius:2px;margin:7px 0 6px;overflow:hidden;}
-.sc-bar-fill{height:3px;border-radius:2px;}
-.sc-meta{font-family:var(--font-mono);font-size:9px;color:var(--mp-text-tertiary);line-height:1.6;}
+.sector-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.sector-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:18px 20px;border-left:2px solid transparent;box-shadow:0 4px 12px rgba(0,0,0,0.4);transition:border-color .3s,box-shadow .3s,transform .3s;}
+.sector-card:hover{border-color:rgba(255,255,255,0.14);box-shadow:0 8px 24px rgba(0,0,0,0.5);transform:translateY(-4px);}
+.sc-name{font-size:14px;font-weight:600;color:var(--mp-text-primary);margin-bottom:8px;letter-spacing:-0.01em;}
+.sc-bar-track{height:5px;background:var(--mp-border);border-radius:3px;margin:10px 0 8px;overflow:hidden;}
+.sc-bar-fill{height:5px;border-radius:3px;}
+.sc-meta{font-family:var(--font-mono);font-size:11px;color:var(--mp-text-tertiary);line-height:1.6;}
 /* ── EVENTS CALENDAR ── */
 .events-section{animation:slideUp .7s cubic-bezier(.16,1,.3,1) .35s both;margin-bottom:36px;}
 .events-timeline{display:flex;border:1px solid var(--mp-border);border-radius:10px;overflow:hidden;}
