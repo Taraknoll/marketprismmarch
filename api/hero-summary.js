@@ -19,7 +19,7 @@ const SYSTEM_PROMPT = `You are writing a 2-3 sentence editorial summary for a st
 
 Sentence 1 — Lead with what's dominating discourse. If multiple articles share a theme, name it specifically (use proper nouns from the articles). If they conflict, describe the conflict.
 
-Sentence 2 — Quantify the disconnect between narrative and fundamentals. If a fair value gap is provided in the input, reference it; if it is not provided, do NOT mention fair value, valuation, premium, discount, over/undervalued, or any "X% above/below fair value" phrasing. Always reference narrative health (use the narrative regime / walsh_regime to characterize whether the story is fresh or fading), and recent earnings when applicable.
+Sentence 2 — Quantify the disconnect between narrative and fundamentals. If a fair value gap is provided in the input, reference it; if it is not provided, do NOT mention fair value, valuation, premium, discount, over/undervalued, or any "X% above/below fair value" phrasing. Always reference narrative health in plain market English - use the "Story momentum" read in the input to say whether the story is building, holding steady, fading, or losing momentum - and reference recent earnings when applicable.
 
 Valuation lens consistency — CRITICAL: A "P/E vs sector" badge sits visually adjacent to this paragraph. If the input provides P/E context (current P/E, 5-yr median, implied-at-fair-value, industry average) AND those signals disagree with the fair-value premium (e.g. fair-value model says +16% overvalued but P/E is below sector or below the stock's own 5-yr median), you MUST acknowledge both lenses rather than lead with just one. Example phrasing: "trades at 42x vs a 5-yr median of 34x even as the multiple sits below sector peers, with the fair-value model still flagging X% of stretch on narrative-adjusted fundamentals". Never write a sentence that contradicts what the adjacent badge shows.
 
@@ -34,6 +34,7 @@ Hard rules:
 - Do not say "this stock", "this ticker", or restate the ticker symbol — they are shown adjacent to the paragraph.
 - Read like a Bloomberg analyst wrote it. Not breathless, not robotic.
 - Banned words (always): crash, guaranteed, certain, always, never, explosion, manipulation. Use "stretched", "diverging", or "outpacing fundamentals" instead.
+- NO narrative-physics or scientific-metaphor vocabulary in the output, ever. Specifically banned: half-life, decay, decaying, energy (including "narrative energy", "sentiment energy", "temporal energy"), velocity, mass, friction, fuel, radioactive, critical, subcritical, supercritical, exhaustion, exhausting. Never cite a number of days of "half-life". Describe the story in plain market English instead: "the story is losing momentum", "fresh coverage is thinning", "the narrative is fading", "conviction is slipping", "coverage is still consensus-long". The plain word "momentum" on its own is allowed - only the physics/energy metaphors are banned. Keep the paragraph focused on the narrative and the stock price.
 - Conditional banned words: when the input contains "Valuation flag: TEMPERATE", these additional words become banned in the paragraph: hype, hyped, frothy, froth, mania, manic, euphoria, euphoric, bubble, parabolic, blow-off. A TEMPERATE flag means the stock is within 20% of fair value AND the multiple is below sector peers, so any "hype" framing would contradict the multiple math. Use "extended", "consensus-long", "well-owned", or "crowded" instead. The synthesized state label above the paragraph may still contain "hype" - that is fine, the label is separate; but the paragraph itself must avoid those words. When the flag is "ELEVATED" or absent, normal valuation language is allowed.
 
 Output ONLY the paragraph. No headers, no quotes around it, no preamble.`;
@@ -61,6 +62,23 @@ function coordinationClass(score) {
   if (score >= 30) return 'SUSPICIOUS_PATTERN';
   if (score >= 10) return 'ORGANIC_SPREAD';
   return 'ORGANIC';
+}
+
+// Translate the narrative-physics regime enums (narrative_energy_regime values
+// are nuclear-reactor terms: 'Sub-Critical' / 'Critical' / 'Supercritical', and
+// walsh_regime adds 'EXHAUSTING' etc.) into a single plain-English read of story
+// momentum. Keeps the physics vocabulary out of the LLM input entirely so the
+// generated paragraph can't echo "half-life", "energy", "subcritical", etc.
+function plainMomentum(energyRegime, walshRegime) {
+  var ner = (energyRegime || '').toString().toLowerCase();
+  var wr = (walshRegime || '').toString().toLowerCase();
+  if (/exhaust/.test(wr)) return 'the story is losing momentum and fresh coverage is thinning';
+  if (/super.?critical/.test(ner)) return 'the story is still gaining attention and fresh coverage is building';
+  if (/sub.?critical/.test(ner)) return 'the story is fading and drawing less fresh coverage';
+  if (/critical/.test(ner)) return 'the story is at peak attention with coverage broadly consensus';
+  if (/build|accel|expand|emerg/.test(wr)) return 'the story is building momentum';
+  if (/stable|mature|sustain|hold/.test(wr)) return 'the story is holding steady with sustained coverage';
+  return null;
 }
 
 // Mirror the frontend's deriveState() so we can pass the synthesized state
@@ -228,8 +246,11 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
   if (sc.narrative_state) lines.push('- State: ' + sc.narrative_state);
   var cc = coordinationClass(sc.coordination_score);
   if (cc) lines.push('- Coordination: ' + cc + (sc.coordination_score != null ? ' (' + Math.round(sc.coordination_score) + ')' : ''));
-  if (sc.walsh_regime) lines.push('- Walsh regime: ' + sc.walsh_regime);
-  if (sc.narrative_energy_regime) lines.push('- Energy regime: ' + sc.narrative_energy_regime);
+  // Story momentum — plain-English read derived from the physics regimes so the
+  // raw enum vocabulary (energy / critical / subcritical / exhausting) never
+  // reaches the model. See plainMomentum().
+  var momentumRead = plainMomentum(sc.narrative_energy_regime, sc.walsh_regime);
+  if (momentumRead) lines.push('- Story momentum: ' + momentumRead);
   if (sc.current_sentiment != null) {
     var cs = Number(sc.current_sentiment);
     var tone = cs > 0.30 ? 'BULLISH' : cs < -0.30 ? 'BEARISH' : 'MIXED';
@@ -237,7 +258,6 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
   }
   if (sc.verdict || s.prism_verdict) lines.push('- Verdict: ' + (sc.verdict || s.prism_verdict));
   if (h.narrative_trend) lines.push('- Trend: ' + h.narrative_trend);
-  if (sc.half_life != null) lines.push('- Narrative half-life (days remaining): ' + Math.round(Number(sc.half_life)));
 
   // Synthesized state — the deterministic label rendered above this paragraph.
   // Surfaced explicitly so the LLM doesn't restate it. Pass today's price
@@ -268,9 +288,11 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
     narratives.slice(0, 5).forEach(function(n, i) {
       var bits = [];
       if (n.narrative) bits.push(n.narrative);
-      if (n.narrative_energy_regime) bits.push('regime=' + n.narrative_energy_regime);
-      if (n.energy_remaining != null) bits.push('energy=' + Number(n.energy_remaining).toFixed(0));
-      if (n.propagation_pressure != null) bits.push('propagation=' + Number(n.propagation_pressure).toFixed(0));
+      // Translate the physics regime to plain momentum; drop the raw energy/
+      // propagation field names so the model never sees those words.
+      var nMom = plainMomentum(n.narrative_energy_regime, null);
+      if (nMom) bits.push(nMom);
+      if (n.propagation_pressure != null) bits.push('spread=' + Number(n.propagation_pressure).toFixed(0));
       lines.push('  ' + (i + 1) + '. ' + bits.join(' · '));
     });
   }
@@ -311,9 +333,9 @@ module.exports = async (req, res) => {
   var sinceISO = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
   var [storyRows, scoreRows, healthRows, narrativeRows, fvRows, articleRows] = await Promise.all([
     fetchSupabase('v_dash_daily_story?select=ticker,sector_name,price,price_change_pct,narrative_state,prism_verdict,story_claim,forensic_rebuttal,days_to_earnings,next_earnings_date,guidance_direction,earnings_surprise_pct,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
-    fetchSupabase('narrative_scorecard?select=ticker,verdict,narrative_state,coordination_score,walsh_regime,narrative_energy_regime,narrative_energy_absolute,current_sentiment,fvd_pct,half_life,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
+    fetchSupabase('narrative_scorecard?select=ticker,verdict,narrative_state,coordination_score,walsh_regime,narrative_energy_regime,narrative_energy_absolute,current_sentiment,fvd_pct,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('v_dash_narrative_health?select=ticker,narrative_health,narrative_trend,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
-    fetchSupabase('v_narrative_scorecard_deduped?select=narrative,propagation_pressure,energy_remaining,narrative_energy_regime,snapshot_date&' + tFilter + '&order=snapshot_date.desc,propagation_pressure.desc.nullslast&limit=8'),
+    fetchSupabase('v_narrative_scorecard_deduped?select=narrative,propagation_pressure,narrative_energy_regime,snapshot_date&' + tFilter + '&order=snapshot_date.desc,propagation_pressure.desc.nullslast&limit=8'),
     fetchSupabase('daily_fair_value?select=fair_value,fv_low,fv_high,verdict,premium_pct,pe_used,pe_5y_median,pe_implied,industry_pe_median,snapshot_date&' + tFilter + '&fair_value=not.is.null&order=snapshot_date.desc&limit=1'),
     fetchSupabase('narrative_analyses?select=narrative_text,source_outlet,sentiment_score,snapshot_date&' + tFilter + '&snapshot_date=gte.' + sinceISO + '&order=snapshot_date.desc&limit=10')
   ]);

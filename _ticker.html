@@ -7300,7 +7300,7 @@ async function loadHero() {
           hl.style.display = '';
           hl.removeAttribute('data-pending');
         };
-        fetch('/api/hero-summary?ticker=' + encodeURIComponent(r.ticker) + '&v=2')
+        fetch('/api/hero-summary?ticker=' + encodeURIComponent(r.ticker) + '&v=3')
           .then(function(res){ return res.ok ? res.json() : null; })
           .then(function(j){
             if (j && j.summary) {
