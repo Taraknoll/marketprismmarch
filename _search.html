@@ -863,6 +863,17 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
   // ── Consumer-decision helpers ──────────────────────────────────────────
   // hitRatePct & confPct are 0–100 numbers (or null). p5/p10/p20 are
   // fractions (e.g. 0.06 for +6%) — same shape the API returns.
+  // Single source of truth for the "high consensus" gate — used by BOTH the
+  // verdict (computeDecision) and the signal banner below, so the two can never
+  // disagree (previously the banner keyed off hit-rate alone, so it could say
+  // "HIGH CONSENSUS" while the verdict said "LOW"). A high call needs a clear
+  // directional hit-rate (>=60%) AND enough resolved analogues to trust it
+  // (confidence >=40). hitRatePct & confPct are 0–100 numbers (or null).
+  function isHighConsensus(hitRatePct, confPct){
+    return hitRatePct != null && !isNaN(hitRatePct) && hitRatePct >= 60 &&
+           confPct    != null && !isNaN(confPct)    && confPct    >= 40;
+  }
+
   function computeDecision(hitRatePct, confPct, p5, p10, p20){
     var p5p  = (p5  == null || isNaN(p5))  ? null : Number(p5)  * 100;
     var p10p = (p10 == null || isNaN(p10)) ? null : Number(p10) * 100;
@@ -890,7 +901,7 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
         summary: 'Similar narratives produced inconsistent outcomes.'
       };
     }
-    if (hitRatePct != null && hitRatePct >= 60 && confPct != null && confPct >= 40) {
+    if (isHighConsensus(hitRatePct, confPct)) {
       return {
         tone: 'bull',
         label: 'HIGH CONSENSUS AMONG SIMILAR NARRATIVES',
@@ -1536,7 +1547,9 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
       var avgRet = k > 0 ? sum / k : null;
 
       var dir = (avgRet == null) ? 'flat' : (avgRet > 0.02 ? 'up' : (avgRet < -0.02 ? 'dn' : 'flat'));
-      var conf = (hr == null || isNaN(hr)) ? null : (hr >= 0.60 ? 'high' : (hr >= 0.40 ? 'mixed' : 'weak'));
+      // Use the shared high-consensus gate (hit-rate >=60% AND confidence >=40)
+      // so this banner can never claim "HIGH CONSENSUS" while the verdict says "LOW".
+      var conf = (hr == null || isNaN(hr)) ? null : (isHighConsensus(hr * 100, hrConf) ? 'high' : (hr >= 0.40 ? 'mixed' : 'weak'));
 
       var txt, cls;
       if (conf == null)                       { txt = 'AWAITING DATA';                                  cls = 'flat'; }
