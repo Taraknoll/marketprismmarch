@@ -1355,15 +1355,35 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
     var titleTk = document.getElementById('rn-ticker');
     var subEl = document.getElementById('rn-sub');
     if (!Array.isArray(recent) || !recent.length) { panel.style.display = 'none'; return; }
+    // Dedupe by narrative text — the corpus can carry near-identical chain tips
+    // for the same story, which would otherwise render as duplicate rows.
+    var _rnSeen = {};
+    recent = recent.filter(function(d){
+      var k = (d.narrative_text || '').trim().toLowerCase();
+      if (!k) return true;
+      if (_rnSeen[k]) return false;
+      _rnSeen[k] = 1; return true;
+    });
+    if (!recent.length) { panel.style.display = 'none'; return; }
     titleTk.textContent = ticker;
     subEl.textContent = 'Last ' + recent.length + ' chain-tip dot' + (recent.length === 1 ? '' : 's') + ' from the corpus';
+    // A null return on a RECENT dot means the horizon hasn't matured yet (the
+    // 5/10-day window is still open) — show "maturing" rather than the alarming
+    // "unresolved". ~1.45 calendar days per trading day. Genuinely old + null
+    // returns read as "pending" (neutral, doesn't claim resolved or broken).
+    var _rnNow = Date.now();
+    function rnPending(d, h){
+      var ageD = d.observed_at ? Math.floor((_rnNow - new Date(d.observed_at).getTime()) / 86400000) : null;
+      if (ageD == null) return 'pending';
+      return ageD < Math.ceil(h * 1.45) ? 'maturing' : 'pending';
+    }
     listEl.innerHTML = recent.map(function(d){
       var r10 = d.return_10d;
       var r10Cls = r10 == null ? 'pending' : (r10 > 0 ? 'up' : (r10 < 0 ? 'dn' : 'flat'));
-      var r10Str = r10 == null ? 'unresolved' : ((r10 >= 0 ? '+' : '') + (r10 * 100).toFixed(1) + '% 10d');
+      var r10Str = r10 == null ? rnPending(d, 10) : ((r10 >= 0 ? '+' : '') + (r10 * 100).toFixed(1) + '% 10d');
       var r5 = d.return_5d;
       var r5Cls = r5 == null ? 'pending' : (r5 > 0 ? 'up' : (r5 < 0 ? 'dn' : 'flat'));
-      var r5Str = r5 == null ? 'unresolved' : ((r5 >= 0 ? '+' : '') + (r5 * 100).toFixed(1) + '% 5d');
+      var r5Str = r5 == null ? rnPending(d, 5) : ((r5 >= 0 ? '+' : '') + (r5 * 100).toFixed(1) + '% 5d');
       return '<div class="rn-item">' +
         '<div class="rn-top">' +
           '<span class="rn-source">' + esc(d.speaker || '—') + '</span>' +

@@ -504,7 +504,7 @@
       <!-- Bear stories -->
       <div class="sl-bear-wrap" id="sl-bear-wrap" style="display:none;">
         <div class="sl-bear-hdr" id="sl-bear-hdr">
-          <div class="sl-bear-title">Bear Stories <span class="sl-bear-badge" id="sl-bear-count">0</span></div>
+          <div class="sl-bear-title" title="Bearish-leaning narratives detected for this ticker in the corpus over the selected window. Click to expand.">Bear Stories <span class="sl-bear-badge" id="sl-bear-count">0</span></div>
           <span class="sl-bear-icon" id="sl-bear-icon">&#9662;</span>
         </div>
         <div class="sl-bear-list" id="sl-bear-list"></div>
@@ -930,7 +930,7 @@
     // Wider left gutter when cluster lanes are shown, so theme labels fit in the
     // shared gutter and the price plot + bubble plot start at the same x.
     // Narrower on small screens so the plot doesn't get squeezed.
-    var _leftPad=(SL_SHOW_CLUSTERS)?(W<560?84:118):50;
+    var _leftPad=(SL_SHOW_CLUSTERS)?(W<560?84:134):50;
     var PAD={top:8,right:52,bottom:28,left:_leftPad},CW=W-PAD.left-PAD.right,CH=H-PAD.top-PAD.bottom,N=snaps.length;
     function xOf(i){return PAD.left+(i/Math.max(N-1,1))*CW;}
     function yOf(p){return PAD.top+(1-(p-minP)/(maxP-minP))*CH;}
