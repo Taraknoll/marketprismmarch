@@ -5887,11 +5887,23 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
         <button class="chip" data-val="elevated" onclick="setForensicFilter('elevated')" style="font-family:Inter,sans-serif;font-size:13px;color:rgba(255,184,0,0.7);">Elevated (<span id="forensic-stat-elevated">—</span>)</button>
         <button class="chip" data-val="watch" onclick="setForensicFilter('watch')" style="font-family:Inter,sans-serif;font-size:13px;">Watch</button>
         <button class="chip" data-val="clean" onclick="setForensicFilter('clean')" style="font-family:Inter,sans-serif;font-size:13px;color:rgba(0,222,148,0.7);">Clean</button>
+        <select id="forensic-sort" onchange="setForensicSort(this.value)" style="font-family:Inter,sans-serif;font-size:13px;background:#0C1018;color:#fff;border:1px solid rgba(255,255,255,0.14);border-radius:8px;padding:6px 10px;margin-left:auto;cursor:pointer;">
+          <option value="red_flag_count:desc">Sort: Most red flags</option>
+          <option value="composite_severity:desc">Sort: Highest severity</option>
+          <option value="altman_z:asc">Sort: Most distressed (Altman Z&Prime;)</option>
+          <option value="beneish_m:desc">Sort: Highest manipulation (Beneish M)</option>
+          <option value="accruals_ratio:desc">Sort: Weakest earnings quality</option>
+          <option value="regulatory_red_flags:desc">Sort: Most regulatory flags</option>
+          <option value="filed_date:desc">Sort: Most recent filing</option>
+          <option value="coverage_pct:desc">Sort: Data completeness</option>
+          <option value="ticker:asc">Sort: Ticker A&rarr;Z</option>
+        </select>
       </div>
       <div id="forensic-feed" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;">
         <div style="padding:40px;text-align:center;color:rgba(255,255,255,0.3);grid-column:1/-1;font-family:Inter,sans-serif;font-size:14px;">Loading forensic screen…</div>
       </div>
       <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;">Every figure traces to the SEC 10-K (EDGAR). Survivorship-free backtest. Forensic screen, not investment advice.</div>
+      <div class="tc-card-overlay" id="forensic-detail-overlay"><div class="tc-card-expanded" id="forensic-detail-panel" style="width:560px;max-width:92vw;max-height:85vh;overflow:auto;position:relative;"></div></div>
     </div>
 
     <!-- ═══ SCORE ANY STOCK — TESTING ═══ -->
@@ -16556,6 +16568,7 @@ function getTrapSeverity(fvd){
 var FORENSIC_DATA = [];
 var forensicFilter = 'all';
 var FORENSIC_TRACKED = new Set();
+var forensicSort = 'red_flag_count:desc';
 async function loadForensic(){
   var feed = document.getElementById('forensic-feed');
   if(!feed) return;
@@ -16563,8 +16576,8 @@ async function loadForensic(){
   try{
     if(!SUPABASE_URL || !SUPABASE_ANON) throw new Error('Supabase not configured');
     var hdrs = {'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};
-    var cols = 'cik,ticker,company_name,red_flag_count,composite_severity,altman_z,negative_equity,cash_burn,is_adjudicable,is_delisted';
-    var url = SUPABASE_URL+'/rest/v1/v_xbrl_redflag_latest?select='+cols+'&order=red_flag_count.desc,composite_severity.desc&limit=400';
+    var cols = 'cik,ticker,company_name,fiscal_year,filed_date,red_flag_count,composite_severity,altman_z,beneish_m,accruals_ratio,coverage_pct,negative_equity,cash_burn,is_adjudicable,is_delisted,has_restatement,has_auditor_change,has_late_filing,regulatory_red_flags';
+    var url = SUPABASE_URL+'/rest/v1/v_xbrl_redflag_latest_plus?select='+cols+'&order=red_flag_count.desc,composite_severity.desc&limit=400';
     var res = await fetch(url,{headers:hdrs});
     if(!res.ok) throw new Error('Supabase '+res.status);
     var rows = await res.json();
@@ -16592,6 +16605,11 @@ function renderForensic(){
   var feed = document.getElementById('forensic-feed');
   if(!feed) return;
   var rows = (forensicFilter==='all') ? FORENSIC_DATA : FORENSIC_DATA.filter(function(r){ return forensicSeverity(r).k===forensicFilter; });
+  (function(){ var sp=(forensicSort||'red_flag_count:desc').split(':'), sf=sp[0], sd=sp[1]||'desc';
+    rows = rows.slice().sort(function(a,b){ var av=a[sf], bv=b[sf];
+      if(sf==='ticker'||sf==='filed_date'){ av=String(av||''); bv=String(bv||''); return sd==='asc'?av.localeCompare(bv):bv.localeCompare(av); }
+      var an=(av==null)?(sd==='asc'?Infinity:-Infinity):Number(av), bn=(bv==null)?(sd==='asc'?Infinity:-Infinity):Number(bv);
+      return sd==='asc'?(an-bn):(bn-an); }); })();
   var sev=0,ele=0; FORENSIC_DATA.forEach(function(r){var k=forensicSeverity(r).k; if(k==='severe')sev++; else if(k==='elevated')ele++;});
   var s1=document.getElementById('forensic-stat-severe'); if(s1)s1.textContent=sev;
   var s2=document.getElementById('forensic-stat-elevated'); if(s2)s2.textContent=ele;
@@ -16600,7 +16618,7 @@ function renderForensic(){
   feed.innerHTML = rows.map(function(r){
     var sv = forensicSeverity(r);
     var tracked = FORENSIC_TRACKED.has((r.ticker||'').toUpperCase());
-    var go = tracked ? ("window.location.href='/ticker/"+encodeURIComponent(r.ticker)+"'") : ("window.open('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK="+(r.cik||'')+"&type=10-K&dateb=&owner=include&count=40','_blank')");
+    var go = "openForensicDetail('"+(r.cik||'')+"')";
     var z = (r.altman_z!=null) ? Number(r.altman_z).toFixed(1) : '—';
     var chips='';
     if(r.negative_equity) chips+='<span style="font-size:11px;padding:2px 8px;border-radius:6px;color:#FF4D4D;border:1px solid #FF4D4D;">neg. equity</span>';
@@ -16609,13 +16627,141 @@ function renderForensic(){
     return '<div onclick="'+go+'" style="background:#0C1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s;" onmouseenter="this.style.borderColor=\'rgba(255,255,255,0.14)\';this.style.transform=\'translateY(-3px)\';" onmouseleave="this.style.borderColor=\'rgba(255,255,255,0.06)\';this.style.transform=\'translateY(0)\';">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'
         +'<div style="min-width:0;"><div style="font-weight:600;font-size:16px;font-family:Inter,sans-serif;">'+esc(r.ticker)+'</div>'
-          +'<div style="font-size:12px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">'+esc((r.company_name||'').slice(0,30))+(r.is_delisted?' · delisted':'')+(tracked?'':' · SEC ↗')+'</div></div>'
+          +'<div style="font-size:12px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">'+esc((r.company_name||'').slice(0,30))+(r.is_delisted?' · delisted':'')+'</div></div>'
         +'<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;color:'+sv.c+';border:1px solid '+sv.c+';white-space:nowrap;">'+sv.b+'</span></div>'
       +'<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;"><span style="font-size:28px;font-weight:600;color:'+sv.c+';font-family:Inter,sans-serif;">'+(r.red_flag_count!=null?r.red_flag_count:'—')+'</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">red flags</span></div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'+(chips||'<span style="font-size:12px;color:rgba(255,255,255,0.3);">no acute flags</span>')+'</div>'
     +'</div>';
   }).join('');
 }
+
+function setForensicSort(v){ forensicSort = v; renderForensic(); }
+function regChip(t){ return '<span style="font-size:11px;padding:2px 9px;border-radius:6px;color:#FFB800;border:1px solid rgba(255,184,0,0.5);">'+esc(t)+'</span>'; }
+function fxMetricRow(label, val, vd, sub){
+  return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05);">'
+    +'<div style="min-width:0;"><div style="font-size:13.5px;color:rgba(255,255,255,0.85);">'+esc(label)+'</div>'
+    +(sub?'<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;">'+esc(sub)+'</div>':'')+'</div>'
+    +'<div style="text-align:right;white-space:nowrap;"><div style="font-size:14px;font-weight:600;color:'+vd.c+';">'+val+'</div>'
+    +'<div style="font-size:10px;color:'+vd.c+';text-transform:uppercase;letter-spacing:0.04em;margin-top:1px;">'+esc(vd.b)+'</div></div>'
+  +'</div>';
+}
+function fxCtx(label, val){
+  return '<div style="flex:1 1 90px;min-width:90px;"><div style="font-size:11px;color:rgba(255,255,255,0.35);">'+esc(label)+'</div><div style="font-size:14px;font-weight:600;">'+val+'</div></div>';
+}
+function renderForensicDetail(d, srow, ta){
+  srow = srow || {};
+  var SEV='#FF4D4D',ELE='#FFB800',CLN='#00DE94',NA='rgba(255,255,255,0.35)';
+  var cik=d.cik||srow.cik||'';
+  var tk=srow.ticker||'';
+  var name=esc(d.company_name||srow.company_name||tk||'');
+  var fy=(d.fiscal_year!=null)?d.fiscal_year:'';
+  var filed=d.filed_date?(' · filed '+esc(String(d.filed_date).slice(0,10))):'';
+  var ovd=forensicSeverity(d);
+  var ne=(d.negative_equity==null)?{v:'—',vd:{b:'N/A',c:NA}}:(d.negative_equity?{v:'Yes',vd:{b:'Severe',c:SEV}}:{v:'No',vd:{b:'Clean',c:CLN}});
+  var cb=(d.cash_burn==null)?{v:'—',vd:{b:'N/A',c:NA}}:(d.cash_burn?{v:'Yes',vd:{b:'Elevated',c:ELE},s:'Operating cash flow below zero'}:{v:'No',vd:{b:'Clean',c:CLN}});
+  var az;
+  if(d.altman_z==null){ az={v:'—',vd:{b:'N/A',c:NA}}; }
+  else { var azn=Number(d.altman_z), azt=azn.toFixed(2)+' '+(d.altman_variant||'Z″');
+    az = azn>2.6?{v:azt,vd:{b:'Safe',c:CLN}}:(azn>=1.1?{v:azt,vd:{b:'Grey zone',c:ELE}}:{v:azt,vd:{b:'Distress',c:SEV}}); }
+  var ic;
+  if(d.interest_coverage==null){ ic={v:'—',vd:{b:'N/A',c:NA},s:'No interest expense disclosed'}; }
+  else { var icn=Number(d.interest_coverage); ic=(icn<1.5)?{v:icn.toFixed(2)+'×',vd:{b:'Severe',c:SEV},s:'Below 1.5×: earnings cannot cover interest'}:{v:icn.toFixed(2)+'×',vd:{b:'Clean',c:CLN}}; }
+  var nd;
+  if(d.net_debt_ebitda==null && d.leverage_flag==null){ nd={v:'—',vd:{b:'N/A',c:NA}}; }
+  else if(d.leverage_flag===true){ nd={v:(d.net_debt_ebitda==null?'neg. EBITDA':Number(d.net_debt_ebitda).toFixed(2)+'×'),vd:{b:'Elevated',c:ELE},s:((d.net_debt_ebitda==null||Number(d.net_debt_ebitda)<0)?'Negative EBITDA':'Leverage above 5x')}; }
+  else { nd={v:(d.net_debt_ebitda==null?'—':Number(d.net_debt_ebitda).toFixed(2)+'×'),vd:{b:'Clean',c:CLN}}; }
+  var bm;
+  if(d.beneish_m==null){ bm={v:'—',vd:{b:'N/A',c:NA},s:'Insufficient data for 8-factor model'}; }
+  else { var bflag=(d.beneish_flag===true)||(Number(d.beneish_m)>-1.78); bm=bflag?{v:Number(d.beneish_m).toFixed(2),vd:{b:'Flag',c:ELE},s:'Above -1.78; higher = more manipulation-prone'}:{v:Number(d.beneish_m).toFixed(2),vd:{b:'Clean',c:CLN},s:'Higher = more manipulation-prone'}; }
+  var ar;
+  if(d.accruals_ratio==null){ ar={v:'—',vd:{b:'N/A',c:NA}}; }
+  else { var arn=Number(d.accruals_ratio); ar=(arn>0.10)?{v:arn.toFixed(3),vd:{b:'Weak',c:ELE},s:'Accruals above 0.10; earnings not cash-backed'}:{v:arn.toFixed(3),vd:{b:'Strong',c:CLN}}; }
+  var metrics =
+     fxMetricRow("Negative shareholders' equity", ne.v, ne.vd, ne.s)
+    +fxMetricRow('Cash burn (operating)', cb.v, cb.vd, cb.s)
+    +fxMetricRow('Altman Z″ (distress model)', az.v, az.vd, az.s)
+    +fxMetricRow('Interest coverage', ic.v, ic.vd, ic.s)
+    +fxMetricRow('Net debt / EBITDA', nd.v, nd.vd, nd.s)
+    +fxMetricRow('Beneish M-Score (manipulation)', bm.v, bm.vd, bm.s)
+    +fxMetricRow('Accruals / earnings quality', ar.v, ar.vd, ar.s);
+  var ctx =
+     fxCtx('Piotroski F', d.piotroski_f!=null?(d.piotroski_f+' / 9'):'—')
+    +fxCtx('Ohlson O (prob.)', d.ohlson_p!=null?(Number(d.ohlson_p)<=1?(Number(d.ohlson_p)*100).toFixed(0)+'%':Number(d.ohlson_p).toFixed(2)):'—')
+    +fxCtx('Goodwill+intang.', d.gw_intangibles_pct!=null?((Number(d.gw_intangibles_pct)<=1?(Number(d.gw_intangibles_pct)*100).toFixed(0):Number(d.gw_intangibles_pct).toFixed(0))+'%'):'—')
+    +fxCtx('Dilution', d.dilution_intensity!=null?Number(d.dilution_intensity).toFixed(2):'—')
+    +fxCtx('CFO vs NI gap', d.cfo_ni_gap!=null?Number(d.cfo_ni_gap).toFixed(3):'—');
+  var tmax=1; (ta||[]).forEach(function(t){ if((t.red_flag_count||0)>tmax) tmax=t.red_flag_count; });
+  var bars=(ta||[]).map(function(t){
+    var h=Math.max(3,Math.round(((t.red_flag_count||0)/tmax)*56));
+    var c=forensicSeverity(t).c;
+    return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;flex:1;min-width:13px;">'
+      +'<div style="font-size:9px;color:rgba(255,255,255,0.4);">'+(t.red_flag_count!=null?t.red_flag_count:'')+'</div>'
+      +'<div title="FY'+t.fiscal_year+': '+(t.red_flag_count||0)+' flags" style="width:62%;height:'+h+'px;background:'+c+';border-radius:3px 3px 0 0;opacity:0.85;"></div>'
+      +'<div style="font-size:9px;color:rgba(255,255,255,0.35);">’'+String(t.fiscal_year).slice(2)+'</div>'
+    +'</div>';
+  }).join('');
+  var timelineHtml = bars ? ('<div style="display:flex;align-items:flex-end;gap:4px;height:90px;padding:6px 2px 0;">'+bars+'</div>') : '<div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:6px;">No multi-year history.</div>';
+  var reg='';
+  if(srow.has_restatement) reg+=regChip('Restatement');
+  if(srow.has_auditor_change) reg+=regChip('Auditor change');
+  if(srow.has_late_filing) reg+=regChip('Late filing');
+  var edgar='https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK='+(cik||'')+'&type=10-K&dateb=&owner=include&count=40';
+  var baseT=String(tk).split('-')[0].split('.')[0];
+  var cross=(tk && FORENSIC_TRACKED.has(baseT.toUpperCase()))?('<a href="/ticker/'+encodeURIComponent(baseT)+'" style="font-size:13px;color:#5B9BD5;text-decoration:none;">View full Stock Forensics →</a>'):'';
+  var covPct = (d.coverage_pct!=null)?(Math.round(Number(d.coverage_pct)*(Number(d.coverage_pct)<=1?100:1))+'%'):'—';
+  return '<button onclick="closeForensicDetail()" aria-label="Close" style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:16px;line-height:1;cursor:pointer;z-index:2;">×</button>'
+   +'<div style="padding:24px 26px 26px;font-family:Inter,sans-serif;color:#fff;">'
+   +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding-right:34px;">'
+     +'<div style="min-width:0;"><div style="font-size:22px;font-weight:700;">'+esc(tk)+'</div>'
+       +'<div style="font-size:13px;color:rgba(255,255,255,0.55);margin-top:2px;">'+name+'</div>'
+       +'<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px;">CIK '+esc(String(cik))+' · as-of FY'+esc(String(fy))+' 10-K'+filed+'</div></div>'
+     +'<span style="font-size:12px;font-weight:600;padding:4px 12px;border-radius:8px;color:'+ovd.c+';border:1px solid '+ovd.c+';white-space:nowrap;">'+ovd.b+'</span>'
+   +'</div>'
+   +'<div style="display:flex;gap:18px;align-items:baseline;margin:16px 0 4px;flex-wrap:wrap;">'
+     +'<div><span style="font-size:30px;font-weight:700;color:'+ovd.c+';">'+(d.red_flag_count!=null?d.red_flag_count:'—')+'</span><span style="font-size:12px;color:rgba(255,255,255,0.4);"> red flags'+(d.red_flag_applic!=null?(' of '+d.red_flag_applic+' applicable'):'')+'</span></div>'
+     +'<div style="font-size:12px;color:rgba(255,255,255,0.5);">Severity '+(d.composite_severity!=null?Number(d.composite_severity).toFixed(2):'—')+'</div>'
+     +'<div style="font-size:12px;color:rgba(255,255,255,0.5);">Coverage '+covPct+'</div>'
+   +'</div>'
+   +(reg?('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">'+reg+'</div>'):'')
+   +'<div style="margin-top:14px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.4);margin-bottom:2px;">Accounting red flags</div>'
+   +metrics
+   +'<div style="margin-top:16px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.4);margin-bottom:8px;">Supporting scores</div>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:14px 10px;">'+ctx+'</div>'
+   +'<div style="margin-top:18px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.4);">Red flags by fiscal year</div>'
+   +timelineHtml
+   +'<div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">'
+     +'<a href="'+edgar+'" target="_blank" rel="noopener" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">View all 10-K filings on EDGAR ↗</a>'
+     +cross
+   +'</div>'
+   +'<div style="margin-top:12px;font-size:11px;color:rgba(255,255,255,0.3);line-height:1.5;">Forensic screen, not investment advice. Deterministic accounting-forensics red flags computed from SEC filings (Beneish, Sloan, Piotroski, Altman Z″, Ohlson). A missing figure means the filing did not disclose the underlying XBRL tag — shown as N/A, never zero.</div>'
+   +'</div>';
+}
+async function openForensicDetail(cik){
+  var ov=document.getElementById('forensic-detail-overlay'), panel=document.getElementById('forensic-detail-panel');
+  if(!ov||!panel) return;
+  if(!cik){ return; }
+  panel.innerHTML='<div style="padding:48px;text-align:center;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;font-size:14px;">Loading forensic detail…</div>';
+  ov.classList.add('open');
+  var srow=FORENSIC_DATA.filter(function(r){ return String(r.cik)===String(cik); })[0]||{};
+  try{
+    var hdrs={'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};
+    var fcols='cik,company_name,fiscal_year,filed_date,red_flag_count,red_flag_applic,composite_severity,is_adjudicable,is_delisted,coverage_pct,negative_equity,cash_burn,altman_z,altman_variant,beneish_m,beneish_flag,accruals_ratio,cfo_ni_gap,piotroski_f,ohlson_p,gw_intangibles_pct,interest_coverage,net_debt_ebitda,dilution_intensity,leverage_flag';
+    var furl=SUPABASE_URL+'/rest/v1/xbrl_forensic_factors?select='+fcols+'&cik=eq.'+encodeURIComponent(cik)+'&order=fiscal_year.desc&limit=1';
+    var turl=SUPABASE_URL+'/rest/v1/v_xbrl_factor_timeline?select=fiscal_year,red_flag_count,composite_severity&cik=eq.'+encodeURIComponent(cik)+'&fiscal_year=gte.2012&fiscal_year=lte.2026&order=fiscal_year.asc';
+    var fr=await fetch(furl,{headers:hdrs}); var fa=fr.ok?await fr.json():[];
+    var trr=await fetch(turl,{headers:hdrs}); var ta=trr.ok?await trr.json():[];
+    if(!fa.length){ panel.innerHTML='<button onclick="closeForensicDetail()" style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:16px;cursor:pointer;">×</button><div style="padding:36px 26px;font-family:Inter,sans-serif;color:#fff;"><div style="font-size:20px;font-weight:700;">'+esc(srow.ticker||'')+'</div><div style="color:rgba(255,255,255,0.5);margin-top:8px;">No forensic factor detail available for this company.</div></div>'; return; }
+    panel.innerHTML=renderForensicDetail(fa[0], srow, ta);
+  }catch(e){
+    panel.innerHTML='<button onclick="closeForensicDetail()" style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:16px;cursor:pointer;">×</button><div style="padding:32px;color:#FF4D4D;font-family:Inter,sans-serif;">Error loading detail. '+esc(e.message)+'</div>';
+  }
+}
+function closeForensicDetail(){ var ov=document.getElementById('forensic-detail-overlay'); if(ov) ov.classList.remove('open'); }
+(function(){
+  var ov=document.getElementById('forensic-detail-overlay');
+  if(ov && !ov._fxbound){ ov._fxbound=true; ov.addEventListener('click',function(e){ if(e.target===this) closeForensicDetail(); }); }
+  if(!window._fxEscBound){ window._fxEscBound=true; document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var o=document.getElementById('forensic-detail-overlay'); if(o&&o.classList.contains('open')) closeForensicDetail(); } }); }
+})();
 
 function getTrapStoryRisk(r){
   var days = r.predicted_exhaustion_days;
