@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forensic Dossier — Market Prism</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', TICKER: '' };</script>
+<style>
+  :root{
+    --mp-obsidian:#080B11; --mp-surface:#0C1018; --mp-surface2:#141925;
+    --mp-border:rgba(255,255,255,0.06); --mp-border-mid:rgba(255,255,255,0.10);
+    --mp-text:#F5F7FA; --mp-text2:#C3CAD6; --mp-text3:#8A93A3;
+    --sev:#FF4D4D; --ele:#FFB800; --cln:#00DE94; --evi:#4DC8F0; --blue:#00AEFF;
+    --na:rgba(255,255,255,0.32);
+    --font-d:'DM Sans','Inter',system-ui,sans-serif; --font-b:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--mp-obsidian);color:var(--mp-text);font-family:var(--font-b);-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 20px 80px;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0 6px;}
+  .topbar .brand{font-family:var(--font-d);font-weight:700;font-size:15px;letter-spacing:-0.01em;}
+  .topbar a.back{font-size:13px;color:var(--mp-text3);text-decoration:none;}
+  .topbar a.back:hover{color:var(--mp-text);}
+  .card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:22px;margin-top:18px;}
+  .sec-label{font-size:11px;text-transform:uppercase;letter-spacing:0.07em;color:var(--mp-text3);margin-bottom:12px;font-weight:600;}
+  .muted{color:var(--mp-text3);}
+  .empty{font-size:13px;color:var(--mp-text3);padding:4px 0;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:780px){.grid2{grid-template-columns:1fr;}}
+  .chip{display:inline-block;font-size:11px;padding:3px 9px;border-radius:7px;border:1px solid var(--mp-border-mid);margin:0 6px 6px 0;white-space:nowrap;}
+  /* hero */
+  .hero{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;}
+  .hero h1{font-family:var(--font-d);font-size:30px;margin:0;font-weight:700;letter-spacing:-0.02em;}
+  .hero .co{font-size:14px;color:var(--mp-text2);margin-top:3px;}
+  .hero .prov{font-size:11px;color:var(--mp-text3);margin-top:6px;}
+  .band-badge{text-align:center;border-radius:14px;padding:14px 22px;border:1px solid;min-width:150px;}
+  .band-badge .lbl{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;opacity:.8;}
+  .band-badge .b{font-family:var(--font-d);font-size:24px;font-weight:700;margin-top:2px;}
+  .band-badge .sub{font-size:11px;color:var(--mp-text3);margin-top:4px;}
+  .hero-stats{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;}
+  .hstat .n{font-size:24px;font-weight:700;font-family:var(--font-d);}
+  .hstat .l{font-size:11px;color:var(--mp-text3);}
+  .thesis{font-size:15px;line-height:1.6;color:var(--mp-text2);}
+  /* metric rows */
+  .mrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+  .mrow:last-child{border-bottom:none;}
+  .mrow .lab{font-size:13.5px;color:var(--mp-text);}
+  .mrow .sub{font-size:11px;color:var(--mp-text3);margin-top:2px;}
+  .mrow .val{font-size:14px;font-weight:600;text-align:right;white-space:nowrap;}
+  .mrow .vb{font-size:10px;text-transform:uppercase;letter-spacing:0.04em;margin-top:1px;}
+  .ctx{display:flex;flex-wrap:wrap;gap:14px 10px;margin-top:8px;}
+  .ctx .c{flex:1 1 92px;min-width:92px;}
+  .ctx .c .l{font-size:11px;color:var(--mp-text3);}
+  .ctx .c .v{font-size:14px;font-weight:600;}
+  /* timeline bars */
+  .bars{display:flex;align-items:flex-end;gap:5px;height:110px;padding:8px 2px 0;}
+  .bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;flex:1;min-width:14px;}
+  .bar .v{font-size:9px;color:var(--mp-text3);}
+  .bar .b{width:64%;border-radius:3px 3px 0 0;opacity:.88;}
+  .bar .y{font-size:9px;color:var(--mp-text3);}
+  /* regulatory timeline */
+  .ev{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);align-items:flex-start;}
+  .ev:last-child{border-bottom:none;}
+  .ev .dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none;}
+  .ev .body{flex:1;min-width:0;}
+  .ev .t{font-size:13.5px;font-weight:600;}
+  .ev .m{font-size:11.5px;color:var(--mp-text3);margin-top:2px;}
+  .ev a{font-size:11.5px;color:var(--blue);text-decoration:none;}
+  /* claim cards */
+  .claim{border:1px solid var(--mp-border);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--mp-surface2);}
+  .claim .ex{font-size:13.5px;line-height:1.5;color:var(--mp-text);}
+  .claim .ev-list{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);}
+  .claim .pp{font-size:12.5px;color:var(--mp-text2);padding:4px 0;display:flex;justify-content:space-between;gap:10px;}
+  .claim .pp a{color:var(--evi);text-decoration:none;}
+  .claim .pp .sc{color:var(--mp-text3);font-size:11px;white-space:nowrap;}
+  .badge{font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid;text-transform:uppercase;letter-spacing:0.03em;}
+  /* peers */
+  .precedent{font-size:22px;font-weight:700;font-family:var(--font-d);}
+  .peerchip{display:inline-block;font-size:12px;padding:5px 11px;border-radius:8px;border:1px solid var(--mp-border-mid);margin:0 7px 7px 0;text-decoration:none;color:var(--mp-text2);}
+  .peerchip:hover{border-color:var(--mp-border-mid);color:var(--mp-text);background:var(--mp-surface2);}
+  /* snapshot mini cards */
+  .mini{border:1px solid var(--mp-border);border-radius:12px;padding:14px;background:var(--mp-surface2);}
+  .mini .h{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--mp-text3);margin-bottom:8px;}
+  .kv{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+  .kv .k{color:var(--mp-text3);}
+  /* research */
+  .rgroup{margin-bottom:14px;}
+  .rgroup .gh{font-size:12px;font-weight:600;color:var(--mp-text2);margin-bottom:6px;}
+  .ritem{font-size:12.5px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .ritem a{color:var(--evi);text-decoration:none;}
+  .ritem .kf{color:var(--mp-text3);font-size:11.5px;margin-top:2px;}
+  .foot{margin-top:26px;font-size:11.5px;color:var(--mp-text3);line-height:1.6;}
+  .foot a{color:var(--mp-text2);}
+  .loading{text-align:center;padding:80px 20px;color:var(--mp-text3);font-size:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <span class="brand">Market Prism · Forensic Dossier</span>
+    <a class="back" href="/dashboard">← Forensic Screen</a>
+  </div>
+  <div id="fx-root"><div class="loading">Loading forensic dossier…</div></div>
+  <div class="foot" id="fx-foot"></div>
+</div>
+<script>
+(function(){
+  var ENV = window.__env || {};
+  var SUPA = ENV.SUPABASE_URL || '';
+  var TICKER = (ENV.TICKER || '').toUpperCase();
+  var SEV='#FF4D4D', ELE='#FFB800', CLN='#00DE94', EVI='#4DC8F0', BLUE='#00AEFF', NA='rgba(255,255,255,0.32)';
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function num(v,d){ return (v==null||v===''||isNaN(Number(v))) ? '—' : Number(v).toFixed(d==null?2:d); }
+  function pctv(v){ return (v==null||isNaN(Number(v))) ? '—' : (Number(v)>=0?'+':'')+Number(v).toFixed(1)+'%'; }
+  function dt(s){ return s ? String(s).slice(0,10) : ''; }
+  function money(v){ if(v==null||isNaN(Number(v)))return '—'; var n=Number(v); var a=Math.abs(n); if(a>=1e12)return '$'+(n/1e12).toFixed(2)+'T'; if(a>=1e9)return '$'+(n/1e9).toFixed(2)+'B'; if(a>=1e6)return '$'+(n/1e6).toFixed(1)+'M'; return '$'+n.toLocaleString(); }
+  function bandColor(b){ return b==='HIGH'?SEV : b==='ELEVATED'?ELE : b==='MODERATE'?ELE : CLN; }
+
+  // severity band for a timeline row (mirrors the screener logic)
+  function rowBand(r){
+    var n=Number(r.red_flag_count||0), s=Number(r.composite_severity||0);
+    if(n>=3&&s>=0.45) return SEV;
+    if(n>=2||s>=0.30) return ELE;
+    if(n>=1) return 'rgba(255,255,255,0.4)';
+    return CLN;
+  }
+
+  function mrow(label, val, band, sub){
+    return '<div class="mrow"><div style="min-width:0;"><div class="lab">'+esc(label)+'</div>'
+      +(sub?'<div class="sub">'+esc(sub)+'</div>':'')+'</div>'
+      +'<div><div class="val" style="color:'+band.c+'">'+val+'</div>'
+      +'<div class="vb" style="color:'+band.c+'">'+esc(band.b)+'</div></div></div>';
+  }
+
+  // ── metric verdicts (faithful to factor_library thresholds; null = N/A never 0) ──
+  function gridHTML(f){
+    if(!f) return '<div class="empty">No forensic factor detail available for this filing.</div>';
+    var rows='';
+    // negative equity
+    rows += (f.negative_equity==null)
+      ? mrow("Negative shareholders' equity",'—',{b:'N/A',c:NA})
+      : mrow("Negative shareholders' equity", f.negative_equity?'Yes':'No', f.negative_equity?{b:'Severe',c:SEV}:{b:'Clean',c:CLN});
+    // cash burn
+    rows += (f.cash_burn==null)
+      ? mrow('Cash burn (operating)','—',{b:'N/A',c:NA})
+      : mrow('Cash burn (operating)', f.cash_burn?'Yes':'No', f.cash_burn?{b:'Elevated',c:ELE}:{b:'Clean',c:CLN}, f.cash_burn?'Operating cash flow below zero':'');
+    // altman (3-band)
+    if(f.altman_z==null){ rows += mrow('Altman Z″ (distress)','—',{b:'N/A',c:NA}); }
+    else { var az=Number(f.altman_z), av=az.toFixed(2)+' '+(f.altman_variant||'Z″');
+      rows += mrow('Altman Z″ (distress)', av, az>2.6?{b:'Safe',c:CLN}:(az>=1.1?{b:'Grey zone',c:ELE}:{b:'Distress',c:SEV})); }
+    // interest coverage
+    if(f.interest_coverage==null){ rows += mrow('Interest coverage','—',{b:'N/A',c:NA},'No interest expense disclosed'); }
+    else { var ic=Number(f.interest_coverage); rows += mrow('Interest coverage', ic.toFixed(2)+'×', ic<1.5?{b:'Severe',c:SEV}:{b:'Clean',c:CLN}, ic<1.5?'Below 1.5×: earnings cannot cover interest':''); }
+    // net debt / ebitda
+    if(f.net_debt_ebitda==null && f.leverage_flag==null){ rows += mrow('Net debt / EBITDA','—',{b:'N/A',c:NA}); }
+    else if(f.leverage_flag===true){ rows += mrow('Net debt / EBITDA', f.net_debt_ebitda==null?'neg. EBITDA':Number(f.net_debt_ebitda).toFixed(2)+'×', {b:'Elevated',c:ELE}, (f.net_debt_ebitda==null||Number(f.net_debt_ebitda)<0)?'Negative EBITDA':'Leverage above 5×'); }
+    else { rows += mrow('Net debt / EBITDA', f.net_debt_ebitda==null?'—':Number(f.net_debt_ebitda).toFixed(2)+'×', {b:'Clean',c:CLN}); }
+    // beneish
+    if(f.beneish_m==null){ rows += mrow('Beneish M-Score','—',{b:'N/A',c:NA},'Insufficient data for 8-factor model'); }
+    else { var bf=(f.beneish_flag===true)||(Number(f.beneish_m)>-1.78); rows += mrow('Beneish M-Score', Number(f.beneish_m).toFixed(2), bf?{b:'Flag',c:ELE}:{b:'Clean',c:CLN}, 'Higher = more manipulation-prone (flag above −1.78)'); }
+    // accruals
+    if(f.accruals_ratio==null){ rows += mrow('Accruals / earnings quality','—',{b:'N/A',c:NA}); }
+    else { var ar=Number(f.accruals_ratio); rows += mrow('Accruals / earnings quality', ar.toFixed(3), ar>0.10?{b:'Weak',c:ELE}:{b:'Strong',c:CLN}, ar>0.10?'Accruals above 0.10: earnings not cash-backed':''); }
+    // supporting context
+    var ctx='<div class="sec-label" style="margin-top:16px;">Supporting scores</div><div class="ctx">'
+      + ctxc('Piotroski F', f.piotroski_f!=null?(f.piotroski_f+' / 9'):'—')
+      + ctxc('Ohlson O (prob.)', f.ohlson_p!=null?(Number(f.ohlson_p)<=1?(Number(f.ohlson_p)*100).toFixed(0)+'%':Number(f.ohlson_p).toFixed(2)):'—')
+      + ctxc('Goodwill+intang.', f.gw_intangibles_pct!=null?((Number(f.gw_intangibles_pct)<=1?(Number(f.gw_intangibles_pct)*100).toFixed(0):Number(f.gw_intangibles_pct).toFixed(0))+'%'):'—')
+      + ctxc('Dilution', f.dilution_intensity!=null?Number(f.dilution_intensity).toFixed(2):'—')
+      + ctxc('CFO vs NI gap', f.cfo_ni_gap!=null?Number(f.cfo_ni_gap).toFixed(3):'—')
+      + '</div>';
+    return rows + ctx;
+  }
+  function ctxc(l,v){ return '<div class="c"><div class="l">'+esc(l)+'</div><div class="v">'+v+'</div></div>'; }
+
+  function thesisHTML(d){
+    var h=d.header||{}, f=d.factors||{};
+    var reg=Number(h.regulatory_red_flags||0), cs=Number(h.composite_severity||0);
+    if(reg>=2 && cs<0.20){
+      var p=[]; if(h.has_restatement)p.push('a restatement'+(h.last_restatement?' ('+dt(h.last_restatement)+')':'')); if(h.has_auditor_change)p.push('an auditor change'+(h.last_auditor_change?' ('+dt(h.last_auditor_change)+')':'')); if(h.has_late_filing)p.push('late filings');
+      return 'The accounting ratios screen clean, but the <b>filing history is not</b>: '+p.join(', ')+'. A company can pass every distress test and still carry governance risk — the combination is exactly what this view is built to surface.';
+    }
+    var lead=[];
+    if(f){
+      if(f.negative_equity) lead.push('negative shareholders’ equity');
+      if(f.altman_z!=null && Number(f.altman_z)<1.1) lead.push('an Altman Z″ in the distress zone');
+      if(f.interest_coverage!=null && Number(f.interest_coverage)<1.5) lead.push('interest coverage below 1.5×');
+      if((f.beneish_flag===true)||(f.beneish_m!=null&&Number(f.beneish_m)>-1.78)) lead.push('a Beneish M-Score above the manipulation threshold');
+      if(f.accruals_ratio!=null && Number(f.accruals_ratio)>0.10) lead.push('weak accruals-based earnings quality');
+      if(f.cash_burn) lead.push('operating cash burn');
+    }
+    if(lead.length){
+      var rg = reg>0 ? (' Plus '+reg+' regulatory flag'+(reg>1?'s':'')+' on file.') : '';
+      return 'The screen flags '+lead.slice(0,3).join(', ')+(lead.length>3?', among others':'')+'.'+rg;
+    }
+    if(reg>0) return reg+' regulatory flag'+(reg>1?'s':'')+' on file, but the accounting ratios are clean this period.';
+    return 'Limited forensic signal — no acute accounting red flags and a clean filing history on record.';
+  }
+
+  function heroHTML(d){
+    var h=d.header||{};
+    var band=h.combined_band||'LOW', bc=bandColor(band);
+    var flagChips='';
+    var rb=h.red_flag_bits||{};
+    if(rb && typeof rb==='object'){ Object.keys(rb).forEach(function(k){ if(rb[k]) flagChips+='<span class="chip" style="color:'+SEV+';border-color:'+SEV+';">'+esc(k.replace(/_/g,' '))+'</span>'; }); }
+    if(h.has_restatement) flagChips+='<span class="chip" style="color:'+ELE+';border-color:'+ELE+';">restatement'+(h.last_restatement?' · '+dt(h.last_restatement):'')+'</span>';
+    if(h.has_auditor_change) flagChips+='<span class="chip" style="color:'+ELE+';border-color:'+ELE+';">auditor change'+(h.last_auditor_change?' · '+dt(h.last_auditor_change):'')+'</span>';
+    if(h.has_late_filing) flagChips+='<span class="chip" style="color:'+ELE+';border-color:'+ELE+';">late filing'+(h.last_late_filing?' · '+dt(h.last_late_filing):'')+'</span>';
+    var prof=d.profile||{};
+    var coName = (prof.name)||h.company_name||'';
+    var sector = prof.sector?(' · '+esc(prof.sector)):'';
+    var edgar='https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK='+encodeURIComponent(d.cik||'')+'&type=10-K&dateb=&owner=include&count=40';
+    return '<div class="card"><div class="hero">'
+      +'<div style="min-width:0;"><h1>'+esc(d.ticker)+'</h1>'
+        +'<div class="co">'+esc(coName)+sector+(prof.market_cap?(' · '+money(prof.market_cap)):'')+'</div>'
+        +'<div class="prov">CIK '+esc(d.cik)+' · as-of FY'+esc(h.fiscal_year)+' 10-K'+(h.filed_date?(', filed '+dt(h.filed_date)):'')+' · <a href="'+edgar+'" target="_blank" rel="noopener" style="color:'+BLUE+';text-decoration:none;">EDGAR ↗</a></div>'
+        +'<div class="hero-stats">'
+          +'<div class="hstat"><div class="n">'+(h.red_flag_count!=null?h.red_flag_count:'—')+'</div><div class="l">accounting flags</div></div>'
+          +'<div class="hstat"><div class="n">'+(h.composite_severity!=null?Number(h.composite_severity).toFixed(2):'—')+'</div><div class="l">accounting severity</div></div>'
+          +'<div class="hstat"><div class="n">'+(h.regulatory_red_flags!=null?h.regulatory_red_flags:'0')+'</div><div class="l">regulatory flags</div></div>'
+          +'<div class="hstat"><div class="n">'+(h.coverage_pct!=null?(Math.round(Number(h.coverage_pct)*(Number(h.coverage_pct)<=1?100:1))+'%'):'—')+'</div><div class="l">data coverage</div></div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="band-badge" style="border-color:'+bc+';color:'+bc+';"><div class="lbl">Combined risk</div><div class="b">'+esc(band)+'</div><div class="sub">accounting + regulatory</div></div>'
+      +'</div>'
+      +(flagChips?('<div style="margin-top:14px;">'+flagChips+'</div>'):'')
+      +'<div class="thesis" style="margin-top:14px;">'+thesisHTML(d)+'</div>'
+      +'</div>';
+  }
+
+  function timelineHTML(t){
+    if(!t || t.length<=1) return card('Red flags by fiscal year','<div class="empty">No multi-year history.</div>');
+    var mx=1; t.forEach(function(r){ if((r.red_flag_count||0)>mx)mx=r.red_flag_count; });
+    var bars=t.map(function(r){
+      var h=Math.max(4,Math.round(((r.red_flag_count||0)/mx)*80));
+      return '<div class="bar"><div class="v">'+(r.red_flag_count!=null?r.red_flag_count:'')+'</div>'
+        +'<div class="b" title="FY'+r.fiscal_year+': '+(r.red_flag_count||0)+' flags" style="height:'+h+'px;background:'+rowBand(r)+';"></div>'
+        +'<div class="y">’'+String(r.fiscal_year).slice(2)+'</div></div>';
+    }).join('');
+    return card('Red flags by fiscal year','<div class="bars">'+bars+'</div>');
+  }
+
+  function regHTML(ev){
+    if(!ev || !ev.length) return card('Regulatory events','<div class="empty">No restatements, auditor changes, or late filings on record.</div>');
+    var col={RESTATEMENT:SEV, AUDITOR_CHANGE:ELE, LATE_FILING:ELE, BANKRUPTCY:SEV};
+    var lab={RESTATEMENT:'Restatement', AUDITOR_CHANGE:'Auditor change', LATE_FILING:'Late filing', BANKRUPTCY:'Bankruptcy'};
+    var rows=ev.map(function(e){
+      var c=col[e.label]||'rgba(255,255,255,0.4)';
+      return '<div class="ev"><div class="dot" style="background:'+c+'"></div><div class="body">'
+        +'<div class="t" style="color:'+c+'">'+esc(lab[e.label]||e.label)+'</div>'
+        +'<div class="m">'+esc(dt(e.event_date))+(e.form_type?(' · '+esc(e.form_type)):'')+(e.item_code?(' · item '+esc(e.item_code)):'')+'</div>'
+        +(e.edgar_url?('<a href="'+esc(e.edgar_url)+'" target="_blank" rel="noopener">View filing on EDGAR ↗</a>'):'')
+        +'</div></div>';
+    }).join('');
+    return card('Regulatory events',rows);
+  }
+
+  function ctBadge(ct){
+    var map={regulatory_action:SEV, clinical_trial:ELE, clinical_evidence:EVI, scientific_feasibility:EVI, market_academic:'rgba(255,255,255,0.45)', empirical_research:'rgba(255,255,255,0.45)', clinical_research:EVI};
+    var c=map[ct]||'rgba(255,255,255,0.45)';
+    return '<span class="badge" style="color:'+c+';border-color:'+c+';">'+esc((ct||'').replace(/_/g,' '))+'</span>';
+  }
+  function dirBadge(dir){
+    if(!dir) return '';
+    var c=(dir==='REGULATORY_RISK')?SEV:(dir==='TRIAL_SETBACK')?ELE:'rgba(255,255,255,0.45)';
+    return '<span class="badge" style="color:'+c+';border-color:'+c+';margin-left:6px;">'+esc(dir.replace(/_/g,' '))+'</span>';
+  }
+  function claimsHTML(ce){
+    if(!ce || !ce.length) return card('Claim vs. evidence','<div class="empty">No claim–evidence matches indexed for this ticker yet.</div>');
+    var byClaim={}; var order=[];
+    ce.forEach(function(r){ var k=r.claim_id||r.claim_excerpt; if(!byClaim[k]){byClaim[k]=[];order.push(k);} byClaim[k].push(r); });
+    var html=order.slice(0,8).map(function(k){
+      var rows=byClaim[k]; var top=rows[0];
+      var papers=rows.slice(0,4).map(function(p){
+        return '<div class="pp"><span>'+(p.source_url?('<a href="'+esc(p.source_url)+'" target="_blank" rel="noopener">'+esc((p.paper_title||'(untitled)').slice(0,90))+'</a>'):esc((p.paper_title||'(untitled)').slice(0,90)))+(p.source?(' <span class="sc">· '+esc(p.source)+(p.year?(' '+p.year):'')+'</span>'):'')+'</span>'
+          +'<span class="sc">'+(p.match_score!=null?(Number(p.match_score).toFixed(2)):'')+'</span></div>';
+      }).join('');
+      return '<div class="claim"><div class="ex">“'+esc((top.claim_excerpt||'').slice(0,260))+'”</div>'
+        +'<div style="margin-top:7px;">'+ctBadge(top.claim_type)+dirBadge(top.consensus_direction)+'</div>'
+        +'<div class="ev-list">'+papers+'</div></div>';
+    }).join('');
+    return card('Claim vs. evidence',html);
+  }
+
+  function peersHTML(p){
+    p=p||{}; var self=p.self, chips=p.chips||[];
+    if(!self) return card('Similar situations','<div class="empty">No red-flag cohort — this profile is clean (clean names aren’t grouped).</div>');
+    var pct=(self.pct_cohort_restated!=null)?Number(self.pct_cohort_restated):null;
+    var head = (pct!=null && self.cohort_size)
+      ? '<div class="precedent" style="color:'+(pct>=25?SEV:pct>=10?ELE:CLN)+'">'+pct.toFixed(1)+'%</div><div class="muted" style="font-size:13px;margin-top:2px;">of the '+self.cohort_size+' companies sharing this accounting-flag profile ('+esc((self.flag_key||'').replace(/,/g,', '))+') later filed a restatement.</div>'
+      : '<div class="muted">Cohort of '+(self.cohort_size||'—')+' companies sharing this flag profile.</div>';
+    var ch = chips.length ? ('<div style="margin-top:12px;">'+chips.map(function(c){ return '<a class="peerchip" href="/forensic?ticker='+encodeURIComponent(c.ticker)+'">'+esc(c.ticker)+' <span class="muted">· '+(c.red_flag_count!=null?c.red_flag_count:'')+'</span></a>'; }).join('')+'</div>') : '';
+    return card('Similar situations (precedent)', head+ch);
+  }
+
+  function snapshotHTML(d){
+    var sc=d.scorecard, fv=d.fair_value, ea=d.earnings, pr=d.profile;
+    var cards='';
+    if(sc){
+      var kv='';
+      if(sc.verdict) kv+=kvrow('Verdict', esc(sc.verdict));
+      if(sc.nrs!=null) kv+=kvrow('Narrative risk', Number(sc.nrs).toFixed(0));
+      if(sc.drift_score!=null) kv+=kvrow('Drift', Number(sc.drift_score).toFixed(0));
+      if(sc.coordination_score!=null) kv+=kvrow('Coordination', Number(sc.coordination_score).toFixed(0)+(sc.coordination_class?(' · '+esc(sc.coordination_class)):''));
+      if(sc.suspicion_class) kv+=kvrow('Trading footprint', esc(sc.suspicion_class));
+      if(sc.vms!=null) kv+=kvrow('VMS (filing match)', Number(sc.vms).toFixed(0));
+      if(kv) cards+='<div class="mini"><div class="h">Narrative / forensic verdict</div>'+kv+'</div>';
+    }
+    if(fv){
+      var kvf='';
+      if(fv.fair_value!=null) kvf+=kvrow('Fair value', '$'+Number(fv.fair_value).toFixed(2)+(fv.fv_low!=null&&fv.fv_high!=null?(' ('+Number(fv.fv_low).toFixed(0)+'–'+Number(fv.fv_high).toFixed(0)+')'):''));
+      if(fv.price_close!=null) kvf+=kvrow('Price', '$'+Number(fv.price_close).toFixed(2));
+      if(fv.premium_pct!=null) kvf+=kvrow('Divergence', pctv(fv.premium_pct)+(fv.verdict?(' · '+esc(fv.verdict)):''));
+      if(kvf) cards+='<div class="mini"><div class="h">Fair value</div>'+kvf+'</div>';
+    }
+    if(ea){
+      var kve='';
+      if(ea.next_earnings_date) kve+=kvrow('Next earnings', dt(ea.next_earnings_date)+(ea.days_to_earnings!=null?(' ('+ea.days_to_earnings+'d)'):''));
+      if(ea.eps_surprise_pct_normalized!=null) kve+=kvrow('Last EPS surprise', pctv(ea.eps_surprise_pct_normalized));
+      if(ea.revenue_surprise_pct!=null) kve+=kvrow('Last rev surprise', pctv(Number(ea.revenue_surprise_pct)*(Math.abs(Number(ea.revenue_surprise_pct))<2?100:1)));
+      if(ea.guidance_direction) kve+=kvrow('Guidance', esc(ea.guidance_direction)+(ea.guidance_fiscal_period?(' · '+esc(ea.guidance_fiscal_period)):''));
+      if(ea.guidance_revenue_midpoint!=null) kve+=kvrow('Guided revenue', money(ea.guidance_revenue_midpoint));
+      if(kve) cards+='<div class="mini"><div class="h">Earnings</div>'+kve+'</div>';
+    }
+    if(pr && (pr.description||pr.total_employees||pr.homepage)){
+      var kvp='';
+      if(pr.total_employees!=null) kvp+=kvrow('Employees', Number(pr.total_employees).toLocaleString());
+      if(pr.exchange) kvp+=kvrow('Exchange', esc(pr.exchange));
+      if(pr.homepage) kvp+=kvrow('Site', '<a href="'+esc(pr.homepage)+'" target="_blank" rel="noopener" style="color:'+BLUE+';text-decoration:none;">'+esc(pr.homepage.replace(/^https?:\/\//,''))+'</a>');
+      var desc = pr.description?('<div class="muted" style="font-size:12px;line-height:1.5;margin-top:8px;">'+esc(pr.description.slice(0,260))+'</div>'):'';
+      if(kvp||desc) cards+='<div class="mini"><div class="h">Company</div>'+kvp+desc+'</div>';
+    }
+    if(!cards) return card('Company & market context','<div class="empty">No market context available.</div>');
+    return card('Company & market context','<div class="grid2">'+cards+'</div>');
+  }
+  function kvrow(k,v){ return '<div class="kv"><span class="k">'+esc(k)+'</span><span>'+v+'</span></div>'; }
+
+  function researchHTML(rr){
+    if(!rr || !rr.length) return card('Research library','<div class="empty">No academic research indexed for this ticker yet.</div>');
+    var groups={}, order=[];
+    rr.forEach(function(r){ var k=r.claim_type||'other'; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(r); });
+    var html=order.map(function(k){
+      var items=groups[k].slice(0,6).map(function(r){
+        return '<div class="ritem">'+(r.source_url?('<a href="'+esc(r.source_url)+'" target="_blank" rel="noopener">'+esc((r.paper_title||'(untitled)').slice(0,110))+'</a>'):esc((r.paper_title||'(untitled)').slice(0,110)))
+          +' <span class="muted">'+(r.source?esc(r.source):'')+(r.year?(' '+r.year):'')+'</span>'
+          +(r.key_finding?('<div class="kf">'+esc(r.key_finding.slice(0,160))+'</div>'):'')+'</div>';
+      }).join('');
+      return '<div class="rgroup"><div class="gh">'+ctBadge(k)+'</div>'+items+'</div>';
+    }).join('');
+    return card('Research library',html);
+  }
+
+  function card(label, inner){ return '<div class="card"><div class="sec-label">'+esc(label)+'</div>'+inner+'</div>'; }
+
+  function footHTML(d){
+    var edgar='https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK='+encodeURIComponent(d.cik||'')+'&type=10-K&dateb=&owner=include&count=40';
+    return 'Forensic screen, not investment advice. Deterministic accounting-forensics from SEC filings (Beneish, Sloan, Piotroski, Altman Z″, Ohlson). Regulatory events from EDGAR submissions. Research via Semantic Scholar / OpenAlex / PubMed / ClinicalTrials.gov / openFDA. A missing figure means the filing did not disclose the underlying XBRL tag — shown as N/A, never zero. <a href="'+edgar+'" target="_blank" rel="noopener">All 10-K filings on EDGAR ↗</a>';
+  }
+
+  function render(d){
+    var root=document.getElementById('fx-root');
+    root.innerHTML =
+        heroHTML(d)
+      + card('Accounting red flags', gridHTML(d.factors))
+      + timelineHTML(d.timeline)
+      + regHTML(d.regulatory_events)
+      + claimsHTML(d.claim_evidence)
+      + peersHTML(d.peers)
+      + snapshotHTML(d)
+      + researchHTML(d.research);
+    document.getElementById('fx-foot').innerHTML = footHTML(d);
+  }
+
+  function fail(msg){
+    document.getElementById('fx-root').innerHTML='<div class="card"><div class="hero"><div><h1>'+esc(TICKER||'—')+'</h1><div class="co">'+esc(msg)+'</div></div></div><div style="margin-top:16px;"><a class="peerchip" href="/dashboard">← Back to Forensic Screen</a></div></div>';
+  }
+
+  if(!TICKER){ fail('No ticker specified.'); return; }
+  document.title = TICKER + ' — Forensic Dossier | Market Prism';
+  fetch('/api/forensic-data?ticker='+encodeURIComponent(TICKER))
+    .then(function(r){ if(r.status===404) throw new Error('notcov'); if(!r.ok) throw new Error('http'); return r.json(); })
+    .then(function(d){ if(!d || d.error || !d.header){ fail(TICKER+' isn’t in the forensic screen yet.'); return; } render(d); })
+    .catch(function(e){ fail(e.message==='notcov' ? (TICKER+' isn’t in the forensic screen yet.') : 'Could not load the forensic dossier. Please try again.'); });
+})();
+</script>
+</body>
+</html>

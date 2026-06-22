@@ -16650,7 +16650,7 @@ function renderForensic(){
   feed.innerHTML = rows.map(function(r){
     var sv = forensicSeverity(r);
     var tracked = FORENSIC_TRACKED.has((r.ticker||'').toUpperCase());
-    var go = "openForensicDetail('"+(r.cik||'')+"')";
+    var go = "window.location.href='/forensic?ticker='+encodeURIComponent('"+((r.ticker||'').toUpperCase())+"')";
     var z = (r.altman_z!=null) ? Number(r.altman_z).toFixed(1) : '—';
     var chips='';
     if(r.negative_equity) chips+='<span style="font-size:11px;padding:2px 8px;border-radius:6px;color:#FF4D4D;border:1px solid #FF4D4D;">neg. equity</span>';

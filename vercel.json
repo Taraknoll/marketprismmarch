@@ -229,6 +229,10 @@
       "destination": "/api/herbtraps"
     },
     {
+      "source": "/forensic",
+      "destination": "/api/forensic"
+    },
+    {
       "source": "/((?!assets/).*)",
       "destination": "/api/index"
     }
@@ -358,6 +362,9 @@
     },
     "api/herbtraps.js": {
       "includeFiles": "_herbtraps.html"
+    },
+    "api/forensic.js": {
+      "includeFiles": "{_forensic.html,lib/**}"
     }
   },
   "headers": [
