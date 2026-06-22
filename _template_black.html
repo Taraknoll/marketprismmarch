@@ -18849,24 +18849,63 @@ function miDate(){
   var el=document.getElementById('mi-date-tag');
   if(el)el.textContent='Last updated: '+new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
-async function loadMarketInsights(){
+// The underlying tables (narrative_scorecard, daily_summaries, sector_news,
+// detected_macro_events) are rewritten several times a day — see
+// [[project_scorecard_intraday_maturation]] — but the tab used to boot ONCE
+// and freeze for the whole session. opts.silent skips the skeleton so a
+// background refresh swaps panel content in place without a loading flash.
+var _miLastLoad=0;
+async function loadMarketInsights(opts){
+  opts=opts||{};
   miRestorePanels();
   if(!SUPABASE_URL||!SUPABASE_ANON){
     ['mi-alert-rail','mi-nmap-mosaic','mi-macro-list','mi-wks-list','mi-story-grid'].forEach(function(id){miDropPanel(id);});
     miQuietNote();
     return;
   }
-  miSkeleton();miDate();
+  if(!opts.silent)miSkeleton();
+  miDate();
   await Promise.all([miLoadAlerts(),miLoadNmap(),miLoadMacro(),miLoadWks(),miLoadStories()]);
   miQuietNote();
+  _miLastLoad=Date.now();
 }
 window.refreshMarketInsights=async function(){
   var btn=document.getElementById('mi-refresh-btn');
   if(btn)btn.classList.add('spinning');
   try{await loadMarketInsights();}finally{if(btn)btn.classList.remove('spinning');}
 };
+// Auto-refresh cadence: re-pull every 10 min, but ONLY while the tab is the
+// one being viewed (active + page visible) so we never poll Supabase for a
+// tab nobody's looking at — keeps this gentle on DB load
+// ([[project_supabase_load]]). Returning to a stale tab also triggers a
+// silent catch-up refresh.
+var MI_REFRESH_MS=10*60*1000;
+var _miTimer=null;
+function miTabActive(){
+  var t=document.getElementById('tab-insights');
+  return !!(t&&t.classList.contains('active')&&!document.hidden);
+}
+function miScheduleRefresh(){
+  if(_miTimer)clearTimeout(_miTimer);
+  _miTimer=setTimeout(function(){
+    if(miTabActive())loadMarketInsights({silent:true});
+    miScheduleRefresh();
+  },MI_REFRESH_MS);
+}
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden&&miTabActive()&&(Date.now()-_miLastLoad)>MI_REFRESH_MS){
+    loadMarketInsights({silent:true});
+  }
+});
 onTabSwitch(function(id){
-  if(id==='insights'&&!MI_BOOTED){MI_BOOTED=true;setTimeout(loadMarketInsights,50);}
+  if(id!=='insights')return;
+  if(!MI_BOOTED){
+    MI_BOOTED=true;
+    setTimeout(function(){loadMarketInsights().then(miScheduleRefresh);},50);
+  }else if((Date.now()-_miLastLoad)>MI_REFRESH_MS){
+    // Returning to a tab that's gone stale — refresh in place, no skeleton.
+    loadMarketInsights({silent:true});
+  }
 });
 })();
 
