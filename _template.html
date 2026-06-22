@@ -1387,7 +1387,7 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
   box-shadow:0 24px 80px rgba(0,0,0,0.5);
 }
 .sector-card-header{
-  padding:14px 16px 10px;
+  padding:18px 20px 12px;
   display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
 }
 .sector-name{font-family:'Inter','DM Sans',system-ui,sans-serif;font-size:20px;font-weight:700;color:var(--mp-text-primary);margin-bottom:3px;letter-spacing:-0.025em;}
@@ -1397,18 +1397,18 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
   border-radius:6px;border:1px solid rgba(255,255,255,0.08);flex-shrink:0;font-weight:500;letter-spacing:.06em;
   text-transform:uppercase;background:rgba(255,255,255,0.04);color:var(--mp-text-secondary);
 }
-.sector-body{padding:0 16px 14px;}
+.sector-body{padding:0 20px 18px;}
 .sector-desc{font-size:14.5px;font-weight:400;color:var(--mp-text-secondary);line-height:1.65;margin-top:14px;margin-bottom:12px;}
 .sector-tickers{display:flex;gap:5px;flex-wrap:wrap;}
 .sector-ticker-chip{
   font-family:var(--font-body);font-size:11px;
-  padding:3px 10px;border-radius:4px;
+  padding:4px 11px;border-radius:6px;
   background:rgba(255,255,255,0.03);border:1px solid var(--mp-border);color:var(--mp-text-secondary);
   cursor:pointer;transition:all .3s cubic-bezier(0.16,1,0.3,1);
 }
 .sector-ticker-chip:hover{border-color:rgba(255,255,255,0.15);color:var(--mp-text-primary);background:rgba(255,255,255,0.06);}
 .sector-footer{
-  padding:10px 16px;border-top:1px solid var(--mp-border);
+  padding:12px 20px;border-top:1px solid var(--mp-border);
   display:flex;align-items:center;justify-content:space-between;
 }
 .sector-cagr{
@@ -10853,7 +10853,7 @@ function renderMarketWidePage(){
     var momentum=t.momentum||0;
     var bar_color='linear-gradient(90deg,#00AEFF,#38C8B8)';
 
-    return '<div class="sector-card" style="animation-delay:'+(i*0.08)+'s;border-top:2px solid rgba(0,174,255,0.3);">'
+    return '<div class="sector-card" style="animation-delay:'+(i*0.08)+'s;border-top:2px solid '+(dir==='bull'?'#00DE94':dir==='bear'?'#FF4D4D':'#00AEFF')+';">'
       +'<div class="sector-card-header">'
         +'<div><div class="sector-name">'+esc(t.title)+'</div><div class="sector-sub">'+esc(t.type)+'</div></div>'
         +'<span class="sector-state '+sentClass[dir]+'" style="border-color:'+(dir==='bull'?'rgba(0,222,148,0.3)':dir==='bear'?'rgba(255,77,77,0.3)':'rgba(0,174,255,0.3)')+';color:'+(dir==='bull'?'#00DE94':dir==='bear'?'#FF4D4D':'#00AEFF')+';background:'+(dir==='bull'?'rgba(0,222,148,0.08)':dir==='bear'?'rgba(255,77,77,0.08)':'rgba(0,174,255,0.08)')+';">'+sentLabel[dir]+'</span>'
@@ -11566,6 +11566,8 @@ function updateSectorSentimentFromLive(quotes){
       badge.style.borderColor = border;
       badge.style.background = bg;
       badge.title = tooltip;
+      // Keep the card's top accent strip in sync with the live direction.
+      cards[c].style.borderTopColor = clr;
     }
   });
 }
