@@ -3,12 +3,15 @@
 // Reads the forensic-engine views server-side with the service-role key (some
 // are RLS-locked from anon) and returns ONE JSON blob the page renders. Every
 // section is independently null-guarded so empty sections collapse, never break.
-// Optional company profile via the existing frontend Massive/Polygon convention
-// (api.polygon.io + ?apiKey=) — the key NEVER reaches the client.
+//
+// PERF: v_claim_evidence_match is a heavy full-text-match view (~70s, not
+// ticker-prunable) so it is NEVER in the blocking path — the page lazy-loads it
+// via ?section=claims. Every other fetch is time-bounded so one slow/hung
+// dependency (incl. the optional external Massive call) can't stall the page.
 //
 // Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (|| SUPABASE_KEY),
 //      MASSIVE_API_KEY (|| MASSIVE_API || POLYGON_API_KEY) [optional]
-// Query: ticker (required)
+// Query: ticker (required); section=claims (optional, lazy claim-evidence only)
 
 const rateLimit = require('./_rate-limit');
 
@@ -24,6 +27,7 @@ module.exports = async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const ticker = (url.searchParams.get('ticker') || '')
       .replace(/[^A-Za-z0-9.\-]/g, '').toUpperCase();
+    const section = (url.searchParams.get('section') || '').toLowerCase();
     if (!ticker) return sendJson(res, 400, { error: 'Missing ticker' });
 
     const SUPA = process.env.SUPABASE_URL || '';
@@ -32,35 +36,65 @@ module.exports = async (req, res) => {
 
     const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, Accept: 'application/json' };
     const T = encodeURIComponent(ticker);
-    // Per-section fetch that NEVER throws — a non-ok/timeout response yields [] so
-    // one empty/slow section can't abort the whole payload.
-    const rest = (path) => fetch(SUPA + '/rest/v1/' + path, { headers: H })
-      .then(r => (r.ok ? r.json() : [])).catch(() => []);
+
+    // Time-bounded fetch: a non-ok / timed-out response yields [] for THAT
+    // section instead of stalling the whole payload.
+    const restT = (path, ms) => {
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), ms || 7000);
+      return fetch(SUPA + '/rest/v1/' + path, { headers: H, signal: ac.signal })
+        .then(r => (r.ok ? r.json() : []))
+        .catch(() => [])
+        .finally(() => clearTimeout(t));
+    };
+    const rest = (path) => restT(path, 7000);
     const one = (arr) => (Array.isArray(arr) && arr.length ? arr[0] : null);
 
+    // ── Lazy claim-evidence sub-request (isolated; heavy view) ──────────────
+    // Only ticker-keyed. Long cache so once computed it's instant on repeat.
+    if (section === 'claims') {
+      const ce = await restT(
+        'v_claim_evidence_match?select=claim_id,snapshot_date,claim_excerpt,claim_type,consensus_direction,paper_title,source,source_url,year,match_score,match_rank' +
+        '&ticker=eq.' + T + '&match_rank=lte.5&order=snapshot_date.desc,match_rank.asc&limit=40',
+        20000
+      );
+      res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
+      return sendJson(res, 200, { ticker: ticker, claim_evidence: Array.isArray(ce) ? ce : [] });
+    }
+
     // 1) Header / hero (one row/cik) — also resolves the cik for cik-keyed views.
-    const headerRow = one(await rest(
+    const headerRow = one(await restT(
       'v_xbrl_redflag_latest_plus?select=cik,ticker,company_name,fiscal_year,filed_date,is_delisted,' +
       'beneish_m,accruals_ratio,piotroski_f,altman_z,ohlson_p,gw_intangibles_pct,cfo_ni_gap,' +
       'negative_equity,cash_burn,red_flag_count,red_flag_bits,composite_severity,coverage_pct,is_adjudicable,' +
       'has_restatement,has_auditor_change,has_late_filing,last_restatement,last_auditor_change,last_late_filing,' +
-      'regulatory_event_count,regulatory_red_flags&ticker=eq.' + T + '&limit=1'
+      'regulatory_event_count,regulatory_red_flags&ticker=eq.' + T + '&limit=1', 7000
     ));
     if (!headerRow) return sendJson(res, 404, { error: 'No forensic record', ticker });
     const cik = headerRow.cik;
     const C = encodeURIComponent(String(cik));
 
-    // 2..N) independent sections in parallel
-    const [factorsArr, timeline, regRows, claimEvidence, peerSelfArr, scorecardArr, fvArr, earnArr, research] = await Promise.all([
+    // Optional company profile (server-side key only; never sent to client).
+    // Parallelized with the Supabase reads + its own short timeout.
+    const MKEY = process.env.MASSIVE_API_KEY || process.env.MASSIVE_API || process.env.POLYGON_API_KEY || '';
+    const profilePromise = MKEY ? (function () {
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 4000);
+      return fetch('https://api.polygon.io/v3/reference/tickers/' + T + '?apiKey=' + encodeURIComponent(MKEY), { signal: ac.signal })
+        .then(r => (r.ok ? r.json() : null)).catch(() => null).finally(() => clearTimeout(t));
+    })() : Promise.resolve(null);
+
+    // 2..N) independent sections in parallel (claims is NOT here — lazy-loaded)
+    const [factorsArr, timeline, regRows, peerSelfArr, scorecardArr, fvArr, earnArr, research, profileJson] = await Promise.all([
       rest('xbrl_forensic_factors?select=cik,fiscal_year,fy_end_date,filed_date,beneish_m,beneish_flag,dsri,gmi,aqi,sgi,depi,sgai,lvgi,tata,accruals_ratio,accruals_flag,dechow_f,dechow_flag,piotroski_f,piotroski_flag,altman_z,altman_variant,altman_flag,ohlson_o,ohlson_p,ohlson_flag,gw_intangibles_pct,gw_intangibles_flag,cfo_ni_gap,cfo_ni_gap_flag,negative_equity,cash_burn,interest_coverage,coverage_flag,net_debt_ebitda,leverage_flag,dilution_intensity,dilution_flag,cash_runway_years,red_flag_count,red_flag_applic,red_flag_bits,composite_severity,coverage_pct,is_adjudicable&cik=eq.' + C + '&order=fiscal_year.desc&limit=1'),
       rest('v_xbrl_factor_timeline?select=fiscal_year,fy_end_date,red_flag_count,composite_severity,altman_z,accruals_ratio,beneish_m,piotroski_f,cfo_ni_gap,negative_equity,cash_burn,dilution_intensity&cik=eq.' + C + '&fiscal_year=gte.2012&fiscal_year=lte.2026&order=fiscal_year.asc'),
       rest('fdq_outcome_labels?select=label,event_date,form_type,item_code,accession,evidence_url,detected_by&cik=eq.' + C + '&order=event_date.desc'),
-      rest('v_claim_evidence_match?select=claim_id,snapshot_date,claim_excerpt,claim_type,consensus_direction,paper_title,source,source_url,year,match_score,match_rank&ticker=eq.' + T + '&match_rank=lte.5&order=snapshot_date.desc,match_rank.asc&limit=40'),
       rest('v_forensic_peers?select=cik,ticker,company_name,red_flag_count,flag_key,cohort_size,n_restated,n_auditor_change,n_late_filing,pct_cohort_restated&cik=eq.' + C + '&limit=1'),
       rest('narrative_scorecard?select=ticker,snapshot_date,verdict,nrs,drift_score,fvd,fvd_pct,coordination_score,coordination_class,suspicion_score,suspicion_class,vms,srs,ccp,npi&ticker=eq.' + T + '&order=snapshot_date.desc&limit=1'),
       rest('daily_fair_value?select=ticker,snapshot_date,fair_value,fv_low,fv_high,premium_pct,premium_dollars,verdict,method,pe_used,forward_eps_used,price_close,market_cap,industry_pe_avg&ticker=eq.' + T + '&order=snapshot_date.desc&limit=1'),
       rest('earnings_context?select=ticker,snapshot_date,next_earnings_date,last_earnings_date,days_to_earnings,eps_actual,eps_estimate,earnings_surprise_pct,eps_surprise_pct,revenue_actual,revenue_estimate,revenue_surprise_pct,guidance_direction,guidance_eps_midpoint,guidance_eps_low,guidance_eps_high,guidance_revenue_midpoint,guidance_date,guidance_fiscal_period&ticker=eq.' + T + '&order=snapshot_date.desc&limit=1'),
-      rest('scholarly_references?select=id,claim_type,paper_title,authors,year,source,source_url,key_finding,consensus_direction,recency_weight&sub_sector=eq.' + T + '&order=recency_weight.desc.nullslast,year.desc&limit=30')
+      rest('scholarly_references?select=id,claim_type,paper_title,authors,year,source,source_url,key_finding,consensus_direction,recency_weight&sub_sector=eq.' + T + '&order=recency_weight.desc.nullslast,year.desc&limit=30'),
+      profilePromise
     ]);
 
     const factors = one(factorsArr);
@@ -91,34 +125,26 @@ module.exports = async (req, res) => {
       eps_surprise_norm = Math.abs(v) < 2 ? v * 100 : v;
     }
 
-    // EDGAR per-event link: evidence_url is already a complete SEC URL; only fall
-    // back to a CIK browse link when it's missing.
+    // EDGAR per-event link: evidence_url is already a complete SEC URL.
     const regulatory_events = (Array.isArray(regRows) ? regRows : []).map((e) => {
       let edgar_url = e.evidence_url || null;
       if (!edgar_url) edgar_url = 'https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=' + cik + '&type=&dateb=&owner=include&count=40';
       return Object.assign({}, e, { edgar_url });
     });
 
-    // Optional company profile (server-side key only; never sent to client).
+    // Map the optional Massive/Polygon profile (already fetched in parallel).
     let profile = null;
-    const MKEY = process.env.MASSIVE_API_KEY || process.env.MASSIVE_API || process.env.POLYGON_API_KEY || '';
-    if (MKEY) {
-      try {
-        const pr = await fetch('https://api.polygon.io/v3/reference/tickers/' + T + '?apiKey=' + encodeURIComponent(MKEY));
-        if (pr.ok) {
-          const pj = await pr.json();
-          const r = pj && pj.results;
-          if (r) profile = {
-            name: r.name || null,
-            sector: r.sic_description || r.sector || null,
-            market_cap: (r.market_cap != null) ? r.market_cap : null,
-            total_employees: (r.total_employees != null) ? r.total_employees : null,
-            description: r.description || null,
-            homepage: r.homepage_url || null,
-            exchange: r.primary_exchange || null
-          };
-        }
-      } catch (e) { profile = null; } // 403 (options/Benzinga pack) or missing key -> omit profile
+    if (profileJson && profileJson.results) {
+      const r = profileJson.results;
+      profile = {
+        name: r.name || null,
+        sector: r.sic_description || r.sector || null,
+        market_cap: (r.market_cap != null) ? r.market_cap : null,
+        total_employees: (r.total_employees != null) ? r.total_employees : null,
+        description: r.description || null,
+        homepage: r.homepage_url || null,
+        exchange: r.primary_exchange || null
+      };
     }
 
     const header = Object.assign({}, headerRow, {
@@ -134,7 +160,8 @@ module.exports = async (req, res) => {
       factors: factors,
       timeline: Array.isArray(timeline) ? timeline : [],
       regulatory_events: regulatory_events,
-      claim_evidence: Array.isArray(claimEvidence) ? claimEvidence : [],
+      claim_evidence: null,        // lazy-loaded via ?section=claims
+      claims_deferred: true,
       peers: { self: peerSelf, chips: Array.isArray(peerChips) ? peerChips : [] },
       scorecard: scorecard,
       fair_value: fair_value,

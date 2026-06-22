@@ -365,6 +365,9 @@
     },
     "api/forensic.js": {
       "includeFiles": "{_forensic.html,lib/**}"
+    },
+    "api/forensic-data.js": {
+      "maxDuration": 30
     }
   },
   "headers": [

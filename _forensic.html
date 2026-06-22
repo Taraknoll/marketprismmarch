@@ -271,8 +271,8 @@
     var c=(dir==='REGULATORY_RISK')?SEV:(dir==='TRIAL_SETBACK')?ELE:'rgba(255,255,255,0.45)';
     return '<span class="badge" style="color:'+c+';border-color:'+c+';margin-left:6px;">'+esc(dir.replace(/_/g,' '))+'</span>';
   }
-  function claimsHTML(ce){
-    if(!ce || !ce.length) return card('Claim vs. evidence','<div class="empty">No claim–evidence matches indexed for this ticker yet.</div>');
+  function claimsInner(ce){
+    if(!ce || !ce.length) return '<div class="empty">No claim–evidence matches indexed for this ticker yet.</div>';
     var byClaim={}; var order=[];
     ce.forEach(function(r){ var k=r.claim_id||r.claim_excerpt; if(!byClaim[k]){byClaim[k]=[];order.push(k);} byClaim[k].push(r); });
     var html=order.slice(0,8).map(function(k){
@@ -285,7 +285,7 @@
         +'<div style="margin-top:7px;">'+ctBadge(top.claim_type)+dirBadge(top.consensus_direction)+'</div>'
         +'<div class="ev-list">'+papers+'</div></div>';
     }).join('');
-    return card('Claim vs. evidence',html);
+    return html;
   }
 
   function peersHTML(p){
@@ -370,11 +370,19 @@
       + card('Accounting red flags', gridHTML(d.factors))
       + timelineHTML(d.timeline)
       + regHTML(d.regulatory_events)
-      + claimsHTML(d.claim_evidence)
+      + '<div class="card"><div class="sec-label">Claim vs. evidence</div><div id="fx-claims-body"><div class="empty">Matching claims to research…</div></div></div>'
       + peersHTML(d.peers)
       + snapshotHTML(d)
       + researchHTML(d.research);
     document.getElementById('fx-foot').innerHTML = footHTML(d);
+    loadClaims(d.ticker||TICKER);
+  }
+  function loadClaims(tk){
+    var el=document.getElementById('fx-claims-body'); if(!el) return;
+    fetch('/api/forensic-data?ticker='+encodeURIComponent(tk)+'&section=claims')
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){ var rows=(j&&j.claim_evidence)||[]; el.innerHTML = rows.length ? claimsInner(rows) : '<div class="empty">No claim–evidence matches surfaced yet (indexing in progress).</div>'; })
+      .catch(function(){ el.innerHTML='<div class="empty">No claim–evidence matches surfaced yet (indexing in progress).</div>'; });
   }
 
   function fail(msg){
