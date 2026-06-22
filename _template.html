@@ -19125,6 +19125,21 @@ function mpIsContentless(txt){
   var s=String(txt);
   return MP_CONTENTLESS_RX.some(function(rx){return rx.test(s);});
 }
+// True during pre-market / overnight / weekend — before the US equity session
+// opens, live quotes are thin and price "moves" are noise. Used so Top Stories
+// ranks by WKS/authority pre-open instead of letting tiny pre-market wiggles
+// dominate. After-hours (>=9:30 ET, incl. post-close) is NOT pre-market, so real
+// after-hours earnings reactions still rank on movement.
+function miIsPremarket(){
+  try{
+    var p=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+    var wd='',hh=0,mm=0;
+    p.forEach(function(x){if(x.type==='weekday')wd=x.value;else if(x.type==='hour')hh=parseInt(x.value,10);else if(x.type==='minute')mm=parseInt(x.value,10);});
+    if(hh===24)hh=0;
+    if(wd==='Sat'||wd==='Sun')return true;        // no live session
+    return (hh*60+mm) < (9*60+30);                // before 9:30 AM ET = pre-market/overnight
+  }catch(_){return false;}                        // any failure → behave exactly as before
+}
 async function miLoadTopStories(){
   var list=document.getElementById('mi-wks-list');
   try{
@@ -19160,18 +19175,22 @@ async function miLoadTopStories(){
       if(r._vm>maxVm)maxVm=r._vm;
     });
     var anyMove=(maxPm>0||maxVm>0);
+    // Pre-market / weekend = thin tape: tiny pre-open wiggles are noise, so rank by
+    // WKS/authority instead. After-hours stays on movement-ranking so real
+    // post-close earnings reactions still surface.
+    var useMove=anyMove&&!miIsPremarket();
     cands.forEach(function(r){
       var pmN=maxPm>0?(r._pm/maxPm)*100:0;
       var vmN=maxVm>0?(r._vm/maxVm)*100:0;
       r._move=0.5*pmN+0.5*vmN;
       // movement-first, authority as a gentle tiebreak. Fall back to pure
       // authority when live quotes are unavailable (weekend / holiday / API down).
-      r._rank=anyMove?(r._move*1000+r._auth):r._auth;
+      r._rank=useMove?(r._move*1000+r._auth):r._auth;
     });
     cands.sort(function(a,b){return b._rank-a._rank;});
     list.innerHTML=cands.slice(0,10).map(function(r,i){
-      var headline=Math.max(0,Math.min(100,anyMove?r._move:r._auth));
-      var hlbl=anyMove?'MOVE':'AUTH';
+      var headline=Math.max(0,Math.min(100,useMove?r._move:r._auth));
+      var hlbl=useMove?'MOVE':'AUTH';
       var q=r._q||{};
       var cp=(q.changePct!=null)?Number(q.changePct):null;
       var cpStr=(cp!=null)?((cp>=0?'+':'')+cp.toFixed(2)+'%'):'';
