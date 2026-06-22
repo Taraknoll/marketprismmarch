@@ -4789,7 +4789,7 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
     var sub = clone.querySelector('.nav-item-sub'); if(sub){ sub.textContent = 'Market-wide red flags'; }
     var badge = clone.querySelector('.nav-item-badge'); if(badge){ badge.remove(); }
     clone.onclick = function(){ if(typeof switchTab==='function') switchTab('forensic', clone); };
-    tmpl.parentNode.insertBefore(clone, tmpl.nextSibling);
+    var fxAnchor = nav.querySelector('.nav-item[data-tab="validation"]'); if(!fxAnchor){ var fxIts = nav.querySelectorAll('.nav-item[data-tab]'); fxAnchor = fxIts[fxIts.length-1]; } fxAnchor.parentNode.insertBefore(clone, fxAnchor.nextSibling);
   }
   if(document.readyState !== 'loading'){ injectForensicNav(); }
   else { document.addEventListener('DOMContentLoaded', function(){ injectForensicNav(); }); }
@@ -16555,6 +16555,7 @@ function getTrapSeverity(fvd){
 // ── Forensic Red-Flag Screener (xbrl_forensic_factors via v_xbrl_redflag_latest) ──
 var FORENSIC_DATA = [];
 var forensicFilter = 'all';
+var FORENSIC_TRACKED = new Set();
 async function loadForensic(){
   var feed = document.getElementById('forensic-feed');
   if(!feed) return;
@@ -16562,12 +16563,13 @@ async function loadForensic(){
   try{
     if(!SUPABASE_URL || !SUPABASE_ANON) throw new Error('Supabase not configured');
     var hdrs = {'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};
-    var cols = 'ticker,company_name,red_flag_count,composite_severity,altman_z,negative_equity,cash_burn,is_adjudicable,is_delisted';
+    var cols = 'cik,ticker,company_name,red_flag_count,composite_severity,altman_z,negative_equity,cash_burn,is_adjudicable,is_delisted';
     var url = SUPABASE_URL+'/rest/v1/v_xbrl_redflag_latest?select='+cols+'&order=red_flag_count.desc,composite_severity.desc&limit=400';
     var res = await fetch(url,{headers:hdrs});
     if(!res.ok) throw new Error('Supabase '+res.status);
     var rows = await res.json();
     FORENSIC_DATA = rows.filter(function(r){ return r.ticker && r.is_adjudicable; });
+    try{ var tres = await fetch(SUPABASE_URL+'/rest/v1/v_ticker_universe_search?select=ticker&limit=1000',{headers:hdrs}); if(tres.ok){ (await tres.json()).forEach(function(t){ if(t.ticker) FORENSIC_TRACKED.add(String(t.ticker).toUpperCase()); }); } }catch(_e){}
     renderForensic();
   }catch(e){
     feed.innerHTML = '<div style="padding:20px;color:#FF4D4D;font-family:Inter,sans-serif;font-size:14px;">Error loading forensic screen. '+esc(e.message)+'</div>';
@@ -16597,15 +16599,17 @@ function renderForensic(){
   if(!rows.length){ feed.innerHTML='<div style="padding:40px;text-align:center;color:rgba(255,255,255,0.3);grid-column:1/-1;font-family:Inter,sans-serif;font-size:14px;">No companies match this filter.</div>'; return; }
   feed.innerHTML = rows.map(function(r){
     var sv = forensicSeverity(r);
+    var tracked = FORENSIC_TRACKED.has((r.ticker||'').toUpperCase());
+    var go = tracked ? ("window.location.href='/ticker/"+encodeURIComponent(r.ticker)+"'") : ("window.open('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK="+(r.cik||'')+"&type=10-K&dateb=&owner=include&count=40','_blank')");
     var z = (r.altman_z!=null) ? Number(r.altman_z).toFixed(1) : '—';
     var chips='';
     if(r.negative_equity) chips+='<span style="font-size:11px;padding:2px 8px;border-radius:6px;color:#FF4D4D;border:1px solid #FF4D4D;">neg. equity</span>';
     if(r.cash_burn) chips+='<span style="font-size:11px;padding:2px 8px;border-radius:6px;color:#FFB800;border:1px solid #FFB800;">cash burn</span>';
     if(r.altman_z!=null && Number(r.altman_z)<1.1) chips+='<span style="font-size:11px;padding:2px 8px;border-radius:6px;color:#FF4D4D;border:1px solid #FF4D4D;">distress Z″ '+z+'</span>';
-    return '<div onclick="window.location.href=\'/ticker/'+encodeURIComponent(r.ticker)+'\'" style="background:#0C1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s;" onmouseenter="this.style.borderColor=\'rgba(255,255,255,0.14)\';this.style.transform=\'translateY(-3px)\';" onmouseleave="this.style.borderColor=\'rgba(255,255,255,0.06)\';this.style.transform=\'translateY(0)\';">'
+    return '<div onclick="'+go+'" style="background:#0C1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s;" onmouseenter="this.style.borderColor=\'rgba(255,255,255,0.14)\';this.style.transform=\'translateY(-3px)\';" onmouseleave="this.style.borderColor=\'rgba(255,255,255,0.06)\';this.style.transform=\'translateY(0)\';">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'
         +'<div style="min-width:0;"><div style="font-weight:600;font-size:16px;font-family:Inter,sans-serif;">'+esc(r.ticker)+'</div>'
-          +'<div style="font-size:12px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">'+esc((r.company_name||'').slice(0,30))+(r.is_delisted?' · delisted':'')+'</div></div>'
+          +'<div style="font-size:12px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">'+esc((r.company_name||'').slice(0,30))+(r.is_delisted?' · delisted':'')+(tracked?'':' · SEC ↗')+'</div></div>'
         +'<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;color:'+sv.c+';border:1px solid '+sv.c+';white-space:nowrap;">'+sv.b+'</span></div>'
       +'<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;"><span style="font-size:28px;font-weight:600;color:'+sv.c+';font-family:Inter,sans-serif;">'+(r.red_flag_count!=null?r.red_flag_count:'—')+'</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">red flags</span></div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'+(chips||'<span style="font-size:12px;color:rgba(255,255,255,0.3);">no acute flags</span>')+'</div>'
