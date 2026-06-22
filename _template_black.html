@@ -18468,6 +18468,13 @@ async function miq(path){
 }
 function miEsc(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;}
 function miWords(s){return String(s||'').replace(/_/g,' ');}
+// Compact "Mon D" from a YYYY-MM-DD date string. Parsed by hand (not new Date)
+// to dodge the UTC-midnight day-shift that bites negative-offset timezones.
+function miShortDate(s){
+  var p=String(s||'').split('-');if(p.length<3)return '';
+  var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1],10)-1];
+  return mo?mo+' '+parseInt(p[2],10):'';
+}
 function miTint(hex,a){var h=String(hex).replace('#','');return 'rgba('+parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16)+','+a+')';}
 function miPill(text,c){return '<span class="mi-pill" style="color:'+c+';background:'+miTint(c,0.12)+';border:1px solid '+miTint(c,0.28)+';">'+miEsc(text)+'</span>';}
 // jsonb columns that arrive stringified (sometimes double-encoded) — same
@@ -18716,7 +18723,7 @@ async function miLoadWks(){
     var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-wks-list');return;}
-    var rows=await miq('narrative_scorecard?select=ticker,narrative,wks_score,walsh_regime,narrative_energy_absolute,narrative_energy_regime,verdict,nrs,narrative_mass_score&snapshot_date=eq.'+encodeURIComponent(day)+'&wks_score=not.is.null&narrative=not.is.null&order=wks_score.desc&limit=40');
+    var rows=await miq('narrative_scorecard?select=ticker,narrative,wks_score,walsh_regime,narrative_energy_absolute,narrative_energy_regime,verdict,nrs,narrative_mass_score,genesis_date&snapshot_date=eq.'+encodeURIComponent(day)+'&wks_score=not.is.null&narrative=not.is.null&order=wks_score.desc&limit=40');
     if(!rows||!rows.length){miDropPanel('mi-wks-list');return;}
     var seen={},out=[];
     rows.forEach(function(r){
@@ -18734,6 +18741,7 @@ async function miLoadWks(){
       var rc=MI_REGIME[regime]||'#A0A8B0';
       var vc=miVerdictColor(r.verdict);
       var energy=Math.round(Number(r.narrative_energy_absolute)||0);
+      var gen=miShortDate(r.genesis_date);
       var logo=(typeof logoHTML==='function')?logoHTML(r.ticker,'sm'):'';
       return '<a class="mi-wks-row" href="/ticker/'+encodeURIComponent(r.ticker)+'" style="animation-delay:'+(i*0.05)+'s;">'
         +'<span class="mi-wks-rank'+(i===0?' mi-r1':i===1?' mi-r2':i===2?' mi-r3':'')+'">'+(i+1)+'</span>'
@@ -18742,6 +18750,7 @@ async function miLoadWks(){
         +'<span class="mi-wks-meta"><b style="color:var(--mp-text-secondary);font-weight:700;">'+miEsc(r.ticker)+'</b>'
         +'<span data-live-price="'+miEsc(r.ticker)+'" style="font-size:11px;color:var(--mp-text-tertiary);font-weight:500;font-family:var(--font-body);"></span>'
         +'<span data-live-change="'+miEsc(r.ticker)+'" style="font-size:10px;font-family:var(--font-body);"></span>'
+        +(gen?'<span title="Narrative genesis — when this storyline was first detected">since '+gen+'</span>':'')
         +(r.verdict?miPill(r.verdict,vc):'')
         +(regime?miPill(regime+' energy',rc):'')
         +(r.walsh_regime?'<span>'+miEsc(r.walsh_regime)+' regime</span>':'')
