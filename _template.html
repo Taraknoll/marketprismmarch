@@ -4786,8 +4786,9 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
     clone.removeAttribute('onclick');
     var lbl = clone.querySelector('.nav-item-label');
     if(lbl){ lbl.textContent = 'Forensic Screen'; } else { clone.textContent = 'Forensic Screen'; }
-    var sub = clone.querySelector('.nav-item-sub'); if(sub){ sub.textContent = 'Market-wide red flags'; }
+    var sub = clone.querySelector('.nav-item-sub'); if(sub){ sub.textContent = 'Market-wide forensic screen'; }
     var badge = clone.querySelector('.nav-item-badge'); if(badge){ badge.remove(); }
+    var fxIc=clone.querySelector('svg'); if(fxIc){ var fxCls=fxIc.getAttribute('class')||'', wA=fxIc.getAttribute('width'), hA=fxIc.getAttribute('height'); fxIc.outerHTML='<svg class="'+fxCls+'"'+(wA?(' width="'+wA+'"'):'')+(hA?(' height="'+hA+'"'):'')+' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><circle cx="11.5" cy="14.5" r="2.5"/><path d="M13.3 16.3 15 18"/></svg>'; }
     clone.onclick = function(){ if(typeof switchTab==='function') switchTab('forensic', clone); };
     var fxAnchor = nav.querySelector('.nav-item[data-tab="validation"]'); if(!fxAnchor){ var fxIts = nav.querySelectorAll('.nav-item[data-tab]'); fxAnchor = fxIts[fxIts.length-1]; } fxAnchor.parentNode.insertBefore(clone, fxAnchor.nextSibling);
   }
@@ -5871,10 +5872,19 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
     <!-- ═══ FORENSIC RED-FLAG SCREEN ═══ -->
     <div class="tab-panel" id="tab-forensic">
       <div class="page-header">
-        <h1>Red flags, from the filings.</h1>
+        <h1>Every filer, screened.</h1>
         <span class="ph-italic">Before the story breaks.</span>
-        <p>Accounting-forensics red flags computed deterministically from SEC filings — Beneish, Sloan, Piotroski, Altman Z&Prime;, Ohlson. A forensic screen, not investment advice.</p>
+        <p>Distress and earnings-quality signals computed deterministically from SEC filings — Beneish, Sloan, Piotroski, Altman Z&Prime;, Ohlson. A forensic screen, not investment advice.</p>
       </div>
+      <div id="fx-gate" style="max-width:420px;margin:40px auto 0;text-align:center;padding:40px 32px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;">
+        <div style="font-size:36px;margin-bottom:16px;">&#128274;</div>
+        <h2 style="font-family:var(--font-display);font-size:28px;font-weight:400;color:var(--mp-text-primary);margin-bottom:8px;letter-spacing:-0.02em;">Forensic Screen</h2>
+        <p style="font-size:13px;color:var(--mp-text-tertiary);line-height:1.6;margin-bottom:24px;">Enter your access code to view the market-wide forensic screen.</p>
+        <input type="password" id="fx-gate-code" placeholder="Access code" autocomplete="off" style="width:100%;padding:12px 16px;font-size:14px;background:var(--mp-surface2);border:1px solid var(--mp-border);border-radius:10px;color:var(--mp-text-primary);font-family:var(--font-body);text-align:center;letter-spacing:0.1em;margin-bottom:12px;outline:none;transition:border-color .2s;" onkeydown="if(event.key==='Enter')fxGateSubmit();">
+        <div id="fx-gate-error" style="display:none;font-size:12px;color:#FF4D4D;margin-bottom:12px;">Incorrect code. Try again.</div>
+        <button onclick="fxGateSubmit()" style="width:100%;padding:12px 24px;background:linear-gradient(135deg,#00DE94,#00AEFF);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:transform .2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">Unlock</button>
+      </div>
+      <div id="fx-content" style="display:none;">
       <div class="stats-row">
         <div class="stat-card"><span class="stat-num">0.67</span><span class="stat-label">Backtest AUC</span></div>
         <div class="stat-card"><span class="stat-num">1.7&times;</span><span class="stat-label">Lift at 4+ flags</span></div>
@@ -5904,6 +5914,7 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
       </div>
       <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;">Every figure traces to the SEC 10-K (EDGAR). Survivorship-free backtest. Forensic screen, not investment advice.</div>
       <div class="tc-card-overlay" id="forensic-detail-overlay"><div class="tc-card-expanded" id="forensic-detail-panel" style="width:560px;max-width:92vw;max-height:85vh;overflow:auto;position:relative;"></div></div>
+      </div>
     </div>
 
     <!-- ═══ SCORE ANY STOCK — TESTING ═══ -->
@@ -6949,7 +6960,7 @@ function switchTab(id, btn){
   if(id==='cards'&&typeof renderCardsGallery==='function'){TCG_RENDERED=false;setTimeout(renderCardsGallery,50);}
   if(id==='calendar'&&typeof calendarBoot==='function')setTimeout(calendarBoot,50);
   if(id==='trapradar'&&typeof initTrapRadar==='function')setTimeout(initTrapRadar,50);
-  if(id==='forensic'&&typeof loadForensic==='function')setTimeout(loadForensic,50);
+  if(id==='forensic'){ if(typeof trGateIsUnlocked==='function'&&trGateIsUnlocked()){ if(typeof fxGateShow==='function')fxGateShow(true); if(typeof loadForensic==='function')setTimeout(loadForensic,50); } else { if(typeof fxGateShow==='function')fxGateShow(false); setTimeout(function(){var i=document.getElementById('fx-gate-code');if(i)i.focus();},100); } }
   // marketwide tab removed — content now inline in Biggest Narratives
   // Run all registered tab hooks (sections register their own init via onTabSwitch)
   for(var h=0;h<_tabHooks.length;h++){ try{_tabHooks[h](id);}catch(e){console.warn('Tab hook error:',e);} }
@@ -10145,6 +10156,27 @@ function trGateSubmit(){
   }
 }
 window.trGateSubmit=trGateSubmit;
+function fxGateShow(unlocked){
+  var gate=document.getElementById('fx-gate');
+  var content=document.getElementById('fx-content');
+  if(gate)gate.style.display=unlocked?'none':'block';
+  if(content)content.style.display=unlocked?'block':'none';
+}
+function fxGateSubmit(){
+  var input=document.getElementById('fx-gate-code');
+  var err=document.getElementById('fx-gate-error');
+  if(!input)return;
+  if(input.value.trim()===TR_GATE_CODE){
+    try{localStorage.setItem(TR_GATE_STORAGE,'1');}catch(_){}
+    fxGateShow(true);
+    if(typeof loadForensic==='function')loadForensic();
+  }else{
+    if(err)err.style.display='block';
+    input.value='';
+    input.focus();
+  }
+}
+window.fxGateSubmit=fxGateSubmit;
 
 onTabSwitch(function(id){
   if(id==='validation'){
