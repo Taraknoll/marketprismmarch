@@ -103,6 +103,8 @@ module.exports = async (req, res) => {
           const price = lastTrade.p || day.c || prevDay.c;
           if (!price) continue;
           const prevClose = prevDay.c || null;
+          const dayVol = day.v != null ? Number(day.v) : null;
+          const prevVol = prevDay.v != null ? Number(prevDay.v) : null;
           quotes[ticker] = {
             price: Number(price),
             change: prevClose ? Number((price - prevClose).toFixed(2)) : null,
@@ -110,6 +112,12 @@ module.exports = async (req, res) => {
             prevClose: prevClose ? Number(prevClose) : null,
             dayHigh: day.h ? Number(day.h) : null,
             dayLow: day.l ? Number(day.l) : null,
+            // Intraday volume + relative-volume (today vs prior session) so the
+            // Top Stories panel can rank by price AND volume movement. Additive
+            // fields — existing live-price callers ignore them.
+            volume: dayVol,
+            prevVolume: prevVol,
+            relVolume: (dayVol != null && prevVol) ? Number((dayVol / prevVol).toFixed(2)) : null,
             source: lastTrade.p ? 'snapshot_live' : 'snapshot_close'
           };
           anySuccess = true;
