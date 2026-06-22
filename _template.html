@@ -16746,7 +16746,7 @@ async function openForensicDetail(cik){
   try{
     var hdrs={'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};
     var fcols='cik,company_name,fiscal_year,filed_date,red_flag_count,red_flag_applic,composite_severity,is_adjudicable,is_delisted,coverage_pct,negative_equity,cash_burn,altman_z,altman_variant,beneish_m,beneish_flag,accruals_ratio,cfo_ni_gap,piotroski_f,ohlson_p,gw_intangibles_pct,interest_coverage,net_debt_ebitda,dilution_intensity,leverage_flag';
-    var furl=SUPABASE_URL+'/rest/v1/xbrl_forensic_factors?select='+fcols+'&cik=eq.'+encodeURIComponent(cik)+'&order=fiscal_year.desc&limit=1';
+    var furl=SUPABASE_URL+'/rest/v1/xbrl_forensic_factors?select='+fcols+'&cik=eq.'+encodeURIComponent(cik)+'&fiscal_year=gte.2012&fiscal_year=lte.2026&order=fiscal_year.desc&limit=1';
     var turl=SUPABASE_URL+'/rest/v1/v_xbrl_factor_timeline?select=fiscal_year,red_flag_count,composite_severity&cik=eq.'+encodeURIComponent(cik)+'&fiscal_year=gte.2012&fiscal_year=lte.2026&order=fiscal_year.asc';
     var fr=await fetch(furl,{headers:hdrs}); var fa=fr.ok?await fr.json():[];
     var trr=await fetch(turl,{headers:hdrs}); var ta=trr.ok?await trr.json():[];
