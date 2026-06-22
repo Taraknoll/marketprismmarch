@@ -5844,6 +5844,32 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
       </div>
     </div>
 
+    <!-- ═══ FORENSIC RED-FLAG SCREEN ═══ -->
+    <div class="tab-panel" id="tab-forensic">
+      <div class="page-header">
+        <h1>Red flags, from the filings.</h1>
+        <span class="ph-italic">Before the story breaks.</span>
+        <p>Accounting-forensics red flags computed deterministically from SEC filings — Beneish, Sloan, Piotroski, Altman Z&Prime;, Ohlson. A forensic screen, not investment advice.</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><span class="stat-num">0.67</span><span class="stat-label">Backtest AUC</span></div>
+        <div class="stat-card"><span class="stat-num">1.7&times;</span><span class="stat-label">Lift at 4+ flags</span></div>
+        <div class="stat-card"><span class="stat-num">~18mo</span><span class="stat-label">Lead time</span></div>
+        <div class="stat-card"><span class="stat-num" id="forensic-stat-total">—</span><span class="stat-label">Companies</span></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;" id="forensic-filter-bar">
+        <button class="chip active" data-val="all" onclick="setForensicFilter('all')" style="font-family:Inter,sans-serif;font-size:13px;">All</button>
+        <button class="chip" data-val="severe" onclick="setForensicFilter('severe')" style="font-family:Inter,sans-serif;font-size:13px;color:rgba(255,77,77,0.7);">Severe (<span id="forensic-stat-severe">—</span>)</button>
+        <button class="chip" data-val="elevated" onclick="setForensicFilter('elevated')" style="font-family:Inter,sans-serif;font-size:13px;color:rgba(255,184,0,0.7);">Elevated (<span id="forensic-stat-elevated">—</span>)</button>
+        <button class="chip" data-val="watch" onclick="setForensicFilter('watch')" style="font-family:Inter,sans-serif;font-size:13px;">Watch</button>
+        <button class="chip" data-val="clean" onclick="setForensicFilter('clean')" style="font-family:Inter,sans-serif;font-size:13px;color:rgba(0,222,148,0.7);">Clean</button>
+      </div>
+      <div id="forensic-feed" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;">
+        <div style="padding:40px;text-align:center;color:rgba(255,255,255,0.3);grid-column:1/-1;font-family:Inter,sans-serif;font-size:14px;">Loading forensic screen…</div>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);font-family:Inter,sans-serif;">Every figure traces to the SEC 10-K (EDGAR). Survivorship-free backtest. Forensic screen, not investment advice.</div>
+    </div>
+
     <!-- ═══ SCORE ANY STOCK — TESTING ═══ -->
     <div class="tab-panel" id="tab-scorer">
       <div class="page-header">
@@ -6799,8 +6825,8 @@ document.querySelectorAll('.page-header p').forEach(function(p,i){
   if(i===0) return;
 });
 // ── Tab switching (hook-based — sections register via onTabSwitch) ────────────
-var TABS = ['daily','insights','leaderboard','prism','cards','calendar','memes','signallab','ticker','sector','scorer','validation','help'];
-var TAB_TITLES = {daily:'Daily Plays',insights:'Market Insights',leaderboard:'Leaderboard',prism:'Prism',cards:'Trading Cards',calendar:'Trading Calendar',memes:'Market Sharing',signallab:'Signal Lab',ticker:'Stock Research',sector:'Sector Pulse',scorer:'Score Any Stock',validation:'Track Record',help:'Help & Account'};
+var TABS = ['daily','insights','leaderboard','forensic','prism','cards','calendar','memes','signallab','ticker','sector','scorer','validation','help'];
+var TAB_TITLES = {daily:'Daily Plays',insights:'Market Insights',leaderboard:'Leaderboard',forensic:'Forensic Screen',prism:'Prism',cards:'Trading Cards',calendar:'Trading Calendar',memes:'Market Sharing',signallab:'Signal Lab',ticker:'Stock Research',sector:'Sector Pulse',scorer:'Score Any Stock',validation:'Track Record',help:'Help & Account'};
 var _tabHooks = [];
 /** Register a callback to run after any tab switch. fn(id) */
 function onTabSwitch(fn){ if(typeof fn==='function') _tabHooks.push(fn); }
@@ -6887,6 +6913,7 @@ function switchTab(id, btn){
   if(id==='cards'&&typeof renderCardsGallery==='function'){TCG_RENDERED=false;setTimeout(renderCardsGallery,50);}
   if(id==='calendar'&&typeof calendarBoot==='function')setTimeout(calendarBoot,50);
   if(id==='trapradar'&&typeof initTrapRadar==='function')setTimeout(initTrapRadar,50);
+  if(id==='forensic'&&typeof loadForensic==='function')setTimeout(loadForensic,50);
   // marketwide tab removed — content now inline in Biggest Narratives
   // Run all registered tab hooks (sections register their own init via onTabSwitch)
   for(var h=0;h<_tabHooks.length;h++){ try{_tabHooks[h](id);}catch(e){console.warn('Tab hook error:',e);} }
@@ -16499,6 +16526,67 @@ function getTrapSeverity(fvd){
   if(fvd >= 150) return {label:'Severe',color:'rgba(255,77,77,0.65)',key:'severe'};
   if(fvd >= 80)  return {label:'Moderate',color:'rgba(255,184,0,0.65)',key:'moderate'};
   return {label:'Low Risk',color:'rgba(0,222,148,0.65)',key:'low'};
+}
+
+// ── Forensic Red-Flag Screener (xbrl_forensic_factors via v_xbrl_redflag_latest) ──
+var FORENSIC_DATA = [];
+var forensicFilter = 'all';
+async function loadForensic(){
+  var feed = document.getElementById('forensic-feed');
+  if(!feed) return;
+  feed.innerHTML = '<div style="padding:40px;text-align:center;color:rgba(255,255,255,0.3);grid-column:1/-1;font-family:Inter,sans-serif;font-size:14px;">Loading forensic screen…</div>';
+  try{
+    if(!SUPABASE_URL || !SUPABASE_ANON) throw new Error('Supabase not configured');
+    var hdrs = {'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};
+    var cols = 'ticker,company_name,red_flag_count,composite_severity,altman_z,negative_equity,cash_burn,is_adjudicable,is_delisted';
+    var url = SUPABASE_URL+'/rest/v1/v_xbrl_redflag_latest?select='+cols+'&order=red_flag_count.desc,composite_severity.desc&limit=400';
+    var res = await fetch(url,{headers:hdrs});
+    if(!res.ok) throw new Error('Supabase '+res.status);
+    var rows = await res.json();
+    FORENSIC_DATA = rows.filter(function(r){ return r.ticker && r.is_adjudicable; });
+    renderForensic();
+  }catch(e){
+    feed.innerHTML = '<div style="padding:20px;color:#FF4D4D;font-family:Inter,sans-serif;font-size:14px;">Error loading forensic screen. '+esc(e.message)+'</div>';
+  }
+}
+function forensicSeverity(r){
+  var n = r.red_flag_count||0, s = r.composite_severity||0;
+  if(n>=3 && s>=0.45) return {b:'Severe',k:'severe',c:'#FF4D4D'};
+  if(n>=2 || s>=0.30) return {b:'Elevated',k:'elevated',c:'#FFB800'};
+  if(n>=1) return {b:'Watch',k:'watch',c:'rgba(255,255,255,0.45)'};
+  return {b:'Clean',k:'clean',c:'#00DE94'};
+}
+function setForensicFilter(k){
+  forensicFilter = k;
+  var bar = document.getElementById('forensic-filter-bar');
+  if(bar) Array.from(bar.children).forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-val')===k); });
+  renderForensic();
+}
+function renderForensic(){
+  var feed = document.getElementById('forensic-feed');
+  if(!feed) return;
+  var rows = (forensicFilter==='all') ? FORENSIC_DATA : FORENSIC_DATA.filter(function(r){ return forensicSeverity(r).k===forensicFilter; });
+  var sev=0,ele=0; FORENSIC_DATA.forEach(function(r){var k=forensicSeverity(r).k; if(k==='severe')sev++; else if(k==='elevated')ele++;});
+  var s1=document.getElementById('forensic-stat-severe'); if(s1)s1.textContent=sev;
+  var s2=document.getElementById('forensic-stat-elevated'); if(s2)s2.textContent=ele;
+  var s3=document.getElementById('forensic-stat-total'); if(s3)s3.textContent=FORENSIC_DATA.length;
+  if(!rows.length){ feed.innerHTML='<div style="padding:40px;text-align:center;color:rgba(255,255,255,0.3);grid-column:1/-1;font-family:Inter,sans-serif;font-size:14px;">No companies match this filter.</div>'; return; }
+  feed.innerHTML = rows.map(function(r){
+    var sv = forensicSeverity(r);
+    var z = (r.altman_z!=null) ? Number(r.altman_z).toFixed(1) : '—';
+    var chips='';
+    if(r.negative_equity) chips+='<span style="font-size:11px;padding:2px 8px;border-radius:6px;color:#FF4D4D;border:1px solid #FF4D4D;">neg. equity</span>';
+    if(r.cash_burn) chips+='<span style="font-size:11px;padding:2px 8px;border-radius:6px;color:#FFB800;border:1px solid #FFB800;">cash burn</span>';
+    if(r.altman_z!=null && Number(r.altman_z)<1.1) chips+='<span style="font-size:11px;padding:2px 8px;border-radius:6px;color:#FF4D4D;border:1px solid #FF4D4D;">distress Z″ '+z+'</span>';
+    return '<div onclick="window.location.href=\'/ticker/'+encodeURIComponent(r.ticker)+'\'" style="background:#0C1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s;" onmouseenter="this.style.borderColor=\'rgba(255,255,255,0.14)\';this.style.transform=\'translateY(-3px)\';" onmouseleave="this.style.borderColor=\'rgba(255,255,255,0.06)\';this.style.transform=\'translateY(0)\';">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'
+        +'<div style="min-width:0;"><div style="font-weight:600;font-size:16px;font-family:Inter,sans-serif;">'+esc(r.ticker)+'</div>'
+          +'<div style="font-size:12px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;">'+esc((r.company_name||'').slice(0,30))+(r.is_delisted?' · delisted':'')+'</div></div>'
+        +'<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;color:'+sv.c+';border:1px solid '+sv.c+';white-space:nowrap;">'+sv.b+'</span></div>'
+      +'<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;"><span style="font-size:28px;font-weight:600;color:'+sv.c+';font-family:Inter,sans-serif;">'+(r.red_flag_count!=null?r.red_flag_count:'—')+'</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">red flags</span></div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'+(chips||'<span style="font-size:12px;color:rgba(255,255,255,0.3);">no acute flags</span>')+'</div>'
+    +'</div>';
+  }).join('');
 }
 
 function getTrapStoryRisk(r){
