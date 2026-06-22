@@ -4784,11 +4784,12 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
     clone.classList.remove('active');
     clone.removeAttribute('href');
     clone.removeAttribute('onclick');
-    var lbl = clone.querySelector('.nav-item-label');
-    if(lbl){ lbl.textContent = 'Forensic Screen'; } else { clone.textContent = 'Forensic Screen'; }
-    var sub = clone.querySelector('.nav-item-sub'); if(sub){ sub.textContent = 'Market-wide forensic screen'; }
-    var badge = clone.querySelector('.nav-item-badge'); if(badge){ badge.remove(); }
-    var fxIc=clone.querySelector('svg'); if(fxIc){ var fxCls=fxIc.getAttribute('class')||'', wA=fxIc.getAttribute('width'), hA=fxIc.getAttribute('height'); fxIc.outerHTML='<svg class="'+fxCls+'"'+(wA?(' width="'+wA+'"'):'')+(hA?(' height="'+hA+'"'):'')+' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><circle cx="11.5" cy="14.5" r="2.5"/><path d="M13.3 16.3 15 18"/></svg>'; }
+    // Build icon + label in one shot. Cloning Leaderboard yields "<svg> + bare
+    // text node" (no .nav-item-label span), so the old textContent assignment
+    // wiped the icon before it could be swapped. A single innerHTML set swaps in
+    // the forensic icon (file + magnifier) and relabels together. stroke-width
+    // 1.5 matches the other sidebar icons (mp-sidebar.js ICONS).
+    clone.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><circle cx="11.5" cy="14.5" r="2.5"/><path d="M13.3 16.3 15 18"/></svg>Forensic Screen';
     clone.onclick = function(){ if(typeof switchTab==='function') switchTab('forensic', clone); };
     var fxAnchor = nav.querySelector('.nav-item[data-tab="validation"]'); if(!fxAnchor){ var fxIts = nav.querySelectorAll('.nav-item[data-tab]'); fxAnchor = fxIts[fxIts.length-1]; } fxAnchor.parentNode.insertBefore(clone, fxAnchor.nextSibling);
   }
