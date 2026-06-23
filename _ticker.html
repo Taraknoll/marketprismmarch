@@ -1556,6 +1556,18 @@
   .nf-pill.pass    { background: rgba(0,222,148,0.08);  color: #34d99b; border-color: rgba(0,222,148,0.22); }
   .nf-pill.fail    { background: rgba(255,77,77,0.08);   color: #ff6b6b; border-color: rgba(255,77,77,0.22); }
   .nf-pill.partial { background: rgba(255,184,0,0.08);   color: #FFB800; border-color: rgba(255,184,0,0.22); }
+  /* Above-the-fold verdict line — the one-line hook above the narrative cards */
+  .nf-verdict {
+    margin: 0 0 14px; padding: 12px 15px;
+    background: rgba(0,174,255,0.06);
+    border: 1px solid rgba(0,174,255,0.18);
+    border-left: 3px solid #00AEFF; border-radius: 10px;
+    font-size: 15px; line-height: 1.5; font-weight: 500;
+    color: var(--mp-text-secondary);
+  }
+  .nf-verdict strong { color: var(--mp-text-primary); font-weight: 700; }
+  .nf-verdict .nf-v-flag { color: #FF6B6B; font-weight: 700; }
+  .nf-verdict .nf-v-ok { color: #34d99b; font-weight: 700; }
 
   /* ── Keyword chips (inside expanded body) ── */
   .narr-kw-wrap {
@@ -9638,6 +9650,38 @@ async function loadNarratives() {
       </div>`;
     }).join('');
 
+    // ── Above-the-fold verdict (the hook) ──
+    // Synthesize the per-narrative claim flags the cards already show into one
+    // scannable, honest line: how many of the narratives moving this ticker are
+    // unsupported by hard data / the filings vs. how many hold up.
+    let vWeak = 0, vSolid = 0;
+    top.forEach(n => {
+      const weak  = n.has_numeric_anchor === false
+                 || n.has_vague_language === true
+                 || (n.causal_logic_score != null && Number(n.causal_logic_score) < 50);
+      const solid = n.has_numeric_anchor === true
+                 && n.has_vague_language !== true
+                 && (n.causal_logic_score == null || Number(n.causal_logic_score) >= 70);
+      if (weak) vWeak++;
+      else if (solid) vSolid++;
+    });
+    const vN = top.length;
+    let verdictInner = '';
+    if (vN) {
+      if (vWeak > 0) {
+        verdictInner = `<span class="nf-v-flag">${vWeak} of ${vN}</span> narrative${vWeak === 1 ? '' : 's'} driving `
+          + `<strong>${esc(TICKER)}</strong> ${vWeak === 1 ? "isn't" : "aren't"} backed by hard data or the filings`
+          + (vSolid > 0 ? ` — <span class="nf-v-ok">${vSolid}</span> hold${vSolid === 1 ? 's' : ''} up.` : '.');
+      } else if (vSolid > 0) {
+        verdictInner = `All <strong>${vN}</strong> narrative${vN === 1 ? '' : 's'} driving `
+          + `<strong>${esc(TICKER)}</strong> are backed by data — no obvious traps in this window.`;
+      } else {
+        verdictInner = `<strong>${vN}</strong> narrative${vN === 1 ? '' : 's'} driving `
+          + `<strong>${esc(TICKER)}</strong> — evidence is mixed; see the breakdown below.`;
+      }
+    }
+    const verdictLineHtml = verdictInner ? `<div class="nf-verdict">${verdictInner}</div>` : '';
+
     // Ticker fuel score summary line (above the narrative list)
     const tickerFuelScore = (window._tickerPulseData && window._tickerPulseData.pulse_health_score != null)
       ? Math.round(window._tickerPulseData.pulse_health_score)
@@ -9646,7 +9690,7 @@ async function loadNarratives() {
     const fuelScoreLineHtml = tickerFuelScore != null
       ? `<div class="narr-fuel-score-line">Ticker fuel score: <strong>${tickerFuelScore}</strong></div>`
       : '';
-    const fullHtml = fuelScoreLineHtml + narrHTML;
+    const fullHtml = verdictLineHtml + fuelScoreLineHtml + narrHTML;
 
     document.getElementById('narr-list').innerHTML = fullHtml;
     var narrListTop = document.getElementById('narr-list-top');
