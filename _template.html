@@ -3560,8 +3560,8 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
 .gc-dir-arrow{font-size:12px;font-weight:700;}
 .gc-dir-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-family:'Inter',var(--font-body),sans-serif;}
 
-/* Valuation / regime caution flag — sits above the action strip */
-.gc-caution-flag{font-size:11px;font-weight:600;line-height:1.3;color:#FFB800;padding:0 18px 8px;font-family:'Inter',var(--font-body),sans-serif;}
+/* Minimal "Overvalued · short-term play" tag — muted, no warning color */
+.gc-overvalued-tag{color:var(--mp-text-tertiary);text-transform:none;letter-spacing:0;font-weight:500;}
 
 /* Confidence — simple inline */
 .gc-conf-row{padding:0 18px 8px;display:flex;align-items:center;gap:8px;}
@@ -9200,6 +9200,10 @@ function tlsBuildRow(r){
   var entry=r.ideal_entry_price!=null?Number(r.ideal_entry_price):null;
   var target=r.ideal_exit_price!=null?Number(r.ideal_exit_price):null;
   var stop=r.ideal_stop_price!=null?Number(r.ideal_stop_price):null;
+  // Guard: a LONG whose ideal_exit_price sits at/below ideal_entry_price is an upstream
+  // inconsistency (a long's target must be above its entry). Don't render a self-contradicting
+  // band — fall back to the live price. Shorts are correct as-is (entry above target).
+  if(!short && entry!=null && target!=null && target<=entry){ entry=null; target=null; }
   var priceLbl=(entry!=null&&target!=null)?'Entry / Target':'Price';
   var priceTxt=(entry!=null&&target!=null)?('$'+fmtPrice(entry)+' → $'+fmtPrice(target)):(r.price!=null?'$'+fmtPrice(Number(r.price)):'');
   var chip=r._chip||'';
@@ -13928,16 +13932,14 @@ var GC_ACTIONS={
   'MOMENTUM_CONFIRMED':'RIDE UP','FUNDAMENTAL_LONG':'BUY & HOLD',
   'OMISSION_CASCADE':'SHORT'
 };
-/* Valuation / regime guard for the front-face action. gcAction() is a pure
+/* Valuation guard for the front-face action. gcAction() is a pure
    primary_label→verb lookup that ignores valuation, so a grossly overvalued
-   name can surface "BUY DIPS". GC_OVERVALUED_PCT is the % above the model's
-   fair value at which a bullish "buy" verb is hard-overridden to OVERVALUED
-   (tunable — raise to flag only the most egregious cases). GC_FADING_REGIMES
-   are the weakening signal regimes ("Losing Steam"/"Hollow") where a buy verb
-   is left intact but flagged as contradictory. */
+   name can surface "BUY DIPS". When a bullish buy verb lands on a name trading
+   >=GC_OVERVALUED_PCT above the model's own fair value, the verb is reframed
+   from a value buy to a single, minimal "Overvalued · short-term play" tag
+   (no warning banner). Tunable. */
 var GC_OVERVALUED_PCT=40;
 var GC_BUY_ACTIONS={'BUY DIPS':1,'RIDE UP':1,'BUY & HOLD':1};
-var GC_FADING_REGIMES={'YELLOW_COLLAPSE':1,'HOLLOW':1};
 function gcAction(d){
   var a=GC_ACTIONS[d.primary_label];
   if(a)return a;
@@ -14026,21 +14028,13 @@ function buildStratCard(d){
   var nrs=d.nrs!=null?Math.round(Number(d.nrs)):'\u2014';
   var vms=d.vms!=null?Math.round(Number(d.vms)):'\u2014';
 
-  /* Front-face action guard.
-     (1) Hard override: a bullish buy verb on a name trading >=GC_OVERVALUED_PCT
-         above the model's own fair value becomes "OVERVALUED" \u2014 we don't tell
-         users to buy into a name the model prices well below the tape.
-     (2) Soft flag: a buy verb under a fading regime (Losing Steam/Hollow) keeps
-         the verb but warns of the contradiction. */
+  /* Front-face action guard: a bullish buy verb on a name trading
+     >=GC_OVERVALUED_PCT above the model's own fair value is reframed from a
+     value buy to a minimal "Overvalued \u00b7 short-term play" tag. All other
+     cards keep their normal action verb. */
   var baseAction=gcAction(d);
   var isBuyAction=!!GC_BUY_ACTIONS[baseAction];
   var overvalued=isBuyAction&&fvdPctVal!=null&&fvdPctVal>=GC_OVERVALUED_PCT;
-  var fadingBuy=isBuyAction&&!overvalued&&!!GC_FADING_REGIMES[d.signal_regime||''];
-  var actionLabel=overvalued?'OVERVALUED':baseAction;
-  var actionColor=(overvalued||fadingBuy)?'#FFB800':phaseCol;
-  var actionArrow=overvalued?'\u25c6':(d.direction==='BEARISH'?'\u25bc':d.direction==='BULLISH'?'\u25b2':'\u25c6');
-  var cautionFlag=overvalued?('\u26a0 '+fv+' above fair value')
-    :(fadingBuy?('\u26a0 Signal fading \u2014 model still says '+baseAction.toLowerCase()):'');
 
   /* ── FRONT FACE (clean enterprise) ── */
   var front='<div class="strat-front">'
@@ -14057,10 +14051,11 @@ function buildStratCard(d){
       +'</div>'
     +'</div>'
     +'<div class="gc-move-name">'+gcEsc(moveName)+'</div>'
-    +(cautionFlag?'<div class="gc-caution-flag">'+gcEsc(cautionFlag)+'</div>':'')
     +'<div class="gc-direction-strip">'
-      +'<span class="gc-dir-arrow" style="color:'+actionColor+';">'+actionArrow+'</span>'
-      +'<span class="gc-dir-label" style="color:'+actionColor+';">'+gcEsc(actionLabel)+'</span>'
+      +(overvalued
+        ? '<span class="gc-dir-label gc-overvalued-tag">Overvalued · short-term play</span>'
+        : '<span class="gc-dir-arrow" style="color:'+phaseCol+';">'+(d.direction==='BEARISH'?'▼':d.direction==='BULLISH'?'▲':'◆')+'</span>'
+          +'<span class="gc-dir-label" style="color:'+phaseCol+';">'+gcEsc(baseAction)+'</span>')
     +'</div>'
     +'<div class="gc-conf-row">'
       +'<span class="gc-conf-label">Confidence</span>'
