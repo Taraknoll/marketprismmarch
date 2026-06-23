@@ -5748,7 +5748,12 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
     #scholarly-section .schol-finding {
       font-size: 13px; line-height: 1.6;
       color: var(--mp-text-secondary, rgba(255,255,255,0.7)); margin-top: 10px;
+      display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
     }
+    #scholarly-section .schol-cite-link {
+      color: var(--mp-cyan, #00AEFF); font-weight: 600; white-space: nowrap;
+    }
+    #scholarly-section a.schol-card:hover .schol-cite-link { text-decoration: underline; }
     #scholarly-section .schol-tags {
       display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px;
     }
@@ -7602,6 +7607,21 @@ function mpScholarDirLabel(dir) {
   out = out.charAt(0).toUpperCase() + out.slice(1);
   return out.replace(/\bai\b/gi, 'AI').replace(/\bus\b/gi, 'US').replace(/\bfda\b/gi, 'FDA').replace(/\bcrr\b/gi, 'CRR');
 }
+// Trim a scraped abstract (key_finding, hard-capped ~1000 chars) down to a tight
+// 1–2 sentence study summary so evidence-corpus cards read as a blurb + citation,
+// not a wall of text. Prefers a clean sentence boundary, falls back to a word.
+function mpStudySummary(text, maxLen) {
+  var t = String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  maxLen = maxLen || 180;
+  if (t.length <= maxLen) return t;
+  var slice = t.slice(0, maxLen);
+  var sentEnd = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('! '), slice.lastIndexOf('? '));
+  if (sentEnd >= 90) return slice.slice(0, sentEnd + 1);
+  var sp = slice.lastIndexOf(' ');
+  if (sp >= 90) slice = slice.slice(0, sp);
+  return slice.replace(/[\s.,;:—-]+$/, '') + '…';
+}
 async function loadScholarlyReferences(heroRow) {
   var section = document.getElementById('scholarly-section');
   var grid = document.getElementById('schol-grid');
@@ -7662,11 +7682,12 @@ async function loadScholarlyReferences(heroRow) {
       var claimLabel = r.claim_type ? esc(String(r.claim_type).replace(/_/g, ' ')) : '';
       var head = '<div class="schol-card-head"><div class="schol-title">' + esc(r.paper_title || 'Untitled study') + '</div>'
         + (url ? '<span class="schol-ext">↗</span>' : '') + '</div>';
+      var summary = mpStudySummary(r.key_finding, 180);
       var inner =
           '<span class="schol-accent" style="background:' + color + ';"></span>'
         + head
-        + (meta ? '<div class="schol-meta">' + meta + '</div>' : '')
-        + (r.key_finding ? '<div class="schol-finding">' + esc(r.key_finding) + '</div>' : '')
+        + (summary ? '<div class="schol-finding">' + esc(summary) + '</div>' : '')
+        + (meta ? '<div class="schol-meta">' + meta + (url ? ' &middot; <span class="schol-cite-link">View paper &#8599;</span>' : '') + '</div>' : '')
         + '<div class="schol-tags">'
           + (dirLabel ? '<span class="schol-tag" style="color:' + color + ';border-color:' + color + '55;">' + esc(dirLabel) + '</span>' : '')
           + (claimLabel ? '<span class="schol-tag schol-tag-muted">' + claimLabel + '</span>' : '')
