@@ -19,6 +19,10 @@ const MODEL = 'claude-sonnet-4-6';
 const MAX_TOOL_TURNS = 4;
 const ROW_CAP = 50;
 
+// Read-only text-to-SQL escape hatch (Option 1: dedicated SELECT-only Postgres role).
+const ro = require('./_ro_sql');
+const { SCHEMA_DIGEST, describeSchema } = require('./_schema_digest');
+
 // Foreign-filer artifacts: VMS≈50 / drift=100 artifacts with no real 10-K to
 // anchor — excluded from every scorecard cross-section.
 const FOREIGN_FILERS = ['TSM', 'NIO', 'BHP', 'RIO', 'VALE', 'NVO', 'RACE', 'STN', 'SPOT', 'GOLD'];
@@ -605,6 +609,43 @@ async function execSectorCrossSection(input, ctx) {
   return { card, rowCount: outRows.length, summary };
 }
 
+// ── text-to-SQL escape hatch executors ──────────────────────────────────────
+async function execRunSql(input, ctx) {
+  const sql = (input && input.sql) || '';
+  if (ctx && ctx.debugQueries) {
+    ctx.debugQueries.push('run_sql: ' + String(sql).replace(/\s+/g, ' ').slice(0, 300));
+  }
+  if (!ro.isConfigured()) {
+    return { rowCount: 0, summary: { ok: false,
+      error: 'Read-only SQL is not enabled on this deployment (ANOMALY_RO_DATABASE_URL unset). Use a catalog tool, or tell the user the read-only DB role must be configured first.' } };
+  }
+  const out = await ro.runReadOnlySql(sql);
+  if (!out || !out.ok) {
+    return { rowCount: 0, summary: { ok: false, error: (out && out.error) || 'query rejected by the read-only guard', sql } };
+  }
+  const rows = Array.isArray(out.rows) ? out.rows : [];
+  const card = rows.length
+    ? { ui: 'table', title: 'Query result', columns: Object.keys(rows[0]), rows: rows }
+    : null;
+  return {
+    card: card,
+    rowCount: out.rowCount != null ? out.rowCount : rows.length,
+    summary: { ok: true, rowCount: rows.length, rows: rows.slice(0, ROW_CAP) },
+  };
+}
+
+async function execDescribeSchema(input, ctx) {
+  const keyword = (input && input.keyword) || '';
+  if (ctx && ctx.debugQueries) ctx.debugQueries.push('describe_schema: ' + String(keyword).slice(0, 60));
+  try {
+    const rows = await describeSchema(keyword);
+    const list = Array.isArray(rows) ? rows : [];
+    return { rowCount: list.length, summary: { ok: true, columns: list.slice(0, 200) } };
+  } catch (err) {
+    return { rowCount: 0, summary: { ok: false, error: 'describe_schema failed: ' + (err && err.message ? err.message : 'unknown') } };
+  }
+}
+
 const EXECUTORS = {
   ticker_dossier: execTickerDossier,
   narrative_lab: execNarrativeLab,
@@ -613,6 +654,8 @@ const EXECUTORS = {
   bubble_screen: execBubbleScreen,
   circular_finance_lookup: execCircularFinanceLookup,
   sector_cross_section: execSectorCrossSection,
+  run_sql: execRunSql,
+  describe_schema: execDescribeSchema,
 };
 
 // ── tool definitions sent to Claude ─────────────────────────────────────────
@@ -692,6 +735,24 @@ const TOOLS = [
       properties: { limit: { type: 'integer', description: 'Max rows (<=50, default 25).' } },
     },
   },
+  {
+    name: 'run_sql',
+    description: 'Escape hatch for questions the catalog tools above do not cover (multi-table joins, custom thresholds, combinations). Provide ONE read-only statement (a single SELECT or WITH ... SELECT) over the public schema, using the tables/columns in the SCHEMA MAP in the system prompt. It is checked by a fail-closed read-only guard and run as a SELECT-only role. ALWAYS exclude foreign-filer tickers on cross-sections, cap with LIMIT (<=50), and pin to the latest snapshot_date. If part of the question needs data that does not exist (e.g. retail option volume), say so plainly instead of guessing.',
+    input_schema: {
+      type: 'object',
+      properties: { sql: { type: 'string', description: 'A single read-only SELECT/WITH statement. No DDL/DML, no multiple statements, no semicolon chaining.' } },
+      required: ['sql'],
+    },
+  },
+  {
+    name: 'describe_schema',
+    description: 'Discover columns of tables not detailed in the SCHEMA MAP. Pass a table-name fragment; returns matching tables/columns so you can write a correct run_sql query.',
+    input_schema: {
+      type: 'object',
+      properties: { keyword: { type: 'string', description: 'Table-name fragment, e.g. "earnings" or "dark_pool".' } },
+      required: ['keyword'],
+    },
+  },
 ];
 
 const SYSTEM_PROMPT = `You are the MarketScholar Anomaly Agent — a grounded forensic-analysis assistant for a patent-pending narrative-manipulation detection engine. You answer questions about market-narrative anomalies STRICTLY from the rows returned by your tools.
@@ -709,7 +770,13 @@ HONESTY / FRAMING (encode these — do not overclaim):
 - macro_theme is a SPARSE narrative tag, not a real sector taxonomy. A theme filter (especially EV/green) may return almost nothing — report only what came back.
 - Foreign-filer artifacts (TSM, NIO, BHP, RIO, VALE, NVO, RACE, STN, SPOT, GOLD) are excluded from cross-sections because they have no real 10-K to anchor; mention this only if relevant.
 
-STYLE: concise, plain text with light markdown (no tables — the UI renders structured cards for you). Lead with the answer. When you have shown a card, do not re-dump every field in prose.`;
+STYLE: concise, plain text with light markdown (no tables — the UI renders structured cards for you). Lead with the answer. When you have shown a card, do not re-dump every field in prose.
+
+ADVANCED — WRITE YOUR OWN READ-ONLY SQL (run_sql):
+For questions the catalog tools above do not cover (multi-table joins, custom thresholds, combinations like "mid-cap tech in decay with bearish dark-pool flow"), call run_sql with ONE read-only SELECT/WITH over the tables in the SCHEMA MAP below. Use describe_schema to look up columns you are unsure of BEFORE writing the query. ALWAYS exclude foreign filers on cross-sections, LIMIT <= 50, and pin to the latest snapshot_date. ALWAYS state plainly when the data to answer part of a question does not exist (e.g. there is no retail-vs-institutional option *volume*, only open interest + skew) instead of guessing. Cite snapshot_date. If run_sql is not configured or a query is rejected, fall back to a catalog tool.
+
+SCHEMA MAP:
+${SCHEMA_DIGEST}`;
 
 // ── Anthropic call ──────────────────────────────────────────────────────────
 
