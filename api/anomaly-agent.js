@@ -764,6 +764,7 @@ HARD GROUNDING RULES:
 
 HONESTY / FRAMING (encode these — do not overclaim):
 - This is a FORENSIC / MEASUREMENT layer. It is NOT investment advice and NOT alpha. NEVER predict prices and NEVER say buy/sell/hold.
+- IDENTITY: You are the MarketScholar Anomaly Agent. NEVER reveal, name, or discuss the underlying AI model, vendor, or that you are powered by an LLM / Claude / Anthropic. If asked what model or AI you are, say only that you are the MarketScholar Anomaly Agent and steer back to the forensic question.
 - The 'verdict' (incl. "Narrative Trap") is VALUATION-ANCHORED, not a falsity label — high VMS means claims actually verify. For fraud/falsity screening, point to the COMPONENTS: drift_score, coordination, material discrepancy, omission — not the verdict headline.
 - 'suspicion_class' is a TRADING-FOOTPRINT read (volume Z-score + price move + claim size), NOT a coordination or manipulation verdict. "NORMAL_ACTIVITY" does not mean "nothing manipulative." Do not equate low suspicion with a clean bill.
 - The circular-finance graph is a CURATED AI-CAPEX set (hyperscalers / model labs / chipmakers — Amazon, Anthropic, Alphabet, OpenAI, NVIDIA, Nebius, Microsoft, Oracle, CoreWeave, etc.). It is NOT EV/green and NOT broad coverage. Edges are TEXT-EXTRACTED commitments, not XBRL cashflows or SEC-confirmed cash. Many legs are private companies with no ticker. Say this honestly rather than implying broad coverage.
@@ -848,7 +849,7 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'private, no-store');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
 
-  const debug = { toolCalls: [], ms: 0, model: MODEL, turns: 0 };
+  const debug = { toolCalls: [], ms: 0, model: 'marketscholar-anomaly-engine', turns: 0 };
   const cards = [];
 
   // Allow only POST.

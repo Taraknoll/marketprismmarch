@@ -267,20 +267,16 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     if(cards && cards.length){
       html+='<div class="cards">'+cards.map(renderCard).join('')+'</div>';
     }
-    html+=renderDebug(debug);
     el.innerHTML=html;
     $('thread').appendChild(el);
-    wireDebug(el);
     scrollBottom();
   }
   function addError(answer, debug){
     var el=document.createElement('div');
     el.className='msg assistant';
     el.innerHTML='<div class="who">Anomaly Agent</div>'
-      +'<div class="bubble errbubble"><div class="h">Error</div>'+esc(answer||'The agent could not complete this request.')+'</div>'
-      +renderDebug(debug);
+      +'<div class="bubble errbubble"><div class="h">Error</div>'+esc(answer||'The agent could not complete this request.')+'</div>';
     $('thread').appendChild(el);
-    wireDebug(el);
     scrollBottom();
   }
 
