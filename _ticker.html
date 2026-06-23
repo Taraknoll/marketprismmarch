@@ -7398,20 +7398,19 @@ async function enrichLeaderboardBadges() {
   }
 }
 
-// ── Scholarly References (sector-level academic & industry studies) ───────────
-// scholarly_references is mostly bulk-scraped "empirical_research" of mixed relevance,
-// plus a curated set of investment / narrative / valuation papers (every non-empirical
-// claim_type). We cite ONLY the curated rows — they carry vetted, on-topic key_findings.
-// The curated catalog is small (~22 papers across 9 fine sub-buckets: Technology/AI,
-// Technology/SaaS, Energy/Oil_Gas, Energy/Clean, Healthcare/Pharma, Healthcare/Biotech,
-// Financials/Banking, Financials/Fintech, Financials/Markets), so we can't make every
-// ticker unique. Instead we score the whole curated pool by relevance to THIS ticker's
-// sub-sector and rotate near-ties per-ticker — so adjacent tickers in the same sub-sector
-// surface a different mix/order instead of an identical list, and sectors with no
-// dedicated coverage get cross-cutting narrative research (not stray AI-bubble papers).
+// ── Scholarly References (ticker- & sector-level academic / industry studies) ─
+// scholarly_references is DUAL-keyed:
+//   • a large ticker-keyed scrape — sub_sector = the TICKER symbol, sector = a
+//     broad GICS group ('Technology','Healthcare','Semiconductors',…); and
+//   • the older fine-bucket curated catalog — sector = 'Technology/AI' etc.,
+//     sub_sector = a bucket name ('SaaS','Oil & Gas').
+// We exclude the bulk-scraped empirical/clinical noise and rank the rest by
+// relevance to THIS ticker: its OWN papers first, then same-broad-sector peers,
+// then the legacy fine bucket, then cross-cutting narrative research — with a
+// per-ticker jitter so same-sector tickers surface a different mix/order.
 // Table is anon-readable (anon_read).
 //
-// Map a fine-grained sector_name → { primary sub-bucket, parent group }.
+// Map a fine-grained sector_name → { primary fine-bucket, parent group } (legacy).
 function mpScholarBuckets(sectorName) {
   var s = (sectorName || '').toLowerCase();
   if (/biotech|genomic|\bgene\b|cell ther|therapeut/.test(s))                              return { primary: 'Healthcare/Biotech', parent: 'Healthcare' };
@@ -7426,6 +7425,27 @@ function mpScholarBuckets(sectorName) {
   if (/\bai\b|artificial intelligence|semiconductor|chip|agentic|quantum|infrastructure|data licensing|training data|predictive analytics|machine learning|autonomous|electric vehicle|\bev\b|social media|digital advertis|robot/.test(s))
                                                                                             return { primary: 'Technology/AI',      parent: 'Technology' };
   return { primary: null, parent: null }; // no dedicated coverage → cross-cutting narrative papers only
+}
+// Map the dashboard sector_name (MP custom taxonomy, often null) → the BROAD
+// sector label used by the ticker-keyed rows in scholarly_references. Best-effort:
+// a null/unknown sector_name returns null (ticker-exact + narrative ranking only).
+function mpScholarBroadSector(sectorName) {
+  var s = (sectorName || '').toLowerCase();
+  if (!s) return null;
+  if (/semiconductor|chip|foundry/.test(s))                                                      return 'Semiconductors';
+  if (/biotech|pharma|health|medtech|life scien|diagnost|medical|drug|genomic|\bgene\b/.test(s)) return 'Healthcare';
+  if (/real estate|reit|proptech/.test(s))                                                       return 'REITs';
+  if (/fintech|payment|bank|insurance|brokerage|capital market|asset manage|lending|financ/.test(s)) return 'Financials';
+  if (/oil|gas|petroleum/.test(s))                                                               return 'Energy';
+  if (/utilit|power grid|nuclear|solar|clean|renewable|wind|hydrogen|energy infrastructure/.test(s)) return 'Utilities';
+  if (/\benergy\b/.test(s))                                                                       return 'Energy';
+  if (/material|chemical|mining|\bmetals\b/.test(s))                                              return 'Materials';
+  if (/industrial|defense|aerospace|manufactur|machinery|logistic/.test(s))                      return 'Industrials';
+  if (/social media|advertis|communicat|\bmedia\b|streaming|telecom|entertainment/.test(s))      return 'Communications';
+  if (/staples|beverage|\bfood\b|household|tobacco/.test(s))                                      return 'Consumer Staples';
+  if (/electric vehicle|\bev\b|autonomous transport|retail|apparel|restaurant|travel|leisure|consumer discretion|\bauto\b/.test(s)) return 'Consumer Discretionary';
+  if (/cloud|saas|software|cyber|security|\bai\b|artificial intelligence|agentic|quantum|data licens|training data|predictive analytic|machine learning|robot|\btech\b/.test(s)) return 'Technology';
+  return null;
 }
 // Cross-cutting papers relevant to ANY ticker (market-behavior / narrative research).
 var MP_SCHOL_GENERAL = ['narrative_mispricing', 'narrative_vs_filings', 'investor_overreaction', 'bubble_dynamics', 'news_narrative_risk', 'news_price_reaction'];
@@ -7453,25 +7473,44 @@ async function loadScholarlyReferences(heroRow) {
   var grid = document.getElementById('schol-grid');
   if (!section || !grid) return;
   try {
-    // Pull the full curated catalog once, then choose 6 client-side by relevance + rotation.
-    var pool = await sbFetch('scholarly_references', {
-      select: 'paper_title,authors,year,source,source_url,key_finding,claim_type,consensus_direction,sector,recency_weight',
-      claim_type: 'not.in.(empirical_research,clinical_research,clinical_trial_reactions)',
-      order:  'recency_weight.desc.nullslast,year.desc',
-      limit:  '80'
-    }).catch(function () { return []; });
-    if (!pool || !pool.length) return; // section stays hidden — no junk on empty
+    // Pull THREE targeted, noise-filtered candidate sets so the ticker's OWN
+    // papers are always in the pool (a single recency-ordered fetch would crowd
+    // them out), then score + rotate client-side and surface the 6 best.
+    var TK = (typeof TICKER === 'string' ? TICKER : '').toUpperCase();
+    var broad = mpScholarBroadSector(heroRow && heroRow.sector_name);
+    var SCHOL_COLS = 'id,paper_title,authors,year,source,source_url,key_finding,claim_type,consensus_direction,sector,sub_sector,recency_weight';
+    var NOISE = 'not.in.(empirical_research,clinical_research,clinical_trial_reactions)';
+    var sets = await Promise.all([
+      // 1) the ticker's OWN curated papers (guaranteed present)
+      TK ? sbFetch('scholarly_references', { select: SCHOL_COLS, sub_sector: 'eq.' + TK, claim_type: NOISE, order: 'recency_weight.desc.nullslast,year.desc', limit: '20' }).catch(function () { return []; }) : Promise.resolve([]),
+      // 2) same broad-sector peers (only when we can map the sector)
+      broad ? sbFetch('scholarly_references', { select: SCHOL_COLS, sector: 'eq.' + broad, claim_type: NOISE, order: 'recency_weight.desc.nullslast,year.desc', limit: '30' }).catch(function () { return []; }) : Promise.resolve([]),
+      // 3) legacy fine-bucket + cross-cutting narrative catalog (fallback)
+      sbFetch('scholarly_references', { select: SCHOL_COLS, claim_type: NOISE, order: 'recency_weight.desc.nullslast,year.desc', limit: '80' }).catch(function () { return []; })
+    ]);
+    var seen = {}, pool = [];
+    sets.forEach(function (arr) {
+      (Array.isArray(arr) ? arr : []).forEach(function (p) {
+        var key = (p.id != null) ? ('id' + p.id) : (p.paper_title || '');
+        if (key && !seen[key]) { seen[key] = 1; pool.push(p); }
+      });
+    });
+    if (!pool.length) return; // section stays hidden — no junk on empty
 
-    var b = mpScholarBuckets(heroRow && heroRow.sector_name);
-    var seed = (typeof TICKER === 'string' ? TICKER : '') || '';
-    // base relevance tiers (primary 12 > parent 8 > cross-cutting 6 > other 1) plus a
-    // 0–7 per-ticker jitter, so a high-jitter near-tier paper can leapfrog a low-jitter
-    // one — same-sub-sector tickers diverge while relevance still dominates on average.
+    var b = mpScholarBuckets(heroRow && heroRow.sector_name); // legacy fine buckets
+    var seed = TK || '';
+    // Relevance tiers spaced >7 apart so the 0–7 per-ticker jitter only reorders
+    // WITHIN a tier (rotation) and never lets a lower tier leapfrog a higher one:
+    //   ticker-exact 100 > broad-sector 40 > fine-bucket 30 > fine-parent 20 >
+    //   cross-cutting narrative 10 > other 1.
     function relScore(p) {
       var base = 1;
-      if (b.primary && p.sector === b.primary) base = 12;
-      else if (b.parent && typeof p.sector === 'string' && p.sector.indexOf(b.parent + '/') === 0) base = 8;
-      else if (MP_SCHOL_GENERAL.indexOf(p.claim_type) >= 0) base = 6;
+      var ps = (typeof p.sub_sector === 'string') ? p.sub_sector.toUpperCase() : '';
+      if (TK && ps === TK) base = 100;
+      else if (broad && p.sector === broad) base = 40;
+      else if (b.primary && p.sector === b.primary) base = 30;
+      else if (b.parent && typeof p.sector === 'string' && p.sector.indexOf(b.parent + '/') === 0) base = 20;
+      else if (MP_SCHOL_GENERAL.indexOf(p.claim_type) >= 0) base = 10;
       return base + (mpScholHash(seed + '|' + (p.paper_title || '')) % 8);
     }
     var rows = pool

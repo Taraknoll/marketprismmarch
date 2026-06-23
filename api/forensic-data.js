@@ -96,7 +96,11 @@ module.exports = async (req, res) => {
       rest('narrative_scorecard?select=ticker,snapshot_date,verdict,nrs,drift_score,fvd,fvd_pct,coordination_score,coordination_class,suspicion_score,suspicion_class,vms,srs,ccp,npi&ticker=eq.' + T + '&order=snapshot_date.desc&limit=1'),
       rest('daily_fair_value?select=ticker,snapshot_date,fair_value,fv_low,fv_high,premium_pct,premium_dollars,verdict,method,pe_used,forward_eps_used,price_close,market_cap,industry_pe_avg&ticker=eq.' + T + '&order=snapshot_date.desc&limit=1'),
       rest('earnings_context?select=ticker,snapshot_date,next_earnings_date,last_earnings_date,days_to_earnings,eps_actual,eps_estimate,earnings_surprise_pct,eps_surprise_pct,revenue_actual,revenue_estimate,revenue_surprise_pct,guidance_direction,guidance_eps_midpoint,guidance_eps_low,guidance_eps_high,guidance_revenue_midpoint,guidance_date,guidance_fiscal_period&ticker=eq.' + T + '&order=snapshot_date.desc&limit=1'),
-      rest('scholarly_references?select=id,claim_type,paper_title,authors,year,source,source_url,key_finding,consensus_direction,recency_weight&sub_sector=eq.' + T + '&order=recency_weight.desc.nullslast,year.desc&limit=30'),
+      // Research library: ticker-keyed (sub_sector = the symbol). Exclude the
+      // bulk-scraped empirical/clinical rows — they're off-topic noise tagged to
+      // the ticker (e.g. an AI-in-education paper under a streaming name); only
+      // the curated claim_types carry vetted, on-topic key_findings.
+      rest('scholarly_references?select=id,claim_type,paper_title,authors,year,source,source_url,key_finding,consensus_direction,recency_weight&sub_sector=eq.' + T + '&claim_type=not.in.(empirical_research,clinical_research,clinical_trial_reactions)&order=recency_weight.desc.nullslast,year.desc&limit=30'),
       profilePromise
     ]);
 
