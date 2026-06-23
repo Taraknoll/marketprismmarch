@@ -6548,9 +6548,13 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
   var titleColor = pal.titleLight;
   var narrBg = pal.cardBg;
   var narrBorder = pal.border;
-  var actionHtml = state.action
-    ? '<span class="tt-narr-action" style="background:'+pal.chipBg+';color:'+pal.color+';">'+ esc(state.action) +'</span>'
-    : '';
+  // Action chip (e.g. "TRADE WITH CAUTION") intentionally NOT rendered here.
+  // It sat directly under the single Market Prism verdict pill (#mp-answer-first,
+  // injected by api/ticker.js) and read as a contradiction — a green
+  // "STRUCTURALLY SUPPORTED" verdict above an amber "TRADE WITH CAUTION" stance.
+  // The verdict pill is the page's one authoritative label; the trade-timing
+  // caution still lives in the narrative paragraph + the Reality-Belief gauge.
+  // state.action is still returned by deriveState() for any non-UI consumers.
 
   // Signals-behind-label expandable rows.
   var signalRows = [];
@@ -6597,7 +6601,6 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
           + '<div class="tt-narr-head">'
             + '<div class="tt-narr-title-wrap">'
               + '<span class="tt-narr-title" style="color:'+titleColor+';">'+ esc(narrTitle) +'</span>'
-              + actionHtml
             + '</div>'
           + '</div>'
           + '<div class="tt-narr-desc" id="tt-headline" data-pending="1" data-fallback="'+ esc(headline || '') +'">'
