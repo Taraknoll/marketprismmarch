@@ -144,14 +144,15 @@ td.t{font-weight:700;color:var(--mp-text-primary);}
 .score{display:inline-block;min-width:34px;text-align:center;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid;}
 
 /* Circular finance loops */
-.loop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--mp-border);}
-.loop:first-child{border-top:none;}
-.node{font-size:13px;font-weight:700;color:var(--mp-text-primary);}
-.arrow{display:flex;flex-direction:column;align-items:center;color:var(--mp-violet);font-size:11px;min-width:90px;}
-.arrow .rel{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
-.arrow .amt{font-size:11px;color:var(--mp-text-tertiary);font-variant-numeric:tabular-nums;}
-.arrow .line{font-size:14px;line-height:1;}
-.loop .meta{margin-left:auto;font-size:11px;color:var(--mp-text-muted);}
+.loop{padding:14px 0;border-top:1px solid var(--mp-border);}
+.loop:first-child{border-top:none;padding-top:2px;}
+.loop-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.loop-top .node{font-size:14px;font-weight:700;color:var(--mp-text-primary);}
+.loop-top .arrow{color:var(--mp-cyan);font-size:15px;font-weight:700;line-height:1;}
+.loop-top .amt{margin-left:auto;font-size:14px;font-weight:700;color:var(--mp-green);font-variant-numeric:tabular-nums;}
+.loop-rels{margin-top:9px;display:flex;flex-wrap:wrap;gap:6px;}
+.loop-rels .rel{font-size:10px;font-weight:600;letter-spacing:.02em;padding:2px 8px;border-radius:6px;background:rgba(123,97,255,.12);color:var(--mp-violet);white-space:nowrap;}
+.loop-meta{margin-top:8px;font-size:11px;color:var(--mp-text-muted);}
 
 .foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--mp-border);font-size:11px;color:var(--mp-text-muted);line-height:1.5;}
 .empty{padding:22px;text-align:center;color:var(--mp-text-muted);font-size:13px;border:1px dashed var(--mp-border);border-radius:12px;}
@@ -399,14 +400,26 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
       +esc(c.title||'Circular finance')+'</div></div><div class="empty">No money-flow loops returned.</div></div>';
     var body=loops.map(function(l){
       var amt=l.amountUsd!=null?('<span class="amt">'+esc(money(l.amountUsd))+'</span>'):'';
-      var conf=l.confidence!=null?(' · conf '+esc((''+l.confidence).slice(0,4))):'';
-      var src=l.url?('<a class="src" href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.source||'source')+'</a>')
-        :(l.source?esc(l.source):'');
+      // relations arrive comma-joined (e.g. "EQUITY_STAKE, INVESTMENT, COMPUTE_PURCHASE (REVERSE)") — split to pills
+      var rels=(''+(l.relation||'')).split(',').map(function(r){return r.trim();}).filter(Boolean);
+      var relHtml=rels.length?('<div class="loop-rels">'+rels.map(function(r){
+        return '<span class="rel">'+esc(r.replace(/_/g,' ').toLowerCase())+'</span>';
+      }).join('')+'</div>'):'';
+      // confidence only if numeric; source only if it links somewhere (the generic descriptor is already in the footer)
+      var cn=Number(l.confidence);
+      var confTxt=(l.confidence!=null && (''+l.confidence).trim()!=='' && isFinite(cn) && !isNaN(cn))?('conf '+cn.toFixed(2)):'';
+      var srcTxt=l.url?('<a class="src" href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.source||'source')+'</a>'):'';
+      var metaParts=[srcTxt,confTxt].filter(Boolean);
+      var metaHtml=metaParts.length?('<div class="loop-meta">'+metaParts.join(' · ')+'</div>'):'';
       return '<div class="loop">'
-        +'<span class="node">'+esc(l.from)+'</span>'
-        +'<span class="arrow"><span class="rel">'+esc(l.relation||'flow')+'</span><span class="line">→</span>'+amt+'</span>'
-        +'<span class="node">'+esc(l.to)+'</span>'
-        +'<span class="meta">'+src+conf+'</span>'
+        +'<div class="loop-top">'
+          +'<span class="node">'+esc(l.from)+'</span>'
+          +'<span class="arrow">&#8594;</span>'
+          +'<span class="node">'+esc(l.to)+'</span>'
+          +amt
+        +'</div>'
+        +relHtml
+        +metaHtml
         +'</div>';
     }).join('');
     return '<div class="card">'
