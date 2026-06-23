@@ -5670,9 +5670,23 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
     </div><!-- /ci-content -->
   </div><!-- /tab-companyinfo -->
 
-  <!-- ═══ SCHOLARLY REFERENCES — sector-level academic & industry research ═══ -->
+  <!-- ═══ CLAIM INTEGRITY — narrative-trap forensic screen, drilled to one ticker ═══ -->
+  <!-- Global section (not a tab panel). Narrative-side twin of the accounting &
+       regulatory red-flag screen. Populated by loadClaimTrap() from
+       v_claim_trap_screen (anon SELECT). Sparse by design — calm "structurally
+       consistent" line is the common, intended state. -->
+  <section id="claim-integrity-section" style="display:none;">
+    <div class="ci-eyebrow">Forensic &middot; Claim Integrity</div>
+    <h2 class="ci-h">Claim Integrity<span id="ci-sym"></span></h2>
+    <div class="ci-sub">Which claim-trap flags fired for this narrative &mdash; the narrative-side twin of the accounting &amp; regulatory red-flag screen, drilled down to one ticker.</div>
+    <div id="ci-card"></div>
+  </section>
+  <!-- ═══ END CLAIM INTEGRITY ═══ -->
+
+  <!-- ═══ SCIENTIFIC PREMISE CHECK + EVIDENCE CORPUS (was: Academic Research) ═══ -->
   <!-- Global section (not a tab panel) — always visible below the tabs, above the
-       server-injected AEO "Related Analysis" block. Populated by loadScholarlyReferences(). -->
+       server-injected AEO "Related Analysis" block. Per-ticker science verdicts
+       (loadPremiseVerdicts) sit above the evidence corpus (loadScholarlyReferences). -->
   <style>
     #scholarly-section {
       margin: 44px 0 0;
@@ -5750,18 +5764,138 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
       font-size: 11px; line-height: 1.5;
       color: var(--mp-text-muted, rgba(255,255,255,0.3)); margin-top: 18px;
     }
+    /* ── Claim Integrity (narrative-trap forensic twin) ─────────────────────── */
+    #claim-integrity-section {
+      margin: 44px 0 0;
+      padding: 30px 0 8px;
+      border-top: 1px solid var(--mp-border, rgba(255,255,255,0.06));
+    }
+    #claim-integrity-section .ci-eyebrow {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--mp-text-tertiary, #A0A8B0);
+      margin-bottom: 8px;
+    }
+    #claim-integrity-section .ci-h {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+      color: var(--mp-text-primary, #fff); margin: 0 0 8px;
+    }
+    #claim-integrity-section .ci-sub {
+      font-size: 13px; line-height: 1.6;
+      color: var(--mp-text-secondary, rgba(255,255,255,0.7));
+      max-width: 780px; margin: 0 0 22px;
+    }
+    #claim-integrity-section .ci-clean {
+      font-size: 13px; line-height: 1.6;
+      color: var(--mp-text-secondary, rgba(255,255,255,0.7));
+    }
+    #claim-integrity-section .ci-box {
+      position: relative; background: var(--mp-surface, #0C1018);
+      border: 1px solid var(--mp-border, rgba(255,255,255,0.06));
+      border-radius: 16px; padding: 22px 20px 20px; overflow: hidden;
+    }
+    #claim-integrity-section .ci-box::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+      background: var(--ci-accent, #FF4D4D);
+    }
+    #claim-integrity-section .ci-row1 {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    #claim-integrity-section .ci-sev {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 4px 10px; border-radius: 6px;
+    }
+    #claim-integrity-section .ci-meta {
+      font-size: 13px; color: var(--mp-text-tertiary, #A0A8B0);
+    }
+    #claim-integrity-section .ci-verdict {
+      font-size: 13px; color: var(--mp-text-secondary, rgba(255,255,255,0.7));
+      margin-top: 12px;
+    }
+    #claim-integrity-section .ci-verdict strong { color: var(--mp-text-primary, #fff); }
+    #claim-integrity-section .ci-chips {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
+    }
+    #claim-integrity-section .ci-chip {
+      display: inline-flex; align-items: center;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; padding: 4px 9px; border-radius: 6px;
+      white-space: nowrap;
+    }
+    #claim-integrity-section .ci-chip-red {
+      background: rgba(255,77,77,0.10); color: #FF6B6B; border: 1px solid rgba(255,77,77,0.30);
+    }
+    #claim-integrity-section .ci-chip-amber {
+      background: rgba(255,184,0,0.10); color: #FFB800; border: 1px solid rgba(255,184,0,0.32);
+    }
+    #claim-integrity-section .ci-chip-rred {
+      background: rgba(255,77,77,0.18); color: #FF8585; border: 1px solid #FF4D4D;
+    }
+    /* ── Scientific Premise Check (verdicts above the evidence corpus) ───────── */
+    #scholarly-section .premise-list {
+      display: flex; flex-direction: column; gap: 12px; margin: 0 0 24px;
+    }
+    #scholarly-section .premise-empty {
+      font-size: 13px; line-height: 1.6; color: var(--mp-text-tertiary, #A0A8B0);
+    }
+    #scholarly-section .premise-row {
+      position: relative; background: var(--mp-surface, #0C1018);
+      border: 1px solid var(--mp-border, rgba(255,255,255,0.06));
+      border-radius: 14px; padding: 16px 18px 16px 22px; overflow: hidden;
+    }
+    #scholarly-section .premise-row::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--st, #A0A8B0);
+    }
+    #scholarly-section .premise-head {
+      display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    }
+    #scholarly-section .premise-pill {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; padding: 4px 9px; border-radius: 6px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    #scholarly-section .premise-claim {
+      font-size: 14px; font-weight: 600; line-height: 1.5;
+      color: var(--mp-text-primary, #fff);
+    }
+    #scholarly-section .premise-evidence {
+      font-size: 13px; line-height: 1.6;
+      color: var(--mp-text-secondary, rgba(255,255,255,0.7)); margin-top: 8px;
+    }
+    #scholarly-section .premise-paper {
+      font-size: 12px; margin-top: 8px; color: var(--mp-text-tertiary, #A0A8B0);
+    }
+    #scholarly-section .premise-paper a { color: var(--mp-cyan, #00AEFF); text-decoration: none; }
+    #scholarly-section .premise-paper a:hover { text-decoration: underline; }
+    #scholarly-section .premise-more {
+      font-size: 12px; color: var(--mp-text-muted, rgba(255,255,255,0.3)); margin-top: 2px;
+    }
+    #scholarly-section .schol-corpus-h {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--mp-text-tertiary, #A0A8B0);
+      margin: 6px 0 14px;
+    }
     @media (max-width: 768px) {
       #scholarly-section { margin-top: 32px; padding-top: 24px; }
       #scholarly-section .schol-grid { grid-template-columns: 1fr; }
       #scholarly-section .schol-h { font-size: 20px; }
+      #claim-integrity-section { margin-top: 32px; padding-top: 24px; }
+      #claim-integrity-section .ci-h { font-size: 20px; }
     }
   </style>
   <section id="scholarly-section" style="display:none;">
-    <div class="schol-eyebrow">Research &amp; Citations</div>
-    <h2 class="schol-h">Academic &amp; Industry Research</h2>
-    <div class="schol-sub" id="schol-sub">Peer-reviewed studies and industry benchmarks on valuation, growth, and narrative-driven mispricing &mdash; the evidence base behind Market Prism&rsquo;s analysis.</div>
-    <div class="schol-grid" id="schol-grid"></div>
-    <div class="schol-note">Sector-level references selected for relevance and recency &mdash; not ticker-specific findings. Each links to the original source.</div>
+    <div class="schol-eyebrow">Forensic &middot; Scientific Premise</div>
+    <h2 class="schol-h">Scientific Premise Check<span id="premise-sym"></span></h2>
+    <div class="schol-sub" id="schol-sub">Claim-by-claim adjudication of this narrative&rsquo;s scientific premises against peer-reviewed research. This precision lens only speaks to claims with a testable scientific premise &mdash; drug efficacy, trial outcome, approval &mdash; and abstains on business or valuation claims.</div>
+    <div class="premise-list" id="premise-verdicts"></div>
+    <div id="schol-corpus" style="display:none;">
+      <div class="schol-corpus-h">Evidence corpus</div>
+      <div class="schol-grid" id="schol-grid"></div>
+      <div class="schol-note">Sector-level references selected for relevance and recency &mdash; not ticker-specific findings. Each links to the original source.</div>
+    </div>
   </section>
   <!-- ═══ END SCHOLARLY REFERENCES ═══ -->
 
@@ -7542,9 +7676,149 @@ async function loadScholarlyReferences(heroRow) {
         : '<div class="schol-card">' + inner + '</div>';
     }).join('');
 
+    var corpus = document.getElementById('schol-corpus');
+    if (corpus) corpus.style.display = 'block';
     section.style.display = 'block';
   } catch (e) {
     console.warn('[ticker] loadScholarlyReferences failed:', e);
+  }
+}
+
+// ── Claim Integrity (narrative-trap forensic screen, one ticker) ──────────────
+// Twin of the accounting/regulatory red-flag screen, for narrative CLAIMS. Reads
+// v_claim_trap_screen (anon SELECT) → 0 or 1 row per ticker. SPARSE by design:
+// most tickers either aren't in the latest scorecard snapshot or carry no flags,
+// so the calm "structurally consistent" line is the common, intended state.
+function mpRgba(hex, a) {
+  var h = String(hex || '').replace('#', '');
+  if (h.length !== 6) return 'rgba(160,168,176,' + a + ')';
+  var n = parseInt(h, 16);
+  return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+function ciFlagClass(flag) {
+  var f = String(flag || '').toLowerCase();
+  if (f === 'science refuted') return 'ci-chip ci-chip-rred';
+  if (f === 'science contested' || f === 'overvalued anchor') return 'ci-chip ci-chip-amber';
+  return 'ci-chip ci-chip-red';
+}
+async function loadClaimTrap() {
+  var section = document.getElementById('claim-integrity-section');
+  var host = document.getElementById('ci-card');
+  if (!section || !host) return;
+  var TK = (typeof TICKER === 'string' ? TICKER : '').toUpperCase();
+  if (!TK) return;
+  try {
+    var rows = await sbFetch('v_claim_trap_screen', { select: '*', ticker: 'eq.' + TK }).catch(function () { return []; });
+    var r = (Array.isArray(rows) && rows.length) ? rows[0] : null;
+    var symEl = document.getElementById('ci-sym');
+    if (symEl) symEl.textContent = ' — ' + TK;
+    var flags = (r && Array.isArray(r.trap_flags)) ? r.trap_flags : [];
+    if (!r || !Number(r.n_flags) || !flags.length) {
+      host.innerHTML = '<div class="ci-clean">No claim-integrity flags &mdash; narrative claims are structurally consistent.</div>';
+      section.style.display = 'block';
+      return;
+    }
+    var sev = String(r.severity || '').toUpperCase();
+    var sevColor = sev === 'HIGH' ? '#FF4D4D' : '#FFB800';
+    var chips = flags.map(function (f) {
+      return '<span class="' + ciFlagClass(f) + '">' + esc(String(f)) + '</span>';
+    }).join('');
+    var convN = (r.conviction != null && r.conviction !== '' && !isNaN(Number(r.conviction))) ? Math.round(Number(r.conviction)) : null;
+    host.innerHTML =
+        '<div class="ci-box" style="--ci-accent:' + sevColor + ';">'
+      +   '<div class="ci-row1">'
+      +     '<span class="ci-sev" style="background:' + mpRgba(sevColor, 0.14) + ';color:' + sevColor + ';border:1px solid ' + mpRgba(sevColor, 0.42) + ';">' + esc(sev || 'FLAGGED') + '</span>'
+      +     '<span class="ci-meta">' + Number(r.n_flags) + ' claim flag' + (Number(r.n_flags) === 1 ? '' : 's')
+      +       (convN != null ? ' &middot; conviction ' + convN + '%' : '') + '</span>'
+      +   '</div>'
+      +   (r.verdict ? '<div class="ci-verdict">Verdict: <strong>' + esc(r.verdict) + '</strong></div>' : '')
+      +   '<div class="ci-chips">' + chips + '</div>'
+      + '</div>';
+    section.style.display = 'block';
+  } catch (e) {
+    console.warn('[ticker] loadClaimTrap failed:', e);
+  }
+}
+
+// ── Scientific Premise Check (per-claim science verdicts) ─────────────────────
+// Reads v_claim_research_verdicts (anon SELECT). Substantive verdicts
+// (refuted/supported/insufficient) render as rows; the many near-identical
+// non_adjudicable rows (business/valuation claims with no testable premise) are
+// collapsed into one honest summary line so the panel never becomes a wall of
+// "no decisive scientific evidence". Reveals #scholarly-section when present.
+function premiseStance(s) {
+  s = String(s || '').toLowerCase();
+  if (s === 'supported')    return { c: '#00DE94', label: 'Supported' };
+  if (s === 'refuted')      return { c: '#FF4D4D', label: 'Refuted' };
+  if (s === 'insufficient') return { c: '#FFB800', label: 'Insufficient' };
+  return { c: '#A0A8B0', label: 'Non-adjudicable' };
+}
+function renderPremiseRow(v) {
+  var st = premiseStance(v.stance);
+  var s = String(v.stance || '').toLowerCase();
+  var evidence = (s === 'supported' || s === 'refuted')
+    ? (v.rationale_quote || v.adjudication_note || '')
+    : (v.adjudication_note || v.rationale_quote || '');
+  var url = (v.source_url && /^https?:\/\//i.test(v.source_url)) ? v.source_url : null;
+  var paperLabel = [v.source, v.year].filter(Boolean).map(esc).join(' · ');
+  return '<div class="premise-row" style="--st:' + st.c + ';">'
+    +   '<div class="premise-head">'
+    +     '<span class="premise-pill" style="background:' + mpRgba(st.c, 0.13) + ';color:' + st.c + ';border:1px solid ' + mpRgba(st.c, 0.40) + ';">' + esc(st.label) + '</span>'
+    +     (v.claim_excerpt ? '<span class="premise-claim">' + esc(v.claim_excerpt) + '</span>' : '')
+    +   '</div>'
+    +   (evidence ? '<div class="premise-evidence">' + esc(evidence) + '</div>' : '')
+    +   (paperLabel
+          ? '<div class="premise-paper">' + (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + paperLabel + ' ↗</a>' : paperLabel) + '</div>'
+          : '')
+    + '</div>';
+}
+async function loadPremiseVerdicts() {
+  var section = document.getElementById('scholarly-section');
+  var host = document.getElementById('premise-verdicts');
+  if (!section || !host) return;
+  var TK = (typeof TICKER === 'string' ? TICKER : '').toUpperCase();
+  if (!TK) return;
+  try {
+    var rows = await sbFetch('v_claim_research_verdicts', {
+      select: 'stance,confidence,claim_excerpt,rationale_quote,adjudication_note,paper_title,source,source_url,year,match_score',
+      ticker: 'eq.' + TK
+    }).catch(function () { return []; });
+    rows = Array.isArray(rows) ? rows : [];
+    var symEl = document.getElementById('premise-sym');
+    if (symEl) symEl.textContent = ' — ' + TK;
+    if (!rows.length) {
+      // No verdict rows at all → calm note, but DON'T reveal the section here;
+      // the evidence-corpus reveal (if any papers exist) controls visibility.
+      host.innerHTML = '<div class="premise-empty">No testable scientific premise in this narrative &mdash; its claims are business- or market-based. See the evidence corpus below.</div>';
+      return;
+    }
+    var rank = { refuted: 0, supported: 1, insufficient: 2, non_adjudicable: 3 };
+    var substantive = [], nNonAdj = 0;
+    rows.forEach(function (v) {
+      if (String(v.stance || '').toLowerCase() === 'non_adjudicable') nNonAdj++;
+      else substantive.push(v);
+    });
+    substantive.sort(function (a, b) {
+      var ra = rank[String(a.stance).toLowerCase()]; if (ra == null) ra = 4;
+      var rb = rank[String(b.stance).toLowerCase()]; if (rb == null) rb = 4;
+      if (ra !== rb) return ra - rb;
+      return (b.confidence == null ? -1 : Number(b.confidence)) - (a.confidence == null ? -1 : Number(a.confidence));
+    });
+    var CAP = 6;
+    var shown = substantive.slice(0, CAP);
+    var hiddenN = substantive.length - shown.length;
+    var html = shown.map(renderPremiseRow).join('');
+    if (hiddenN > 0) {
+      html += '<div class="premise-more">+' + hiddenN + ' more adjudicated claim' + (hiddenN === 1 ? '' : 's') + '</div>';
+    }
+    if (nNonAdj > 0) {
+      html += '<div class="premise-empty">' + nNonAdj + ' other narrative claim' + (nNonAdj === 1 ? '' : 's')
+        + ' had no testable scientific premise to adjudicate (business / valuation assertions).</div>';
+    }
+    host.innerHTML = html;
+    section.style.display = 'block';
+  } catch (e) {
+    console.warn('[ticker] loadPremiseVerdicts failed:', e);
   }
 }
 
@@ -11941,7 +12215,9 @@ async function refreshAll() {
     loadSectorPeBubble(heroData),
     loadStoriesFeed(),
     loadEarnings(),
-    loadScholarlyReferences(heroData)
+    loadScholarlyReferences(heroData),
+    loadClaimTrap(),
+    loadPremiseVerdicts()
   ]);
 }
 
