@@ -14198,13 +14198,13 @@ async function loadStrategyData(){
     // (low-conviction) cards into trade_cards_live, which the gallery has no
     // limit/floor to suppress — exclude them so the count reflects conviction
     // cards only. Remove this filter if upstream stops emitting STANDARD.
-    // Confidence floor: only surface cards the model is >=65% confident in.
+    // Confidence floor: only surface cards the model is over 65% confident in.
     // confidence is stored as a 0-1 fraction (rendered ×100 in buildStratCard),
-    // so 0.65 = 65%. gte excludes null-confidence rows, which would otherwise
-    // render as the 50% default and fall below the floor anyway.
+    // so 0.65 = 65%. gt excludes both the exactly-65% boundary and null-confidence
+    // rows, which would otherwise render as the 50% default and fall below the floor.
     var cardUrl=SUPABASE_URL+'/rest/v1/trade_cards_live?select='+cols
       +'&card_tier=in.(UNICORN,PLATINUM,GOLD,SURPRISE)'
-      +'&confidence=gte.0.65'
+      +'&confidence=gt.0.65'
       +'&order=trade_score.desc';
     var res=await fetch(cardUrl,{headers:hdrs});
     if(!res.ok)throw new Error('trade_cards_live fetch failed: '+res.status);
