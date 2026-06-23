@@ -4527,7 +4527,10 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
 .sl-conv-bar > i{display:block;height:100%;border-radius:2px;}
 .sl-more{padding:11px 16px;font-size:11px;color:var(--mp-text-muted);text-align:center;position:relative;z-index:2;border-top:1px solid rgba(255,255,255,0.04);}
 .sl-foot{padding:11px 16px;border-top:1px solid var(--mp-border);font-size:10.5px;color:var(--mp-text-muted);line-height:1.5;position:relative;z-index:2;}
-.sl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;}
+.sl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+/* Strategy tiles reuse the .lb-section board look (above); keep the subtitle to one line. */
+.sl-grid .lb-hsub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sl-grid .lb-section .sl-foot{border-top:1px solid var(--mp-border);}
 @media(max-width:767px){.sl-grid{grid-template-columns:1fr;}.sl-conv{width:66px;}.sl-select{margin-left:0;}}
 
 /* ── Leaderboard Toolbar ── */
@@ -5842,7 +5845,6 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
         <div class="sl-loading" id="sl-loading">Loading strategy signals…</div>
         <div class="sl-error" id="sl-error" style="display:none;"></div>
         <div class="sl-empty" id="sl-empty" style="display:none;"></div>
-        <div id="sl-overall"></div>
         <div class="sl-grid" id="sl-grid"></div>
       </div>
     </div>
@@ -19244,58 +19246,58 @@ window.computeBoardJaccard = function(opts){
       .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error('Supabase '+r.status+' '+(t||'').slice(0,140));});return r.json();});
   }
 
-  function bracketHtml(r){
-    var ep=num(r.entry_price), tp=num(r.target_price), sp=num(r.stop_price), rr=num(r.reward_risk);
-    var tpc=num(r.target_pct), spc=num(r.stop_pct);
-    if(ep==null&&tp==null&&sp==null) return '';
-    var bits=[];
-    if(ep!=null) bits.push('Entry <b>'+money(ep)+'</b>');
-    if(tp!=null) bits.push('Tgt <span class="up">'+money(tp)+(tpc!=null?' (+'+Math.round(tpc)+'%)':'')+'</span>');
-    if(sp!=null) bits.push('Stop <span class="dn">'+money(sp)+(spc!=null?' (−'+Math.round(spc)+'%)':'')+'</span>');
-    if(rr!=null) bits.push('R/R <b>'+rr.toFixed(1)+'</b>');
-    return '<div class="sl-bracket">'+bits.join('<span class="sl-dot">·</span>')+'</div>';
-  }
+  function lbRank(i){return i===0?' lb-r1':i===1?' lb-r2':i===2?' lb-r3':'';}
+  function ini2(s){return String(s||'').slice(0,2).toUpperCase()||'??';}
 
-  // opts: {badge} show strategy pill (overall board); {compact} clamp trigger (cards)
-  function rowHtml(r, i, opts){
-    opts=opts||{};
-    var fc=famColor(r.family);
-    var badge = opts.badge
-      ? '<span class="sl-badge" style="color:'+fc+';border-color:'+tint(fc,0.4)+';background:'+tint(fc,0.1)+';" title="'+esc(r.citation||'')+'">'+esc(shortName(r.strategy))+'</span>'
-      : '';
-    var rich  = (r.fv_capped===true) ? '<span class="sl-rich" title="Valid setup but richly valued vs fair value">rich</span>' : '';
-    var scope = (r.scope==='massive') ? '<span class="sl-scope" title="Full US universe — outside the ~166 tracked names">massive</span>' : '';
-    var trig  = r.trigger_detail ? '<div class="sl-trigger'+(opts.compact?' sl-clamp':'')+'">'+esc(r.trigger_detail)+'</div>' : '';
-    var conv  = num(r.conviction);
-    return '<a class="sl-row" href="/ticker/'+encodeURIComponent(r.ticker)+'">'
-      +'<div class="sl-rank">'+(i+1)+'</div>'
-      +'<div class="sl-main">'
-        +'<div class="sl-line1"><span class="sl-tkr">'+esc(r.ticker)+'</span>'+badge+rich+scope+'</div>'
-        +trig+bracketHtml(r)
+  // One row of a strategy board — same shape as the boards above (logo, live
+  // price, one-line meta = trigger_detail, conviction score on the right).
+  function strategyRow(r, i, fc, maxConv){
+    var conv=num(r.conviction)||0;
+    var barW=Math.max(4, Math.round(conv/(maxConv||1)*100)); // relative bar, like the boards above
+    var av=(typeof logoHTML==='function')
+      ? logoHTML(r.ticker,'sm')
+      : '<div class="lb-av" style="background:rgba(255,255,255,0.05);color:var(--mp-text-tertiary);">'+esc(ini2(r.ticker))+'</div>';
+    var live='<span data-live-price="'+esc(r.ticker)+'" style="font-size:11px;color:var(--mp-text-tertiary);font-weight:500;margin-left:8px;font-family:var(--font-body);"></span>'
+            +'<span data-live-change="'+esc(r.ticker)+'" style="font-size:10px;margin-left:4px;font-family:var(--font-body);"></span>';
+    var richPre=(r.fv_capped===true)?'<span style="color:var(--mp-amber);font-weight:600;">rich</span> · ':'';
+    var scopePre=(r.scope==='massive')?'<span style="color:var(--mp-text-muted);">massive</span> · ':'';
+    var meta=richPre+scopePre+esc(r.trigger_detail||r.notes||'');
+    return '<a class="lb-row" href="/ticker/'+encodeURIComponent(r.ticker)+'">'
+      +'<div class="lb-rank'+lbRank(i)+'">'+(i+1)+'</div>'
+      + av
+      +'<div class="lb-info">'
+        +'<div class="lb-name">'+esc(r.ticker)+live+'</div>'
+        +'<div class="lb-meta">'+meta+'</div>'
+        +'<div class="lb-bar-wrap"><div class="lb-bar" style="width:'+barW+'%;background:'+fc+';opacity:.6;"></div></div>'
       +'</div>'
-      +'<div class="sl-conv">'
-        +'<div class="sl-conv-val">'+convInt(conv)+'</div>'
-        +'<div class="sl-conv-lbl">Conv</div>'
-        +'<div class="sl-conv-bar"><i style="width:'+convW(conv)+'%;background:'+fc+';"></i></div>'
-      +'</div>'
+      +'<div class="lb-score"><div class="lb-sval">'+convInt(conv)+'</div><div class="lb-slbl">Conv</div></div>'
+      +'<div class="lb-arr">›</div>'
     +'</a>';
   }
 
-  function sectionShell(accent, headHtml, bodyHtml, footHtml){
-    return '<div class="sl-section">'
-      +'<div class="sl-accent" style="background:'+accent+';"></div>'
-      +'<div class="sl-head">'+headHtml+'</div>'
-      +bodyHtml
-      +(footHtml?('<div class="sl-foot">'+footHtml+'</div>'):'')
+  // One strategy = one board tile, styled exactly like the boards above so the
+  // strategies line up uniformly in the grid.
+  function strategyTile(s){
+    var rows=_plays.filter(function(p){return p.strategy===s.strategy;})
+                   .sort(function(a,b){return (num(b.conviction)||0)-(num(a.conviction)||0);});
+    var shown=rows.slice(0,10);
+    var fc=famColor(s.family);
+    var maxConv=shown.reduce(function(m,r){return Math.max(m,num(r.conviction)||0);},0.0001);
+    var sub=[s.named_after, famLabel(s.family), (s.n_fired!=null?s.n_fired:rows.length)+' fired']
+              .filter(Boolean).join(' · ');
+    var rowsHtml=shown.length
+      ? shown.map(function(r,i){return strategyRow(r,i,fc,maxConv);}).join('')
+      : '<div class="lb-empty">No names.</div>';
+    var foot=(shown[0]&&shown[0].citation)?('<div class="sl-foot">'+esc(shown[0].citation)+'</div>'):'';
+    return '<div class="lb-section">'
+      +'<div class="lb-accent" style="background:'+fc+';"></div>'
+      +'<div class="lb-head"><div><div class="lb-htitle">'+esc(s.strategy_name)+'</div>'
+        +'<div class="lb-hsub">'+esc(sub)+'</div></div></div>'
+      +'<div class="lb-rows">'+rowsHtml+'</div>'
+      + foot
     +'</div>';
   }
 
-  function getFilteredPlays(){
-    return _plays.filter(function(p){
-      return (filter.family==='ALL'||p.family===filter.family)
-          && (filter.strategy==='ALL'||p.strategy===filter.strategy);
-    });
-  }
   function strategiesInFamily(fam){
     return _summary.filter(function(s){return fam==='ALL'||s.family===fam;});
   }
@@ -19339,43 +19341,16 @@ window.computeBoardJaccard = function(opts){
   }
 
   function renderBoards(){
-    var fp=getFilteredPlays();
-    var overallEl=$('sl-overall');
-    if(overallEl){
-      var top=fp.slice(0,15); // _plays is already conviction-desc from the query
-      if(!top.length){ overallEl.innerHTML=''; }
-      else {
-        var sub='Top setups'+(filter.family!=='ALL'?' · '+esc(famLabel(filter.family)):'')+(filter.strategy!=='ALL'?' · '+esc(shortName(filter.strategy)):'')+', ranked by conviction';
-        var head='<div><div class="sl-htitle">Overall Leaderboard</div><div class="sl-hsub">'+sub+'</div></div>'
-          +'<div class="sl-hstats"><div><div class="sl-hstat-val">'+top.length+'</div><div class="sl-hstat-lbl">shown</div></div></div>';
-        var rows=top.map(function(r,i){return rowHtml(r,i,{badge:true});}).join('');
-        var foot='Conviction shown 0–100. Bracket = entry → target / stop with reward-risk (≥ 2.0 by construction). Descriptive screen, not trade advice.';
-        overallEl.innerHTML=sectionShell('#4DC8F0', head, '<div class="sl-rows">'+rows+'</div>', foot);
-      }
-    }
     var gridEl=$('sl-grid');
-    if(gridEl){
-      var sums=strategiesInFamily(filter.family).filter(function(s){return filter.strategy==='ALL'||s.strategy===filter.strategy;});
-      sums=sums.slice().sort(function(a,b){return (b.n_fired||0)-(a.n_fired||0);}); // n_fired desc
-      gridEl.innerHTML=sums.map(function(s){
-        var rows=_plays.filter(function(p){return p.strategy===s.strategy;})
-                       .sort(function(a,b){return (num(b.conviction)||0)-(num(a.conviction)||0);});
-        var shown=rows.slice(0,6);
-        var fc=famColor(s.family);
-        var head='<div><div class="sl-line1"><div class="sl-htitle">'+esc(s.strategy_name)+'</div>'
-            +'<span class="sl-badge" style="color:'+fc+';border-color:'+tint(fc,0.4)+';background:'+tint(fc,0.1)+';">'+esc(famLabel(s.family))+'</span></div>'
-          +'<div class="sl-hsub">'+esc(s.named_after||'')+'</div></div>'
-          +'<div class="sl-hstats">'
-            +'<div><div class="sl-hstat-val">'+(s.n_fired!=null?s.n_fired:rows.length)+'</div><div class="sl-hstat-lbl">fired</div></div>'
-            +'<div><div class="sl-hstat-val">'+convInt(s.top_conviction)+'</div><div class="sl-hstat-lbl">top</div></div>'
-            +'<div><div class="sl-hstat-val">'+convInt(s.avg_conviction)+'</div><div class="sl-hstat-lbl">avg</div></div>'
-          +'</div>';
-        var body='<div class="sl-rows">'+shown.map(function(r,i){return rowHtml(r,i,{compact:true});}).join('')+'</div>';
-        if(rows.length>shown.length){var extra=rows.length-shown.length;body+='<div class="sl-more">+'+extra+' more '+(extra===1?'name':'names')+'</div>';}
-        var foot=(shown[0]&&shown[0].citation)?('Source: '+esc(shown[0].citation)):'';
-        return sectionShell(fc, head, body, foot);
-      }).join('');
-    }
+    if(!gridEl) return;
+    // One uniform board tile per fired strategy (n_fired desc), filtered by the
+    // active family / strategy. Lined up in the same grid as the boards above.
+    var sums=strategiesInFamily(filter.family)
+      .filter(function(s){return filter.strategy==='ALL'||s.strategy===filter.strategy;})
+      .slice().sort(function(a,b){return (b.n_fired||0)-(a.n_fired||0);});
+    gridEl.innerHTML=sums.length
+      ? sums.map(strategyTile).join('')
+      : '<div class="sl-empty" style="grid-column:1/-1;">No strategies match this filter.</div>';
   }
 
   function renderAll(){
@@ -19386,7 +19361,6 @@ window.computeBoardJaccard = function(opts){
     if(!_plays.length){
       if(empty){ empty.style.display='block'; empty.textContent='No signals fired for '+fmtDate(_date)+'.'; }
       if($('sl-controls')) $('sl-controls').innerHTML='';
-      if($('sl-overall'))  $('sl-overall').innerHTML='';
       if($('sl-grid'))     $('sl-grid').innerHTML='';
       renderStats();
       return;
