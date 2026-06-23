@@ -7864,11 +7864,11 @@ async function loadClaimTrap() {
 }
 
 // ── Scientific Premise Check (per-claim science verdicts) ─────────────────────
-// Reads v_claim_research_verdicts (anon SELECT). Substantive verdicts
-// (refuted/supported/insufficient) render as rows; the many near-identical
-// non_adjudicable rows (business/valuation claims with no testable premise) are
-// collapsed into one honest summary line so the panel never becomes a wall of
-// "no decisive scientific evidence". Reveals #scholarly-section when present.
+// Reads v_claim_research_verdicts (anon SELECT), filtered to claim_type
+// 'scientific_premise' — the only rows that belong in a SCIENTIFIC premise check.
+// The 'business_or_valuation' rows are auto-generated descriptions of earnings
+// transcripts ("...Q1 earnings call transcript provides..."), not real claims,
+// so they're excluded entirely. Reveals #scholarly-section when a claim exists.
 function premiseStance(s) {
   s = String(s || '').toLowerCase();
   if (s === 'supported')    return { c: '#00DE94', label: 'Supported' };
@@ -7902,41 +7902,36 @@ async function loadPremiseVerdicts() {
   var TK = (typeof TICKER === 'string' ? TICKER : '').toUpperCase();
   if (!TK) return;
   try {
+    // Only SCIENTIFIC-premise claims belong here. 'business_or_valuation' rows are
+    // transcript descriptions ("...Q1 earnings call transcript provides..."), not
+    // real claims — exclude them at the query so they never reach the panel.
     var rows = await sbFetch('v_claim_research_verdicts', {
       select: 'stance,confidence,claim_excerpt,rationale_quote,adjudication_note,paper_title,source,source_url,year,match_score',
-      ticker: 'eq.' + TK
+      ticker: 'eq.' + TK,
+      claim_type: 'eq.scientific_premise'
     }).catch(function () { return []; });
     rows = Array.isArray(rows) ? rows : [];
     var symEl = document.getElementById('premise-sym');
     if (symEl) symEl.textContent = ' — ' + TK;
     if (!rows.length) {
-      // No verdict rows at all → calm note, but DON'T reveal the section here;
+      // No scientific claim at all → calm note, but DON'T reveal the section here;
       // the evidence-corpus reveal (if any papers exist) controls visibility.
       host.innerHTML = '<div class="premise-empty">No testable scientific premise in this narrative &mdash; its claims are business- or market-based. See the evidence corpus below.</div>';
       return;
     }
     var rank = { refuted: 0, supported: 1, insufficient: 2, non_adjudicable: 3 };
-    var substantive = [], nNonAdj = 0;
-    rows.forEach(function (v) {
-      if (String(v.stance || '').toLowerCase() === 'non_adjudicable') nNonAdj++;
-      else substantive.push(v);
-    });
-    substantive.sort(function (a, b) {
+    rows.sort(function (a, b) {
       var ra = rank[String(a.stance).toLowerCase()]; if (ra == null) ra = 4;
       var rb = rank[String(b.stance).toLowerCase()]; if (rb == null) rb = 4;
       if (ra !== rb) return ra - rb;
       return (b.confidence == null ? -1 : Number(b.confidence)) - (a.confidence == null ? -1 : Number(a.confidence));
     });
     var CAP = 6;
-    var shown = substantive.slice(0, CAP);
-    var hiddenN = substantive.length - shown.length;
+    var shown = rows.slice(0, CAP);
+    var hiddenN = rows.length - shown.length;
     var html = shown.map(renderPremiseRow).join('');
     if (hiddenN > 0) {
       html += '<div class="premise-more">+' + hiddenN + ' more adjudicated claim' + (hiddenN === 1 ? '' : 's') + '</div>';
-    }
-    if (nNonAdj > 0) {
-      html += '<div class="premise-empty">' + nNonAdj + ' other narrative claim' + (nNonAdj === 1 ? '' : 's')
-        + ' had no testable scientific premise to adjudicate (business / valuation assertions).</div>';
     }
     host.innerHTML = html;
     section.style.display = 'block';
