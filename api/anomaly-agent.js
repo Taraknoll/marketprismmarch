@@ -235,6 +235,23 @@ function plainNarrativeLab(focus, peers, state) {
   return `${focus.ticker || ''} sits with ${n} same-phase peer${n === 1 ? '' : 's'} in the ${phase} group.${tail}`;
 }
 
+// period_of_report is inconsistent across sources (ISO date, or a unix epoch for yfinance rows).
+function fmtPeriod(p) {
+  if (p == null) return null;
+  const s = String(p);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  if (/^\d{9,}$/.test(s)) { const d = new Date(Number(s) * 1000); return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10); }
+  return s;
+}
+// Filing snippets carry HTML entities (e.g. MANAGEMENT&#8217;S) — decode before display.
+function decodeEntities(s) {
+  return String(s)
+    .replace(/&#(\d+);/g, (_, n) => { const c = parseInt(n, 10); return isFinite(c) ? String.fromCharCode(c) : ''; })
+    .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ').trim();
+}
+
 // ── tool executors + card builders ──────────────────────────────────────────
 // Each returns { card | cards, rowCount, summary } — summary is the JSON fed
 // back to Claude as the tool_result.
@@ -308,6 +325,42 @@ async function execTickerDossier(input, ctx) {
       reading: bubbleActive ? `bubble_active_idio=true (${bubbleRegime || 'regime n/a'})` : 'no active idiosyncratic bubble' },
   ];
 
+  // ── Receipts: evidence the user can click through to (parallel, best-effort) ─
+  const receipts = {};
+  const [covRows, coordRows, filingRows] = await Promise.all([
+    rest(`articles?select=title,publication_name,published_at,url,narrative_direction_gemini&ticker=eq.${ticker}&is_about_ticker_gemini=is.true&order=published_at.desc&limit=5`, ctx.debugQueries).catch(() => []),
+    rest(`coordination_flags?select=sources_within_1hr,identical_phrasing_count,identical_phrases_json,has_primary_source,primary_source_url,coordination_score,coordination_class&ticker=eq.${ticker}&order=snapshot_date.desc&limit=1`, ctx.debugQueries).catch(() => []),
+    rest(`claim_verifications?select=form_type,period_of_report,filing_date,sec_revenue,sec_eps,vms_score,mda_snippet&ticker=eq.${ticker}&order=snapshot_date.desc&limit=1`, ctx.debugQueries).catch(() => []),
+  ]);
+  if (covRows && covRows.length) {
+    receipts.coverage = covRows.map((a) => {
+      let t = a.title || '';
+      if (a.publication_name && t.endsWith(' - ' + a.publication_name)) t = t.slice(0, -(' - ' + a.publication_name).length);
+      return { title: t, source: a.publication_name, at: a.published_at, url: a.url, direction: a.narrative_direction_gemini };
+    });
+  }
+  if (coordRows && coordRows.length) {
+    const c0 = coordRows[0];
+    const cscore = num(c0.coordination_score) || 0;
+    if (cscore >= 40 || c0.coordination_class === 'LIKELY_COORDINATED' || c0.coordination_class === 'SUSPICIOUS_PATTERN') {
+      let phrases = [];
+      try { let j = c0.identical_phrases_json; if (typeof j === 'string') j = JSON.parse(j); if (Array.isArray(j)) phrases = j.slice(0, 3).map((p) => (typeof p === 'string' ? p : JSON.stringify(p))); } catch (_) { /* phrases optional */ }
+      receipts.coordination = {
+        sourcesWithin1hr: num(c0.sources_within_1hr), identicalPhrasing: num(c0.identical_phrasing_count),
+        phrases, primarySourceUrl: c0.has_primary_source ? c0.primary_source_url : null, cls: c0.coordination_class,
+      };
+    }
+  }
+  if (filingRows && filingRows.length) {
+    const f = filingRows[0];
+    receipts.filing = {
+      isSec: !!(f.form_type && f.form_type !== 'yfinance'),
+      form: f.form_type, period: fmtPeriod(f.period_of_report),
+      revenue: num(f.sec_revenue), eps: num(f.sec_eps), vms: num(f.vms_score),
+      snippet: f.mda_snippet ? decodeEntities(String(f.mda_snippet)).slice(0, 260) : null,
+    };
+  }
+
   const card = {
     ui: 'risk_dossier',
     ticker,
@@ -318,6 +371,7 @@ async function execTickerDossier(input, ctx) {
     firing: plain.firing,
     metrics,
     flags,
+    receipts: Object.keys(receipts).length ? receipts : undefined,
   };
 
   const summary = {

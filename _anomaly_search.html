@@ -129,6 +129,23 @@ h1{font-size:clamp(20px,2.4vw,26px);font-weight:700;letter-spacing:-.025em;line-
 .confluence.warm{background:rgba(255,184,0,.10);border:1px solid rgba(255,184,0,.30);color:var(--mp-text-primary);}
 .confluence.clean{background:rgba(0,222,148,.09);border:1px solid rgba(0,222,148,.28);color:var(--mp-text-primary);}
 
+/* Receipts — clickable evidence */
+.receipts{margin-top:8px;border-top:1px solid var(--mp-border);padding-top:12px;}
+.receipts>summary{cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mp-text-tertiary);list-style:none;outline:none;}
+.receipts>summary::-webkit-details-marker{display:none;}
+.receipts>summary::before{content:'▸ ';color:var(--mp-text-muted);}
+.receipts[open]>summary::before{content:'▾ ';}
+.rcp-grp{margin-top:13px;}
+.rcp-h{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mp-text-muted);margin-bottom:6px;}
+.rcp-art{padding:6px 0;font-size:13px;line-height:1.4;border-top:1px solid var(--mp-border);}
+.rcp-art:first-of-type{border-top:none;padding-top:2px;}
+.rcp-dir{font-size:9px;margin-right:6px;vertical-align:1px;}
+.rcp-dir.up{color:var(--mp-green);}.rcp-dir.dn{color:var(--mp-red);}
+.rcp-meta{font-size:11px;color:var(--mp-text-muted);margin-top:1px;}
+.rcp-line{font-size:13px;color:var(--mp-text-secondary);line-height:1.45;}
+.rcp-phrase{font-size:11.5px;color:var(--mp-text-tertiary);background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:6px;padding:4px 9px;margin-top:5px;font-style:italic;}
+.rcp-snip{margin-top:6px;font-size:12px;font-style:italic;color:var(--mp-text-tertiary);line-height:1.5;border-left:2px solid var(--mp-border);padding-left:11px;}
+
 .flag{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--mp-border);}
 .flag:first-child{border-top:none;}
 .dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0;}
@@ -435,6 +452,42 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     var txt=headline||(n?(n+' forensic red flag'+(n===1?'':'s')+' firing'):'No forensic red flags firing.');
     return '<div class="confluence '+cls+'"><span class="ic">'+ic+'</span><span>'+esc(txt)+'</span></div>';
   }
+  function fmtDate(iso){
+    if(!iso) return '';
+    var d=new Date(iso);
+    if(isNaN(d.getTime())) return esc(String(iso).slice(0,10));
+    var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];
+    return mo+' '+d.getUTCDate();
+  }
+  // Receipts — clickable evidence (coverage articles, coordination phrases, the SEC filing line).
+  function receiptsBlock(rc){
+    if(!rc) return '';
+    var out='';
+    if(rc.coverage && rc.coverage.length){
+      out+='<div class="rcp-grp"><div class="rcp-h">Recent coverage</div>'+rc.coverage.slice(0,5).map(function(a){
+        var dir=a.direction==='bullish'?'<span class="rcp-dir up">▲</span>':a.direction==='bearish'?'<span class="rcp-dir dn">▼</span>':'';
+        var ttl=esc(a.title||'(untitled)');
+        var t=a.url?('<a class="src" href="'+esc(a.url)+'" target="_blank" rel="noopener">'+ttl+'</a>'):ttl;
+        return '<div class="rcp-art">'+dir+t+'<div class="rcp-meta">'+esc(a.source||'')+(a.at?(' · '+fmtDate(a.at)):'')+'</div></div>';
+      }).join('')+'</div>';
+    }
+    if(rc.coordination){
+      var c=rc.coordination, line=[];
+      if(c.sourcesWithin1hr!=null) line.push(c.sourcesWithin1hr+' sources within 1 hour');
+      if(c.identicalPhrasing) line.push(c.identicalPhrasing+' identical phrasing'+(c.identicalPhrasing===1?'':'s'));
+      var ph=(c.phrases||[]).map(function(p){ return '<div class="rcp-phrase">"'+esc(p)+'"</div>'; }).join('');
+      out+='<div class="rcp-grp"><div class="rcp-h">Coordination</div>'+(line.length?'<div class="rcp-line">'+esc(line.join(' · '))+'</div>':'')+ph
+        +(c.primarySourceUrl?'<div class="rcp-meta"><a class="src" href="'+esc(c.primarySourceUrl)+'" target="_blank" rel="noopener">primary source ↗</a></div>':'')+'</div>';
+    }
+    if(rc.filing){
+      var f=rc.filing, head=[f.isSec?('SEC '+(f.form||'filing')):(f.form||'fundamentals')];
+      if(f.period) head.push(f.period);
+      var nums=[]; if(f.revenue!=null)nums.push('rev '+money(f.revenue)); if(f.eps!=null)nums.push('EPS '+f.eps); if(f.vms!=null)nums.push('claims-match '+Math.round(f.vms));
+      out+='<div class="rcp-grp"><div class="rcp-h">'+(f.isSec?'Latest SEC filing':'Latest fundamentals')+'</div><div class="rcp-line">'+esc(head.join(' · '))+(nums.length?(' · '+esc(nums.join(' · '))):'')+'</div>'
+        +(f.snippet?'<div class="rcp-snip">"'+esc(f.snippet)+'…"</div>':'')+'</div>';
+    }
+    return out?('<details class="receipts" open><summary>Evidence &amp; receipts</summary>'+out+'</details>'):'';
+  }
 
   // risk_dossier
   function cardRiskDossier(c){
@@ -452,6 +505,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
       +(c.plain?'<div class="verdict-line">'+esc(c.plain)+'</div>':'')
       +(metrics?'<div class="metricbar">'+metrics+'</div>':'')
       +flags
+      +receiptsBlock(c.receipts)
       +'<div class="foot">Forensic-structure read, not a price prediction or investment advice. The verdict is valuation-anchored, not a falsity label — read the component flags. suspicion_class is a trading-footprint read, not a manipulation verdict.</div>'
       +'</div>';
   }
