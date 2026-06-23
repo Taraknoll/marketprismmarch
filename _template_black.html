@@ -3439,6 +3439,9 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 .gc-dir-arrow{font-size:12px;font-weight:700;}
 .gc-dir-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-family:'Inter',var(--font-body),sans-serif;}
 
+/* Valuation / regime caution flag — sits above the action strip */
+.gc-caution-flag{font-size:11px;font-weight:600;line-height:1.3;color:#FFB800;padding:0 18px 8px;font-family:'Inter',var(--font-body),sans-serif;}
+
 /* Confidence — simple inline */
 .gc-conf-row{padding:0 18px 8px;display:flex;align-items:center;gap:8px;}
 .gc-conf-label{font-size:11px;color:var(--mp-text-muted);text-transform:uppercase;letter-spacing:.04em;font-family:'Inter',var(--font-body),sans-serif;flex-shrink:0;}
@@ -4900,23 +4903,9 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
     .mi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mi-accent,#00AEFF);}
     .mi-card>*{position:relative;z-index:1;}
     .mi-card:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.5);}
-    /* Featured alerts rail */
-    .mi-alert-rail{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 14px;scroll-snap-type:x mandatory;}
-    .mi-alert-rail::-webkit-scrollbar{height:5px;}
-    .mi-alert-rail::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px;}
-    .mi-alert-card{min-width:300px;max-width:340px;flex:0 0 auto;scroll-snap-align:start;display:flex;flex-direction:column;}
-    .mi-alert-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
-    .mi-alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-    .mi-alert-dot.sev-high{background:#FF4D4D;animation:miPulseRed 1.6s ease-in-out infinite;}
-    .mi-alert-dot.sev-med{background:#FFB800;}
-    .mi-alert-dot.sev-low{background:#00AEFF;}
-    .mi-alert-group{font-size:13px;font-weight:700;color:var(--mp-text-primary);letter-spacing:.03em;text-transform:uppercase;line-height:1.3;}
-    .mi-alert-sev{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.07em;padding:3px 9px;border-radius:6px;flex-shrink:0;}
-    .mi-alert-desc{font-size:13px;line-height:1.55;color:var(--mp-text-secondary);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
     .mi-tk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
     .mi-tk-chip{font-size:11px;font-weight:600;color:var(--mp-text-secondary);background:rgba(255,255,255,0.05);border:1px solid var(--mp-border);border-radius:6px;padding:3px 8px;text-decoration:none;transition:all .15s;}
     .mi-tk-chip:hover{color:#FFFFFF;border-color:rgba(0,174,255,0.4);background:rgba(0,174,255,0.10);}
-    .mi-alert-foot{display:flex;gap:14px;font-size:11px;color:var(--mp-text-tertiary);border-top:1px solid var(--mp-border);padding-top:10px;margin-top:auto;}
     /* Macro band */
     .mi-macro-row{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;padding:16px 18px;margin-bottom:12px;transition:border-color .2s,transform .2s;animation:miUp .5s cubic-bezier(0.16,1,0.3,1) both;}
     .mi-macro-row:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-2px);}
@@ -5014,18 +5003,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
         </button>
       </div>
 
-      <!-- 1) FEATURED ALERTS -->
-      <div class="mi-section">
-        <div class="mi-sec-head">
-          <div>
-            <div class="mi-sec-title">Featured Alerts</div>
-            <div class="mi-sec-sub">Cross-ticker narrative surges our scanners flagged in the last 24 hours — the stories big enough to move groups, not just names.</div>
-          </div>
-          <span class="mi-live-pill"><span class="mi-live-dot"></span>Live scan</span>
-        </div>
-        <div class="mi-alert-rail" id="mi-alert-rail"></div>
-      </div>
-
       <!-- 1b) NARRATIVE MAP -->
       <div class="mi-section">
         <div class="mi-sec-head">
@@ -5039,6 +5016,17 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
         <div class="mi-nmap-detail" id="mi-nmap-detail" style="display:none;"></div>
       </div>
 
+      <!-- 3) TOP STORIES — moved directly below the Narrative Map (2026-06-22) -->
+      <div class="mi-section">
+        <div class="mi-sec-head">
+          <div>
+            <div class="mi-sec-title">Top Stories</div>
+            <div class="mi-sec-sub">Today's biggest movers that carry a real narrative — ranked by live price &amp; volume right now, with each story's source (SRS) and analyst (ACS) credibility shown alongside.</div>
+          </div>
+        </div>
+        <div class="mi-wks-list" id="mi-wks-list"></div>
+      </div>
+
       <!-- 2) MACRO CURRENTS -->
       <div class="mi-section">
         <div class="mi-sec-head">
@@ -5048,17 +5036,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
           </div>
         </div>
         <div id="mi-macro-list"></div>
-      </div>
-
-      <!-- 3) MOST INFLUENTIAL NARRATIVES (WKS) -->
-      <div class="mi-section">
-        <div class="mi-sec-head">
-          <div>
-            <div class="mi-sec-title">Top Stories</div>
-            <div class="mi-sec-sub">Today's biggest movers that carry a real narrative — ranked by live price &amp; volume right now, with each story's source (SRS) and analyst (ACS) credibility shown alongside.</div>
-          </div>
-        </div>
-        <div class="mi-wks-list" id="mi-wks-list"></div>
       </div>
 
       <!-- 4) SECTOR STORIES -->
@@ -13489,6 +13466,16 @@ var GC_ACTIONS={
   'MOMENTUM_CONFIRMED':'RIDE UP','FUNDAMENTAL_LONG':'BUY & HOLD',
   'OMISSION_CASCADE':'SHORT'
 };
+/* Valuation / regime guard for the front-face action. gcAction() is a pure
+   primary_label→verb lookup that ignores valuation, so a grossly overvalued
+   name can surface "BUY DIPS". GC_OVERVALUED_PCT is the % above the model's
+   fair value at which a bullish "buy" verb is hard-overridden to OVERVALUED
+   (tunable — raise to flag only the most egregious cases). GC_FADING_REGIMES
+   are the weakening signal regimes ("Losing Steam"/"Hollow") where a buy verb
+   is left intact but flagged as contradictory. */
+var GC_OVERVALUED_PCT=40;
+var GC_BUY_ACTIONS={'BUY DIPS':1,'RIDE UP':1,'BUY & HOLD':1};
+var GC_FADING_REGIMES={'YELLOW_COLLAPSE':1,'HOLLOW':1};
 function gcAction(d){
   var a=GC_ACTIONS[d.primary_label];
   if(a)return a;
@@ -13577,6 +13564,22 @@ function buildStratCard(d){
   var nrs=d.nrs!=null?Math.round(Number(d.nrs)):'\u2014';
   var vms=d.vms!=null?Math.round(Number(d.vms)):'\u2014';
 
+  /* Front-face action guard.
+     (1) Hard override: a bullish buy verb on a name trading >=GC_OVERVALUED_PCT
+         above the model's own fair value becomes "OVERVALUED" \u2014 we don't tell
+         users to buy into a name the model prices well below the tape.
+     (2) Soft flag: a buy verb under a fading regime (Losing Steam/Hollow) keeps
+         the verb but warns of the contradiction. */
+  var baseAction=gcAction(d);
+  var isBuyAction=!!GC_BUY_ACTIONS[baseAction];
+  var overvalued=isBuyAction&&fvdPctVal!=null&&fvdPctVal>=GC_OVERVALUED_PCT;
+  var fadingBuy=isBuyAction&&!overvalued&&!!GC_FADING_REGIMES[d.signal_regime||''];
+  var actionLabel=overvalued?'OVERVALUED':baseAction;
+  var actionColor=(overvalued||fadingBuy)?'#FFB800':phaseCol;
+  var actionArrow=overvalued?'\u25c6':(d.direction==='BEARISH'?'\u25bc':d.direction==='BULLISH'?'\u25b2':'\u25c6');
+  var cautionFlag=overvalued?('\u26a0 '+fv+' above fair value')
+    :(fadingBuy?('\u26a0 Signal fading \u2014 model still says '+baseAction.toLowerCase()):'');
+
   /* ── FRONT FACE (clean enterprise) ── */
   var front='<div class="strat-front">'
     +'<div class="gc-accent-bar" style="background:'+phaseCol+';"></div>'
@@ -13592,9 +13595,10 @@ function buildStratCard(d){
       +'</div>'
     +'</div>'
     +'<div class="gc-move-name">'+gcEsc(moveName)+'</div>'
+    +(cautionFlag?'<div class="gc-caution-flag">'+gcEsc(cautionFlag)+'</div>':'')
     +'<div class="gc-direction-strip">'
-      +'<span class="gc-dir-arrow" style="color:'+phaseCol+';">'+(d.direction==='BEARISH'?'\u25BC':d.direction==='BULLISH'?'\u25B2':'\u25C6')+'</span>'
-      +'<span class="gc-dir-label" style="color:'+phaseCol+';">'+gcAction(d)+'</span>'
+      +'<span class="gc-dir-arrow" style="color:'+actionColor+';">'+actionArrow+'</span>'
+      +'<span class="gc-dir-label" style="color:'+actionColor+';">'+gcEsc(actionLabel)+'</span>'
     +'</div>'
     +'<div class="gc-conf-row">'
       +'<span class="gc-conf-label">Confidence</span>'
@@ -18437,10 +18441,7 @@ window.computeBoardJaccard = function(opts){
 })();
 
 /* ── MARKET INSIGHTS TAB ──
-   Five independent panels, each backed by an intraday-fresh table:
-     Featured Alerts        ← detected_macro_events, rolling 24h window
-                              (the scanner writes once/day ~2-7 PM ET, so a
-                              fixed "latest day" read shows stale mornings)
+   Four independent panels, each backed by an intraday-fresh table:
      Narrative Map          ← v_narrative_map_daily (narrative_clusters rolled
                               up per theme/day — view handles the stringified-
                               jsonb tickers + macro_theme normalization)
@@ -18553,7 +18554,6 @@ function miCountUp(scope){
   });
 }
 
-var MI_SEV={HIGH:{c:'#FF4D4D',dot:'sev-high'},MEDIUM:{c:'#FFB800',dot:'sev-med'},LOW:{c:'#00AEFF',dot:'sev-low'}};
 var MI_STATUS={BREAKING:'#FF4D4D',SURGING:'#00DE94',FRAGILE:'#FFB800',COOLING:'#00AEFF',STABLE:'#A0A8B0'};
 var MI_REGIME={EXPLOSIVE:'#FF6B6B',HIGH:'#00DE94',MODERATE:'#FFB800',LOW:'#00AEFF',DORMANT:'#A0A8B0'};
 function miVerdictColor(v){
@@ -18565,41 +18565,6 @@ function miVerdictColor(v){
   return '#A0A8B0';
 }
 
-/* 1) FEATURED ALERTS — rolling 24h window, one card per watchgroup */
-async function miLoadAlerts(){
-  var rail=document.getElementById('mi-alert-rail');
-  try{
-    var since=new Date(Date.now()-86400000).toISOString();
-    var rows=await miq('detected_macro_events?select=watchgroup,event_type,severity,description,spiking_tickers,total_articles,avg_coordination,tickers_spiking,tickers_in_group,detection_date,detected_at&detected_at=gte.'+encodeURIComponent(since)+'&order=detected_at.desc&limit=40');
-    if(!rows||!rows.length){miDropPanel('mi-alert-rail');return;}
-    var seen={},alerts=[];
-    rows.forEach(function(r){
-      if(seen[r.watchgroup])return;
-      seen[r.watchgroup]=1;alerts.push(r);
-    });
-    var sevRank={HIGH:0,MEDIUM:1,LOW:2};
-    alerts.sort(function(a,b){
-      var d=(sevRank[a.severity]!=null?sevRank[a.severity]:3)-(sevRank[b.severity]!=null?sevRank[b.severity]:3);
-      return d!==0?d:(Number(b.total_articles)||0)-(Number(a.total_articles)||0);
-    });
-    rail.innerHTML=alerts.slice(0,8).map(function(r,i){
-      var sev=MI_SEV[r.severity]||MI_SEV.LOW;
-      var desc=String(r.description||'').replace(/^Auto-detected:\s*/i,'').replace(/\s*Spiking tickers:.*$/i,'');
-      var tks=miTickers(r.spiking_tickers);
-      var arts=Number(r.total_articles)||0;
-      var coord=Math.round(Number(r.avg_coordination)||0);
-      var breadth=(r.tickers_spiking!=null&&r.tickers_in_group)?(r.tickers_spiking+'/'+r.tickers_in_group+' tickers moving'):'';
-      return '<div class="mi-card mi-alert-card" style="--mi-accent:'+sev.c+';animation-delay:'+(i*0.07)+'s;">'
-        +'<div class="mi-alert-head"><span class="mi-alert-dot '+sev.dot+'"></span>'
-        +'<span class="mi-alert-group">'+miEsc(miWords(r.watchgroup))+'</span>'
-        +'<span class="mi-alert-sev" style="color:'+sev.c+';background:'+miTint(sev.c,0.12)+';">'+miEsc(r.severity||'')+'</span></div>'
-        +'<div class="mi-alert-desc" title="'+miEsc(desc)+'">'+miEsc(desc)+'</div>'
-        +'<div class="mi-tk-chips">'+miTickerChips(tks,6)+'</div>'
-        +'<div class="mi-alert-foot"><span>'+arts+' article'+(arts===1?'':'s')+'</span>'+(breadth?'<span>'+miEsc(breadth)+'</span>':'')+(coord>0?'<span>coordination '+coord+'</span>':'')+'</div>'
-      +'</div>';
-    }).join('');
-  }catch(e){miDropPanel('mi-alert-rail');}
-}
 
 /* 1b) NARRATIVE MAP — v_narrative_map_daily (narrative_clusters theme rollup).
    Mosaic of theme tiles (flex-grow = ticker reach, tint = chain strength);
@@ -18898,8 +18863,6 @@ function miRenderStories(){
 window.miShowMoreStories=function(){miStoryCap+=12;miRenderStories();};
 
 function miSkeleton(){
-  var rail=document.getElementById('mi-alert-rail');
-  if(rail)rail.innerHTML=miSkels(4,150,300);
   var nm=document.getElementById('mi-nmap-mosaic');
   if(nm)nm.innerHTML=miSkels(8,62,130);
   var nd=document.getElementById('mi-nmap-detail');
@@ -18925,13 +18888,13 @@ async function loadMarketInsights(opts){
   opts=opts||{};
   miRestorePanels();
   if(!SUPABASE_URL||!SUPABASE_ANON){
-    ['mi-alert-rail','mi-nmap-mosaic','mi-macro-list','mi-wks-list','mi-story-grid'].forEach(function(id){miDropPanel(id);});
+    ['mi-nmap-mosaic','mi-macro-list','mi-wks-list','mi-story-grid'].forEach(function(id){miDropPanel(id);});
     miQuietNote();
     return;
   }
   if(!opts.silent)miSkeleton();
   miDate();
-  await Promise.all([miLoadAlerts(),miLoadNmap(),miLoadMacro(),miLoadTopStories(),miLoadStories()]);
+  await Promise.all([miLoadNmap(),miLoadMacro(),miLoadTopStories(),miLoadStories()]);
   miQuietNote();
   _miLastLoad=Date.now();
 }
