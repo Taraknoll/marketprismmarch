@@ -399,18 +399,36 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
       +'</svg></div>';
   }
 
+  // Pretty-print enum labels: NORMAL_ACTIVITY -> "Normal Activity", DISTRIBUTION -> "Distribution".
+  // humanize(): whole-value enum fields (state / class / regime / metric values — never tickers).
+  function humanize(v){
+    if(v==null) return v;
+    var s=String(v);
+    if(/^[A-Z0-9]+(?:_[A-Z0-9]+)+$/.test(s) || /^[A-Z][A-Z]+$/.test(s)){
+      return s.toLowerCase().split(/[_\s]+/).map(function(w){ return w?w.charAt(0).toUpperCase()+w.slice(1):w; }).join(' ');
+    }
+    return s;
+  }
+  // humanizeInline(): only rewrites UPPER_SNAKE tokens embedded in prose; leaves tickers/numbers/words intact.
+  function humanizeInline(text){
+    if(text==null) return text;
+    return String(text).replace(/\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b/g, function(m){
+      return m.toLowerCase().split('_').map(function(w){ return w.charAt(0).toUpperCase()+w.slice(1); }).join(' ');
+    });
+  }
+
   // risk_dossier
   function cardRiskDossier(c){
     var metrics=(c.metrics||[]).map(function(m){
-      return '<div class="metric"><div class="lbl">'+esc(m.label)+'</div><div class="val mono">'+esc(m.value)+'</div></div>';
+      return '<div class="metric"><div class="lbl">'+esc(m.label)+'</div><div class="val mono">'+esc(humanize(m.value))+'</div></div>';
     }).join('');
     var flags=(c.flags||[]).map(function(x){
       var lvl=(x.level||'ok');
       return '<div class="flag"><span class="dot '+esc(lvl)+'"></span><div><div class="name">'+esc(x.name)
-        +'</div><div class="read">'+esc(x.reading)+'</div></div><span class="lvl '+esc(lvl)+'">'+esc(lvl)+'</span></div>';
+        +'</div><div class="read">'+esc(humanizeInline(x.reading))+'</div></div><span class="lvl '+esc(lvl)+'">'+esc(humanize(lvl))+'</span></div>';
     }).join('');
     return '<div class="card">'
-      +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>'+esc(c.subtitle||'')+'</small></div>'+badge(c.riskStatus)+'</div>'
+      +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>'+esc(humanizeInline(c.subtitle||''))+'</small></div>'+badge(c.riskStatus)+'</div>'
       +(metrics?'<div class="metricbar">'+metrics+'</div>':'')
       +flags
       +'<div class="foot">Forensic-structure read, not a price prediction or investment advice. The verdict is valuation-anchored, not a falsity label — read the component flags. suspicion_class is a trading-footprint read, not a manipulation verdict.</div>'
@@ -430,7 +448,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
   }
   function cardNarrativeLab(c){
     var peers=(c.peers||[]).map(function(a){
-      return '<tr><td class="t">'+esc(a.ticker)+'</td><td>'+esc(a.state||'—')+'</td><td class="mono">'+f0(a.vms)
+      return '<tr><td class="t">'+esc(a.ticker)+'</td><td>'+esc(humanize(a.state||'—'))+'</td><td class="mono">'+f0(a.vms)
         +'</td><td class="mono">'+f0(a.drift)+'</td><td class="mono">'+(a.fvdPct==null?'—':pct(a.fvdPct))+'</td></tr>';
     }).join('') || '<tr><td colspan="5" style="color:var(--mp-text-muted)">No state-peers found.</td></tr>';
     var cp=num(c.consensusPct);
@@ -439,9 +457,9 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     }),{ xLabel:'Narrative drift →', yLabel:'Fair-value divergence %' });
     return '<div class="card">'
       +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>Narrative Lab</small></div></div>'
-      +'<p class="synth">'+esc(c.synthesis||'')+'</p>'
+      +'<p class="synth">'+esc(humanizeInline(c.synthesis||''))+'</p>'
       +(cp==null?'':'<div class="gauge">'+ringSvg(cp)+'<div class="cap"><b style="color:var(--mp-text-secondary)">'+Math.round(cp)
-        +'% analogue consensus</b><br>'+esc(c.consensusCaption||'')+'</div></div>')
+        +'% analogue consensus</b><br>'+esc(humanizeInline(c.consensusCaption||''))+'</div></div>')
       +(scatterChart?'<div class="chart-cap">Same-state peers · drift × valuation premium</div>'+scatterChart:'')
       +'<table><thead><tr><th>Peer</th><th>State</th><th>VMS</th><th>Drift</th><th>FVD%</th></tr></thead><tbody>'+peers+'</tbody></table>'
       +'<div class="foot">Analogues = same-state peers on the latest snapshot. Foreign filers excluded. Descriptive, not predictive.</div>'
@@ -458,7 +476,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
       var tags=(r.axes||[]).map(function(a){ return '<span class="tag">'+esc(a)+'</span>'; }).join('');
       return '<tr><td class="t">'+esc(r.ticker)+'</td>'
         +'<td><span class="score mono" style="color:'+col+';border-color:'+col+'">'+Math.round(sc)+'</span></td>'
-        +'<td class="mono">'+f0(r.confluence)+'</td><td>'+tags+'</td><td>'+esc(r.state||'—')+'</td></tr>';
+        +'<td class="mono">'+f0(r.confluence)+'</td><td>'+tags+'</td><td>'+esc(humanize(r.state||'—'))+'</td></tr>';
     }).join('');
     var chart=barsSvg(rows.map(function(r){
       var sc=num(r.score)||0;
@@ -522,7 +540,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
         if(col==='ticker') return '<td class="t">'+esc(v)+'</td>';
         if(/fvd_pct/.test(col)) return '<td class="mono">'+(v==null?'—':pct(v))+'</td>';
         if(/_score$|^drift|vms|energy|coordination|bsadf|crit|nrs|ccp|srs/.test(col)) return '<td class="mono">'+(typeof v==='number'?f0(v):esc(v==null?'—':v))+'</td>';
-        return '<td>'+esc(v==null?'—':v)+'</td>';
+        return '<td>'+esc(v==null?'—':humanizeInline(v))+'</td>';
       }).join('')+'</tr>';
     }).join('');
     var labelCol=cols.indexOf('ticker')>=0?'ticker':cols[0];
