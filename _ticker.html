@@ -1515,6 +1515,14 @@
     flex: 1; min-width: 0; font-size: 18px; font-weight: 600;
     line-height: 1.4; letter-spacing: -0.01em; color: var(--mp-text-primary);
   }
+  /* Decorative opening quote — cues that the headline is a narrative/claim.
+     Pure CSS so it never enters the selectable/copied text. Inter, no serif. */
+  .nf-headline::before {
+    content: "\201C";
+    color: var(--nf-accent, #00AEFF);
+    font-weight: 700; font-size: 1.3em; line-height: 0;
+    margin-right: 2px; vertical-align: -0.22em;
+  }
   .nf-badge {
     flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
     text-transform: uppercase; padding: 3px 9px; border-radius: 99px;
@@ -4881,7 +4889,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
 
         <!-- Story Lifecycle -->
         <div class="section">
-          <div class="section-label">Story Lifecycle</div>
+          <div class="section-label">Exhaustion Level</div>
           <div class="section-body">
             <div class="lc-pad" id="lc-body-top">
               <div class="skel" style="height:14px;width:40%;margin-bottom:14px;"></div>
@@ -5091,7 +5099,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
 
     <!-- Story Lifecycle -->
     <div class="section">
-      <div class="section-label">Story Lifecycle</div>
+      <div class="section-label">Exhaustion Level</div>
       <div class="section-body">
         <div class="lc-pad" id="lc-body">
           <div class="skel" style="height:14px;width:40%;margin-bottom:14px;"></div>
