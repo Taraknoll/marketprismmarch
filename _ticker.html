@@ -1492,6 +1492,82 @@
     font-weight: 500;
   }
 
+  /* ── Fast-scan narrative card (forensics refactor) ── */
+  .nf-card {
+    position: relative;
+    background: #11151f;
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-left: 3px solid var(--nf-accent, #00AEFF);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .nf-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .nf-card:last-child { margin-bottom: 0; }
+  .nf-top { display: flex; align-items: flex-start; gap: 10px; }
+  .nf-rank {
+    font-size: 18px; font-weight: 700; font-family: var(--font-body);
+    color: var(--nf-accent, #00AEFF); flex-shrink: 0; width: 20px;
+    text-align: center; line-height: 1.45;
+  }
+  .nf-headline {
+    flex: 1; min-width: 0; font-size: 15px; font-weight: 600;
+    line-height: 1.45; color: var(--mp-text-primary);
+  }
+  .nf-badge {
+    flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 99px;
+    border: 1px solid; white-space: nowrap; margin-top: 2px;
+  }
+  .nf-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-top: 12px;
+  }
+  .nf-tile {
+    background: #0d1119; border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px; padding: 8px 10px; min-width: 0;
+  }
+  .nf-tile-lbl {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--mp-text-muted); margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .nf-tile-val {
+    font-size: 16px; font-weight: 600; line-height: 1.2;
+    color: var(--mp-text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .nf-tile-val.muted { color: var(--mp-text-muted); font-weight: 500; font-size: 13px; }
+  .nf-tile-sub { font-size: 11px; color: var(--mp-text-muted); margin-top: 2px; }
+  .nf-dur { margin-top: 12px; }
+  .nf-dur-labels {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 5px;
+  }
+  .nf-dur-labels strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+  .nf-claim {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .nf-claim-text {
+    font-size: 13px; color: var(--mp-text-secondary);
+    line-height: 1.45; margin-bottom: 7px;
+  }
+  .nf-claim-text strong { color: var(--mp-text-primary); font-weight: 600; }
+  .nf-claim-recency { color: var(--mp-text-muted); }
+  .nf-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .nf-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 500; font-family: var(--font-body);
+    padding: 2px 8px; border-radius: 99px; border: 1px solid; white-space: nowrap;
+  }
+  .nf-pill .nf-ico { font-size: 11px; line-height: 1; }
+  .nf-pill.pass    { background: rgba(0,222,148,0.08);  color: #34d99b; border-color: rgba(0,222,148,0.22); }
+  .nf-pill.fail    { background: rgba(255,77,77,0.08);   color: #ff6b6b; border-color: rgba(255,77,77,0.22); }
+  .nf-pill.partial { background: rgba(255,184,0,0.08);   color: #FFB800; border-color: rgba(255,184,0,0.22); }
+  @media (max-width: 560px) { .nf-strip { grid-template-columns: 1fr; } }
+
   /* ── Keyword chips (inside expanded body) ── */
   .narr-kw-wrap {
     display: flex;
@@ -7826,7 +7902,10 @@ async function loadClaimTrap() {
     var claimHtml = '';
     if (r.claim) {
       var attr = [];
-      if (r.source) attr.push(esc(String(r.source)));
+      // Per the no-named-sources rule (same as the narrative cards): never name
+      // the publishing outlet here — r.source is the news source (e.g. "Barron's").
+      // Keep the framing + cross-source spread, which describe the claim without
+      // identifying the outlet.
       if (r.narrative_tone) attr.push(esc(ciNiceClass(r.narrative_tone)) + ' framing');
       var spread = mpConsensusNote(r.drift_explanation);
       if (spread) attr.push(esc(spread));
@@ -9418,262 +9497,171 @@ async function loadNarratives() {
       if (key) omissionClusterCount[key] = (omissionClusterCount[key] || 0) + 1;
     });
 
-    var narrHTML = top.map((n, idx) => {
-      // Verdict class
-      const v = (n.verdict || '').toUpperCase();
-      const vCls = v.includes('MISLEAD') || v.includes('FALSE') ? 'narr-v-misleading'
-        : v.includes('TRAP') ? 'narr-v-trap'
-        : 'narr-v-monitoring';
-      const vLbl = v.includes('MISLEAD') || v.includes('FALSE') ? 'Misleading'
-        : v.includes('TRAP') ? 'Trap' : 'Monitoring';
+    // ── Strength (energy regime) → badge label + accent color ──
+    // User-spec palette: cyan=EXPLOSIVE, amber=HIGH, teal=MODERATE, muted=LOW/DORMANT.
+    // Intentionally differs from the red/green MI_REGIME ramp used elsewhere.
+    function strengthMeta(regime) {
+      switch (String(regime || '').toUpperCase()) {
+        case 'EXPLOSIVE': return { lbl: 'EXPLOSIVE', color: '#00AEFF' };
+        case 'HIGH':      return { lbl: 'HIGH',      color: '#FFB800' };
+        case 'MODERATE':  return { lbl: 'MODERATE',  color: '#38C8B8' };
+        case 'LOW':       return { lbl: 'LOW',       color: '#A0A8B0' };
+        case 'DORMANT':   return { lbl: 'DORMANT',   color: '#A0A8B0' };
+        default:          return { lbl: '',          color: '#00AEFF' };
+      }
+    }
+    // Source-quality composite. TODO(data): narrative_analyses carries no
+    // per-narrative source-reliability score (SRS); this derives an authority
+    // score from the citing outlets via the PUB_REACH map. Outlet names are
+    // NEVER rendered — only the composite tier + number. Swap in a real
+    // `source_reliability_score` column here when one exists upstream.
+    function outletAuthorityPts(reach) {
+      if (reach >= 60) return 9.5;
+      if (reach >= 30) return 8.0;
+      if (reach >= 12) return 6.5;
+      if (reach >= 5)  return 5.0;
+      if (reach >= 1)  return 3.5;
+      return 2.0;
+    }
+    function sourceQuality(citations) {
+      const outlets = [...new Set((citations || []).map(c => c.source_outlet).filter(Boolean))];
+      if (!outlets.length) return null;
+      const pts = outlets.map(o => outletAuthorityPts(getReach(o) || 0));
+      const score = pts.reduce((s, v) => s + v, 0) / pts.length;
+      const tier = score >= 8.5 ? 'A' : score >= 6.5 ? 'B' : score >= 4.5 ? 'C' : 'D';
+      return { score, tier };
+    }
+    function relDaysAgo(dateStr) {
+      if (!dateStr) return '';
+      const days = Math.round((Date.now() - new Date(dateStr.slice(0, 10) + 'T12:00:00').getTime()) / 86400000);
+      if (days <= 0) return 'today';
+      if (days === 1) return '1d ago';
+      return `${days}d ago`;
+    }
 
-      // ── Narrative Price Impact (replaces old claim verification) ──
-      const narKwsForImpact = keywordsForNarrative(n);
-      const matchedKpi = narKwsForImpact
+    var narrHTML = top.map((n, idx) => {
+      const strength = strengthMeta(n.narrative_energy_regime);
+      const accent   = strength.color;
+
+      // Tile 1 — source quality (composite outlet authority; no outlet names shown)
+      const sq = sourceQuality(n.allCitations || [n]);
+      const sqHtml = sq
+        ? `<div class="nf-tile-val">${sq.tier}-tier · ${sq.score.toFixed(1)}</div>`
+        : `<div class="nf-tile-val muted">No sources</div>`;
+
+      // Tile 2 — analyst / figure credibility
+      // TODO(data): no analyst credibility score in payload (need e.g.
+      // `analyst_credibility_score`). Show the named firm/figure only.
+      const analystNameRaw = n.analyst_firm
+        || (n.allCitations || []).map(c => c.analyst_firm).filter(Boolean)[0] || null;
+      // analyst_firm is frequently populated with the *publication* (Motley Fool,
+      // Seeking Alpha…) rather than a real analyst. Never surface a known news
+      // outlet here — only a genuine, non-publication analyst/figure gets named.
+      const analystName = (analystNameRaw && !getReach(analystNameRaw)) ? analystNameRaw : null;
+      const analystHtml = analystName
+        ? `<div class="nf-tile-val" title="${esc(analystName)}">${esc(analystName)}</div>
+           <div class="nf-tile-sub">credibility n/a</div>`
+        : `<div class="nf-tile-val muted">None named</div>`;
+
+      // Tile 3 — price impact (engine directional prediction)
+      // Blended expected 5-day move from keyword_price_impact for this narrative's
+      // keywords. TODO(data): no per-narrative directional_prediction / price_target
+      // field; this is the closest engine signal the card already receives.
+      const narKws = keywordsForNarrative(n);
+      const matchedKpi = narKws
         .map(kw => kpiByKeyword[kw] ? { keyword: kw, ...kpiByKeyword[kw] } : null)
         .filter(Boolean);
-      // Compute blended expected 5-day move (weighted by article_count)
-      let blendedMove = null;
-      let totalArticles = 0;
-      let kwCount = matchedKpi.length;
-      if (kwCount > 0) {
+      let blendedMove = null, totalArticles = 0;
+      if (matchedKpi.length) {
         let weightedSum = 0;
         matchedKpi.forEach(r => {
           const cnt = Number(r.article_count) || 1;
-          const ret = Number(r.avg_return_5d) || 0;
-          weightedSum += ret * cnt;
+          weightedSum += (Number(r.avg_return_5d) || 0) * cnt;
           totalArticles += cnt;
         });
         blendedMove = totalArticles > 0 ? weightedSum / totalArticles : 0;
       }
-      // Find dominant keyword (largest absolute impact)
-      let dominantKw = null;
-      if (matchedKpi.length > 1) {
-        dominantKw = matchedKpi.reduce((a, b) =>
-          Math.abs(Number(b.avg_return_5d)||0) > Math.abs(Number(a.avg_return_5d)||0) ? b : a
-        ).keyword;
-      }
-      // Exhaustion from half_life
-      const exhaustDays = n.half_life != null ? Number(n.half_life).toFixed(1) : null;
-      // Analyst from first citation
-      const analystFirm = n.analyst_firm || (n.allCitations || []).map(c => c.analyst_firm).filter(Boolean)[0] || null;
-      // Narrative age — days since earliest citation
-      const citeDates = (n.allCitations || [n]).map(c => c.snapshot_date).filter(Boolean).sort();
-      const narrativeAgeDays = citeDates.length
-        ? Math.round((Date.now() - new Date(citeDates[0]).getTime()) / 86400000)
-        : null;
+      const piColor = blendedMove == null ? ''
+        : blendedMove > 0 ? '#00DE94' : blendedMove < 0 ? '#FF4D4D' : 'rgba(255,255,255,0.8)';
+      const piHtml = blendedMove == null
+        ? `<div class="nf-tile-val muted">—</div>`
+        : `<div class="nf-tile-val" style="color:${piColor}">${blendedMove > 0 ? '+' : ''}${blendedMove.toFixed(1)}%</div>`;
 
-      // Quality signals
-      const signals = [
-        n.has_source_ref     ? { lbl: 'Has source',    cls: 'good' } : null,
-        n.has_numeric_anchor ? { lbl: 'Data-backed',   cls: 'good' } : { lbl: 'No data anchor', cls: 'warn' },
-        n.has_vague_language ? { lbl: 'Vague language',cls: 'warn' } : { lbl: 'Precise language', cls: 'good' },
-        n.causal_logic_score != null
-          ? { lbl: `Logic ${Math.round(n.causal_logic_score)}%`,
-              cls: n.causal_logic_score >= 70 ? 'good' : 'warn' }
-          : null
-      ].filter(Boolean);
-
-      const signalsHtml = signals.map(s =>
-        `<span class="narr-signal ${s.cls}">${esc(s.lbl)}</span>`
-      ).join('');
-
-      // Claim line
-      const claimHtml = n.claim_metric
-        ? `<div class="narr-claim-row">
-            <span class="narr-claim-label">Claim</span>
-            <span class="narr-claim-val">${esc(n.claim_metric)}</span>
-            ${n.claim_value ? `<span class="narr-claim-val">${esc(n.claim_value)}</span>` : ''}
-            ${n.claim_timeframe ? `<span class="narr-claim-tf">${esc(n.claim_timeframe)}</span>` : ''}
-          </div>` : '';
-
-      // Flag if discrepancy. Only surface the omission when it's specific to
-      // THIS cluster — shared (boilerplate) omissions are suppressed so the
-      // same red box doesn't repeat across unrelated stories.
-      const omissionKey = _normOmission(n.omission_summary);
-      const showOmission = !!omissionKey && omissionClusterCount[omissionKey] === 1;
-      const flagHtml = n.material_discrepancy || showOmission
-        ? `<div class="narr-flag">
-            ${n.material_discrepancy ? `⚠ Material discrepancy detected` : ''}
-            ${showOmission ? `${n.material_discrepancy ? '<br>' : ''}${esc(n.omission_summary)}` : ''}
-           </div>` : '';
-
-      // Date + price at time of article
-      // Anchor at noon so the plain "YYYY-MM-DD" from Postgres doesn't drift
-      // back a day in non-UTC browsers (new Date("2026-04-21") parses as UTC
-      // midnight = Apr 20 evening in ET).
-      const dateKey = n.snapshot_date?.slice(0,10);
-      const dateStr = dateKey
-        ? new Date(dateKey + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
-        : '';
-      const priceAtTime = dateKey ? priceByDate[dateKey] : null;
-      const priceStr = priceAtTime != null ? fmtPrice(priceAtTime) : null;
-
-      // Source rows — show all citations from the theme cluster
-      const citations = n.allCitations || [n];
-      // Dedup by outlet+url (or outlet+hash if url is missing), keeping the
-      // newest snapshot. Daily re-scrapes of the same URL would otherwise show
-      // up as 3-4 "different" citations of the same publication.
-      const sortedCites = [...citations].sort(
-        (a, b) => (b.snapshot_date || '').localeCompare(a.snapshot_date || '')
-      );
-      const seen = new Set();
-      const uniqueCites = sortedCites.filter(c => {
-        const k = (c.source_outlet || '') + '|' + (c.article_url || c.narrative_hash || '');
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
-
-      const sourceHtml = `<div class="narr-sources-list">
-        <div class="narr-sources-label">Sources (${uniqueCites.length})</div>
-        ${uniqueCites.map(c => {
-          const cDate = c.snapshot_date?.slice(0,10);
-          const cDateStr = cDate
-            ? new Date(cDate + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
-            : '';
-          const cPrice = cDate ? priceByDate[cDate] : null;
-          const cPriceStr = cPrice != null ? fmtPrice(cPrice) : null;
-          const cVerdict = (c.verdict || '').toUpperCase();
-          const cVCls = cVerdict.includes('MISLEAD') || cVerdict.includes('FALSE') ? 'narr-v-misleading'
-            : cVerdict.includes('TRAP') ? 'narr-v-trap'
-            : cVerdict.includes('NEED') ? 'narr-v-needs'
-            : 'narr-v-monitoring';
-          return `<div class="narr-source-row">
-            <div class="narr-source-meta">
-              ${c.source_outlet ? `<span class="narr-src-outlet">${esc(c.source_outlet)}</span>` : ''}
-              ${(() => { var sr = getReach(c.source_outlet); return sr ? `<span class="narr-src-reach">${fmtReach(sr)} readers</span>` : ''; })()}
-              ${c.analyst_firm  ? `<span class="narr-src-analyst">· ${esc(c.analyst_firm)}</span>` : ''}
-              ${c.verdict ? `<span class="narr-verdict ${cVCls}" style="font-size:10px;padding:1px 5px;">${esc(c.verdict)}</span>` : ''}
-            </div>
-            <div class="narr-source-detail">
-              ${cDateStr ? `<span class="narr-date">${cDateStr}</span>` : ''}
-              ${cPriceStr ? `<span class="narr-price-at">@ <strong>$${cPriceStr}</strong></span>` : ''}
-              ${c.article_url ? `<a href="${esc(c.article_url)}" target="_blank" rel="noopener">View article →</a>` : ''}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`;
-
-      const itemId = `narr-${idx}`;
-
-      const verdictKey = vLbl.toLowerCase();
-
-      // Fuel bar (always visible, below headline)
-      const rank1 = idx + 1;
+      // ── Duration bar (reuses the energy bar; relabelled to read as DURATION) ──
       const pressureVal = Number(n.propagation_pressure) || 0;
-      const barWidth = maxPressure > 0 ? (pressureVal / maxPressure) * 100 : 0;
-      const fuelPct  = totalPressure > 0 ? Math.round((pressureVal / totalPressure) * 100) : 0;
-      const fuelColor = fuelColorForRank(rank1);
-      const regimeCls = regimeClass(n.narrative_energy_regime);
-      const regimeLbl = n.narrative_energy_regime
-        ? String(n.narrative_energy_regime).toUpperCase() : '';
-      const hasFuelData = n.propagation_pressure != null
-        || n.energy_remaining != null
-        || n.half_life != null
-        || n.narrative_energy_regime != null;
-      const fuelHtml = hasFuelData ? `
-        <div class="narr-fuel-wrap">
-          <div class="narr-fuel-top">
-            ${regimeLbl ? `<span class="narr-regime-pill ${regimeCls}">${esc(regimeLbl)}</span>` : '<span></span>'}
-            ${n.propagation_pressure != null ? `<span class="narr-fuel-pct">${fuelPct}% of fuel</span>` : ''}
+      const barWidth    = maxPressure   > 0 ? (pressureVal / maxPressure)   * 100 : 0;
+      const fuelPct     = totalPressure > 0 ? Math.round((pressureVal / totalPressure) * 100) : 0;
+      const hasFuelData = n.propagation_pressure != null || n.energy_remaining != null
+        || n.half_life != null || n.narrative_energy_regime != null;
+      const citeDates = (n.allCitations || [n]).map(c => c.snapshot_date).filter(Boolean)
+        .map(s => s.slice(0, 10)).sort();
+      const spanDays = citeDates.length
+        ? Math.max(0, Math.round(
+            (new Date(citeDates[citeDates.length - 1] + 'T12:00:00').getTime()
+             - new Date(citeDates[0] + 'T12:00:00').getTime()) / 86400000))
+        : 0;
+      const spanLbl     = spanDays >= 1 ? `${spanDays} day${spanDays !== 1 ? 's' : ''}` : 'under a day';
+      const halfLifeLbl = n.half_life != null ? ` · half-life ${Math.round(Number(n.half_life))}d` : '';
+      const durHtml = hasFuelData ? `
+        <div class="nf-dur">
+          <div class="nf-dur-labels">
+            <span>Pushed <strong>${spanLbl}</strong>${halfLifeLbl}</span>
+            ${n.propagation_pressure != null ? `<span><strong>${fuelPct}%</strong> of fuel</span>` : ''}
           </div>
           <div class="narr-fuel-bar-track">
-            <div class="narr-fuel-bar-fill" style="width:${barWidth.toFixed(1)}%;background:${fuelColor};"></div>
-          </div>
-          <div class="narr-fuel-stats">
-            ${n.propagation_pressure != null
-              ? `<span>propagation <strong>${Number(n.propagation_pressure).toFixed(2)}×</strong></span><span class="sep">·</span>` : ''}
-            ${n.energy_remaining != null
-              ? `<span>energy <strong>${Math.round(Number(n.energy_remaining))}%</strong></span><span class="sep">·</span>` : ''}
-            ${n.half_life != null
-              ? `<span>half-life <strong>${Math.round(Number(n.half_life))}d</strong></span>` : ''}
+            <div class="narr-fuel-bar-fill" style="width:${barWidth.toFixed(1)}%;background:${accent};"></div>
           </div>
         </div>` : '';
 
-      // Keyword chips for this narrative (dedup across its citations)
-      const narKws = keywordsForNarrative(n);
-      const kwChipsHtml = narKws.length ? `
-        <div class="narr-kw-wrap">
-          ${narKws.map(kw => {
-            const dir = (kwDir[kw] || '').toLowerCase();
-            const cls = dir === 'bullish' ? 'narr-kw-bull'
-                      : dir === 'bearish' ? 'narr-kw-bear'
-                      : 'narr-kw-neutral';
-            return `<button type="button" class="narr-kw-chip ${cls}" data-kw="${esc(kw)}">${esc(kw)}</button>`;
-          }).join('')}
-        </div>` : '';
+      // ── Claim vs evidence — only when claim flags exist on the row ──
+      const hasClaimFlags = n.has_source_ref != null || n.has_numeric_anchor != null
+        || n.has_vague_language != null || n.causal_logic_score != null;
+      let claimHtml = '';
+      if (hasClaimFlags) {
+        const pills = [];
+        if (n.has_source_ref != null)
+          pills.push(n.has_source_ref ? { s: 'pass', t: 'Has source' } : { s: 'fail', t: 'No source' });
+        if (n.has_numeric_anchor != null)
+          pills.push(n.has_numeric_anchor ? { s: 'pass', t: 'Data anchor' } : { s: 'fail', t: 'No data anchor' });
+        if (n.has_vague_language != null)
+          pills.push(n.has_vague_language ? { s: 'fail', t: 'Vague language' } : { s: 'pass', t: 'Precise language' });
+        if (n.causal_logic_score != null) {
+          const sc = Math.round(Number(n.causal_logic_score));
+          pills.push({ s: sc >= 80 ? 'pass' : sc < 50 ? 'fail' : 'partial', t: `Logic ${sc}%` });
+        }
+        const glyph = { pass: '✓', fail: '✕', partial: '◐' };
+        const pillsHtml = pills.map(p =>
+          `<span class="nf-pill ${p.s}"><span class="nf-ico">${glyph[p.s]}</span>${esc(p.t)}</span>`
+        ).join('');
+        const claimSummary = n.claim_metric
+          ? [n.claim_metric, n.claim_value].filter(Boolean).map(esc).join(' ')
+            + (n.claim_timeframe ? ` (${esc(n.claim_timeframe)})` : '')
+          : esc((n.narrative_text || '').slice(0, 90)) + ((n.narrative_text || '').length > 90 ? '…' : '');
+        const recency = relDaysAgo(citeDates[citeDates.length - 1]);
+        claimHtml = `
+          <div class="nf-claim">
+            <div class="nf-claim-text"><strong>Claim:</strong> ${claimSummary}${recency ? ` <span class="nf-claim-recency">(${recency})</span>` : ''}</div>
+            <div class="nf-pills">${pillsHtml}</div>
+          </div>`;
+      }
 
-      return `<div class="narr-item" data-verdict="${verdictKey}">
-        <div class="narr-header" data-target="${itemId}">
-          <div class="narr-rank">${idx + 1}</div>
-          <div class="narr-header-mid">
-            <div class="narr-text">${esc(n.narrative_text)}</div>
-            ${fuelHtml}
-            <div class="narr-meta-row">
-              <span class="narr-verdict ${vCls}">${vLbl}</span>
-              <span class="narr-cite"><span class="narr-cite-count">${n.citation_count}</span> citation${n.citation_count !== 1 ? 's' : ''}</span>
-              ${(() => {
-                const outlets = [...new Set((n.allCitations||[n]).map(c => c.source_outlet).filter(Boolean))];
-                return outlets.length > 0
-                  ? `<span class="narr-outlet">${outlets.map(o => esc(o)).join(', ')}</span>`
-                  : '';
-              })()}
-              ${(() => {
-                const reach = calcNarrativeReach(n.allCitations || [n]);
-                return reach > 0
-                  ? `<span class="narr-reach" title="Estimated combined monthly readership of citing publications">~${fmtReach(reach)} reach</span>`
-                  : '';
-              })()}
-              ${n.narrative_type ? `<span class="narr-outlet">· ${esc(n.narrative_type)}</span>` : ''}
-              ${dateStr ? `<span class="narr-date">${dateStr}</span>` : ''}
-              ${priceStr ? `<span class="narr-price-at">@ <strong>${priceStr}</strong></span>` : ''}
-            </div>
-          </div>
-          <div class="narr-header-right">
-            <span class="narr-toggle" id="toggle-${itemId}" aria-hidden="true">▾</span>
-          </div>
+      const badgeHtml = strength.lbl
+        ? `<div class="nf-badge" style="color:${accent};border-color:${accent}55;background:${accent}14;">${strength.lbl}</div>`
+        : '';
+
+      return `<div class="nf-card" style="--nf-accent:${accent};">
+        <div class="nf-top">
+          <div class="nf-rank">${idx + 1}</div>
+          <div class="nf-headline">${esc(n.narrative_text)}</div>
+          ${badgeHtml}
         </div>
-        <div class="narr-body" id="${itemId}">
-          <div class="narr-body-pad">
-            ${kwChipsHtml}
-            ${claimHtml}
-            ${matchedKpi.length ? `
-              <div class="narr-price-impact">
-                <div class="narr-pi-title">Narrative Price Impact</div>
-                ${blendedMove != null ? `
-                  <div class="narr-pi-expected" style="color:${blendedMove >= 0 ? '#00DE94' : '#FF4D4D'}">
-                    Expected 5-day move: ${blendedMove >= 0 ? '▲' : '▼'} ${blendedMove >= 0 ? '+' : ''}${blendedMove.toFixed(2)}%
-                  </div>
-                  <div class="narr-pi-basis">Based on ${kwCount} keyword${kwCount !== 1 ? 's' : ''} × ${totalArticles.toLocaleString()} historical articles</div>
-                ` : ''}
-                <div class="narr-pi-rows">
-                  ${matchedKpi.map(r => {
-                    const ret = Number(r.avg_return_5d) || 0;
-                    const isDominant = r.keyword === dominantKw;
-                    return `<div class="narr-pi-row">
-                      <span class="narr-pi-kw">${esc(r.keyword)}</span>
-                      <span class="narr-pi-articles">(${Number(r.article_count || 0).toLocaleString()} articles)</span>
-                      <span class="narr-pi-return" style="color:${ret >= 0 ? '#00DE94' : '#FF4D4D'}">
-                        ${ret >= 0 ? '+' : ''}${ret.toFixed(2)}%${isDominant ? '<span class="narr-pi-dominant">← dominant</span>' : ''}
-                      </span>
-                    </div>`;
-                  }).join('')}
-                </div>
-                ${analystFirm || exhaustDays || narrativeAgeDays ? `
-                  <div class="narr-pi-footer">
-                    ${narrativeAgeDays != null ? `<span>Active for: <strong>${narrativeAgeDays}d</strong></span>` : ''}
-                    ${analystFirm ? `<span>Analyst: <strong>${esc(analystFirm)}</strong></span>` : ''}
-                    ${exhaustDays ? `<span>Exhausts in: <strong>~${exhaustDays} days</strong></span>` : ''}
-                  </div>
-                ` : ''}
-              </div>
-            ` : ''}
-            ${signalsHtml ? `<div class="narr-signals">${signalsHtml}</div>` : ''}
-            ${flagHtml}
-            ${sourceHtml}
-          </div>
+        <div class="nf-strip">
+          <div class="nf-tile"><div class="nf-tile-lbl">Source quality</div>${sqHtml}</div>
+          <div class="nf-tile"><div class="nf-tile-lbl">Analyst</div>${analystHtml}</div>
+          <div class="nf-tile"><div class="nf-tile-lbl">Price impact</div>${piHtml}</div>
         </div>
+        ${durHtml}
+        ${claimHtml}
       </div>`;
     }).join('');
 
