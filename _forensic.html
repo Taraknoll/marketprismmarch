@@ -290,12 +290,15 @@
 
   function peersHTML(p){
     p=p||{}; var self=p.self, chips=p.chips||[];
-    if(!self) return card('Similar situations','<div class="empty">No red-flag cohort — this profile is clean (clean names aren’t grouped).</div>');
+    if(!self) return '';   // clean names have no red-flag cohort — hide the section
+    var cohort=Number(self.cohort_size||0);
     var pct=(self.pct_cohort_restated!=null)?Number(self.pct_cohort_restated):null;
-    var head = (pct!=null && self.cohort_size)
-      ? '<div class="precedent" style="color:'+(pct>=25?SEV:pct>=10?ELE:CLN)+'">'+pct.toFixed(1)+'%</div><div class="muted" style="font-size:13px;margin-top:2px;">of the '+self.cohort_size+' companies sharing this accounting-flag profile ('+esc((self.flag_key||'').replace(/,/g,', '))+') later filed a restatement.</div>'
-      : '<div class="muted">Cohort of '+(self.cohort_size||'—')+' companies sharing this flag profile.</div>';
+    // a precedent rate is only meaningful with a real peer base (>=5 companies)
+    var head = (pct!=null && cohort>=5)
+      ? '<div class="precedent" style="color:'+(pct>=25?SEV:pct>=10?ELE:CLN)+'">'+pct.toFixed(1)+'%</div><div class="muted" style="font-size:13px;margin-top:2px;">of the '+cohort+' companies sharing this accounting-flag profile ('+esc((self.flag_key||'').replace(/,/g,', '))+') later filed a restatement.</div>'
+      : '';
     var ch = chips.length ? ('<div style="margin-top:12px;">'+chips.map(function(c){ return '<a class="peerchip" href="/forensic?ticker='+encodeURIComponent(c.ticker)+'">'+esc(c.ticker)+' <span class="muted">· '+(c.red_flag_count!=null?c.red_flag_count:'')+'</span></a>'; }).join('')+'</div>') : '';
+    if(!head && !ch) return '';   // too few peers and no peer chips -> hide
     return card('Similar situations (precedent)', head+ch);
   }
 
@@ -342,7 +345,7 @@
   function kvrow(k,v){ return '<div class="kv"><span class="k">'+esc(k)+'</span><span>'+v+'</span></div>'; }
 
   function researchHTML(rr){
-    if(!rr || !rr.length) return card('Research library','<div class="empty">No academic research indexed for this ticker yet.</div>');
+    if(!rr || !rr.length) return '';
     var groups={}, order=[];
     rr.forEach(function(r){ var k=r.claim_type||'other'; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(r); });
     var html=order.map(function(k){
@@ -370,7 +373,7 @@
       + card('Accounting red flags', gridHTML(d.factors))
       + timelineHTML(d.timeline)
       + regHTML(d.regulatory_events)
-      + '<div class="card"><div class="sec-label">Claim vs. evidence</div><div id="fx-claims-body"><div class="empty">Matching claims to research…</div></div></div>'
+      + '<div class="card" id="fx-claims-card"><div class="sec-label">Claim vs. evidence</div><div id="fx-claims-body"><div class="empty">Matching claims to research…</div></div></div>'
       + peersHTML(d.peers)
       + snapshotHTML(d)
       + researchHTML(d.research);
@@ -379,10 +382,11 @@
   }
   function loadClaims(tk){
     var el=document.getElementById('fx-claims-body'); if(!el) return;
+    var hide=function(){ var c=document.getElementById('fx-claims-card'); if(c) c.style.display='none'; };
     fetch('/api/forensic-data?ticker='+encodeURIComponent(tk)+'&section=claims')
       .then(function(r){ return r.ok?r.json():null; })
-      .then(function(j){ var rows=(j&&j.claim_evidence)||[]; el.innerHTML = rows.length ? claimsInner(rows) : '<div class="empty">No claim–evidence matches surfaced yet (indexing in progress).</div>'; })
-      .catch(function(){ el.innerHTML='<div class="empty">No claim–evidence matches surfaced yet (indexing in progress).</div>'; });
+      .then(function(j){ var rows=(j&&j.claim_evidence)||[]; if(rows.length){ el.innerHTML=claimsInner(rows); } else { hide(); } })
+      .catch(hide);
   }
 
   function fail(msg){
