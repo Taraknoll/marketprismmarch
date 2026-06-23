@@ -714,8 +714,14 @@ STYLE: concise, plain text with light markdown (no tables — the UI renders str
 // ── Anthropic call ──────────────────────────────────────────────────────────
 
 async function callClaude(messages, debug) {
-  const key = process.env.ANTHROPIC_KEY || '';
-  if (!key) throw new Error('ANTHROPIC_KEY missing');
+  // Accept whichever name the key is stored under (frontend uses ANTHROPIC_KEY,
+  // the backend convention is ANTHROPIC_API_KEY; tolerate common aliases too).
+  const key = process.env.ANTHROPIC_KEY
+    || process.env.ANTHROPIC_API_KEY
+    || process.env.CLAUDE_API_KEY
+    || process.env.CLAUDE_KEY
+    || '';
+  if (!key) throw new Error('No Anthropic key in env (checked ANTHROPIC_KEY / ANTHROPIC_API_KEY / CLAUDE_API_KEY / CLAUDE_KEY)');
   const resp = await fetch(ANTHROPIC_URL, {
     method: 'POST',
     headers: {
