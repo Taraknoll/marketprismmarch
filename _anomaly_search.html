@@ -159,6 +159,22 @@ td.t{font-weight:700;color:var(--mp-text-primary);}
 .errbubble{border:1px solid rgba(255,77,77,.4);background:rgba(255,77,77,.08);}
 .errbubble .h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mp-red);margin-bottom:6px;}
 a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:underline;}
+
+/* Inline SVG charts */
+.chart{margin:4px 0 14px;}
+.svgchart{display:block;width:100%;height:auto;overflow:visible;}
+.svgchart text{font-family:var(--font-body);}
+.chart-cap{font-size:10.5px;color:var(--mp-text-muted);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+.bl-lbl{fill:var(--mp-text-secondary);font-size:11px;font-weight:600;}
+.bl-val{fill:var(--mp-text-tertiary);font-size:11px;}
+.sc-axis{stroke:var(--mp-border);stroke-width:1;}
+.sc-zero{stroke:var(--mp-text-muted);stroke-width:1;stroke-dasharray:3 3;opacity:.55;}
+.sc-note{fill:var(--mp-text-muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;}
+.sc-axislbl{fill:var(--mp-text-muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.sc-dot{fill:var(--mp-violet);opacity:.65;}
+.sc-dot.focus{fill:var(--mp-cyan);opacity:1;stroke:var(--mp-obsidian);stroke-width:2;}
+.sc-lbl{fill:var(--mp-text-tertiary);font-size:9.5px;}
+.sc-lbl.focus{fill:var(--mp-cyan);font-weight:700;font-size:11px;}
 </style>
 </head>
 <body>
@@ -328,6 +344,61 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     return '<span class="badge '+c+'">'+esc(s)+' RISK</span>';
   }
 
+  // ── inline SVG charts (no library; themed via CSS vars) ──────────────────────
+  // Ranked horizontal bars. items: [{label, value, color?, display?}]
+  function barsSvg(items){
+    items=(items||[]).filter(function(i){ return i && num(i.value)!=null; });
+    if(items.length<2) return '';
+    items=items.slice().sort(function(a,b){ return (num(b.value)||0)-(num(a.value)||0); }).slice(0,30);
+    var max=Math.max.apply(null, items.map(function(i){ return Math.abs(num(i.value)||0); }))||1;
+    var W=600, rowH=26, padL=92, padR=56, gap=7, barH=rowH-gap, H=items.length*rowH+6;
+    var bars=items.map(function(it,idx){
+      var v=num(it.value)||0, y=idx*rowH+3;
+      var bw=Math.max(2,(Math.abs(v)/max)*(W-padL-padR));
+      var col=it.color||'var(--mp-cyan)';
+      return '<g>'
+        +'<text x="'+(padL-8)+'" y="'+(y+barH/2)+'" text-anchor="end" dominant-baseline="central" class="bl-lbl">'+esc(it.label)+'</text>'
+        +'<rect x="'+padL+'" y="'+y+'" width="'+bw.toFixed(1)+'" height="'+barH+'" rx="3" fill="'+col+'"/>'
+        +'<text x="'+(padL+bw+7)+'" y="'+(y+barH/2)+'" dominant-baseline="central" class="bl-val">'+esc(it.display!=null?it.display:Math.round(v))+'</text>'
+        +'</g>';
+    }).join('');
+    return '<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMinYMin meet" class="svgchart">'+bars+'</svg></div>';
+  }
+  // Scatter. points: [{x, y, label, focus?}], opts: {xLabel, yLabel}
+  function scatterSvg(points, opts){
+    opts=opts||{};
+    points=(points||[]).filter(function(p){ return p && num(p.x)!=null && num(p.y)!=null; });
+    if(points.length<2) return '';
+    var W=600, H=300, padL=52, padR=18, padT=18, padB=42;
+    var xs=points.map(function(p){ return num(p.x); }), ys=points.map(function(p){ return num(p.y); });
+    var xMin=Math.min.apply(null,xs), xMax=Math.max.apply(null,xs);
+    var yMin=Math.min.apply(null,ys), yMax=Math.max.apply(null,ys);
+    if(xMin===xMax){ xMin-=1; xMax+=1; } if(yMin===yMax){ yMin-=1; yMax+=1; }
+    var xp=(xMax-xMin)*0.10, yp=(yMax-yMin)*0.12; xMin-=xp; xMax+=xp; yMin-=yp; yMax+=yp;
+    function sx(x){ return padL+((x-xMin)/(xMax-xMin))*(W-padL-padR); }
+    function sy(y){ return (H-padB)-((y-yMin)/(yMax-yMin))*(H-padT-padB); }
+    var zero='';
+    if(yMin<0 && yMax>0){
+      var zy=sy(0).toFixed(1);
+      zero='<line x1="'+padL+'" y1="'+zy+'" x2="'+(W-padR)+'" y2="'+zy+'" class="sc-zero"/>'
+        +'<text x="'+(W-padR)+'" y="'+(parseFloat(zy)-4).toFixed(1)+'" text-anchor="end" class="sc-note">fair value</text>';
+    }
+    var dots=points.map(function(p){
+      var cx=sx(num(p.x)).toFixed(1), cy=sy(num(p.y)).toFixed(1), r=p.focus?6:4.5;
+      return '<g><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" class="sc-dot'+(p.focus?' focus':'')+'"/>'
+        +'<text x="'+cx+'" y="'+(parseFloat(cy)-9).toFixed(1)+'" text-anchor="middle" class="sc-lbl'+(p.focus?' focus':'')+'">'+esc(p.label)+'</text></g>';
+    }).join('');
+    var cxA=((padL+(W-padR))/2).toFixed(1), cyA=((padT+(H-padB))/2).toFixed(1);
+    return '<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" class="svgchart">'
+      +'<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(H-padB)+'" class="sc-axis"/>'
+      +'<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" class="sc-axis"/>'
+      +zero
+      +'<text x="'+cxA+'" y="'+(H-8)+'" text-anchor="middle" class="sc-axislbl">'+esc(opts.xLabel||'')+'</text>'
+      +'<text x="13" y="'+cyA+'" text-anchor="middle" class="sc-axislbl" transform="rotate(-90 13 '+cyA+')">'+esc(opts.yLabel||'')+'</text>'
+      +dots
+      +'</svg></div>';
+  }
+
   // risk_dossier
   function cardRiskDossier(c){
     var metrics=(c.metrics||[]).map(function(m){
@@ -363,11 +434,15 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
         +'</td><td class="mono">'+f0(a.drift)+'</td><td class="mono">'+(a.fvdPct==null?'—':pct(a.fvdPct))+'</td></tr>';
     }).join('') || '<tr><td colspan="5" style="color:var(--mp-text-muted)">No state-peers found.</td></tr>';
     var cp=num(c.consensusPct);
+    var scatterChart=scatterSvg((c.peers||[]).map(function(a){
+      return { x:num(a.drift), y:num(a.fvdPct), label:a.ticker, focus:(a.ticker===c.ticker) };
+    }),{ xLabel:'Narrative drift →', yLabel:'Fair-value divergence %' });
     return '<div class="card">'
       +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>Narrative Lab</small></div></div>'
       +'<p class="synth">'+esc(c.synthesis||'')+'</p>'
       +(cp==null?'':'<div class="gauge">'+ringSvg(cp)+'<div class="cap"><b style="color:var(--mp-text-secondary)">'+Math.round(cp)
         +'% analogue consensus</b><br>'+esc(c.consensusCaption||'')+'</div></div>')
+      +(scatterChart?'<div class="chart-cap">Same-state peers · drift × valuation premium</div>'+scatterChart:'')
       +'<table><thead><tr><th>Peer</th><th>State</th><th>VMS</th><th>Drift</th><th>FVD%</th></tr></thead><tbody>'+peers+'</tbody></table>'
       +'<div class="foot">Analogues = same-state peers on the latest snapshot. Foreign filers excluded. Descriptive, not predictive.</div>'
       +'</div>';
@@ -385,9 +460,14 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
         +'<td><span class="score mono" style="color:'+col+';border-color:'+col+'">'+Math.round(sc)+'</span></td>'
         +'<td class="mono">'+f0(r.confluence)+'</td><td>'+tags+'</td><td>'+esc(r.state||'—')+'</td></tr>';
     }).join('');
+    var chart=barsSvg(rows.map(function(r){
+      var sc=num(r.score)||0;
+      return { label:r.ticker, value:sc, color:sc>=70?'var(--mp-red)':sc>=40?'var(--mp-amber)':'var(--mp-green)' };
+    }));
     return '<div class="card">'
       +'<div class="card-top"><div class="tkr" style="font-size:18px">Anomaly Feed<small>severity × confluence'
       +(c.asOf?(' · '+esc(c.asOf)):'')+'</small></div></div>'
+      +(chart?'<div class="chart-cap">Anomaly score by ticker</div>'+chart:'')
       +'<table><thead><tr><th>Ticker</th><th>Score</th><th>Axes</th><th>Firing</th><th>State</th></tr></thead><tbody>'+body+'</tbody></table>'
       +'<div class="foot">Confluence = number of forensic axes firing (drift≥70, coordination≥20, suspicion≥60, |FVD|≥100, active idiosyncratic bubble). Foreign filers excluded. Structure, not alpha.</div>'
       +'</div>';
@@ -445,8 +525,15 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
         return '<td>'+esc(v==null?'—':v)+'</td>';
       }).join('')+'</tr>';
     }).join('');
+    var labelCol=cols.indexOf('ticker')>=0?'ticker':cols[0];
+    var numCol=null;
+    for(var ci=0;ci<cols.length;ci++){ var cc=cols[ci]; if(cc===labelCol) continue;
+      if(/_score$|^drift|vms|energy|coordination|bsadf|crit|nrs|ccp|srs|suspicion/.test(cc) && typeof rows[0][cc]==='number'){ numCol=cc; break; } }
+    var chart=numCol?barsSvg(rows.map(function(r){ return { label:r[labelCol], value:r[numCol] }; })):'';
     return '<div class="card"><div class="card-top"><div class="tkr" style="font-size:16px">'+esc(c.title||'Results')
-      +'<small>'+rows.length+' row(s)</small></div></div><table><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>'
+      +'<small>'+rows.length+' row(s)</small></div></div>'
+      +(chart?'<div class="chart-cap">'+esc(numCol)+' by '+esc(labelCol)+'</div>'+chart:'')
+      +'<table><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>'
       +'<div class="foot">Latest snapshot · foreign filers excluded · anon read-only · grounded in returned rows.</div></div>';
   }
 
