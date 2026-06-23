@@ -236,6 +236,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
   var EXAMPLES = [
     'Forensic dossier for NVDA',
     "What's anomalous across the market today?",
+    'What changed since yesterday?',
     'Show me the AI-capex circular-finance loops',
     'Any active idiosyncratic bubbles right now?',
     'Coordinated, high-drift, richly valued names',
@@ -545,21 +546,23 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
   // anomaly_feed
   function cardAnomalyFeed(c){
     var rows=(c.rows||[]);
-    if(!rows.length) return '<div class="card"><div class="empty">No names cleared the confluence threshold'
-      +(c.asOf?(' for '+esc(c.asOf)):'')+'.</div></div>';
+    if(!rows.length) return '<div class="card">'
+      +'<div class="card-top"><div class="tkr" style="font-size:18px">'+esc(c.title||'Anomaly Feed')+'<small>'+esc(c.subtitle||'severity × confluence')+(c.asOf?(' · '+esc(c.asOf)):'')+'</small></div></div>'
+      +(c.headline?'<div class="verdict-line">'+esc(c.headline)+'</div>':'<div class="empty">No names cleared the confluence threshold'+(c.asOf?(' for '+esc(c.asOf)):'')+'.</div>')
+      +'</div>';
     var body=rows.map(function(r){
       var sc=num(r.score)||0, col=sc>=70?'var(--mp-red)':sc>=40?'var(--mp-amber)':'var(--mp-green)';
       var tags=(r.axes||[]).map(function(a){ return '<span class="tag">'+esc(a)+'</span>'; }).join('');
       return '<tr><td class="t">'+esc(r.ticker)+'</td>'
         +'<td><span class="score mono" style="color:'+col+';border-color:'+col+'">'+Math.round(sc)+'</span></td>'
-        +'<td class="mono">'+f0(r.confluence)+'</td><td>'+tags+'</td><td>'+esc(humanize(r.state||'—'))+'</td></tr>';
+        +'<td class="mono">'+f0(r.confluence)+'</td><td>'+tags+'</td><td>'+esc(humanize(r.state||'—'))+(r.note?'<div class="rcp-meta">'+esc(humanizeInline(r.note))+'</div>':'')+'</td></tr>';
     }).join('');
     var chart=barsSvg(rows.map(function(r){
       var sc=num(r.score)||0;
       return { label:r.ticker, value:sc, color:sc>=70?'var(--mp-red)':sc>=40?'var(--mp-amber)':'var(--mp-green)' };
     }));
     return '<div class="card">'
-      +'<div class="card-top"><div class="tkr" style="font-size:18px">Anomaly Feed<small>severity × confluence'
+      +'<div class="card-top"><div class="tkr" style="font-size:18px">'+esc(c.title||'Anomaly Feed')+'<small>'+esc(c.subtitle||'severity × confluence')
       +(c.asOf?(' · '+esc(c.asOf)):'')+'</small></div></div>'
       +(c.headline?'<div class="verdict-line">'+esc(c.headline)+'</div>':'')
       +(chart?'<div class="chart-cap">Anomaly score by ticker</div>'+chart:'')

@@ -507,6 +507,86 @@ async function execDailyAnomalyFeed(input, ctx) {
   return { card, rowCount: scored.length, summary };
 }
 
+// "What changed today" — diff the latest scorecard snapshot vs the prior one for
+// NEWLY-fired forensic axes (and verdict shifts). No bubble (separate table).
+async function execWhatChanged(input, ctx) {
+  const limit = clampLimit(input && input.limit, 25);
+  const snap = await ctx.latestSnapshot('narrative_scorecard');
+  if (!snap) return { rowCount: 0, summary: { error: 'no scorecard snapshot' } };
+
+  let prevSnap = null;
+  try {
+    const pr = await rest(
+      `narrative_scorecard?select=snapshot_date&snapshot_date=lt.${snap}&order=snapshot_date.desc&limit=1`,
+      ctx.debugQueries
+    );
+    if (pr.length) prevSnap = pr[0].snapshot_date;
+  } catch (_) { /* no prior snapshot */ }
+
+  const cols = 'ticker,verdict,drift_score,coordination_score,suspicion_score,fvd_pct,nrs,narrative_state';
+  const [todayRows, prevRows] = await Promise.all([
+    rest(`narrative_scorecard?select=${cols}&snapshot_date=eq.${snap}&${FOREIGN_EXCL}&limit=300`, ctx.debugQueries).catch(() => []),
+    prevSnap ? rest(`narrative_scorecard?select=${cols}&snapshot_date=eq.${prevSnap}&${FOREIGN_EXCL}&limit=300`, ctx.debugQueries).catch(() => []) : Promise.resolve([]),
+  ]);
+
+  const TAG = { drift: 'drift', coordination: 'coordination', suspicion: 'footprint', fvd: 'valuation' };
+  function axisSet(r) {
+    const s = new Set();
+    if ((num(r.drift_score) || 0) >= 70) s.add('drift');
+    if ((num(r.coordination_score) || 0) >= 20) s.add('coordination');
+    if ((num(r.suspicion_score) || 0) >= 60) s.add('suspicion');
+    if (Math.abs(num(r.fvd_pct) || 0) >= 100) s.add('fvd');
+    return s;
+  }
+  const prevMap = new Map();
+  prevRows.forEach((r) => prevMap.set(r.ticker, { axes: axisSet(r), verdict: r.verdict }));
+
+  const changes = [];
+  todayRows.forEach((r) => {
+    const today = axisSet(r);
+    const prior = prevMap.get(r.ticker);
+    const priorAxes = prior ? prior.axes : new Set();
+    const newly = [...today].filter((a) => !priorAxes.has(a));
+    const verdictChanged = !!(prior && prior.verdict && r.verdict && prior.verdict !== r.verdict);
+    if (!newly.length && !verdictChanged) return;
+    changes.push({
+      ticker: r.ticker,
+      score: round(r.nrs, 0) || 0,
+      confluence: newly.length,
+      axes: newly.map((a) => TAG[a] || a),
+      state: r.narrative_state || '—',
+      note: verdictChanged ? `verdict ${prior.verdict} → ${r.verdict}` : null,
+      _new: newly.length,
+    });
+  });
+
+  changes.sort((a, b) => (b._new - a._new) || (b.score - a.score));
+  const rows = changes.slice(0, limit).map((c) => ({ ticker: c.ticker, score: c.score, confluence: c.confluence, axes: c.axes, state: c.state, note: c.note }));
+
+  const newlyFlagged = changes.filter((c) => c._new > 0).length;
+  const verdictShifts = changes.length - newlyFlagged;
+  const headline = !prevSnap
+    ? 'No prior snapshot to compare against yet.'
+    : changes.length
+      ? `${newlyFlagged} name${newlyFlagged === 1 ? '' : 's'} lit up new forensic flags since ${prevSnap}${verdictShifts ? `, plus ${verdictShifts} verdict shift${verdictShifts === 1 ? '' : 's'}` : ''}.`
+      : `Nothing new lit up since ${prevSnap} — the board is quiet.`;
+
+  const card = {
+    ui: 'anomaly_feed',
+    title: 'What changed today',
+    subtitle: prevSnap ? `new vs ${prevSnap}` : 'no prior snapshot',
+    asOf: snap,
+    headline,
+    rows,
+  };
+  const summary = {
+    snapshot_date: snap, prev_snapshot: prevSnap, changed: rows.length,
+    rows: rows.map((x) => ({ ticker: x.ticker, newly_fired: x.axes, note: x.note })),
+    note: rows.length ? undefined : 'no transitions since the prior snapshot',
+  };
+  return { card, rowCount: rows.length, summary };
+}
+
 async function execStructuralScreen(input, ctx) {
   const limit = clampLimit(input && input.limit, 25);
   const snap = await ctx.latestSnapshot('narrative_scorecard');
@@ -788,6 +868,7 @@ const EXECUTORS = {
   ticker_dossier: execTickerDossier,
   narrative_lab: execNarrativeLab,
   daily_anomaly_feed: execDailyAnomalyFeed,
+  what_changed: execWhatChanged,
   structural_screen: execStructuralScreen,
   bubble_screen: execBubbleScreen,
   circular_finance_lookup: execCircularFinanceLookup,
@@ -825,6 +906,16 @@ const TOOLS = [
       properties: {
         limit: { type: 'integer', description: 'Max rows (<=50, default 20).' },
         minConfluence: { type: 'integer', description: 'Minimum number of axes that must fire (default 1).' },
+      },
+    },
+  },
+  {
+    name: 'what_changed',
+    description: 'What CHANGED since the prior snapshot: tickers that NEWLY fired a forensic axis today vs the previous day (drift>=70, coordination>=20, suspicion>=60, |fvd_pct|>=100), plus verdict shifts. Foreign filers excluded. Use for "what changed today", "what is new", "what just flipped", "what entered a red-flag state", "anything new since yesterday", daily-monitoring questions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'integer', description: 'Max rows (<=50, default 25).' },
       },
     },
   },
