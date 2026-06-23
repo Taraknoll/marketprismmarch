@@ -5837,6 +5837,33 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
     #claim-integrity-section .ci-chip-rred {
       background: rgba(255,77,77,0.18); color: #FF8585; border: 1px solid #FF4D4D;
     }
+    #claim-integrity-section .ci-claim {
+      margin-top: 16px; padding: 14px 16px;
+      background: rgba(255,255,255,0.02);
+      border-left: 2px solid var(--ci-accent, #00AEFF); border-radius: 8px;
+    }
+    #claim-integrity-section .ci-claim-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--mp-text-tertiary, #A0A8B0); margin-bottom: 7px;
+    }
+    #claim-integrity-section .ci-claim-text {
+      font-size: 14px; line-height: 1.55; color: var(--mp-text-primary, #fff);
+    }
+    #claim-integrity-section .ci-claim-attr {
+      font-size: 12px; color: var(--mp-text-tertiary, #A0A8B0); margin-top: 8px;
+    }
+    #claim-integrity-section .ci-ev {
+      display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 12px; align-items: baseline;
+    }
+    #claim-integrity-section .ci-ev-k {
+      flex-shrink: 0; min-width: 92px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--mp-text-tertiary, #A0A8B0);
+    }
+    #claim-integrity-section .ci-ev-v {
+      flex: 1 1 200px; font-size: 13px; line-height: 1.55;
+      color: var(--mp-text-secondary, rgba(255,255,255,0.7));
+    }
     /* ── Scientific Premise Check (verdicts above the evidence corpus) ───────── */
     #scholarly-section .premise-list {
       display: flex; flex-direction: column; gap: 12px; margin: 0 0 24px;
@@ -7722,6 +7749,47 @@ function ciFlagClass(flag) {
   if (f === 'science contested' || f === 'overvalued anchor') return 'ci-chip ci-chip-amber';
   return 'ci-chip ci-chip-red';
 }
+// Strip internal markup from a scorecard drift_explanation for display.
+function mpCleanEvidence(t) {
+  return String(t == null ? '' : t)
+    .replace(/\[f:[0-9a-f]+\]/gi, '')        // internal filing-ref tags
+    .replace(/\[CONSENSUS[^\]]*\]\s*/i, '')  // consensus prefix (surfaced separately)
+    .replace(/\s+/g, ' ').trim();
+}
+// "[CONSENSUS 6 articles, 4 sources ...]" -> "6 articles across 4 sources"
+function mpConsensusNote(t) {
+  var m = String(t == null ? '' : t).match(/\[CONSENSUS\s+(\d+)\s+articles?,\s*(\d+)\s+sources?/i);
+  if (!m) return '';
+  var a = +m[1], s = +m[2];
+  return a + ' article' + (a === 1 ? '' : 's') + ' across ' + s + ' source' + (s === 1 ? '' : 's');
+}
+function ciNiceClass(c) {
+  return String(c || '').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, function (m) { return m.toUpperCase(); });
+}
+// One-line "why it fired" for a flag. 'filing contradiction' is omitted here —
+// it is surfaced as the dedicated "Filing check" line (the drift_explanation).
+function ciFlagEvidence(flag, r) {
+  switch (String(flag || '').toLowerCase()) {
+    case 'overvalued anchor':
+      return (r.fvd_pct != null && !isNaN(Number(r.fvd_pct)))
+        ? 'Priced ~' + Math.round(Number(r.fvd_pct)) + '% above model fair value'
+            + (String(r.npp_conclusion || '').toUpperCase() === 'PRICED_FOR_PERFECTION' ? ' — priced for perfection' : '')
+        : 'Trades well above model fair value';
+    case 'omission cascade':
+      return 'Material facts the narrative leaves out'
+        + (r.omission_gap_score != null ? ' (omission-gap ' + Math.round(Number(r.omission_gap_score)) + '/100)' : '');
+    case 'coordinated':
+      return 'Cross-source coordination' + (r.coordination_class ? ' — ' + ciNiceClass(r.coordination_class) : '');
+    case 'trading footprint':
+      return (r.suspicion_class ? ciNiceClass(r.suspicion_class) : 'Unusual') + ' trading footprint';
+    case 'science refuted':
+      return 'A scientific premise is refuted by peer-reviewed research — see Scientific Premise Check below';
+    case 'science contested':
+      return 'A scientific premise lacks decisive evidence — see Scientific Premise Check below';
+    default:
+      return null;
+  }
+}
 async function loadClaimTrap() {
   var section = document.getElementById('claim-integrity-section');
   var host = document.getElementById('ci-card');
@@ -7733,28 +7801,62 @@ async function loadClaimTrap() {
     var r = (Array.isArray(rows) && rows.length) ? rows[0] : null;
     var symEl = document.getElementById('ci-sym');
     if (symEl) symEl.textContent = ' — ' + TK;
-    var flags = (r && Array.isArray(r.trap_flags)) ? r.trap_flags : [];
-    if (!r || !Number(r.n_flags) || !flags.length) {
-      host.innerHTML = '<div class="ci-clean">No claim-integrity flags &mdash; narrative claims are structurally consistent.</div>';
+
+    // No scorecard row at all → calm, no fabricated claim.
+    if (!r) {
+      host.innerHTML = '<div class="ci-clean">No claim-integrity read for this ticker yet.</div>';
       section.style.display = 'block';
       return;
     }
+
+    var flags = Array.isArray(r.trap_flags) ? r.trap_flags : [];
+    var hasFlags = Number(r.n_flags) > 0 && flags.length > 0;
     var sev = String(r.severity || '').toUpperCase();
-    var sevColor = sev === 'HIGH' ? '#FF4D4D' : '#FFB800';
-    var chips = flags.map(function (f) {
-      return '<span class="' + ciFlagClass(f) + '">' + esc(String(f)) + '</span>';
-    }).join('');
+    var accent = !hasFlags ? '#00AEFF' : (sev === 'HIGH' ? '#FF4D4D' : '#FFB800');
     var convN = (r.conviction != null && r.conviction !== '' && !isNaN(Number(r.conviction))) ? Math.round(Number(r.conviction)) : null;
-    host.innerHTML =
-        '<div class="ci-box" style="--ci-accent:' + sevColor + ';">'
-      +   '<div class="ci-row1">'
-      +     '<span class="ci-sev" style="background:' + mpRgba(sevColor, 0.14) + ';color:' + sevColor + ';border:1px solid ' + mpRgba(sevColor, 0.42) + ';">' + esc(sev || 'FLAGGED') + '</span>'
-      +     '<span class="ci-meta">' + Number(r.n_flags) + ' claim flag' + (Number(r.n_flags) === 1 ? '' : 's')
-      +       (convN != null ? ' &middot; conviction ' + convN + '%' : '') + '</span>'
-      +   '</div>'
-      +   (r.verdict ? '<div class="ci-verdict">Verdict: <strong>' + esc(r.verdict) + '</strong></div>' : '')
-      +   '<div class="ci-chips">' + chips + '</div>'
-      + '</div>';
+
+    // Top row — severity badge (or CLEAR) + meta.
+    var badge = '<span class="ci-sev" style="background:' + mpRgba(accent, 0.14) + ';color:' + accent + ';border:1px solid ' + mpRgba(accent, 0.42) + ';">'
+      + (hasFlags ? esc(sev || 'FLAGGED') : 'CLEAR') + '</span>';
+    var meta = hasFlags
+      ? (Number(r.n_flags) + ' claim flag' + (Number(r.n_flags) === 1 ? '' : 's') + (convN != null ? ' &middot; conviction ' + convN + '%' : ''))
+      : 'No claim-trap flags fired';
+
+    // The narrative claim being assessed + attribution / spread.
+    var claimHtml = '';
+    if (r.claim) {
+      var attr = [];
+      if (r.source) attr.push(esc(String(r.source)));
+      if (r.narrative_tone) attr.push(esc(ciNiceClass(r.narrative_tone)) + ' framing');
+      var spread = mpConsensusNote(r.drift_explanation);
+      if (spread) attr.push(esc(spread));
+      claimHtml = '<div class="ci-claim"><div class="ci-claim-label">Assessed claim</div>'
+        + '<div class="ci-claim-text">' + esc(String(r.claim)) + '</div>'
+        + (attr.length ? '<div class="ci-claim-attr">' + attr.join(' &middot; ') + '</div>' : '')
+        + '</div>';
+    }
+
+    // Filing check = the claim adjudicated against SEC filings (drift_explanation).
+    var fc = mpCleanEvidence(r.drift_explanation);
+    var filingHtml = fc ? '<div class="ci-ev"><span class="ci-ev-k">Filing check</span><span class="ci-ev-v">' + esc(fc) + '</span></div>' : '';
+
+    var body = '<div class="ci-row1">' + badge + '<span class="ci-meta">' + meta + '</span></div>' + claimHtml;
+    if (hasFlags) {
+      body += '<div class="ci-chips">' + flags.map(function (f) {
+        return '<span class="' + ciFlagClass(f) + '">' + esc(String(f)) + '</span>';
+      }).join('') + '</div>';
+      body += filingHtml;
+      body += flags.map(function (f) {
+        var e = ciFlagEvidence(f, r);
+        return e ? '<div class="ci-ev"><span class="ci-ev-k">' + esc(String(f)) + '</span><span class="ci-ev-v">' + esc(e) + '</span></div>' : '';
+      }).filter(Boolean).join('');
+    } else {
+      body += filingHtml;
+      body += '<div class="ci-clean">No filing contradiction, coordination, or trading-footprint flags fired.</div>';
+    }
+    if (r.verdict) body += '<div class="ci-verdict">Verdict: <strong>' + esc(String(r.verdict)) + '</strong></div>';
+
+    host.innerHTML = '<div class="ci-box" style="--ci-accent:' + accent + ';">' + body + '</div>';
     section.style.display = 'block';
   } catch (e) {
     console.warn('[ticker] loadClaimTrap failed:', e);
