@@ -4461,6 +4461,75 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
 }
 @media(max-width:767px){#lb-grid{grid-template-columns:1fr!important;}}
 
+/* ── Daily Strategy Leaderboards (strategy_signals lane) ──
+   A distinct sub-section inside the Leaderboard tab. Reuses the .lb-section
+   surface/crosshatch look but with its own sl- namespace so the board engine
+   above is untouched. Font sizes honour the project minimums. */
+#sl-block{position:relative;animation:slideUp .6s cubic-bezier(.16,1,.3,1) .12s both;}
+.sl-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.10),transparent);margin:12px 0 28px;}
+.sl-eyebrow{font-family:var(--font-body);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#4DC8F0;display:flex;align-items:center;gap:10px;}
+.sl-eyebrow::before{content:'';width:22px;height:1px;background:#4DC8F0;}
+.sl-title{font-family:'Inter','DM Sans',system-ui,sans-serif;font-size:24px;font-weight:700;letter-spacing:-.025em;color:var(--mp-text-primary);margin:10px 0 0;}
+.sl-sub{font-size:13px;color:var(--mp-text-tertiary);line-height:1.55;max-width:700px;margin-top:8px;}
+.sl-stats{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:16px;align-items:baseline;}
+.sl-stat{display:flex;align-items:baseline;gap:7px;}
+.sl-stat-val{font-size:18px;font-weight:700;color:var(--mp-text-primary);font-variant-numeric:tabular-nums;}
+.sl-stat-lbl{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--mp-text-muted);}
+.sl-disclaimer{font-size:11px;color:var(--mp-text-muted);line-height:1.5;background:rgba(255,255,255,0.03);border:1px solid var(--mp-border);border-left:2px solid var(--mp-amber);border-radius:8px;padding:10px 13px;margin:16px 0 20px;}
+.sl-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px;}
+.sl-controls:empty{display:none;}
+.sl-chips{display:flex;flex-wrap:wrap;gap:7px;}
+.sl-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;background:var(--mp-surface);border:1px solid var(--mp-border);color:var(--mp-text-secondary);font-family:var(--font-body);font-size:12px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;}
+.sl-chip:hover{border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.sl-chip.active{background:rgba(0,174,255,0.12);border-color:rgba(0,174,255,0.42);color:var(--mp-text-primary);}
+.sl-chip[disabled]{opacity:.38;cursor:not-allowed;}
+.sl-chip-n{font-size:10px;font-variant-numeric:tabular-nums;color:var(--mp-text-muted);}
+.sl-chip.active .sl-chip-n{color:#4DC8F0;}
+.sl-select{margin-left:auto;padding:8px 12px;border-radius:9px;background:var(--mp-surface);border:1px solid var(--mp-border);color:var(--mp-text-secondary);font-family:var(--font-body);font-size:12px;cursor:pointer;outline:none;transition:border-color .15s;}
+.sl-select:focus{border-color:#4DC8F0;}
+.sl-loading,.sl-empty,.sl-error{font-size:13px;color:var(--mp-text-tertiary);padding:30px 0;text-align:center;}
+.sl-error{color:#FF8B8B;}
+.sl-empty{border:1px dashed var(--mp-border);border-radius:12px;}
+/* Section shell — mirrors .lb-section (surface, crosshatch, top accent bar) */
+.sl-section{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;overflow:hidden;position:relative;margin-bottom:20px;transition:border-color .3s,box-shadow .3s;}
+.sl-section::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:48px 48px;}
+.sl-section:hover{border-color:rgba(255,255,255,0.12);box-shadow:0 10px 34px rgba(0,0,0,0.34);}
+.sl-accent{position:absolute;top:0;left:0;right:0;height:2px;z-index:2;}
+.sl-head{padding:16px;border-bottom:1px solid var(--mp-border);position:relative;z-index:2;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+.sl-htitle{font-family:'Inter',var(--font-body),system-ui,sans-serif;font-size:18px;font-weight:600;color:var(--mp-text-primary);}
+.sl-hsub{font-size:11px;color:var(--mp-text-tertiary);margin-top:3px;line-height:1.45;}
+.sl-hstats{margin-left:auto;display:flex;gap:16px;text-align:right;}
+.sl-hstat-val{font-size:16px;font-weight:700;color:var(--mp-text-primary);font-variant-numeric:tabular-nums;line-height:1;}
+.sl-hstat-lbl{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-muted);margin-top:3px;}
+.sl-rows{position:relative;z-index:2;}
+.sl-row{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.04);text-decoration:none;color:inherit;transition:background .15s;}
+.sl-row:last-child{border-bottom:none;}
+.sl-row:hover{background:rgba(255,255,255,0.03);}
+.sl-rank{font-size:12px;font-weight:700;color:rgba(255,255,255,0.25);width:18px;flex-shrink:0;text-align:center;font-variant-numeric:tabular-nums;padding-top:2px;}
+.sl-main{flex:1;min-width:0;}
+.sl-line1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sl-tkr{font-size:15px;font-weight:700;color:var(--mp-text-primary);letter-spacing:-.01em;}
+a.sl-row:hover .sl-tkr{color:#4DC8F0;}
+.sl-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:6px;border:1px solid;white-space:nowrap;}
+.sl-rich{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:6px;color:var(--mp-amber);border:1px solid rgba(255,184,0,.35);background:rgba(255,184,0,.1);}
+.sl-scope{font-size:10px;color:var(--mp-text-muted);text-transform:uppercase;letter-spacing:.05em;}
+.sl-trigger{font-size:13px;color:var(--mp-text-tertiary);margin-top:5px;line-height:1.45;}
+.sl-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.sl-bracket{font-size:11.5px;color:var(--mp-text-muted);margin-top:6px;font-variant-numeric:tabular-nums;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 4px;}
+.sl-bracket b{color:var(--mp-text-secondary);font-weight:600;}
+.sl-bracket .up{color:#00DE94;}
+.sl-bracket .dn{color:#FF4D4D;}
+.sl-dot{color:var(--mp-text-muted);margin:0 4px;}
+.sl-conv{flex-shrink:0;width:82px;text-align:right;}
+.sl-conv-val{font-size:18px;font-weight:700;color:var(--mp-text-primary);font-variant-numeric:tabular-nums;line-height:1;}
+.sl-conv-lbl{font-size:10px;color:var(--mp-text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+.sl-conv-bar{height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-top:7px;overflow:hidden;}
+.sl-conv-bar > i{display:block;height:100%;border-radius:2px;}
+.sl-more{padding:11px 16px;font-size:11px;color:var(--mp-text-muted);text-align:center;position:relative;z-index:2;border-top:1px solid rgba(255,255,255,0.04);}
+.sl-foot{padding:11px 16px;border-top:1px solid var(--mp-border);font-size:10.5px;color:var(--mp-text-muted);line-height:1.5;position:relative;z-index:2;}
+.sl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;}
+@media(max-width:767px){.sl-grid{grid-template-columns:1fr;}.sl-conv{width:66px;}.sl-select{margin-left:0;}}
+
 /* ── Leaderboard Toolbar ── */
 .lb-toolbar{
   display:flex;align-items:center;justify-content:space-between;
@@ -5751,6 +5820,30 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
       <div id="lb-error" style="display:none;color:#FF4D4D;font-size:13px;padding:20px 0;"></div>
       <div id="lb-body" style="display:none;">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;" id="lb-grid"></div>
+      </div>
+
+      <!-- ── Daily Strategy Leaderboards (strategy_signals lane) ──────────────
+           A daily screener of 8 classic, research-backed short-term strategies,
+           each named after its originator. Hosted inside the Leaderboard tab.
+           Reads two READ-ONLY views (v_strategy_plays, v_strategy_lane_summary)
+           via the anon key — same PostgREST pattern as the boards above. The
+           views always return the latest scan date, so the surface is inherently
+           daily / auto-refreshing. Candidate research screen, NOT trade advice. -->
+      <div id="sl-block">
+        <div class="sl-divider"></div>
+        <div class="sl-header">
+          <div class="sl-eyebrow">Market Prism · Daily Strategy Screener</div>
+          <h2 class="sl-title">Daily Strategy Leaderboards</h2>
+          <p class="sl-sub">Today's fired signals from eight classic, research-backed short-term strategies — each named after its originator. One row per ticker&nbsp;×&nbsp;strategy that fired on the latest scan, ranked by conviction.</p>
+          <div class="sl-stats" id="sl-stats"></div>
+        </div>
+        <div class="sl-disclaimer">Candidate research screen — classic strategies, not trade advice. Edge is calibration-only (one market regime). “Fires” ≠ buy signal.</div>
+        <div class="sl-controls" id="sl-controls"></div>
+        <div class="sl-loading" id="sl-loading">Loading strategy signals…</div>
+        <div class="sl-error" id="sl-error" style="display:none;"></div>
+        <div class="sl-empty" id="sl-empty" style="display:none;"></div>
+        <div id="sl-overall"></div>
+        <div class="sl-grid" id="sl-grid"></div>
       </div>
     </div>
 
@@ -19100,6 +19193,246 @@ window.computeBoardJaccard = function(opts){
   ids.forEach(function(id){tickers[titleById[id]||id]=Array.from(boards[id]);});
   return {tickers:tickers,matrix:matrix,redundant:redundant};
 };
+})();
+
+/* ── DAILY STRATEGY LEADERBOARDS ──
+   Classic short-term strategy screener (strategy_signals lane), hosted inside
+   the Leaderboard tab. Reads two READ-ONLY views via the anon key — same
+   PostgREST shape as the boards above, SELECT only, never a write:
+     v_strategy_plays         → every (ticker, strategy) that fired on the
+                                 latest scan date (best-first by conviction)
+     v_strategy_lane_summary  → per-strategy rollup for that date
+   The views always return the latest snapshot_date, so the surface is
+   inherently daily / auto-refreshing. Candidate research screen, NOT trade
+   advice — see the persistent disclaimer in the markup. Lazy-boots on first
+   Leaderboard tab switch; folds into the existing Refresh button. */
+(function(){
+  var _booted=false, _plays=[], _summary=[], _date=null;
+  var _summaryByStrat={};
+  var filter={family:'ALL', strategy:'ALL'};
+  // Canonical family taxonomy (spec). Always render all three chips even when a
+  // family fired nothing today (e.g. Breakout) — a 0-count chip is disabled.
+  var FAMILIES=[
+    {key:'MEAN_REVERSION', label:'Mean-Reversion', color:'#00AEFF'},
+    {key:'BREAKOUT',       label:'Breakout',       color:'#FFB800'},
+    {key:'MOMENTUM',       label:'Momentum',       color:'#00DE94'}
+  ];
+  var FAM={}; FAMILIES.forEach(function(f){FAM[f.key]=f;});
+  // Compact badge labels so the strategy pill stays short on the overall board.
+  var SHORT={CONNORS_RSI2:'RSI(2)',WILLIAMS_R:'Williams %R',BOLLINGER_REVERT:'Bollinger',
+    IBS_REVERSION:'IBS',LEHMANN_REVERSAL:'S-T Reversal',DONCHIAN_TURTLE:'Donchian',
+    DARVAS_BOX:'Darvas',GEORGE_HWANG_52W:'52W High'};
+
+  function $(id){return document.getElementById(id);}
+  function esc(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;}
+  function num(v){var x=Number(v);return isFinite(x)?x:null;}
+  function famColor(k){return (FAM[k]&&FAM[k].color)||'#A0A8B0';}
+  function famLabel(k){return (FAM[k]&&FAM[k].label)||String(k||'').replace(/_/g,' ');}
+  function tint(hex,a){var h=String(hex).replace('#','');return 'rgba('+parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16)+','+a+')';}
+  function shortName(s){return SHORT[s]||(_summaryByStrat[s]&&_summaryByStrat[s].strategy_name)||String(s||'');}
+  // Hand-parse YYYY-MM-DD → "Jun 23, 2026" (no new Date() — dodges UTC day-shift).
+  function fmtDate(s){var p=String(s||'').split('-');if(p.length<3)return String(s||'');
+    var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1],10)-1];
+    return mo?mo+' '+parseInt(p[2],10)+', '+p[0]:String(s);}
+  function money(v){var x=num(v);if(x==null)return '—';return '$'+(Math.abs(x)>=1000?x.toLocaleString('en-US',{maximumFractionDigits:0}):x.toFixed(2));}
+  // conviction & strength are 0–1; surface as a 0–100 index for readability.
+  function convInt(v){var x=num(v);return x==null?'—':String(Math.round(x*100));}
+  function convW(v){var x=num(v);return x==null?0:Math.max(0,Math.min(100,Math.round(x*100)));}
+
+  function slq(path){
+    return fetch(SUPABASE_URL.replace(/\/+$/,'')+'/rest/v1/'+path,{headers:{apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON,Accept:'application/json'}})
+      .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error('Supabase '+r.status+' '+(t||'').slice(0,140));});return r.json();});
+  }
+
+  function bracketHtml(r){
+    var ep=num(r.entry_price), tp=num(r.target_price), sp=num(r.stop_price), rr=num(r.reward_risk);
+    var tpc=num(r.target_pct), spc=num(r.stop_pct);
+    if(ep==null&&tp==null&&sp==null) return '';
+    var bits=[];
+    if(ep!=null) bits.push('Entry <b>'+money(ep)+'</b>');
+    if(tp!=null) bits.push('Tgt <span class="up">'+money(tp)+(tpc!=null?' (+'+Math.round(tpc)+'%)':'')+'</span>');
+    if(sp!=null) bits.push('Stop <span class="dn">'+money(sp)+(spc!=null?' (−'+Math.round(spc)+'%)':'')+'</span>');
+    if(rr!=null) bits.push('R/R <b>'+rr.toFixed(1)+'</b>');
+    return '<div class="sl-bracket">'+bits.join('<span class="sl-dot">·</span>')+'</div>';
+  }
+
+  // opts: {badge} show strategy pill (overall board); {compact} clamp trigger (cards)
+  function rowHtml(r, i, opts){
+    opts=opts||{};
+    var fc=famColor(r.family);
+    var badge = opts.badge
+      ? '<span class="sl-badge" style="color:'+fc+';border-color:'+tint(fc,0.4)+';background:'+tint(fc,0.1)+';" title="'+esc(r.citation||'')+'">'+esc(shortName(r.strategy))+'</span>'
+      : '';
+    var rich  = (r.fv_capped===true) ? '<span class="sl-rich" title="Valid setup but richly valued vs fair value">rich</span>' : '';
+    var scope = (r.scope==='massive') ? '<span class="sl-scope" title="Full US universe — outside the ~166 tracked names">massive</span>' : '';
+    var trig  = r.trigger_detail ? '<div class="sl-trigger'+(opts.compact?' sl-clamp':'')+'">'+esc(r.trigger_detail)+'</div>' : '';
+    var conv  = num(r.conviction);
+    return '<a class="sl-row" href="/ticker/'+encodeURIComponent(r.ticker)+'">'
+      +'<div class="sl-rank">'+(i+1)+'</div>'
+      +'<div class="sl-main">'
+        +'<div class="sl-line1"><span class="sl-tkr">'+esc(r.ticker)+'</span>'+badge+rich+scope+'</div>'
+        +trig+bracketHtml(r)
+      +'</div>'
+      +'<div class="sl-conv">'
+        +'<div class="sl-conv-val">'+convInt(conv)+'</div>'
+        +'<div class="sl-conv-lbl">Conv</div>'
+        +'<div class="sl-conv-bar"><i style="width:'+convW(conv)+'%;background:'+fc+';"></i></div>'
+      +'</div>'
+    +'</a>';
+  }
+
+  function sectionShell(accent, headHtml, bodyHtml, footHtml){
+    return '<div class="sl-section">'
+      +'<div class="sl-accent" style="background:'+accent+';"></div>'
+      +'<div class="sl-head">'+headHtml+'</div>'
+      +bodyHtml
+      +(footHtml?('<div class="sl-foot">'+footHtml+'</div>'):'')
+    +'</div>';
+  }
+
+  function getFilteredPlays(){
+    return _plays.filter(function(p){
+      return (filter.family==='ALL'||p.family===filter.family)
+          && (filter.strategy==='ALL'||p.strategy===filter.strategy);
+    });
+  }
+  function strategiesInFamily(fam){
+    return _summary.filter(function(s){return fam==='ALL'||s.family===fam;});
+  }
+
+  function renderStats(){
+    var el=$('sl-stats'); if(!el) return;
+    el.innerHTML =
+       '<div class="sl-stat"><span class="sl-stat-val">'+esc(fmtDate(_date))+'</span><span class="sl-stat-lbl">scan date</span></div>'
+      +'<div class="sl-stat"><span class="sl-stat-val">'+_plays.length+'</span><span class="sl-stat-lbl">signals fired</span></div>'
+      +'<div class="sl-stat"><span class="sl-stat-val">'+_summary.length+'</span><span class="sl-stat-lbl">strategies fired</span></div>';
+  }
+
+  function renderControls(){
+    var el=$('sl-controls'); if(!el) return;
+    var counts={ALL:_plays.length};
+    FAMILIES.forEach(function(f){counts[f.key]=_plays.filter(function(p){return p.family===f.key;}).length;});
+    var chips='<div class="sl-chips">';
+    chips+='<button class="sl-chip'+(filter.family==='ALL'?' active':'')+'" data-fam="ALL">All <span class="sl-chip-n">'+counts.ALL+'</span></button>';
+    FAMILIES.forEach(function(f){
+      var n=counts[f.key]||0;
+      chips+='<button class="sl-chip'+(filter.family===f.key?' active':'')+'" data-fam="'+f.key+'"'+(n?'':' disabled')+'>'
+        +'<span style="width:7px;height:7px;border-radius:50%;background:'+f.color+';display:inline-block;"></span>'
+        +esc(f.label)+' <span class="sl-chip-n">'+n+'</span></button>';
+    });
+    chips+='</div>';
+    var opts='<option value="ALL">All strategies'+(filter.family!=='ALL'?' · '+esc(famLabel(filter.family)):'')+'</option>';
+    strategiesInFamily(filter.family).forEach(function(s){
+      opts+='<option value="'+esc(s.strategy)+'"'+(filter.strategy===s.strategy?' selected':'')+'>'+esc(s.strategy_name)+' ('+s.n_fired+')</option>';
+    });
+    el.innerHTML=chips+'<select class="sl-select" id="sl-strat-select" aria-label="Filter by strategy">'+opts+'</select>';
+    Array.prototype.forEach.call(el.querySelectorAll('.sl-chip'),function(b){
+      if(b.hasAttribute('disabled')) return;
+      b.onclick=function(){ filter.family=b.getAttribute('data-fam'); filter.strategy='ALL'; renderControls(); renderBoards(); };
+    });
+    var sel=$('sl-strat-select');
+    if(sel) sel.onchange=function(){
+      filter.strategy=sel.value;
+      if(sel.value!=='ALL'){ var s=_summaryByStrat[sel.value]; if(s) filter.family=s.family; }
+      renderControls(); renderBoards();
+    };
+  }
+
+  function renderBoards(){
+    var fp=getFilteredPlays();
+    var overallEl=$('sl-overall');
+    if(overallEl){
+      var top=fp.slice(0,15); // _plays is already conviction-desc from the query
+      if(!top.length){ overallEl.innerHTML=''; }
+      else {
+        var sub='Top setups'+(filter.family!=='ALL'?' · '+esc(famLabel(filter.family)):'')+(filter.strategy!=='ALL'?' · '+esc(shortName(filter.strategy)):'')+', ranked by conviction';
+        var head='<div><div class="sl-htitle">Overall Leaderboard</div><div class="sl-hsub">'+sub+'</div></div>'
+          +'<div class="sl-hstats"><div><div class="sl-hstat-val">'+top.length+'</div><div class="sl-hstat-lbl">shown</div></div></div>';
+        var rows=top.map(function(r,i){return rowHtml(r,i,{badge:true});}).join('');
+        var foot='Conviction shown 0–100. Bracket = entry → target / stop with reward-risk (≥ 2.0 by construction). Descriptive screen, not trade advice.';
+        overallEl.innerHTML=sectionShell('#4DC8F0', head, '<div class="sl-rows">'+rows+'</div>', foot);
+      }
+    }
+    var gridEl=$('sl-grid');
+    if(gridEl){
+      var sums=strategiesInFamily(filter.family).filter(function(s){return filter.strategy==='ALL'||s.strategy===filter.strategy;});
+      sums=sums.slice().sort(function(a,b){return (b.n_fired||0)-(a.n_fired||0);}); // n_fired desc
+      gridEl.innerHTML=sums.map(function(s){
+        var rows=_plays.filter(function(p){return p.strategy===s.strategy;})
+                       .sort(function(a,b){return (num(b.conviction)||0)-(num(a.conviction)||0);});
+        var shown=rows.slice(0,6);
+        var fc=famColor(s.family);
+        var head='<div><div class="sl-line1"><div class="sl-htitle">'+esc(s.strategy_name)+'</div>'
+            +'<span class="sl-badge" style="color:'+fc+';border-color:'+tint(fc,0.4)+';background:'+tint(fc,0.1)+';">'+esc(famLabel(s.family))+'</span></div>'
+          +'<div class="sl-hsub">'+esc(s.named_after||'')+'</div></div>'
+          +'<div class="sl-hstats">'
+            +'<div><div class="sl-hstat-val">'+(s.n_fired!=null?s.n_fired:rows.length)+'</div><div class="sl-hstat-lbl">fired</div></div>'
+            +'<div><div class="sl-hstat-val">'+convInt(s.top_conviction)+'</div><div class="sl-hstat-lbl">top</div></div>'
+            +'<div><div class="sl-hstat-val">'+convInt(s.avg_conviction)+'</div><div class="sl-hstat-lbl">avg</div></div>'
+          +'</div>';
+        var body='<div class="sl-rows">'+shown.map(function(r,i){return rowHtml(r,i,{compact:true});}).join('')+'</div>';
+        if(rows.length>shown.length){var extra=rows.length-shown.length;body+='<div class="sl-more">+'+extra+' more '+(extra===1?'name':'names')+'</div>';}
+        var foot=(shown[0]&&shown[0].citation)?('Source: '+esc(shown[0].citation)):'';
+        return sectionShell(fc, head, body, foot);
+      }).join('');
+    }
+  }
+
+  function renderAll(){
+    _summaryByStrat={}; _summary.forEach(function(s){_summaryByStrat[s.strategy]=s;});
+    var loading=$('sl-loading'), err=$('sl-error'), empty=$('sl-empty');
+    if(loading) loading.style.display='none';
+    if(err) err.style.display='none';
+    if(!_plays.length){
+      if(empty){ empty.style.display='block'; empty.textContent='No signals fired for '+fmtDate(_date)+'.'; }
+      if($('sl-controls')) $('sl-controls').innerHTML='';
+      if($('sl-overall'))  $('sl-overall').innerHTML='';
+      if($('sl-grid'))     $('sl-grid').innerHTML='';
+      renderStats();
+      return;
+    }
+    if(empty) empty.style.display='none';
+    renderStats(); renderControls(); renderBoards();
+  }
+
+  function load(){
+    var loading=$('sl-loading'), err=$('sl-error'), empty=$('sl-empty');
+    if(loading){ loading.style.display='block'; loading.textContent='Loading strategy signals…'; }
+    if(err) err.style.display='none';
+    if(empty) empty.style.display='none';
+    if(typeof SUPABASE_URL==='undefined'||typeof SUPABASE_ANON==='undefined'||!SUPABASE_URL||!SUPABASE_ANON){
+      if(loading) loading.style.display='none';
+      if(err){ err.style.display='block'; err.textContent='Supabase not configured.'; }
+      return;
+    }
+    Promise.all([
+      slq('v_strategy_plays?select=*&order=conviction.desc.nullslast&limit=500'),
+      slq('v_strategy_lane_summary?select=*&order=n_fired.desc')
+    ]).then(function(res){
+      _plays=Array.isArray(res[0])?res[0]:[];
+      _summary=Array.isArray(res[1])?res[1]:[];
+      _date=(_plays[0]&&_plays[0].snapshot_date)||(_summary[0]&&_summary[0].snapshot_date)||null;
+      filter={family:'ALL', strategy:'ALL'};
+      renderAll();
+    }).catch(function(e){
+      if(loading) loading.style.display='none';
+      if(err){ err.style.display='block'; err.textContent='Couldn’t load strategy signals: '+(e&&e.message?e.message:e); }
+      console.warn('[StrategyLB] load failed:',e);
+    });
+  }
+
+  function boot(){ if(_booted) return; _booted=true; load(); }
+
+  if(typeof onTabSwitch==='function'){
+    onTabSwitch(function(id){ if(id==='leaderboard') boot(); });
+  }
+  // Fold the strategy section into the existing Leaderboard Refresh button.
+  var _origRefresh=window.refreshLeaderboard;
+  window.refreshLeaderboard=function(){
+    var p=(typeof _origRefresh==='function')?_origRefresh.apply(this,arguments):undefined;
+    _booted=true; load();
+    return p;
+  };
 })();
 
 /* ── MARKET INSIGHTS TAB ──
