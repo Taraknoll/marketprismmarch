@@ -3,15 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Anomaly Search — Market Prism™</title>
-<meta name="description" content="Ask a question; get structural market-anomaly cards from the live forensic scorecard.">
+<title>Anomaly Agent — Market Prism™</title>
+<meta name="description" content="Chat with the grounded forensic anomaly agent. Reads the live scorecard server-side; renders structural cards.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
 <script>try{if(localStorage.getItem('mp-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-<!-- Injected server-side by api/anomaly-search.js (anon key only). -->
-<script>window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '' };</script>
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -31,52 +28,71 @@
   --mp-text-tertiary:#A0A8B0;--mp-text-muted:rgba(255,255,255,0.3);
   --mp-card-shadow:0 4px 12px rgba(0,0,0,0.4);
 }
-body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-text-primary);min-height:100vh;-webkit-font-smoothing:antialiased;}
-.wrap{max-width:900px;margin:0 auto;padding:40px 24px 80px;}
+html,body{height:100%;}
+body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-text-primary);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100vh;}
 .mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
 
-/* Header */
-.eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-cyan);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+/* Shell layout: header / scroll thread / pinned composer */
+.shell{flex:1;display:flex;flex-direction:column;max-width:900px;width:100%;margin:0 auto;min-height:0;}
+.head{padding:26px 24px 14px;border-bottom:1px solid var(--mp-border);}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-cyan);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
 .eyebrow::before{content:'';width:24px;height:1px;background:var(--mp-cyan);}
-h1{font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-.025em;line-height:1.15;}
-.sub{margin-top:12px;font-size:14px;color:var(--mp-text-tertiary);max-width:640px;line-height:1.55;}
+h1{font-size:clamp(20px,2.4vw,26px);font-weight:700;letter-spacing:-.025em;line-height:1.15;}
+.sub{margin-top:8px;font-size:13px;color:var(--mp-text-tertiary);max-width:660px;line-height:1.5;}
 
-/* Form */
-.form{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap;}
-.form input{flex:1;min-width:240px;padding:13px 16px;border-radius:11px;background:var(--mp-surface);border:1px solid var(--mp-border);font-family:var(--font-body);font-size:15px;color:var(--mp-text-primary);outline:none;transition:border-color .15s,box-shadow .15s;}
-.form input:focus{border-color:var(--mp-cyan);box-shadow:0 0 0 3px rgba(0,174,255,0.12);}
-.form input::placeholder{color:var(--mp-text-muted);}
-.btn{padding:13px 22px;border-radius:11px;background:var(--mp-cyan);color:#fff;border:none;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:.02em;transition:opacity .15s,transform .05s;}
-.btn:hover{opacity:.92;}.btn:active{transform:translateY(1px);}
-.btn:disabled{opacity:.4;cursor:not-allowed;}
+/* Thread */
+.thread{flex:1;overflow-y:auto;padding:20px 24px 8px;min-height:0;display:flex;flex-direction:column;gap:18px;}
+.msg{display:flex;flex-direction:column;max-width:100%;}
+.msg.user{align-items:flex-end;}
+.msg.assistant{align-items:stretch;}
+.bubble{border-radius:16px;padding:13px 16px;font-size:14px;line-height:1.55;max-width:86%;}
+.msg.user .bubble{background:var(--mp-cyan);color:#fff;border-bottom-right-radius:5px;}
+.msg.assistant .bubble{background:var(--mp-surface);border:1px solid var(--mp-border);color:var(--mp-text-secondary);border-bottom-left-radius:5px;align-self:flex-start;white-space:pre-wrap;}
+.msg.assistant .who{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.msg.assistant .who::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--mp-cyan);}
 
-/* Chips */
-.chips{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;}
+/* Typing indicator */
+.typing{display:inline-flex;gap:5px;padding:4px 2px;}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--mp-text-muted);animation:blink 1.2s infinite ease-in-out;}
+.typing span:nth-child(2){animation-delay:.2s;}.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,80%,100%{opacity:.25;transform:translateY(0);}40%{opacity:1;transform:translateY(-3px);}}
+
+/* Composer (pinned) */
+.composer{border-top:1px solid var(--mp-border);background:var(--mp-obsidian);padding:14px 24px 18px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
 .chip{padding:7px 13px;border-radius:999px;background:var(--mp-surface);border:1px solid var(--mp-border);color:var(--mp-text-secondary);font-size:12px;cursor:pointer;transition:all .15s;}
 .chip:hover{border-color:var(--mp-cyan);color:var(--mp-text-primary);}
 .chip:disabled{opacity:.4;cursor:not-allowed;}
-
-/* Asked + status */
-.asked{margin-top:24px;font-size:13px;color:var(--mp-text-tertiary);}
-.asked b{color:var(--mp-text-secondary);font-weight:600;}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--mp-border);border-top-color:var(--mp-cyan);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+.form{display:flex;gap:10px;align-items:flex-end;}
+.form textarea{flex:1;min-width:0;padding:12px 16px;border-radius:13px;background:var(--mp-surface);border:1px solid var(--mp-border);font-family:var(--font-body);font-size:15px;color:var(--mp-text-primary);outline:none;resize:none;line-height:1.45;max-height:140px;transition:border-color .15s,box-shadow .15s;}
+.form textarea:focus{border-color:var(--mp-cyan);box-shadow:0 0 0 3px rgba(0,174,255,0.12);}
+.form textarea::placeholder{color:var(--mp-text-muted);}
+.btn{padding:12px 22px;border-radius:13px;background:var(--mp-cyan);color:#fff;border:none;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:.02em;transition:opacity .15s,transform .05s;flex-shrink:0;}
+.btn:hover{opacity:.92;}.btn:active{transform:translateY(1px);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:5px;}
 @keyframes spin{to{transform:rotate(360deg);}}
+.disclaimer{margin-top:9px;font-size:10.5px;color:var(--mp-text-muted);text-align:center;line-height:1.4;}
 
 /* Debug strip */
-.debug{margin-top:18px;border:1px solid var(--mp-border);border-radius:12px;background:var(--mp-surface);overflow:hidden;}
-.debug-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;cursor:pointer;}
+.debug{margin-top:12px;border:1px solid var(--mp-border);border-radius:12px;background:var(--mp-surface);overflow:hidden;max-width:86%;align-self:flex-start;}
+.debug-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 13px;cursor:pointer;}
 .debug-head .left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .pill{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:6px;border:1px solid;}
 .pill.cyan{color:var(--mp-cyan);border-color:rgba(0,174,255,.4);background:rgba(0,174,255,.1);}
 .pill.violet{color:var(--mp-violet);border-color:rgba(123,97,255,.4);background:rgba(123,97,255,.1);}
 .pill.amber{color:var(--mp-amber);border-color:rgba(255,184,0,.4);background:rgba(255,184,0,.1);}
 .debug-meta{font-size:11px;color:var(--mp-text-muted);}
-.debug-body{border-top:1px solid var(--mp-border);padding:12px 14px;font-size:11px;color:var(--mp-text-tertiary);}
-.debug-body code{display:block;background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:6px;padding:8px 10px;margin:6px 0;word-break:break-all;color:var(--mp-text-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+.debug-body{border-top:1px solid var(--mp-border);padding:12px 13px;font-size:11px;color:var(--mp-text-tertiary);}
+.debug-body .tc{margin-bottom:10px;}
+.debug-body .tc:last-child{margin-bottom:0;}
+.debug-body .tcname{font-size:11px;font-weight:700;color:var(--mp-text-secondary);}
+.debug-body .tcname .ms{font-weight:500;color:var(--mp-text-muted);margin-left:6px;}
+.debug-body code{display:block;background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:6px;padding:7px 9px;margin:5px 0;word-break:break-all;color:var(--mp-text-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;}
 
 /* Cards */
-.cards{margin-top:18px;display:flex;flex-direction:column;gap:16px;}
-.card{border:1px solid var(--mp-border);border-radius:16px;background:var(--mp-surface);box-shadow:var(--mp-card-shadow);padding:22px;}
+.cards{margin-top:14px;display:flex;flex-direction:column;gap:14px;align-self:stretch;}
+.card{border:1px solid var(--mp-border);border-radius:16px;background:var(--mp-surface);box-shadow:var(--mp-card-shadow);padding:20px;}
 .card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
 .tkr{font-size:24px;font-weight:800;letter-spacing:-.02em;}
 .tkr small{display:block;font-size:12px;font-weight:500;color:var(--mp-text-muted);letter-spacing:0;margin-top:2px;}
@@ -114,270 +130,186 @@ td.t{font-weight:700;color:var(--mp-text-primary);}
 .tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:rgba(123,97,255,.12);color:var(--mp-violet);margin:1px 2px 1px 0;}
 .score{display:inline-block;min-width:34px;text-align:center;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid;}
 
+/* Circular finance loops */
+.loop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--mp-border);}
+.loop:first-child{border-top:none;}
+.node{font-size:13px;font-weight:700;color:var(--mp-text-primary);}
+.arrow{display:flex;flex-direction:column;align-items:center;color:var(--mp-violet);font-size:11px;min-width:90px;}
+.arrow .rel{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.arrow .amt{font-size:11px;color:var(--mp-text-tertiary);font-variant-numeric:tabular-nums;}
+.arrow .line{font-size:14px;line-height:1;}
+.loop .meta{margin-left:auto;font-size:11px;color:var(--mp-text-muted);}
+
 .foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--mp-border);font-size:11px;color:var(--mp-text-muted);line-height:1.5;}
-.err{margin-top:18px;border:1px solid rgba(255,77,77,.4);background:rgba(255,77,77,.08);border-radius:12px;padding:14px 16px;}
-.err .h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mp-red);}
-.err .m{margin-top:6px;font-size:13px;color:var(--mp-text-secondary);}
-.empty{padding:28px;text-align:center;color:var(--mp-text-muted);font-size:13px;border:1px dashed var(--mp-border);border-radius:12px;}
+.empty{padding:22px;text-align:center;color:var(--mp-text-muted);font-size:13px;border:1px dashed var(--mp-border);border-radius:12px;}
+.errbubble{border:1px solid rgba(255,77,77,.4);background:rgba(255,77,77,.08);}
+.errbubble .h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mp-red);margin-bottom:6px;}
+a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="eyebrow">MarketScholar · Anomaly Search</div>
-  <h1>Ask a question. Get the structural anomaly.</h1>
-  <p class="sub">Natural-language search over the live forensic scorecard. It routes your question to a
-  deterministic, read-only query and renders the result as forensic cards. Reads only — anon key, no writes.
-  <b style="color:var(--mp-text-secondary)">MVP:</b> keyword routing + Supabase REST (LLM routing comes later).</p>
+<div class="shell">
+  <div class="head">
+    <div class="eyebrow">MarketScholar · Anomaly Agent</div>
+    <h1>Chat with the forensic anomaly agent.</h1>
+    <p class="sub">A grounded, read-only agent that queries the live forensic scorecard server-side and answers in
+    plain language with structural cards. It only reports what the data shows — it does not predict prices or give
+    investment advice. Ask follow-ups; it remembers the thread.</p>
+  </div>
 
-  <form class="form" id="form">
-    <input id="q" autocomplete="off" placeholder="e.g. Forensic dossier for NVDA  ·  What's anomalous today?  ·  coordinated high-drift rich names" />
-    <button class="btn" id="go" type="submit">Search</button>
-  </form>
+  <div class="thread" id="thread"></div>
 
-  <div class="chips" id="chips"></div>
-  <div id="asked"></div>
-  <div id="err"></div>
-  <div id="debug"></div>
-  <div class="cards" id="cards"></div>
+  <div class="composer">
+    <div class="chips" id="chips"></div>
+    <form class="form" id="form">
+      <textarea id="q" rows="1" autocomplete="off" placeholder="Ask anything — e.g. Forensic dossier for NVDA, or what's anomalous today?"></textarea>
+      <button class="btn" id="go" type="submit">Send</button>
+    </form>
+    <div class="disclaimer">Forensic-structure read, not investment advice. Reads only (anon key, server-side). The agent answers strictly from returned rows.</div>
+  </div>
 </div>
 
 <script>
 (function(){
   "use strict";
-  var ENV = window.__env || {};
-  var SB = (ENV.SUPABASE_URL || '').replace(/\/+$/,'');
-  var ANON = ENV.SUPABASE_ANON || '';
 
-  // ── Constants ────────────────────────────────────────────────────────────
-  var FF = ['TSM','NIO','BHP','RIO','VALE','NVO','RACE','STN','SPOT','GOLD']; // foreign-filer artifacts
-  var FF_NOTIN = 'ticker=not.in.(' + FF.join(',') + ')';
-  var SCOL = ['ticker','snapshot_date','verdict','vms','vms_gap','drift_score','drift_explanation',
-    'coordination_score','coordination_class','suspicion_score','suspicion_class','energy_remaining',
-    'half_life','composite_decay_rate','narrative_state','narrative_mass','walsh_regime','signal_regime',
-    'fvd','fvd_pct','fair_value','earnings_credibility_score','nrs','ccp','srs'].join(',');
-  var STATES = ['DISTRIBUTION','RETAIL_PUMP','WHALE_ACCUMULATION','DORMANT'];
+  // ── Conversation state ─────────────────────────────────────────────────────
+  var messages = [];   // [{role:'user'|'assistant', content:string}] — sent to /api/anomaly-agent
+  var busy = false;
 
   var EXAMPLES = [
     'Forensic dossier for NVDA',
     "What's anomalous across the market today?",
-    'The story on TSLA and what it rhymes with',
+    'Show me the AI-capex circular-finance loops',
+    'Any active idiosyncratic bubbles right now?',
     'Coordinated, high-drift, richly valued names',
-    'Which narratives are dying?'
+    'The story on TSLA and what it rhymes with'
   ];
 
-  // ── DOM helpers ──────────────────────────────────────────────────────────
+  // ── DOM helpers ─────────────────────────────────────────────────────────────
   var $ = function(id){ return document.getElementById(id); };
   function esc(s){ return s==null?'':(''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function n(v){ var x=Number(v); return isFinite(x)?x:null; }
-  function f0(v){ var x=n(v); return x==null?'—':Math.round(x); }
-  function f1(v){ var x=n(v); return x==null?'—':x.toFixed(1); }
-  function pct(v){ var x=n(v); return x==null?'—':(x>=0?'+':'')+x.toFixed(1)+'%'; }
-
-  // ── REST (PostgREST via anon key) ─────────────────────────────────────────
-  var _calls = [];
-  function rest(pathAndQuery){
-    var url = SB + '/rest/v1/' + pathAndQuery;
-    _calls.push(pathAndQuery);
-    return fetch(url, { headers:{ apikey:ANON, Authorization:'Bearer '+ANON, Accept:'application/json' }})
-      .then(function(r){ if(!r.ok) return r.text().then(function(t){ throw new Error('REST '+r.status+': '+(t||'').slice(0,120)); }); return r.json(); });
+  function num(v){ var x=Number(v); return isFinite(x)?x:null; }
+  function f0(v){ var x=num(v); return x==null?'—':Math.round(x); }
+  function pct(v){ var x=num(v); return x==null?'—':(x>=0?'+':'')+x.toFixed(1)+'%'; }
+  function money(v){
+    var x=num(v); if(x==null) return '—';
+    var a=Math.abs(x);
+    if(a>=1e12) return '$'+(x/1e12).toFixed(1)+'T';
+    if(a>=1e9)  return '$'+(x/1e9).toFixed(1)+'B';
+    if(a>=1e6)  return '$'+(x/1e6).toFixed(1)+'M';
+    return '$'+x.toLocaleString();
   }
+  function scrollBottom(){ var t=$('thread'); t.scrollTop=t.scrollHeight; }
 
-  var _latest = null;          // latest narrative_scorecard snapshot_date
-  function latest(){
-    if(_latest) return Promise.resolve(_latest);
-    return rest('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1')
-      .then(function(rows){ _latest = (rows&&rows[0])?rows[0].snapshot_date:null; return _latest; });
+  // ── Thread rendering ─────────────────────────────────────────────────────────
+  function addUserMsg(text){
+    var el=document.createElement('div');
+    el.className='msg user';
+    el.innerHTML='<div class="bubble">'+esc(text)+'</div>';
+    $('thread').appendChild(el); scrollBottom();
   }
-
-  var _tickers = null;         // Set of valid tickers on the latest snapshot
-  function tickerSet(){
-    if(_tickers) return Promise.resolve(_tickers);
-    return latest().then(function(d){
-      if(!d){ _tickers=new Set(); return _tickers; }
-      return rest('narrative_scorecard?select=ticker&snapshot_date=eq.'+d).then(function(rows){
-        _tickers = new Set((rows||[]).map(function(r){ return (r.ticker||'').toUpperCase(); }));
-        return _tickers;
-      });
-    });
+  function addTyping(){
+    var el=document.createElement('div');
+    el.className='msg assistant'; el.id='typing-row';
+    el.innerHTML='<div class="who">Anomaly Agent</div><div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>';
+    $('thread').appendChild(el); scrollBottom();
+    return el;
   }
-
-  // ── Keyword router → { intent, params } ────────────────────────────────────
-  function detectTicker(q, set){
-    var toks = (q.toUpperCase().match(/[A-Z]{1,5}(?:\.[A-Z])?/g)) || [];
-    for(var i=0;i<toks.length;i++){ if(set.has(toks[i])) return toks[i]; }
-    return null;
-  }
-  function route(q, set){
-    var s = q.toLowerCase();
-    var t = detectTicker(q, set);
-    var storyWords = /\b(story|narrative|rhyme|rhymes|similar|analog|analogue|compare|like|peers?)\b/.test(s);
-    var feedWords  = /\b(anomal|unusual|hot|today|happening|interesting|across the market|right now|surprising)\b/.test(s);
-    var screenWords= /\b(coordinat|drift|rich|overvalued|expensive|cheap|undervalued|discount|dying|low energy|exhaust|fading|unverified|low vms|trap|whale|accumulation|pump|distribution|dormant|screen|find|show me)\b/.test(s);
-
-    if(t && storyWords) return { intent:'narrative_lab_lookup', params:{ ticker:t } };
-    if(t)               return { intent:'ticker_dossier', params:{ ticker:t } };
-    if(feedWords)       return { intent:'daily_anomaly_feed', params:{} };
-    if(screenWords){
-      var p = {};
-      if(/coordinat/.test(s)) p.minCoordination = 20;
-      if(/\bdrift\b|high.drift/.test(s)) p.minDrift = 60;
-      if(/unverified|low vms/.test(s)) p.maxVms = 65;
-      if(/rich|overvalued|expensive/.test(s)) p.minFvdPct = 100;
-      if(/cheap|undervalued|discount/.test(s)) p.maxFvdPct = -30;
-      if(/dead/.test(s)) p.energy = 'dead';
-      else if(/dying|low energy|exhaust|fading/.test(s)) p.energy = 'dying';
-      else if(/full energy|strong energy|high energy/.test(s)) p.energy = 'full';
-      if(/whale|accumulation/.test(s)) p.state = 'WHALE_ACCUMULATION';
-      else if(/retail.?pump|\bpump\b/.test(s)) p.state = 'RETAIL_PUMP';
-      else if(/distribution/.test(s)) p.state = 'DISTRIBUTION';
-      else if(/dormant/.test(s)) p.state = 'DORMANT';
-      if(Object.keys(p).length) return { intent:'structural_screen', params:p };
+  function addAssistant(answer, cards, debug){
+    var el=document.createElement('div');
+    el.className='msg assistant';
+    var html='<div class="who">Anomaly Agent</div>'
+      +'<div class="bubble">'+(answer?esc(answer):'<i>No answer returned.</i>')+'</div>';
+    if(cards && cards.length){
+      html+='<div class="cards">'+cards.map(renderCard).join('')+'</div>';
     }
-    return { intent:'sector_cross_section', params:{} };
+    html+=renderDebug(debug);
+    el.innerHTML=html;
+    $('thread').appendChild(el);
+    wireDebug(el);
+    scrollBottom();
+  }
+  function addError(answer, debug){
+    var el=document.createElement('div');
+    el.className='msg assistant';
+    el.innerHTML='<div class="who">Anomaly Agent</div>'
+      +'<div class="bubble errbubble"><div class="h">Error</div>'+esc(answer||'The agent could not complete this request.')+'</div>'
+      +renderDebug(debug);
+    $('thread').appendChild(el);
+    wireDebug(el);
+    scrollBottom();
   }
 
-  // ── Intent executors → { cards:[html], note } ──────────────────────────────
-  function execDossier(p){
-    return rest('narrative_scorecard?ticker=eq.'+encodeURIComponent(p.ticker)+'&order=snapshot_date.desc&limit=1&select='+SCOL)
-      .then(function(rows){
-        if(!rows||!rows.length) return { cards:[], note:'No scorecard row for '+p.ticker };
-        return { cards:[ cardDossier(rows[0]) ] };
-      });
+  // ── Debug strip (per assistant message) ──────────────────────────────────────
+  function renderDebug(debug){
+    if(!debug) return '';
+    var tcs=(debug.toolCalls||[]);
+    var pillCls = tcs.length?'violet':'amber';
+    var body = tcs.length ? tcs.map(function(tc){
+      var queries=(tc.restQueries||[]).map(function(q){ return '<code>'+esc(q)+'</code>'; }).join('');
+      return '<div class="tc"><div class="tcname">'+esc(tc.name||'tool')
+        +'<span class="ms">'+(tc.rowCount!=null?(tc.rowCount+' row(s)'):'')+'</span></div>'
+        +'<div class="debug-meta">input '+esc(JSON.stringify(tc.input||{}))+'</div>'
+        +(queries||'<i>no queries</i>')+'</div>';
+    }).join('') : '<i>no tool calls — answered without querying</i>';
+    var meta=(tcs.length?(tcs.length+' tool call(s) · '):'')
+      +(debug.turns!=null?(debug.turns+' turn(s) · '):'')
+      +(debug.ms!=null?(debug.ms+'ms · '):'')
+      +esc(debug.model||'')
+      +(debug.fellBack?(' · fallback: '+esc(debug.fellBack)):'');
+    return '<div class="debug"><div class="debug-head">'
+      +'<div class="left"><span class="pill '+pillCls+'">debug</span>'
+      +'<span class="debug-meta">'+meta+'</span></div>'
+      +'<span class="debug-meta">show</span></div>'
+      +'<div class="debug-body" style="display:none">'+body+'</div></div>';
   }
-  function execLab(p){
-    return rest('narrative_scorecard?ticker=eq.'+encodeURIComponent(p.ticker)+'&order=snapshot_date.desc&limit=1&select='+SCOL)
-      .then(function(focusRows){
-        if(!focusRows||!focusRows.length) return { cards:[], note:'No scorecard row for '+p.ticker };
-        var focus = focusRows[0];
-        var st = focus.narrative_state;
-        if(!st) return { cards:[ cardDossier(focus) ], note:'No narrative_state to find analogues; showing dossier instead' };
-        return latest().then(function(d){
-          var qy = 'narrative_scorecard?snapshot_date=eq.'+d+'&narrative_state=eq.'+encodeURIComponent(st)
-                 + '&ticker=neq.'+encodeURIComponent(p.ticker)+'&'+FF_NOTIN+'&select='+SCOL+'&limit=40';
-          return rest(qy).then(function(rows){
-            var fp = n(focus.fvd_pct);
-            (rows||[]).forEach(function(r){ r._d = Math.abs((n(r.fvd_pct)||0)-(fp||0)); });
-            rows.sort(function(a,b){ return a._d-b._d; });
-            return { cards:[ cardLab(focus, rows.slice(0,8)) ] };
-          });
-        });
-      });
-  }
-  function execFeed(){
-    return latest().then(function(d){
-      var sc = rest('narrative_scorecard?snapshot_date=eq.'+d+'&'+FF_NOTIN+'&select='+SCOL+'&limit=200');
-      // bubble overlay (own latest date, best-effort)
-      var bub = rest('bubble_metrics?select=snapshot_date&order=snapshot_date.desc&limit=1')
-        .then(function(br){ var bd=(br&&br[0])?br[0].snapshot_date:null;
-          return bd ? rest('bubble_metrics?snapshot_date=eq.'+bd+'&select=ticker,bubble_active_idio,bsadf_now&limit=600') : []; })
-        .catch(function(){ return []; });
-      return Promise.all([sc, bub]).then(function(res){
-        var rows = res[0]||[], bubble = {};
-        (res[1]||[]).forEach(function(b){ bubble[(b.ticker||'').toUpperCase()] = b; });
-        var scored = rows.map(function(r){
-          var drift=n(r.drift_score)||0, coord=n(r.coordination_score)||0, susp=n(r.suspicion_score)||0;
-          var fvd=Math.abs(n(r.fvd_pct)||0), bm=bubble[(r.ticker||'').toUpperCase()];
-          var bubActive = bm && bm.bubble_active_idio===true;
-          var axes=[];
-          if(drift>=70) axes.push('drift');
-          if(coord>=20) axes.push('coordination');
-          if(susp>=60) axes.push('suspicion');
-          if(fvd>=100) axes.push('fvd');
-          if(bubActive) axes.push('bubble');
-          var score = Math.min(100, Math.round(0.30*Math.min(100,drift)+0.20*Math.min(100,coord)
-            +0.20*Math.min(100,susp)+0.15*Math.min(100,fvd)+0.15*(bubActive?100:0)));
-          return { ticker:r.ticker, verdict:r.verdict, state:r.narrative_state, score:score,
-                   confluence:axes.length, axes:axes, drift:drift, coord:coord, fvd:n(r.fvd_pct) };
-        }).filter(function(x){ return x.confluence>=1; });
-        scored.sort(function(a,b){ return b.confluence-a.confluence || b.score-a.score; });
-        return { cards:[ cardFeed(d, scored.slice(0,25)) ] };
-      });
-    });
-  }
-  function execScreen(p){
-    return latest().then(function(d){
-      var qs = ['snapshot_date=eq.'+d, FF_NOTIN, 'select='+SCOL, 'limit=40'];
-      if(p.minCoordination!=null) qs.push('coordination_score=gte.'+p.minCoordination);
-      if(p.minDrift!=null) qs.push('drift_score=gte.'+p.minDrift);
-      if(p.maxVms!=null) qs.push('vms=lte.'+p.maxVms);
-      if(p.minFvdPct!=null) qs.push('fvd_pct=gte.'+p.minFvdPct);
-      if(p.maxFvdPct!=null) qs.push('fvd_pct=lte.'+p.maxFvdPct);
-      if(p.energy==='full'){ qs.push('energy_remaining=gte.80'); }
-      else if(p.energy==='dying'){ qs.push('energy_remaining=gte.5'); qs.push('energy_remaining=lt.20'); }
-      else if(p.energy==='dead'){ qs.push('energy_remaining=lt.5'); }
-      if(p.state) qs.push('narrative_state=eq.'+encodeURIComponent(p.state));
-      qs.push('order=coordination_score.desc.nullslast');
-      return rest('narrative_scorecard?'+qs.join('&')).then(function(rows){
-        return { cards:[ cardScreen(rows||[], p) ] };
-      });
-    });
-  }
-  function execFallback(){
-    return latest().then(function(d){
-      return rest('narrative_scorecard?snapshot_date=eq.'+d+'&'+FF_NOTIN
-        +'&select=ticker,verdict,narrative_state,drift_score,coordination_score,vms,fvd_pct,energy_remaining,suspicion_class'
-        +'&order=drift_score.desc.nullslast&limit=25').then(function(rows){
-        return { cards:[ cardTable('Market cross-section · ranked by narrative drift', rows||[],
-          ['ticker','verdict','narrative_state','drift_score','coordination_score','vms','fvd_pct']) ] };
-      });
-    });
-  }
-  var EXEC = { ticker_dossier:execDossier, narrative_lab_lookup:execLab, daily_anomaly_feed:execFeed,
-               structural_screen:execScreen, sector_cross_section:execFallback };
-
-  // ── Forensic axis evaluation (Pattern A flags) ─────────────────────────────
-  function riskStatus(row){
-    var nrs=n(row.nrs); var v=(row.verdict||'');
-    if(nrs!=null){ if(nrs>=60) return 'HIGH'; if(nrs>=40) return 'ELEVATED'; if(nrs>=25) return 'MODERATE'; return 'LOW'; }
-    if(/Trap/i.test(v)) return 'HIGH'; if(/Risk/i.test(v)) return 'ELEVATED';
-    if(/Supported|Accumulate/i.test(v)) return 'LOW'; return 'MODERATE';
-  }
-  function flags(row){
-    var out=[];
-    var vms=n(row.vms);
-    out.push({ name:'SEC verification (VMS)', lvl: vms==null?'ok':(vms<50?'severe':vms<65?'elevated':'ok'),
-      read: vms==null?'no anchor':('VMS '+f0(vms)+(vms<65?' — claims poorly verified':' — claims verify')) });
-    var dr=n(row.drift_score);
-    out.push({ name:'Narrative drift', lvl: dr==null?'ok':(dr>=70?'severe':dr>=50?'elevated':'ok'),
-      read: (dr==null?'—':('drift '+f0(dr)))+(row.drift_explanation?(' · '+(''+row.drift_explanation).slice(0,120)):'') });
-    var co=n(row.coordination_score);
-    out.push({ name:'Cross-source coordination', lvl: co==null?'ok':(co>=40?'severe':co>=20?'elevated':'ok'),
-      read: (co==null?'—':('coord '+f0(co)))+(row.coordination_class?(' · '+row.coordination_class):'') });
-    var sc=(row.suspicion_class||'');
-    out.push({ name:'Trading-footprint suspicion', lvl: /HIGH/i.test(sc)?'severe':/MODERATE/i.test(sc)?'elevated':'ok',
-      read: (sc||'NORMAL_ACTIVITY')+' · score '+f0(row.suspicion_score) });
-    var fv=n(row.fvd_pct);
-    out.push({ name:'Fair-value divergence', lvl: fv==null?'ok':(Math.abs(fv)>=150?'severe':Math.abs(fv)>=80?'elevated':'ok'),
-      read: fv==null?'no anchor':('FVD '+pct(fv)+(fv>0?' (rich)':' (cheap)')) });
-    var en=n(row.energy_remaining);
-    out.push({ name:'Narrative energy', lvl: en==null?'ok':(en<5?'severe':en<20?'weak':'ok'),
-      read: en==null?'—':('energy '+f0(en)+'% · '+(en<5?'Dead':en<20?'Dying':en>=80?'Full':'Active')) });
-    if(row.narrative_state) out.push({ name:'Market state', lvl:'weak', read: row.narrative_state });
-    return out;
+  function wireDebug(scope){
+    var d=scope.querySelector('.debug'); if(!d) return;
+    var head=d.querySelector('.debug-head'), body=d.querySelector('.debug-body'), open=false;
+    head.onclick=function(){ open=!open; body.style.display=open?'block':'none'; scrollBottom(); };
   }
 
-  // ── Card renderers ─────────────────────────────────────────────────────────
+  // ── Card renderers (keyed on card.ui) ────────────────────────────────────────
+  function renderCard(card){
+    if(!card || !card.ui) return '';
+    switch(card.ui){
+      case 'risk_dossier':     return cardRiskDossier(card);
+      case 'narrative_lab':    return cardNarrativeLab(card);
+      case 'anomaly_feed':     return cardAnomalyFeed(card);
+      case 'circular_finance': return cardCircularFinance(card);
+      case 'table':            return cardTable(card);
+      default:                 return '';
+    }
+  }
   function badge(status){
-    var c = status==='HIGH'?'b-high':status==='ELEVATED'?'b-elev':status==='MODERATE'?'b-mod':'b-low';
-    return '<span class="badge '+c+'">'+status+' RISK</span>';
+    var s=(status||'MODERATE').toUpperCase();
+    var c = s==='HIGH'?'b-high':s==='ELEVATED'?'b-elev':s==='MODERATE'?'b-mod':'b-low';
+    return '<span class="badge '+c+'">'+esc(s)+' RISK</span>';
   }
-  function cardDossier(row){
-    var st=riskStatus(row);
-    var mb = [['Coordination',f0(row.coordination_score)],['Drift',f0(row.drift_score)],
-              ['VMS',f0(row.vms)],['FVD',row.fvd_pct==null?'—':pct(row.fvd_pct)]];
-    var fl = flags(row).map(function(x){
-      return '<div class="flag"><span class="dot '+x.lvl+'"></span><div><div class="name">'+esc(x.name)
-        +'</div><div class="read">'+esc(x.read)+'</div></div><span class="lvl '+x.lvl+'">'+x.lvl+'</span></div>';
+
+  // risk_dossier
+  function cardRiskDossier(c){
+    var metrics=(c.metrics||[]).map(function(m){
+      return '<div class="metric"><div class="lbl">'+esc(m.label)+'</div><div class="val mono">'+esc(m.value)+'</div></div>';
+    }).join('');
+    var flags=(c.flags||[]).map(function(x){
+      var lvl=(x.level||'ok');
+      return '<div class="flag"><span class="dot '+esc(lvl)+'"></span><div><div class="name">'+esc(x.name)
+        +'</div><div class="read">'+esc(x.reading)+'</div></div><span class="lvl '+esc(lvl)+'">'+esc(lvl)+'</span></div>';
     }).join('');
     return '<div class="card">'
-      +'<div class="card-top"><div class="tkr">'+esc(row.ticker)+'<small>'+esc(row.verdict||'—')+' · '+esc(row.snapshot_date||'')+'</small></div>'+badge(st)+'</div>'
-      +'<div class="metricbar">'+mb.map(function(m){ return '<div class="metric"><div class="lbl">'+m[0]+'</div><div class="val mono">'+m[1]+'</div></div>'; }).join('')+'</div>'
-      +fl
-      +'<div class="foot">Forensic-structure read, not a price prediction or investment advice. The verdict is valuation-anchored, not a falsity label — read the component flags. Source: narrative_scorecard · '+esc(row.snapshot_date||'')+'.</div>'
+      +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>'+esc(c.subtitle||'')+'</small></div>'+badge(c.riskStatus)+'</div>'
+      +(metrics?'<div class="metricbar">'+metrics+'</div>':'')
+      +flags
+      +'<div class="foot">Forensic-structure read, not a price prediction or investment advice. The verdict is valuation-anchored, not a falsity label — read the component flags. suspicion_class is a trading-footprint read, not a manipulation verdict.</div>'
       +'</div>';
   }
+
+  // narrative_lab
   function ringSvg(p){
-    var R=46, C=2*Math.PI*R, off=C*(1-Math.max(0,Math.min(100,p))/100);
+    p=Math.max(0,Math.min(100,num(p)||0));
+    var R=46, C=2*Math.PI*R, off=C*(1-p/100);
     var col = p>=66?'var(--mp-green)':p>=33?'var(--mp-amber)':'var(--mp-text-muted)';
     return '<div class="ring"><svg width="104" height="104" viewBox="0 0 104 104">'
       +'<circle cx="52" cy="52" r="'+R+'" fill="none" stroke="var(--mp-border)" stroke-width="9"/>'
@@ -385,117 +317,147 @@ td.t{font-weight:700;color:var(--mp-text-primary);}
       +'stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 52 52)"/>'
       +'</svg><div class="pctn mono">'+Math.round(p)+'%</div></div>';
   }
-  function cardLab(focus, anas){
-    var fp=n(focus.fvd_pct);
-    var side = fp==null?null:(fp>0?'rich':'cheap');
-    var sameSide = anas.filter(function(a){ var x=n(a.fvd_pct); return x!=null && side && ((x>0?'rich':'cheap')===side); }).length;
-    var consensus = anas.length? Math.round(100*sameSide/anas.length):0;
-    var synth = esc(focus.ticker)+' is in <b>'+esc(focus.narrative_state||'an undefined state')+'</b> with drift '
-      +f0(focus.drift_score)+' and coordination '+f0(focus.coordination_score)+', while VMS verifies at '+f0(focus.vms)
-      +(n(focus.vms)>=65?' (claims check out)':' (claims poorly verified)')+'. Fair-value divergence is '
-      +(fp==null?'unanchored':pct(fp)+' ('+side+')')+'. Among '+anas.length+' peers sharing this market state, '
-      +consensus+'% sit on the same '+(side||'—')+' side of fair value.';
-    var rows = anas.map(function(a){
-      return '<tr><td class="t">'+esc(a.ticker)+'</td><td>'+esc(a.narrative_state||'—')+'</td><td class="mono">'+f0(a.vms)
-        +'</td><td class="mono">'+f0(a.drift_score)+'</td><td class="mono">'+(a.fvd_pct==null?'—':pct(a.fvd_pct))+'</td></tr>';
+  function cardNarrativeLab(c){
+    var peers=(c.peers||[]).map(function(a){
+      return '<tr><td class="t">'+esc(a.ticker)+'</td><td>'+esc(a.state||'—')+'</td><td class="mono">'+f0(a.vms)
+        +'</td><td class="mono">'+f0(a.drift)+'</td><td class="mono">'+(a.fvdPct==null?'—':pct(a.fvdPct))+'</td></tr>';
     }).join('') || '<tr><td colspan="5" style="color:var(--mp-text-muted)">No state-peers found.</td></tr>';
+    var cp=num(c.consensusPct);
     return '<div class="card">'
-      +'<div class="card-top"><div class="tkr">'+esc(focus.ticker)+'<small>Narrative Lab · '+esc(focus.verdict||'—')+'</small></div>'+badge(riskStatus(focus))+'</div>'
-      +'<p class="synth">'+synth+'</p>'
-      +'<div class="gauge">'+ringSvg(consensus)+'<div class="cap"><b style="color:var(--mp-text-secondary)">'+consensus
-      +'% analogue consensus</b><br>'+sameSide+' of '+anas.length+' state-peers share '+esc(focus.ticker)+'’s '+(side||'—')
-      +' fair-value divergence. (Derived from current scorecard divergence, not historical returns.)</div></div>'
-      +'<table><thead><tr><th>Peer</th><th>State</th><th>VMS</th><th>Drift</th><th>FVD%</th></tr></thead><tbody>'+rows+'</tbody></table>'
-      +'<div class="foot">Analogues = same-state peers on the latest snapshot, ranked by closeness of fair-value divergence. Foreign filers excluded. Descriptive, not predictive.</div>'
+      +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>Narrative Lab</small></div></div>'
+      +'<p class="synth">'+esc(c.synthesis||'')+'</p>'
+      +(cp==null?'':'<div class="gauge">'+ringSvg(cp)+'<div class="cap"><b style="color:var(--mp-text-secondary)">'+Math.round(cp)
+        +'% analogue consensus</b><br>'+esc(c.consensusCaption||'')+'</div></div>')
+      +'<table><thead><tr><th>Peer</th><th>State</th><th>VMS</th><th>Drift</th><th>FVD%</th></tr></thead><tbody>'+peers+'</tbody></table>'
+      +'<div class="foot">Analogues = same-state peers on the latest snapshot. Foreign filers excluded. Descriptive, not predictive.</div>'
       +'</div>';
   }
-  function cardFeed(d, rows){
-    if(!rows.length) return '<div class="card"><div class="empty">No names cleared the confluence threshold for '+esc(d)+'.</div></div>';
-    var body = rows.map(function(r){
-      var sc=r.score, col=sc>=70?'var(--mp-red)':sc>=40?'var(--mp-amber)':'var(--mp-green)';
-      var tags=r.axes.map(function(a){ return '<span class="tag">'+esc(a)+'</span>'; }).join('');
+
+  // anomaly_feed
+  function cardAnomalyFeed(c){
+    var rows=(c.rows||[]);
+    if(!rows.length) return '<div class="card"><div class="empty">No names cleared the confluence threshold'
+      +(c.asOf?(' for '+esc(c.asOf)):'')+'.</div></div>';
+    var body=rows.map(function(r){
+      var sc=num(r.score)||0, col=sc>=70?'var(--mp-red)':sc>=40?'var(--mp-amber)':'var(--mp-green)';
+      var tags=(r.axes||[]).map(function(a){ return '<span class="tag">'+esc(a)+'</span>'; }).join('');
       return '<tr><td class="t">'+esc(r.ticker)+'</td>'
-        +'<td><span class="score mono" style="color:'+col+';border-color:'+col+'">'+sc+'</span></td>'
-        +'<td class="mono">'+r.confluence+'</td><td>'+tags+'</td><td>'+esc(r.state||'—')+'</td></tr>';
+        +'<td><span class="score mono" style="color:'+col+';border-color:'+col+'">'+Math.round(sc)+'</span></td>'
+        +'<td class="mono">'+f0(r.confluence)+'</td><td>'+tags+'</td><td>'+esc(r.state||'—')+'</td></tr>';
     }).join('');
     return '<div class="card">'
-      +'<div class="card-top"><div class="tkr" style="font-size:18px">Anomaly Feed<small>severity × confluence · '+esc(d)+'</small></div></div>'
+      +'<div class="card-top"><div class="tkr" style="font-size:18px">Anomaly Feed<small>severity × confluence'
+      +(c.asOf?(' · '+esc(c.asOf)):'')+'</small></div></div>'
       +'<table><thead><tr><th>Ticker</th><th>Score</th><th>Axes</th><th>Firing</th><th>State</th></tr></thead><tbody>'+body+'</tbody></table>'
-      +'<div class="foot">Confluence = number of forensic axes firing (drift≥70, coordination≥20, suspicion≥60, |FVD|≥100, active bubble). Score blends the normalized magnitudes. Foreign filers excluded.</div>'
+      +'<div class="foot">Confluence = number of forensic axes firing (drift≥70, coordination≥20, suspicion≥60, |FVD|≥100, active idiosyncratic bubble). Foreign filers excluded. Structure, not alpha.</div>'
       +'</div>';
   }
-  function cardScreen(rows, p){
-    var crit=[]; if(p.minCoordination!=null)crit.push('coord≥'+p.minCoordination); if(p.minDrift!=null)crit.push('drift≥'+p.minDrift);
-    if(p.maxVms!=null)crit.push('VMS≤'+p.maxVms); if(p.minFvdPct!=null)crit.push('FVD≥'+p.minFvdPct+'%');
-    if(p.maxFvdPct!=null)crit.push('FVD≤'+p.maxFvdPct+'%'); if(p.energy)crit.push(p.energy+' energy'); if(p.state)crit.push(p.state);
-    return cardTable('Structural screen · '+(crit.join(' · ')||'all'), rows,
-      ['ticker','verdict','coordination_score','drift_score','vms','fvd_pct','energy_remaining','narrative_state']);
+
+  // circular_finance
+  function cardCircularFinance(c){
+    var loops=(c.loops||[]);
+    if(!loops.length) return '<div class="card"><div class="card-top"><div class="tkr" style="font-size:16px">'
+      +esc(c.title||'Circular finance')+'</div></div><div class="empty">No money-flow loops returned.</div></div>';
+    var body=loops.map(function(l){
+      var amt=l.amountUsd!=null?('<span class="amt">'+esc(money(l.amountUsd))+'</span>'):'';
+      var conf=l.confidence!=null?(' · conf '+esc((''+l.confidence).slice(0,4))):'';
+      var src=l.url?('<a class="src" href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.source||'source')+'</a>')
+        :(l.source?esc(l.source):'');
+      return '<div class="loop">'
+        +'<span class="node">'+esc(l.from)+'</span>'
+        +'<span class="arrow"><span class="rel">'+esc(l.relation||'flow')+'</span><span class="line">→</span>'+amt+'</span>'
+        +'<span class="node">'+esc(l.to)+'</span>'
+        +'<span class="meta">'+src+conf+'</span>'
+        +'</div>';
+    }).join('');
+    return '<div class="card">'
+      +'<div class="card-top"><div class="tkr" style="font-size:16px">'+esc(c.title||'Circular finance')
+      +'<small>'+loops.length+' edge(s)</small></div></div>'
+      +body
+      +'<div class="foot">Curated AI-capex set (Amazon/Anthropic/Alphabet/OpenAI/NVIDIA/Nebius/Microsoft/Oracle/CoreWeave-type loops), NOT a broad/EV-green map. Edges are text-extracted commitments, not XBRL cashflows. Many legs are private companies with no ticker. Forensic, not alpha.</div>'
+      +'</div>';
   }
-  function cardTable(title, rows, cols){
-    if(!rows.length) return '<div class="card"><div class="card-top"><div class="tkr" style="font-size:16px">'+esc(title)+'</div></div><div class="empty">No rows matched.</div></div>';
-    var head = cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('');
-    var body = rows.map(function(r){
-      return '<tr>'+cols.map(function(c){
-        var v=r[c]; if(c==='ticker') return '<td class="t">'+esc(v)+'</td>';
-        if(/fvd_pct/.test(c)) return '<td class="mono">'+(v==null?'—':pct(v))+'</td>';
-        if(/score|drift|vms|energy|coordination/.test(c)) return '<td class="mono">'+f0(v)+'</td>';
+
+  // table
+  function cardTable(c){
+    var cols=(c.columns||[]), rows=(c.rows||[]);
+    if(!rows.length) return '<div class="card"><div class="card-top"><div class="tkr" style="font-size:16px">'
+      +esc(c.title||'Results')+'</div></div><div class="empty">No rows matched.</div></div>';
+    var head=cols.map(function(col){ return '<th>'+esc(col)+'</th>'; }).join('');
+    var body=rows.map(function(r){
+      return '<tr>'+cols.map(function(col){
+        var v=r[col];
+        if(col==='ticker') return '<td class="t">'+esc(v)+'</td>';
+        if(/fvd_pct/.test(col)) return '<td class="mono">'+(v==null?'—':pct(v))+'</td>';
+        if(/_score$|^drift|vms|energy|coordination|bsadf|crit|nrs|ccp|srs/.test(col)) return '<td class="mono">'+(typeof v==='number'?f0(v):esc(v==null?'—':v))+'</td>';
         return '<td>'+esc(v==null?'—':v)+'</td>';
       }).join('')+'</tr>';
     }).join('');
-    return '<div class="card"><div class="card-top"><div class="tkr" style="font-size:16px">'+esc(title)
-      +'<small>'+rows.length+' rows</small></div></div><table><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>'
-      +'<div class="foot">Latest snapshot · foreign filers excluded · anon read-only.</div></div>';
+    return '<div class="card"><div class="card-top"><div class="tkr" style="font-size:16px">'+esc(c.title||'Results')
+      +'<small>'+rows.length+' row(s)</small></div></div><table><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>'
+      +'<div class="foot">Latest snapshot · foreign filers excluded · anon read-only · grounded in returned rows.</div></div>';
   }
 
-  // ── Run ─────────────────────────────────────────────────────────────────────
-  var busy=false;
-  function run(q){
-    q=(q||'').trim(); if(!q||busy) return;
-    busy=true; _calls=[];
-    $('go').disabled=true;
-    $('err').innerHTML=''; $('debug').innerHTML=''; $('cards').innerHTML='';
-    $('asked').innerHTML='<div class="asked"><span class="spinner"></span>Searching <b>'+esc(q)+'</b>…</div>';
-    var t0=Date.now();
-    tickerSet().then(function(set){
-      var r = route(q, set);
-      var exec = EXEC[r.intent] || execFallback;
-      return exec(r.params).then(function(out){ return { r:r, out:out }; });
-    }).then(function(z){
-      var ms=Date.now()-t0;
-      $('asked').innerHTML='<div class="asked">Q: <b>'+esc(q)+'</b></div>';
-      renderDebug(z.r, ms, (z.out.cards||[]).length);
-      var cards=z.out.cards||[];
-      $('cards').innerHTML = cards.length? cards.join('') :
-        '<div class="empty">'+esc(z.out.note||'No results.')+'</div>';
+  // ── Send to the agent ─────────────────────────────────────────────────────────
+  function send(text){
+    text=(text||'').trim();
+    if(!text || busy) return;
+    busy=true; setBusy(true);
+
+    addUserMsg(text);
+    messages.push({ role:'user', content:text });
+    $('q').value=''; autoGrow();
+
+    var typingEl=addTyping();
+
+    fetch('/api/anomaly-agent', {
+      method:'POST',
+      headers:{ 'content-type':'application/json' },
+      body:JSON.stringify({ messages: messages })
+    }).then(function(r){
+      return r.json().catch(function(){ throw new Error('Bad response from /api/anomaly-agent ('+r.status+')'); });
+    }).then(function(data){
+      removeTyping(typingEl);
+      if(data && data.ok){
+        var answer=data.answer||'';
+        addAssistant(answer, data.cards||[], data.debug);
+        // keep the thread coherent for follow-ups
+        messages.push({ role:'assistant', content:answer || '(returned cards only)' });
+      } else {
+        var msg=(data&&(data.answer||data.error))||'The agent returned an error.';
+        addError(msg, data&&data.debug);
+        // do not push a failed turn into history so the user can retry cleanly
+      }
     }).catch(function(e){
-      $('asked').innerHTML='<div class="asked">Q: <b>'+esc(q)+'</b></div>';
-      $('err').innerHTML='<div class="err"><div class="h">Error</div><div class="m">'+esc(e.message||e)
-        +'</div><div class="m" style="font-size:11px;color:var(--mp-text-muted);margin-top:6px">If this mentions auth/JWT or an empty SUPABASE env, the anon key is not injected on this deploy.</div></div>';
-    }).then(function(){ busy=false; $('go').disabled=false; });
+      removeTyping(typingEl);
+      addError((e&&e.message)||('Network error contacting the agent.'), null);
+    }).then(function(){
+      busy=false; setBusy(false); $('q').focus();
+    });
   }
-  function renderDebug(r, ms, nCards){
-    var pillCls = r.intent==='sector_cross_section'?'amber':(r.intent==='daily_anomaly_feed'||r.intent==='structural_screen')?'violet':'cyan';
-    var calls = _calls.map(function(c){ return '<code>GET /rest/v1/'+esc(c)+'</code>'; }).join('');
-    var html='<div class="debug"><div class="debug-head" id="dbgh">'
-      +'<div class="left"><span class="pill '+pillCls+'">'+esc(r.intent)+'</span>'
-      +'<span class="debug-meta">params '+esc(JSON.stringify(r.params||{}))+'</span></div>'
-      +'<span class="debug-meta">'+nCards+' card(s) · '+ms+'ms · '+_calls.length+' query(ies) · show</span></div>'
-      +'<div class="debug-body" id="dbgb" style="display:none">'+ (calls||'<i>no queries</i>') +'</div></div>';
-    $('debug').innerHTML=html;
-    var b=$('dbgb'), open=false;
-    $('dbgh').onclick=function(){ open=!open; b.style.display=open?'block':'none'; };
+  function removeTyping(el){ if(el&&el.parentNode) el.parentNode.removeChild(el); }
+  function setBusy(b){
+    $('go').disabled=b;
+    $('go').innerHTML = b ? '<span class="spinner"></span>Thinking' : 'Send';
+    Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function(c){ c.disabled=b; });
   }
 
-  // ── Wire up ──────────────────────────────────────────────────────────────
+  // ── Composer wiring ───────────────────────────────────────────────────────────
+  function autoGrow(){
+    var ta=$('q'); ta.style.height='auto'; ta.style.height=Math.min(140, ta.scrollHeight)+'px';
+  }
+  $('q').addEventListener('input', autoGrow);
+  $('q').addEventListener('keydown', function(ev){
+    if(ev.key==='Enter' && !ev.shiftKey){ ev.preventDefault(); send($('q').value); }
+  });
+  $('form').addEventListener('submit', function(ev){ ev.preventDefault(); send($('q').value); });
+
   $('chips').innerHTML = EXAMPLES.map(function(e){ return '<button class="chip" type="button">'+esc(e)+'</button>'; }).join('');
   Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function(b){
-    b.onclick=function(){ $('q').value=b.textContent; run(b.textContent); };
+    b.onclick=function(){ if(!busy) send(b.textContent); };
   });
-  $('form').addEventListener('submit', function(ev){ ev.preventDefault(); run($('q').value); });
 
-  if(!SB || !ANON){
-    $('err').innerHTML='<div class="err"><div class="h">Not configured</div><div class="m">SUPABASE_URL / SUPABASE_ANON were not injected. On the deploy these come from the Vercel project env (already set for the rest of the site).</div></div>';
-  }
+  $('q').focus();
 })();
 </script>
 </body>

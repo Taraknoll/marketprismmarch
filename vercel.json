@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/anomaly-agent",
+      "destination": "/api/anomaly-agent"
+    },
+    {
       "source": "/api/scholar",
       "destination": "/api/scholar"
     },
@@ -265,6 +269,9 @@
     },
     "api/anomaly-search.js": {
       "includeFiles": "_anomaly_search.html"
+    },
+    "api/anomaly-agent.js": {
+      "maxDuration": 60
     },
     "api/dots-predict.js": {
       "includeFiles": "node_modules/@xenova/transformers/dist/**",
