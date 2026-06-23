@@ -119,6 +119,15 @@ h1{font-size:clamp(20px,2.4vw,26px);font-weight:700;letter-spacing:-.025em;line-
 .metric{background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:10px;padding:12px;}
 .metric .lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--mp-text-muted);}
 .metric .val{font-size:22px;font-weight:700;margin-top:4px;}
+.metric .gloss{font-size:9.5px;color:var(--mp-text-muted);margin-top:5px;line-height:1.25;text-transform:none;letter-spacing:0;font-weight:500;}
+
+/* Plain-English verdict line + confluence banner */
+.verdict-line{font-size:15px;line-height:1.55;color:var(--mp-text-primary);font-weight:500;margin:2px 0 16px;}
+.confluence{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:10px;margin:2px 0 14px;font-size:13px;font-weight:600;line-height:1.45;}
+.confluence .ic{font-size:14px;line-height:1.35;flex-shrink:0;}
+.confluence.hot{background:rgba(255,77,77,.10);border:1px solid rgba(255,77,77,.30);color:var(--mp-text-primary);}
+.confluence.warm{background:rgba(255,184,0,.10);border:1px solid rgba(255,184,0,.30);color:var(--mp-text-primary);}
+.confluence.clean{background:rgba(0,222,148,.09);border:1px solid rgba(0,222,148,.28);color:var(--mp-text-primary);}
 
 .flag{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--mp-border);}
 .flag:first-child{border-top:none;}
@@ -417,10 +426,20 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     });
   }
 
+  // 3-word plain-English gloss under each metric tile, so jargon always carries meaning.
+  var GLOSS={'Verdict':'overall read','NRS':'narrative risk 0–100','VMS':'claims vs SEC filings','Drift':'story-vs-filing gap','Coordination':'synchronized coverage','Suspicion':'trading footprint','FVD %':'price vs fundamentals','Energy':'momentum left','State':'narrative phase','Regime':'energy regime'};
+  // Confluence banner — leads with the cross-axis contradiction (the moat), colored by count.
+  function confluenceBanner(firing, headline){
+    var n=(firing&&firing.length)||0;
+    var cls=n>=3?'hot':n?'warm':'clean', ic=n>=3?'⚠':n?'◑':'✓';
+    var txt=headline||(n?(n+' forensic red flag'+(n===1?'':'s')+' firing'):'No forensic red flags firing.');
+    return '<div class="confluence '+cls+'"><span class="ic">'+ic+'</span><span>'+esc(txt)+'</span></div>';
+  }
+
   // risk_dossier
   function cardRiskDossier(c){
     var metrics=(c.metrics||[]).map(function(m){
-      return '<div class="metric"><div class="lbl">'+esc(m.label)+'</div><div class="val mono">'+esc(humanize(m.value))+'</div></div>';
+      return '<div class="metric"><div class="lbl">'+esc(m.label)+'</div><div class="val mono">'+esc(humanize(m.value))+'</div>'+(GLOSS[m.label]?'<div class="gloss">'+esc(GLOSS[m.label])+'</div>':'')+'</div>';
     }).join('');
     var flags=(c.flags||[]).map(function(x){
       var lvl=(x.level||'ok');
@@ -429,6 +448,8 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     }).join('');
     return '<div class="card">'
       +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>'+esc(humanizeInline(c.subtitle||''))+'</small></div>'+badge(c.riskStatus)+'</div>'
+      +(c.headline?confluenceBanner(c.firing,c.headline):'')
+      +(c.plain?'<div class="verdict-line">'+esc(c.plain)+'</div>':'')
       +(metrics?'<div class="metricbar">'+metrics+'</div>':'')
       +flags
       +'<div class="foot">Forensic-structure read, not a price prediction or investment advice. The verdict is valuation-anchored, not a falsity label — read the component flags. suspicion_class is a trading-footprint read, not a manipulation verdict.</div>'
@@ -457,6 +478,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     }),{ xLabel:'Narrative drift →', yLabel:'Fair-value divergence %' });
     return '<div class="card">'
       +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>Narrative Lab</small></div></div>'
+      +(c.plain?'<div class="verdict-line">'+esc(c.plain)+'</div>':'')
       +'<p class="synth">'+esc(humanizeInline(c.synthesis||''))+'</p>'
       +(cp==null?'':'<div class="gauge">'+ringSvg(cp)+'<div class="cap"><b style="color:var(--mp-text-secondary)">'+Math.round(cp)
         +'% analogue consensus</b><br>'+esc(humanizeInline(c.consensusCaption||''))+'</div></div>')
@@ -485,6 +507,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     return '<div class="card">'
       +'<div class="card-top"><div class="tkr" style="font-size:18px">Anomaly Feed<small>severity × confluence'
       +(c.asOf?(' · '+esc(c.asOf)):'')+'</small></div></div>'
+      +(c.headline?'<div class="verdict-line">'+esc(c.headline)+'</div>':'')
       +(chart?'<div class="chart-cap">Anomaly score by ticker</div>'+chart:'')
       +'<table><thead><tr><th>Ticker</th><th>Score</th><th>Axes</th><th>Firing</th><th>State</th></tr></thead><tbody>'+body+'</tbody></table>'
       +'<div class="foot">Confluence = number of forensic axes firing (drift≥70, coordination≥20, suspicion≥60, |FVD|≥100, active idiosyncratic bubble). Foreign filers excluded. Structure, not alpha.</div>'

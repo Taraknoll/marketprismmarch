@@ -163,6 +163,78 @@ function flagLevel(value, thresholds) {
   return 'ok';
 }
 
+// ── plain-English layer (finance-literate, deterministic, honest) ────────────
+const AXIS_PLAIN = {
+  drift:        'story has drifted from the filing',
+  coordination: 'synchronized coverage across outlets',
+  suspicion:    'abnormal trading footprint',
+  fvd:          'price far from fundamentals',
+  bubble:       'active price bubble',
+};
+
+// FVD% = (price/fair_value - 1) * 100, so price/fair = 1 + fvd/100.
+function valuationClause(fvdPct) {
+  const f = num(fvdPct);
+  if (f === null) return null;
+  const mult = 1 + f / 100;
+  if (mult >= 1.5)  return `trades at ~${mult.toFixed(1)}× what its fundamentals justify`;
+  if (mult >= 1.15) return `carries a ~${Math.round(f)}% premium to fundamentals`;
+  if (mult >= 0.9)  return 'is priced roughly in line with fundamentals';
+  if (mult > 0)     return `trades ~${Math.round(Math.abs(f))}% below fundamental fair value`;
+  return 'is priced below any fundamental anchor';
+}
+
+function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+// Returns { plain, headline, firing } — a one-line analyst verdict + confluence headline.
+function plainDossier(r, bubbleActive, axes) {
+  const vms = num(r.vms), drift = num(r.drift_score);
+  const coordHot = (num(r.coordination_score) || 0) >= 20 || r.coordination_class === 'LIKELY_COORDINATED';
+  const tapeHot  = r.suspicion_class === 'HIGH_MANIPULATION_RISK';
+  const tapeCalm = r.suspicion_class === 'NORMAL_ACTIVITY' || r.suspicion_class === 'NORMAL';
+
+  // drift fires on selective framing, NOT just falsity — keep the language honest.
+  let claims;
+  if (vms !== null && vms >= 80) claims = 'the claims line up with the filings';
+  else if (vms !== null && vms < 50) claims = "the claims don't square with the filings";
+  else claims = 'the claims only partly match the filings';
+  if (drift !== null && drift >= 70) claims += ', but the story is framed well beyond what was filed';
+
+  let coordClause = null;
+  if (coordHot && tapeCalm) coordClause = 'coverage is running in lockstep across outlets while the tape stays calm — an orchestrated story, not a provable crime';
+  else if (coordHot && tapeHot) coordClause = 'coverage is synchronized and the trading footprint is abnormal — the strongest manipulation-shaped pattern';
+  else if (coordHot) coordClause = 'coverage looks synchronized across outlets';
+  else if (tapeHot)  coordClause = 'the trading footprint looks abnormal for the story';
+
+  const val = valuationClause(r.fvd_pct);
+  const parts = [];
+  if (val) parts.push(`The stock ${val}`);
+  parts.push(capFirst(claims));
+  if (coordClause) parts.push(capFirst(coordClause));
+  const plain = parts.join('. ') + '.';
+
+  const firing = (axes || []).map((a) => AXIS_PLAIN[a]).filter(Boolean);
+  const headline = firing.length
+    ? `${firing.length} forensic red flag${firing.length === 1 ? '' : 's'} firing: ${firing.join(' · ')}.`
+    : 'No forensic red flags firing — structurally clean.';
+
+  return { plain, headline, firing };
+}
+
+function plainNarrativeLab(focus, peers, state) {
+  const median = (arr) => { const a = arr.filter((v) => v !== null).sort((x, y) => x - y); return a.length ? a[Math.floor((a.length - 1) / 2)] : null; };
+  const ff = num(focus.fvd_pct), fd = num(focus.drift_score);
+  const mFvd = median((peers || []).map((p) => num(p.fvdPct)));
+  const mDrift = median((peers || []).map((p) => num(p.drift)));
+  const bits = [];
+  if (ff !== null && mFvd !== null) bits.push(ff > mFvd ? 'more richly valued than the median peer' : 'cheaper than the median peer');
+  if (fd !== null && mDrift !== null) bits.push(fd > mDrift ? 'its story has drifted further from the filings' : 'its story tracks the filings more closely than most');
+  const tail = bits.length ? ` Versus its peers, it's ${bits.join(', and ')}.` : '';
+  const phase = String(state || '').toLowerCase().replace(/_/g, ' ') || 'unclassified';
+  const n = (peers || []).length;
+  return `${focus.ticker || ''} sits with ${n} same-phase peer${n === 1 ? '' : 's'} in the ${phase} group.${tail}`;
+}
+
 // ── tool executors + card builders ──────────────────────────────────────────
 // Each returns { card | cards, rowCount, summary } — summary is the JSON fed
 // back to Claude as the tool_result.
@@ -205,6 +277,7 @@ async function execTickerDossier(input, ctx) {
 
   const axes = computeAxes(r, bubbleActive);
   const riskStatus = riskStatusFrom(axes.length, r.nrs);
+  const plain = plainDossier(r, bubbleActive, axes);
 
   const metrics = [
     { label: 'Verdict', value: r.verdict || '—' },
@@ -240,6 +313,9 @@ async function execTickerDossier(input, ctx) {
     ticker,
     subtitle: `${r.verdict || 'Monitoring'} · ${snap} · theme ${r.macro_theme || 'n/a'}`,
     riskStatus,
+    plain: plain.plain,
+    headline: plain.headline,
+    firing: plain.firing,
     metrics,
     flags,
   };
@@ -302,9 +378,11 @@ async function execNarrativeLab(input, ctx) {
     `${totalPeers} same-state peer${totalPeers === 1 ? '' : 's'} on ${snap}. ` +
     `Verdict is valuation-anchored, not a falsity label — read the components (drift/coordination), not the headline.`;
 
+  const plain = plainNarrativeLab(focus, peers, state);
   const card = {
     ui: 'narrative_lab',
     ticker,
+    plain,
     synthesis,
     consensusPct,
     consensusCaption: state ? `${totalPeers} peers share the ${state} state` : 'no state classification',
@@ -356,9 +434,15 @@ async function execDailyAnomalyFeed(input, ctx) {
     .sort((a, b) => (b.confluence - a.confluence) || (b.score - a.score))
     .slice(0, limit);
 
+  const top = scored[0];
+  const multi = scored.filter((s) => s.confluence >= 2).length;
+  const headline = scored.length
+    ? `${scored.length} name${scored.length === 1 ? '' : 's'} showing forensic red flags today${multi ? `; ${multi} with two or more axes firing` : ''}. ${top.ticker} tops the list.`
+    : 'No names are firing multiple forensic flags right now.';
   const card = {
     ui: 'anomaly_feed',
     asOf: snap,
+    headline,
     rows: scored,
   };
   const summary = {
