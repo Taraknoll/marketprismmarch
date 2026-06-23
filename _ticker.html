@@ -1512,40 +1512,22 @@
     text-align: center; line-height: 1.45;
   }
   .nf-headline {
-    flex: 1; min-width: 0; font-size: 15px; font-weight: 600;
-    line-height: 1.45; color: var(--mp-text-primary);
+    flex: 1; min-width: 0; font-size: 18px; font-weight: 600;
+    line-height: 1.4; letter-spacing: -0.01em; color: var(--mp-text-primary);
   }
   .nf-badge {
     flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
     text-transform: uppercase; padding: 3px 9px; border-radius: 99px;
-    border: 1px solid; white-space: nowrap; margin-top: 2px;
+    border: 1px solid; white-space: nowrap; margin-top: 4px;
   }
-  .nf-strip {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 8px; margin-top: 12px;
+  /* Compact small-text data line under the headline (no boxes) */
+  .nf-data {
+    margin-top: 9px;
+    font-size: 12px; line-height: 1.7; color: var(--mp-text-secondary);
   }
-  .nf-tile {
-    background: #0d1119; border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 8px; padding: 8px 10px; min-width: 0;
-  }
-  .nf-tile-lbl {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--mp-text-muted); margin-bottom: 3px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .nf-tile-val {
-    font-size: 16px; font-weight: 600; line-height: 1.2;
-    color: var(--mp-text-primary);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .nf-tile-val.muted { color: var(--mp-text-muted); font-weight: 500; font-size: 13px; }
-  .nf-tile-sub { font-size: 11px; color: var(--mp-text-muted); margin-top: 2px; }
-  .nf-dur { margin-top: 12px; }
-  .nf-dur-labels {
-    display: flex; justify-content: space-between; gap: 10px;
-    font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 5px;
-  }
-  .nf-dur-labels strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+  .nf-data-item { white-space: nowrap; }
+  .nf-data b { color: var(--mp-text-primary); font-weight: 600; }
+  .nf-data-sep { color: rgba(255,255,255,0.22); }
   .nf-claim {
     margin-top: 12px; padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,0.06);
@@ -1566,7 +1548,6 @@
   .nf-pill.pass    { background: rgba(0,222,148,0.08);  color: #34d99b; border-color: rgba(0,222,148,0.22); }
   .nf-pill.fail    { background: rgba(255,77,77,0.08);   color: #ff6b6b; border-color: rgba(255,77,77,0.22); }
   .nf-pill.partial { background: rgba(255,184,0,0.08);   color: #FFB800; border-color: rgba(255,184,0,0.22); }
-  @media (max-width: 560px) { .nf-strip { grid-template-columns: 1fr; } }
 
   /* ── Keyword chips (inside expanded body) ── */
   .narr-kw-wrap {
@@ -9543,30 +9524,23 @@ async function loadNarratives() {
       const strength = strengthMeta(n.narrative_energy_regime);
       const accent   = strength.color;
 
-      // Tile 1 — source quality (composite outlet authority; no outlet names shown)
+      // ── Source quality (composite outlet authority; no outlet names shown) ──
       const sq = sourceQuality(n.allCitations || [n]);
-      const sqHtml = sq
-        ? `<div class="nf-tile-val">${sq.tier}-tier · ${sq.score.toFixed(1)}</div>`
-        : `<div class="nf-tile-val muted">No sources</div>`;
 
-      // Tile 2 — analyst / figure credibility
+      // ── Analyst / figure pushing the claim ──
       // TODO(data): no analyst credibility score in payload (need e.g.
-      // `analyst_credibility_score`). Show the named firm/figure only.
+      // `analyst_credibility_score`). analyst_firm is frequently a *publication*
+      // (Motley Fool…) or a bare data site (TIKR.com) rather than a real analyst —
+      // never name a known outlet or a domain; only a genuine analyst shows.
       const analystNameRaw = n.analyst_firm
         || (n.allCitations || []).map(c => c.analyst_firm).filter(Boolean)[0] || null;
-      // analyst_firm is frequently populated with the *publication* (Motley Fool,
-      // Seeking Alpha…) rather than a real analyst. Never surface a known news
-      // outlet here — only a genuine, non-publication analyst/figure gets named.
-      const analystName = (analystNameRaw && !getReach(analystNameRaw)) ? analystNameRaw : null;
-      const analystHtml = analystName
-        ? `<div class="nf-tile-val" title="${esc(analystName)}">${esc(analystName)}</div>
-           <div class="nf-tile-sub">credibility n/a</div>`
-        : `<div class="nf-tile-val muted">None named</div>`;
+      const looksLikeSite = /\.(com|net|io|org|co|ai)\b/i.test(analystNameRaw || '');
+      const analystName = (analystNameRaw && !getReach(analystNameRaw) && !looksLikeSite)
+        ? analystNameRaw : null;
 
-      // Tile 3 — price impact (engine directional prediction)
+      // ── Price impact (engine directional prediction) ──
       // Blended expected 5-day move from keyword_price_impact for this narrative's
-      // keywords. TODO(data): no per-narrative directional_prediction / price_target
-      // field; this is the closest engine signal the card already receives.
+      // keywords. TODO(data): no per-narrative directional_prediction / price_target.
       const narKws = keywordsForNarrative(n);
       const matchedKpi = narKws
         .map(kw => kpiByKeyword[kw] ? { keyword: kw, ...kpiByKeyword[kw] } : null)
@@ -9582,17 +9556,11 @@ async function loadNarratives() {
         blendedMove = totalArticles > 0 ? weightedSum / totalArticles : 0;
       }
       const piColor = blendedMove == null ? ''
-        : blendedMove > 0 ? '#00DE94' : blendedMove < 0 ? '#FF4D4D' : 'rgba(255,255,255,0.8)';
-      const piHtml = blendedMove == null
-        ? `<div class="nf-tile-val muted">—</div>`
-        : `<div class="nf-tile-val" style="color:${piColor}">${blendedMove > 0 ? '+' : ''}${blendedMove.toFixed(1)}%</div>`;
+        : blendedMove > 0 ? '#00DE94' : blendedMove < 0 ? '#FF4D4D' : 'rgba(255,255,255,0.85)';
 
-      // ── Duration bar (reuses the energy bar; relabelled to read as DURATION) ──
+      // ── Duration / fuel (small text, not a bar) ──
       const pressureVal = Number(n.propagation_pressure) || 0;
-      const barWidth    = maxPressure   > 0 ? (pressureVal / maxPressure)   * 100 : 0;
       const fuelPct     = totalPressure > 0 ? Math.round((pressureVal / totalPressure) * 100) : 0;
-      const hasFuelData = n.propagation_pressure != null || n.energy_remaining != null
-        || n.half_life != null || n.narrative_energy_regime != null;
       const citeDates = (n.allCitations || [n]).map(c => c.snapshot_date).filter(Boolean)
         .map(s => s.slice(0, 10)).sort();
       const spanDays = citeDates.length
@@ -9600,18 +9568,20 @@ async function loadNarratives() {
             (new Date(citeDates[citeDates.length - 1] + 'T12:00:00').getTime()
              - new Date(citeDates[0] + 'T12:00:00').getTime()) / 86400000))
         : 0;
-      const spanLbl     = spanDays >= 1 ? `${spanDays} day${spanDays !== 1 ? 's' : ''}` : 'under a day';
-      const halfLifeLbl = n.half_life != null ? ` · half-life ${Math.round(Number(n.half_life))}d` : '';
-      const durHtml = hasFuelData ? `
-        <div class="nf-dur">
-          <div class="nf-dur-labels">
-            <span>Pushed <strong>${spanLbl}</strong>${halfLifeLbl}</span>
-            ${n.propagation_pressure != null ? `<span><strong>${fuelPct}%</strong> of fuel</span>` : ''}
-          </div>
-          <div class="narr-fuel-bar-track">
-            <div class="narr-fuel-bar-fill" style="width:${barWidth.toFixed(1)}%;background:${accent};"></div>
-          </div>
-        </div>` : '';
+      const spanShort = spanDays >= 1 ? `${spanDays}d` : '<1d';
+
+      // ── Compact data line: small white text below the headline (no boxes) ──
+      const dataBits = [];
+      if (sq) dataBits.push(`Source <b>${sq.tier}-tier · ${sq.score.toFixed(1)}</b>`);
+      if (analystName) dataBits.push(`Analyst <b>${esc(analystName)}</b>`);
+      if (blendedMove != null)
+        dataBits.push(`Impact <b style="color:${piColor}">${blendedMove > 0 ? '+' : ''}${blendedMove.toFixed(1)}%</b>`);
+      if (n.propagation_pressure != null || n.half_life != null) dataBits.push(`Pushed <b>${spanShort}</b>`);
+      if (n.half_life != null) dataBits.push(`half-life <b>${Math.round(Number(n.half_life))}d</b>`);
+      if (n.propagation_pressure != null) dataBits.push(`<b>${fuelPct}%</b> fuel`);
+      const dataHtml = dataBits.length
+        ? `<div class="nf-data">${dataBits.map(b => `<span class="nf-data-item">${b}</span>`).join(' <span class="nf-data-sep">·</span> ')}</div>`
+        : '';
 
       // ── Claim vs evidence — only when claim flags exist on the row ──
       const hasClaimFlags = n.has_source_ref != null || n.has_numeric_anchor != null
@@ -9655,12 +9625,7 @@ async function loadNarratives() {
           <div class="nf-headline">${esc(n.narrative_text)}</div>
           ${badgeHtml}
         </div>
-        <div class="nf-strip">
-          <div class="nf-tile"><div class="nf-tile-lbl">Source quality</div>${sqHtml}</div>
-          <div class="nf-tile"><div class="nf-tile-lbl">Analyst</div>${analystHtml}</div>
-          <div class="nf-tile"><div class="nf-tile-lbl">Price impact</div>${piHtml}</div>
-        </div>
-        ${durHtml}
+        ${dataHtml}
         ${claimHtml}
       </div>`;
     }).join('');
