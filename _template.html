@@ -19723,7 +19723,13 @@ var MP_CONTENTLESS_RX = [
   /\bforecast\s+information\s+(?:is|are)\s+available\b/i,
   /\bis\s+an?\s+entity\s+with\s+a\s+profile\b/i,
   /\bstock\s+information\s+including\s+price\b/i,
-  /\bstock\s+price,\s*trades\s*(?:and|&)\s*news\b/i,
+  /\bstock\s+price,?\s*trades?,?\s*(?:and|&)\s*news\b/i,
+  // Aggregator "<outlet> provides stock price/trade/news/… information" landing tell —
+  // e.g. "KLA Corp (KLAC) is a publicly traded company for which GuruFocus provides
+  // stock price, trade, and news information." A real thesis never frames an outlet as
+  // merely *providing* the stock's data. ("provides stock-based compensation" is safe —
+  // the hyphen blocks the \s+ after "stock".)
+  /\bprovides?\s+stock\s+(?:price|quotes?|trades?|trading|news|data|information|info|details?|headlines?|charts?|fundamentals?)\b/i,
   /\bstock\s+(?:price,\s*quote,\s*news\s*(?:and|&)\s*analysis\s+)?information(?:\s+including[^.]*)?\s+(?:is|are)\s+available\b/i,
   // Tolerate intervening words between the data-noun and "available" — e.g.
   // "stock information and news are available on GuruFocus" (the narrow pattern
