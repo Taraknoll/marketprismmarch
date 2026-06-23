@@ -65,6 +65,10 @@
       "destination": "/api/search"
     },
     {
+      "source": "/anomaly-search",
+      "destination": "/api/anomaly-search"
+    },
+    {
       "source": "/heatmap",
       "destination": "/api/heatmap"
     },
@@ -258,6 +262,9 @@
     },
     "api/search.js": {
       "includeFiles": "_search.html"
+    },
+    "api/anomaly-search.js": {
+      "includeFiles": "_anomaly_search.html"
     },
     "api/dots-predict.js": {
       "includeFiles": "node_modules/@xenova/transformers/dist/**",

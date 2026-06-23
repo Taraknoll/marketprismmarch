@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anomaly Search — Market Prism™</title>
+<meta name="description" content="Ask a question; get structural market-anomaly cards from the live forensic scorecard.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<script>try{if(localStorage.getItem('mp-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Injected server-side by api/anomaly-search.js (anon key only). -->
+<script>window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '' };</script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --font-body:'Inter','DM Sans',system-ui,sans-serif;
+  --mp-obsidian:#FFFFFF;--mp-surface:#FAFBFC;--mp-surface2:#F0F2F5;
+  --mp-border:rgba(0,0,0,0.08);--mp-border-hover:rgba(0,0,0,0.15);
+  --mp-text-primary:#1A1F2E;--mp-text-secondary:rgba(0,0,0,0.65);
+  --mp-text-tertiary:#6B7280;--mp-text-muted:rgba(0,0,0,0.35);
+  --mp-cyan:#00AEFF;--mp-green:#00DE94;--mp-red:#FF4D4D;--mp-amber:#FFB800;--mp-violet:#7B61FF;
+  --mp-card-shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 12px rgba(0,0,0,0.04);
+}
+[data-theme="dark"]{
+  --mp-obsidian:#080B11;--mp-surface:#0C1018;--mp-surface2:#111927;
+  --mp-border:rgba(255,255,255,0.06);--mp-border-hover:rgba(255,255,255,0.14);
+  --mp-text-primary:#FFFFFF;--mp-text-secondary:rgba(255,255,255,0.7);
+  --mp-text-tertiary:#A0A8B0;--mp-text-muted:rgba(255,255,255,0.3);
+  --mp-card-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-text-primary);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:900px;margin:0 auto;padding:40px 24px 80px;}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
+
+/* Header */
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-cyan);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.eyebrow::before{content:'';width:24px;height:1px;background:var(--mp-cyan);}
+h1{font-size:clamp(28px,3vw,36px);font-weight:700;letter-spacing:-.025em;line-height:1.15;}
+.sub{margin-top:12px;font-size:14px;color:var(--mp-text-tertiary);max-width:640px;line-height:1.55;}
+
+/* Form */
+.form{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap;}
+.form input{flex:1;min-width:240px;padding:13px 16px;border-radius:11px;background:var(--mp-surface);border:1px solid var(--mp-border);font-family:var(--font-body);font-size:15px;color:var(--mp-text-primary);outline:none;transition:border-color .15s,box-shadow .15s;}
+.form input:focus{border-color:var(--mp-cyan);box-shadow:0 0 0 3px rgba(0,174,255,0.12);}
+.form input::placeholder{color:var(--mp-text-muted);}
+.btn{padding:13px 22px;border-radius:11px;background:var(--mp-cyan);color:#fff;border:none;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:.02em;transition:opacity .15s,transform .05s;}
+.btn:hover{opacity:.92;}.btn:active{transform:translateY(1px);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* Chips */
+.chips{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;}
+.chip{padding:7px 13px;border-radius:999px;background:var(--mp-surface);border:1px solid var(--mp-border);color:var(--mp-text-secondary);font-size:12px;cursor:pointer;transition:all .15s;}
+.chip:hover{border-color:var(--mp-cyan);color:var(--mp-text-primary);}
+.chip:disabled{opacity:.4;cursor:not-allowed;}
+
+/* Asked + status */
+.asked{margin-top:24px;font-size:13px;color:var(--mp-text-tertiary);}
+.asked b{color:var(--mp-text-secondary);font-weight:600;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--mp-border);border-top-color:var(--mp-cyan);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Debug strip */
+.debug{margin-top:18px;border:1px solid var(--mp-border);border-radius:12px;background:var(--mp-surface);overflow:hidden;}
+.debug-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;cursor:pointer;}
+.debug-head .left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.pill{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:6px;border:1px solid;}
+.pill.cyan{color:var(--mp-cyan);border-color:rgba(0,174,255,.4);background:rgba(0,174,255,.1);}
+.pill.violet{color:var(--mp-violet);border-color:rgba(123,97,255,.4);background:rgba(123,97,255,.1);}
+.pill.amber{color:var(--mp-amber);border-color:rgba(255,184,0,.4);background:rgba(255,184,0,.1);}
+.debug-meta{font-size:11px;color:var(--mp-text-muted);}
+.debug-body{border-top:1px solid var(--mp-border);padding:12px 14px;font-size:11px;color:var(--mp-text-tertiary);}
+.debug-body code{display:block;background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:6px;padding:8px 10px;margin:6px 0;word-break:break-all;color:var(--mp-text-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+
+/* Cards */
+.cards{margin-top:18px;display:flex;flex-direction:column;gap:16px;}
+.card{border:1px solid var(--mp-border);border-radius:16px;background:var(--mp-surface);box-shadow:var(--mp-card-shadow);padding:22px;}
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.tkr{font-size:24px;font-weight:800;letter-spacing:-.02em;}
+.tkr small{display:block;font-size:12px;font-weight:500;color:var(--mp-text-muted);letter-spacing:0;margin-top:2px;}
+.badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:6px 12px;border-radius:999px;border:1px solid;}
+.b-high{color:var(--mp-red);border-color:rgba(255,77,77,.4);background:rgba(255,77,77,.1);}
+.b-elev{color:var(--mp-amber);border-color:rgba(255,184,0,.4);background:rgba(255,184,0,.1);}
+.b-mod{color:var(--mp-cyan);border-color:rgba(0,174,255,.4);background:rgba(0,174,255,.1);}
+.b-low{color:var(--mp-green);border-color:rgba(0,222,148,.4);background:rgba(0,222,148,.1);}
+
+.metricbar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.metric{background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:10px;padding:12px;}
+.metric .lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--mp-text-muted);}
+.metric .val{font-size:22px;font-weight:700;margin-top:4px;}
+
+.flag{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--mp-border);}
+.flag:first-child{border-top:none;}
+.dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.dot.severe{background:var(--mp-red);}.dot.elevated{background:var(--mp-amber);}.dot.weak{background:var(--mp-violet);}.dot.ok{background:var(--mp-green);}
+.flag .name{font-size:13px;font-weight:600;}
+.flag .read{font-size:12px;color:var(--mp-text-tertiary);margin-top:2px;line-height:1.45;}
+.flag .lvl{margin-left:auto;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+.lvl.severe{color:var(--mp-red);}.lvl.elevated{color:var(--mp-amber);}.lvl.weak{color:var(--mp-violet);}.lvl.ok{color:var(--mp-green);}
+
+.synth{font-size:14px;line-height:1.6;color:var(--mp-text-secondary);}
+.gauge{display:flex;align-items:center;gap:20px;margin:18px 0;}
+.ring{position:relative;width:104px;height:104px;flex-shrink:0;}
+.ring .pctn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;}
+.gauge .cap{font-size:13px;color:var(--mp-text-tertiary);line-height:1.5;}
+
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mp-text-muted);padding:8px 10px 8px 0;border-bottom:1px solid var(--mp-border);}
+td{font-size:13px;padding:9px 10px 9px 0;border-bottom:1px solid var(--mp-border);color:var(--mp-text-secondary);}
+tr:last-child td{border-bottom:none;}
+td.t{font-weight:700;color:var(--mp-text-primary);}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:rgba(123,97,255,.12);color:var(--mp-violet);margin:1px 2px 1px 0;}
+.score{display:inline-block;min-width:34px;text-align:center;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid;}
+
+.foot{margin-top:14px;padding-top:12px;border-top:1px solid var(--mp-border);font-size:11px;color:var(--mp-text-muted);line-height:1.5;}
+.err{margin-top:18px;border:1px solid rgba(255,77,77,.4);background:rgba(255,77,77,.08);border-radius:12px;padding:14px 16px;}
+.err .h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mp-red);}
+.err .m{margin-top:6px;font-size:13px;color:var(--mp-text-secondary);}
+.empty{padding:28px;text-align:center;color:var(--mp-text-muted);font-size:13px;border:1px dashed var(--mp-border);border-radius:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">MarketScholar · Anomaly Search</div>
+  <h1>Ask a question. Get the structural anomaly.</h1>
+  <p class="sub">Natural-language search over the live forensic scorecard. It routes your question to a
+  deterministic, read-only query and renders the result as forensic cards. Reads only — anon key, no writes.
+  <b style="color:var(--mp-text-secondary)">MVP:</b> keyword routing + Supabase REST (LLM routing comes later).</p>
+
+  <form class="form" id="form">
+    <input id="q" autocomplete="off" placeholder="e.g. Forensic dossier for NVDA  ·  What's anomalous today?  ·  coordinated high-drift rich names" />
+    <button class="btn" id="go" type="submit">Search</button>
+  </form>
+
+  <div class="chips" id="chips"></div>
+  <div id="asked"></div>
+  <div id="err"></div>
+  <div id="debug"></div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var ENV = window.__env || {};
+  var SB = (ENV.SUPABASE_URL || '').replace(/\/+$/,'');
+  var ANON = ENV.SUPABASE_ANON || '';
+
+  // ── Constants ────────────────────────────────────────────────────────────
+  var FF = ['TSM','NIO','BHP','RIO','VALE','NVO','RACE','STN','SPOT','GOLD']; // foreign-filer artifacts
+  var FF_NOTIN = 'ticker=not.in.(' + FF.join(',') + ')';
+  var SCOL = ['ticker','snapshot_date','verdict','vms','vms_gap','drift_score','drift_explanation',
+    'coordination_score','coordination_class','suspicion_score','suspicion_class','energy_remaining',
+    'half_life','composite_decay_rate','narrative_state','narrative_mass','walsh_regime','signal_regime',
+    'fvd','fvd_pct','fair_value','earnings_credibility_score','nrs','ccp','srs'].join(',');
+  var STATES = ['DISTRIBUTION','RETAIL_PUMP','WHALE_ACCUMULATION','DORMANT'];
+
+  var EXAMPLES = [
+    'Forensic dossier for NVDA',
+    "What's anomalous across the market today?",
+    'The story on TSLA and what it rhymes with',
+    'Coordinated, high-drift, richly valued names',
+    'Which narratives are dying?'
+  ];
+
+  // ── DOM helpers ──────────────────────────────────────────────────────────
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return s==null?'':(''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function n(v){ var x=Number(v); return isFinite(x)?x:null; }
+  function f0(v){ var x=n(v); return x==null?'—':Math.round(x); }
+  function f1(v){ var x=n(v); return x==null?'—':x.toFixed(1); }
+  function pct(v){ var x=n(v); return x==null?'—':(x>=0?'+':'')+x.toFixed(1)+'%'; }
+
+  // ── REST (PostgREST via anon key) ─────────────────────────────────────────
+  var _calls = [];
+  function rest(pathAndQuery){
+    var url = SB + '/rest/v1/' + pathAndQuery;
+    _calls.push(pathAndQuery);
+    return fetch(url, { headers:{ apikey:ANON, Authorization:'Bearer '+ANON, Accept:'application/json' }})
+      .then(function(r){ if(!r.ok) return r.text().then(function(t){ throw new Error('REST '+r.status+': '+(t||'').slice(0,120)); }); return r.json(); });
+  }
+
+  var _latest = null;          // latest narrative_scorecard snapshot_date
+  function latest(){
+    if(_latest) return Promise.resolve(_latest);
+    return rest('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1')
+      .then(function(rows){ _latest = (rows&&rows[0])?rows[0].snapshot_date:null; return _latest; });
+  }
+
+  var _tickers = null;         // Set of valid tickers on the latest snapshot
+  function tickerSet(){
+    if(_tickers) return Promise.resolve(_tickers);
+    return latest().then(function(d){
+      if(!d){ _tickers=new Set(); return _tickers; }
+      return rest('narrative_scorecard?select=ticker&snapshot_date=eq.'+d).then(function(rows){
+        _tickers = new Set((rows||[]).map(function(r){ return (r.ticker||'').toUpperCase(); }));
+        return _tickers;
+      });
+    });
+  }
+
+  // ── Keyword router → { intent, params } ────────────────────────────────────
+  function detectTicker(q, set){
+    var toks = (q.toUpperCase().match(/[A-Z]{1,5}(?:\.[A-Z])?/g)) || [];
+    for(var i=0;i<toks.length;i++){ if(set.has(toks[i])) return toks[i]; }
+    return null;
+  }
+  function route(q, set){
+    var s = q.toLowerCase();
+    var t = detectTicker(q, set);
+    var storyWords = /\b(story|narrative|rhyme|rhymes|similar|analog|analogue|compare|like|peers?)\b/.test(s);
+    var feedWords  = /\b(anomal|unusual|hot|today|happening|interesting|across the market|right now|surprising)\b/.test(s);
+    var screenWords= /\b(coordinat|drift|rich|overvalued|expensive|cheap|undervalued|discount|dying|low energy|exhaust|fading|unverified|low vms|trap|whale|accumulation|pump|distribution|dormant|screen|find|show me)\b/.test(s);
+
+    if(t && storyWords) return { intent:'narrative_lab_lookup', params:{ ticker:t } };
+    if(t)               return { intent:'ticker_dossier', params:{ ticker:t } };
+    if(feedWords)       return { intent:'daily_anomaly_feed', params:{} };
+    if(screenWords){
+      var p = {};
+      if(/coordinat/.test(s)) p.minCoordination = 20;
+      if(/\bdrift\b|high.drift/.test(s)) p.minDrift = 60;
+      if(/unverified|low vms/.test(s)) p.maxVms = 65;
+      if(/rich|overvalued|expensive/.test(s)) p.minFvdPct = 100;
+      if(/cheap|undervalued|discount/.test(s)) p.maxFvdPct = -30;
+      if(/dead/.test(s)) p.energy = 'dead';
+      else if(/dying|low energy|exhaust|fading/.test(s)) p.energy = 'dying';
+      else if(/full energy|strong energy|high energy/.test(s)) p.energy = 'full';
+      if(/whale|accumulation/.test(s)) p.state = 'WHALE_ACCUMULATION';
+      else if(/retail.?pump|\bpump\b/.test(s)) p.state = 'RETAIL_PUMP';
+      else if(/distribution/.test(s)) p.state = 'DISTRIBUTION';
+      else if(/dormant/.test(s)) p.state = 'DORMANT';
+      if(Object.keys(p).length) return { intent:'structural_screen', params:p };
+    }
+    return { intent:'sector_cross_section', params:{} };
+  }
+
+  // ── Intent executors → { cards:[html], note } ──────────────────────────────
+  function execDossier(p){
+    return rest('narrative_scorecard?ticker=eq.'+encodeURIComponent(p.ticker)+'&order=snapshot_date.desc&limit=1&select='+SCOL)
+      .then(function(rows){
+        if(!rows||!rows.length) return { cards:[], note:'No scorecard row for '+p.ticker };
+        return { cards:[ cardDossier(rows[0]) ] };
+      });
+  }
+  function execLab(p){
+    return rest('narrative_scorecard?ticker=eq.'+encodeURIComponent(p.ticker)+'&order=snapshot_date.desc&limit=1&select='+SCOL)
+      .then(function(focusRows){
+        if(!focusRows||!focusRows.length) return { cards:[], note:'No scorecard row for '+p.ticker };
+        var focus = focusRows[0];
+        var st = focus.narrative_state;
+        if(!st) return { cards:[ cardDossier(focus) ], note:'No narrative_state to find analogues; showing dossier instead' };
+        return latest().then(function(d){
+          var qy = 'narrative_scorecard?snapshot_date=eq.'+d+'&narrative_state=eq.'+encodeURIComponent(st)
+                 + '&ticker=neq.'+encodeURIComponent(p.ticker)+'&'+FF_NOTIN+'&select='+SCOL+'&limit=40';
+          return rest(qy).then(function(rows){
+            var fp = n(focus.fvd_pct);
+            (rows||[]).forEach(function(r){ r._d = Math.abs((n(r.fvd_pct)||0)-(fp||0)); });
+            rows.sort(function(a,b){ return a._d-b._d; });
+            return { cards:[ cardLab(focus, rows.slice(0,8)) ] };
+          });
+        });
+      });
+  }
+  function execFeed(){
+    return latest().then(function(d){
+      var sc = rest('narrative_scorecard?snapshot_date=eq.'+d+'&'+FF_NOTIN+'&select='+SCOL+'&limit=200');
+      // bubble overlay (own latest date, best-effort)
+      var bub = rest('bubble_metrics?select=snapshot_date&order=snapshot_date.desc&limit=1')
+        .then(function(br){ var bd=(br&&br[0])?br[0].snapshot_date:null;
+          return bd ? rest('bubble_metrics?snapshot_date=eq.'+bd+'&select=ticker,bubble_active_idio,bsadf_now&limit=600') : []; })
+        .catch(function(){ return []; });
+      return Promise.all([sc, bub]).then(function(res){
+        var rows = res[0]||[], bubble = {};
+        (res[1]||[]).forEach(function(b){ bubble[(b.ticker||'').toUpperCase()] = b; });
+        var scored = rows.map(function(r){
+          var drift=n(r.drift_score)||0, coord=n(r.coordination_score)||0, susp=n(r.suspicion_score)||0;
+          var fvd=Math.abs(n(r.fvd_pct)||0), bm=bubble[(r.ticker||'').toUpperCase()];
+          var bubActive = bm && bm.bubble_active_idio===true;
+          var axes=[];
+          if(drift>=70) axes.push('drift');
+          if(coord>=20) axes.push('coordination');
+          if(susp>=60) axes.push('suspicion');
+          if(fvd>=100) axes.push('fvd');
+          if(bubActive) axes.push('bubble');
+          var score = Math.min(100, Math.round(0.30*Math.min(100,drift)+0.20*Math.min(100,coord)
+            +0.20*Math.min(100,susp)+0.15*Math.min(100,fvd)+0.15*(bubActive?100:0)));
+          return { ticker:r.ticker, verdict:r.verdict, state:r.narrative_state, score:score,
+                   confluence:axes.length, axes:axes, drift:drift, coord:coord, fvd:n(r.fvd_pct) };
+        }).filter(function(x){ return x.confluence>=1; });
+        scored.sort(function(a,b){ return b.confluence-a.confluence || b.score-a.score; });
+        return { cards:[ cardFeed(d, scored.slice(0,25)) ] };
+      });
+    });
+  }
+  function execScreen(p){
+    return latest().then(function(d){
+      var qs = ['snapshot_date=eq.'+d, FF_NOTIN, 'select='+SCOL, 'limit=40'];
+      if(p.minCoordination!=null) qs.push('coordination_score=gte.'+p.minCoordination);
+      if(p.minDrift!=null) qs.push('drift_score=gte.'+p.minDrift);
+      if(p.maxVms!=null) qs.push('vms=lte.'+p.maxVms);
+      if(p.minFvdPct!=null) qs.push('fvd_pct=gte.'+p.minFvdPct);
+      if(p.maxFvdPct!=null) qs.push('fvd_pct=lte.'+p.maxFvdPct);
+      if(p.energy==='full'){ qs.push('energy_remaining=gte.80'); }
+      else if(p.energy==='dying'){ qs.push('energy_remaining=gte.5'); qs.push('energy_remaining=lt.20'); }
+      else if(p.energy==='dead'){ qs.push('energy_remaining=lt.5'); }
+      if(p.state) qs.push('narrative_state=eq.'+encodeURIComponent(p.state));
+      qs.push('order=coordination_score.desc.nullslast');
+      return rest('narrative_scorecard?'+qs.join('&')).then(function(rows){
+        return { cards:[ cardScreen(rows||[], p) ] };
+      });
+    });
+  }
+  function execFallback(){
+    return latest().then(function(d){
+      return rest('narrative_scorecard?snapshot_date=eq.'+d+'&'+FF_NOTIN
+        +'&select=ticker,verdict,narrative_state,drift_score,coordination_score,vms,fvd_pct,energy_remaining,suspicion_class'
+        +'&order=drift_score.desc.nullslast&limit=25').then(function(rows){
+        return { cards:[ cardTable('Market cross-section · ranked by narrative drift', rows||[],
+          ['ticker','verdict','narrative_state','drift_score','coordination_score','vms','fvd_pct']) ] };
+      });
+    });
+  }
+  var EXEC = { ticker_dossier:execDossier, narrative_lab_lookup:execLab, daily_anomaly_feed:execFeed,
+               structural_screen:execScreen, sector_cross_section:execFallback };
+
+  // ── Forensic axis evaluation (Pattern A flags) ─────────────────────────────
+  function riskStatus(row){
+    var nrs=n(row.nrs); var v=(row.verdict||'');
+    if(nrs!=null){ if(nrs>=60) return 'HIGH'; if(nrs>=40) return 'ELEVATED'; if(nrs>=25) return 'MODERATE'; return 'LOW'; }
+    if(/Trap/i.test(v)) return 'HIGH'; if(/Risk/i.test(v)) return 'ELEVATED';
+    if(/Supported|Accumulate/i.test(v)) return 'LOW'; return 'MODERATE';
+  }
+  function flags(row){
+    var out=[];
+    var vms=n(row.vms);
+    out.push({ name:'SEC verification (VMS)', lvl: vms==null?'ok':(vms<50?'severe':vms<65?'elevated':'ok'),
+      read: vms==null?'no anchor':('VMS '+f0(vms)+(vms<65?' — claims poorly verified':' — claims verify')) });
+    var dr=n(row.drift_score);
+    out.push({ name:'Narrative drift', lvl: dr==null?'ok':(dr>=70?'severe':dr>=50?'elevated':'ok'),
+      read: (dr==null?'—':('drift '+f0(dr)))+(row.drift_explanation?(' · '+(''+row.drift_explanation).slice(0,120)):'') });
+    var co=n(row.coordination_score);
+    out.push({ name:'Cross-source coordination', lvl: co==null?'ok':(co>=40?'severe':co>=20?'elevated':'ok'),
+      read: (co==null?'—':('coord '+f0(co)))+(row.coordination_class?(' · '+row.coordination_class):'') });
+    var sc=(row.suspicion_class||'');
+    out.push({ name:'Trading-footprint suspicion', lvl: /HIGH/i.test(sc)?'severe':/MODERATE/i.test(sc)?'elevated':'ok',
+      read: (sc||'NORMAL_ACTIVITY')+' · score '+f0(row.suspicion_score) });
+    var fv=n(row.fvd_pct);
+    out.push({ name:'Fair-value divergence', lvl: fv==null?'ok':(Math.abs(fv)>=150?'severe':Math.abs(fv)>=80?'elevated':'ok'),
+      read: fv==null?'no anchor':('FVD '+pct(fv)+(fv>0?' (rich)':' (cheap)')) });
+    var en=n(row.energy_remaining);
+    out.push({ name:'Narrative energy', lvl: en==null?'ok':(en<5?'severe':en<20?'weak':'ok'),
+      read: en==null?'—':('energy '+f0(en)+'% · '+(en<5?'Dead':en<20?'Dying':en>=80?'Full':'Active')) });
+    if(row.narrative_state) out.push({ name:'Market state', lvl:'weak', read: row.narrative_state });
+    return out;
+  }
+
+  // ── Card renderers ─────────────────────────────────────────────────────────
+  function badge(status){
+    var c = status==='HIGH'?'b-high':status==='ELEVATED'?'b-elev':status==='MODERATE'?'b-mod':'b-low';
+    return '<span class="badge '+c+'">'+status+' RISK</span>';
+  }
+  function cardDossier(row){
+    var st=riskStatus(row);
+    var mb = [['Coordination',f0(row.coordination_score)],['Drift',f0(row.drift_score)],
+              ['VMS',f0(row.vms)],['FVD',row.fvd_pct==null?'—':pct(row.fvd_pct)]];
+    var fl = flags(row).map(function(x){
+      return '<div class="flag"><span class="dot '+x.lvl+'"></span><div><div class="name">'+esc(x.name)
+        +'</div><div class="read">'+esc(x.read)+'</div></div><span class="lvl '+x.lvl+'">'+x.lvl+'</span></div>';
+    }).join('');
+    return '<div class="card">'
+      +'<div class="card-top"><div class="tkr">'+esc(row.ticker)+'<small>'+esc(row.verdict||'—')+' · '+esc(row.snapshot_date||'')+'</small></div>'+badge(st)+'</div>'
+      +'<div class="metricbar">'+mb.map(function(m){ return '<div class="metric"><div class="lbl">'+m[0]+'</div><div class="val mono">'+m[1]+'</div></div>'; }).join('')+'</div>'
+      +fl
+      +'<div class="foot">Forensic-structure read, not a price prediction or investment advice. The verdict is valuation-anchored, not a falsity label — read the component flags. Source: narrative_scorecard · '+esc(row.snapshot_date||'')+'.</div>'
+      +'</div>';
+  }
+  function ringSvg(p){
+    var R=46, C=2*Math.PI*R, off=C*(1-Math.max(0,Math.min(100,p))/100);
+    var col = p>=66?'var(--mp-green)':p>=33?'var(--mp-amber)':'var(--mp-text-muted)';
+    return '<div class="ring"><svg width="104" height="104" viewBox="0 0 104 104">'
+      +'<circle cx="52" cy="52" r="'+R+'" fill="none" stroke="var(--mp-border)" stroke-width="9"/>'
+      +'<circle cx="52" cy="52" r="'+R+'" fill="none" stroke="'+col+'" stroke-width="9" stroke-linecap="round" '
+      +'stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 52 52)"/>'
+      +'</svg><div class="pctn mono">'+Math.round(p)+'%</div></div>';
+  }
+  function cardLab(focus, anas){
+    var fp=n(focus.fvd_pct);
+    var side = fp==null?null:(fp>0?'rich':'cheap');
+    var sameSide = anas.filter(function(a){ var x=n(a.fvd_pct); return x!=null && side && ((x>0?'rich':'cheap')===side); }).length;
+    var consensus = anas.length? Math.round(100*sameSide/anas.length):0;
+    var synth = esc(focus.ticker)+' is in <b>'+esc(focus.narrative_state||'an undefined state')+'</b> with drift '
+      +f0(focus.drift_score)+' and coordination '+f0(focus.coordination_score)+', while VMS verifies at '+f0(focus.vms)
+      +(n(focus.vms)>=65?' (claims check out)':' (claims poorly verified)')+'. Fair-value divergence is '
+      +(fp==null?'unanchored':pct(fp)+' ('+side+')')+'. Among '+anas.length+' peers sharing this market state, '
+      +consensus+'% sit on the same '+(side||'—')+' side of fair value.';
+    var rows = anas.map(function(a){
+      return '<tr><td class="t">'+esc(a.ticker)+'</td><td>'+esc(a.narrative_state||'—')+'</td><td class="mono">'+f0(a.vms)
+        +'</td><td class="mono">'+f0(a.drift_score)+'</td><td class="mono">'+(a.fvd_pct==null?'—':pct(a.fvd_pct))+'</td></tr>';
+    }).join('') || '<tr><td colspan="5" style="color:var(--mp-text-muted)">No state-peers found.</td></tr>';
+    return '<div class="card">'
+      +'<div class="card-top"><div class="tkr">'+esc(focus.ticker)+'<small>Narrative Lab · '+esc(focus.verdict||'—')+'</small></div>'+badge(riskStatus(focus))+'</div>'
+      +'<p class="synth">'+synth+'</p>'
+      +'<div class="gauge">'+ringSvg(consensus)+'<div class="cap"><b style="color:var(--mp-text-secondary)">'+consensus
+      +'% analogue consensus</b><br>'+sameSide+' of '+anas.length+' state-peers share '+esc(focus.ticker)+'’s '+(side||'—')
+      +' fair-value divergence. (Derived from current scorecard divergence, not historical returns.)</div></div>'
+      +'<table><thead><tr><th>Peer</th><th>State</th><th>VMS</th><th>Drift</th><th>FVD%</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<div class="foot">Analogues = same-state peers on the latest snapshot, ranked by closeness of fair-value divergence. Foreign filers excluded. Descriptive, not predictive.</div>'
+      +'</div>';
+  }
+  function cardFeed(d, rows){
+    if(!rows.length) return '<div class="card"><div class="empty">No names cleared the confluence threshold for '+esc(d)+'.</div></div>';
+    var body = rows.map(function(r){
+      var sc=r.score, col=sc>=70?'var(--mp-red)':sc>=40?'var(--mp-amber)':'var(--mp-green)';
+      var tags=r.axes.map(function(a){ return '<span class="tag">'+esc(a)+'</span>'; }).join('');
+      return '<tr><td class="t">'+esc(r.ticker)+'</td>'
+        +'<td><span class="score mono" style="color:'+col+';border-color:'+col+'">'+sc+'</span></td>'
+        +'<td class="mono">'+r.confluence+'</td><td>'+tags+'</td><td>'+esc(r.state||'—')+'</td></tr>';
+    }).join('');
+    return '<div class="card">'
+      +'<div class="card-top"><div class="tkr" style="font-size:18px">Anomaly Feed<small>severity × confluence · '+esc(d)+'</small></div></div>'
+      +'<table><thead><tr><th>Ticker</th><th>Score</th><th>Axes</th><th>Firing</th><th>State</th></tr></thead><tbody>'+body+'</tbody></table>'
+      +'<div class="foot">Confluence = number of forensic axes firing (drift≥70, coordination≥20, suspicion≥60, |FVD|≥100, active bubble). Score blends the normalized magnitudes. Foreign filers excluded.</div>'
+      +'</div>';
+  }
+  function cardScreen(rows, p){
+    var crit=[]; if(p.minCoordination!=null)crit.push('coord≥'+p.minCoordination); if(p.minDrift!=null)crit.push('drift≥'+p.minDrift);
+    if(p.maxVms!=null)crit.push('VMS≤'+p.maxVms); if(p.minFvdPct!=null)crit.push('FVD≥'+p.minFvdPct+'%');
+    if(p.maxFvdPct!=null)crit.push('FVD≤'+p.maxFvdPct+'%'); if(p.energy)crit.push(p.energy+' energy'); if(p.state)crit.push(p.state);
+    return cardTable('Structural screen · '+(crit.join(' · ')||'all'), rows,
+      ['ticker','verdict','coordination_score','drift_score','vms','fvd_pct','energy_remaining','narrative_state']);
+  }
+  function cardTable(title, rows, cols){
+    if(!rows.length) return '<div class="card"><div class="card-top"><div class="tkr" style="font-size:16px">'+esc(title)+'</div></div><div class="empty">No rows matched.</div></div>';
+    var head = cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('');
+    var body = rows.map(function(r){
+      return '<tr>'+cols.map(function(c){
+        var v=r[c]; if(c==='ticker') return '<td class="t">'+esc(v)+'</td>';
+        if(/fvd_pct/.test(c)) return '<td class="mono">'+(v==null?'—':pct(v))+'</td>';
+        if(/score|drift|vms|energy|coordination/.test(c)) return '<td class="mono">'+f0(v)+'</td>';
+        return '<td>'+esc(v==null?'—':v)+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+    return '<div class="card"><div class="card-top"><div class="tkr" style="font-size:16px">'+esc(title)
+      +'<small>'+rows.length+' rows</small></div></div><table><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>'
+      +'<div class="foot">Latest snapshot · foreign filers excluded · anon read-only.</div></div>';
+  }
+
+  // ── Run ─────────────────────────────────────────────────────────────────────
+  var busy=false;
+  function run(q){
+    q=(q||'').trim(); if(!q||busy) return;
+    busy=true; _calls=[];
+    $('go').disabled=true;
+    $('err').innerHTML=''; $('debug').innerHTML=''; $('cards').innerHTML='';
+    $('asked').innerHTML='<div class="asked"><span class="spinner"></span>Searching <b>'+esc(q)+'</b>…</div>';
+    var t0=Date.now();
+    tickerSet().then(function(set){
+      var r = route(q, set);
+      var exec = EXEC[r.intent] || execFallback;
+      return exec(r.params).then(function(out){ return { r:r, out:out }; });
+    }).then(function(z){
+      var ms=Date.now()-t0;
+      $('asked').innerHTML='<div class="asked">Q: <b>'+esc(q)+'</b></div>';
+      renderDebug(z.r, ms, (z.out.cards||[]).length);
+      var cards=z.out.cards||[];
+      $('cards').innerHTML = cards.length? cards.join('') :
+        '<div class="empty">'+esc(z.out.note||'No results.')+'</div>';
+    }).catch(function(e){
+      $('asked').innerHTML='<div class="asked">Q: <b>'+esc(q)+'</b></div>';
+      $('err').innerHTML='<div class="err"><div class="h">Error</div><div class="m">'+esc(e.message||e)
+        +'</div><div class="m" style="font-size:11px;color:var(--mp-text-muted);margin-top:6px">If this mentions auth/JWT or an empty SUPABASE env, the anon key is not injected on this deploy.</div></div>';
+    }).then(function(){ busy=false; $('go').disabled=false; });
+  }
+  function renderDebug(r, ms, nCards){
+    var pillCls = r.intent==='sector_cross_section'?'amber':(r.intent==='daily_anomaly_feed'||r.intent==='structural_screen')?'violet':'cyan';
+    var calls = _calls.map(function(c){ return '<code>GET /rest/v1/'+esc(c)+'</code>'; }).join('');
+    var html='<div class="debug"><div class="debug-head" id="dbgh">'
+      +'<div class="left"><span class="pill '+pillCls+'">'+esc(r.intent)+'</span>'
+      +'<span class="debug-meta">params '+esc(JSON.stringify(r.params||{}))+'</span></div>'
+      +'<span class="debug-meta">'+nCards+' card(s) · '+ms+'ms · '+_calls.length+' query(ies) · show</span></div>'
+      +'<div class="debug-body" id="dbgb" style="display:none">'+ (calls||'<i>no queries</i>') +'</div></div>';
+    $('debug').innerHTML=html;
+    var b=$('dbgb'), open=false;
+    $('dbgh').onclick=function(){ open=!open; b.style.display=open?'block':'none'; };
+  }
+
+  // ── Wire up ──────────────────────────────────────────────────────────────
+  $('chips').innerHTML = EXAMPLES.map(function(e){ return '<button class="chip" type="button">'+esc(e)+'</button>'; }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function(b){
+    b.onclick=function(){ $('q').value=b.textContent; run(b.textContent); };
+  });
+  $('form').addEventListener('submit', function(ev){ ev.preventDefault(); run($('q').value); });
+
+  if(!SB || !ANON){
+    $('err').innerHTML='<div class="err"><div class="h">Not configured</div><div class="m">SUPABASE_URL / SUPABASE_ANON were not injected. On the deploy these come from the Vercel project env (already set for the rest of the site).</div></div>';
+  }
+})();
+</script>
+</body>
+</html>
