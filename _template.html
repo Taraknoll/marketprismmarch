@@ -5204,10 +5204,21 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
         <div class="mi-sec-head">
           <div>
             <div class="mi-sec-title">Top Stories</div>
-            <div class="mi-sec-sub">Today's biggest movers that carry a real narrative — ranked by live price &amp; volume right now, with each story's source (SRS) and analyst (ACS) credibility shown alongside.</div>
+            <div class="mi-sec-sub">The biggest movers from the last 24 hours that carry a real narrative — fresh stories ranked by live price &amp; volume impact, with each story's source (SRS) and analyst (ACS) credibility shown alongside.</div>
           </div>
         </div>
         <div class="mi-wks-list" id="mi-wks-list"></div>
+      </div>
+
+      <!-- 3b) RECENT ANALYST CALLS -->
+      <div class="mi-section">
+        <div class="mi-sec-head">
+          <div>
+            <div class="mi-sec-title">Recent Analyst Calls</div>
+            <div class="mi-sec-sub">Fresh sell-side &amp; research coverage from the past few days — explicit rating actions (upgrades, downgrades, price-target &amp; initiation calls) surface first, then the most credible coverage ranked by analyst score (ACS).</div>
+          </div>
+        </div>
+        <div class="mi-wks-list" id="mi-analyst-list"></div>
       </div>
 
       <!-- 2) MACRO CURRENTS -->
@@ -19404,7 +19415,7 @@ async function miLoadTopStories(){
     var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-wks-list');return;}
-    var rows=await miq('narrative_scorecard?select=ticker,narrative,srs,acs,ccp,wks_score,verdict,narrative_energy_regime,narrative_mass_score,nrs,genesis_date&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative=not.is.null&ticker='+encodeURIComponent(MP_EXCLUDED_TICKERS)+'&order=wks_score.desc.nullslast&limit=120');
+    var rows=await miq('narrative_scorecard?select=ticker,narrative,srs,acs,ccp,wks_score,verdict,narrative_energy_regime,narrative_mass_score,nrs,genesis_date,days_elapsed&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative=not.is.null&ticker='+encodeURIComponent(MP_EXCLUDED_TICKERS)+'&order=wks_score.desc.nullslast&limit=120');
     if(!rows||!rows.length){miDropPanel('mi-wks-list');return;}
     // Junk filter + collapse to ONE (most credible) narrative per ticker.
     var best={};
@@ -19419,6 +19430,14 @@ async function miLoadTopStories(){
     });
     var cands=Object.keys(best).map(function(t){return best[t];});
     if(!cands.length){miDropPanel('mi-wks-list');return;}
+    // Top Stories = what BROKE in the last ~24h, not every still-active narrative.
+    // Honor that window but stay weekend/holiday-safe: widen the lookback until
+    // the panel has enough to fill, and only as a last resort keep the full set
+    // so it never collapses on a quiet Monday. days_elapsed = snapshot - genesis.
+    var freshBy=function(maxD){return cands.filter(function(r){var de=r.days_elapsed;return de!=null&&Number(de)<=maxD;});};
+    var recent=freshBy(1);
+    if(recent.length<8)recent=freshBy(3);
+    if(recent.length>=6)cands=recent;
     // Bound the live-quote call: rank candidates by narrative significance (WKS)
     // and quote the top slice — among those, movement decides the order.
     cands.sort(function(a,b){return b._wks-a._wks;});
@@ -19477,6 +19496,70 @@ async function miLoadTopStories(){
     }).join('');
     miAnimateBars(list);miCountUp(list);
   }catch(e){miDropPanel('mi-wks-list');}
+}
+
+/* 3b) RECENT ANALYST CALLS — there is no structured ratings feed in the DB, so
+   this is built from analyst/research-firm-attributed narratives (analyst_firm)
+   that broke in the last few days. Genuine rating actions (upgrade/downgrade/
+   price-target/initiation) are detected by language and floated to the top; the
+   rest is ranked by analyst credibility (ACS). Deliberately labelled "calls /
+   coverage", NOT "re-ratings" — analyst_firm is often a research outlet
+   (GuruFocus, Trefis, Motley Fool), not a clean sell-side rating transition. */
+var MP_RATING_RX=/\b(?:upgrades?|upgraded|upgrading|downgrades?|downgraded|downgrading|price\s+target|price\s+objective|initiates?|initiated|initiating|initiation|reiterates?|reiterated|reiterating|reaffirms?|reaffirmed|reaffirming|top\s+pick|(?:buy|sell|hold|neutral|overweight|underweight|outperform|underperform)\s+rating|rated\s+(?:buy|sell|hold|neutral|overweight|underweight|outperform|underperform)|maintain(?:s|ed)?\s+(?:a\s+|its\s+|their\s+)?(?:buy|sell|hold|overweight|underweight|outperform|rating)|(?:raises?|raised|raising|cuts?|cutting|lowers?|lowered|lowering|boosts?|boosted|hikes?|hiked|trims?|trimmed)\s+(?:its\s+|their\s+|the\s+)?(?:price\s+)?(?:pt|target|price\s+objective|price\s+target|price))/i;
+async function miLoadAnalystCalls(){
+  var list=document.getElementById('mi-analyst-list');
+  if(!list)return;
+  try{
+    var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
+    var day=d&&d[0]&&d[0].snapshot_date;
+    if(!miFreshDay(day,3)){miDropPanel('mi-analyst-list');return;}
+    var rows=await miq('narrative_scorecard?select=ticker,narrative,analyst_firm,source_outlet,srs,acs,verdict,genesis_date,days_elapsed&snapshot_date=eq.'+encodeURIComponent(day)+'&analyst_firm=not.is.null&narrative=not.is.null&ticker='+encodeURIComponent(MP_EXCLUDED_TICKERS)+'&order=genesis_date.desc.nullslast&limit=120');
+    if(!rows||!rows.length){miDropPanel('mi-analyst-list');return;}
+    // Junk filter + collapse to ONE row per ticker (rating action wins, else higher ACS).
+    var best={};
+    rows.forEach(function(r){
+      if(/^[A-Z][A-Z.\-]{0,7}\s+narrative\s*:/i.test(String(r.narrative||'')))return;   // template stub
+      if(typeof mpIsContentless==='function'&&mpIsContentless(r.narrative))return;        // contentless page
+      r._rate=MP_RATING_RX.test(String(r.narrative||''));
+      r._acs=Number(r.acs)||0;
+      var cur=best[r.ticker];
+      if(!cur||(r._rate&&!cur._rate)||(r._rate===cur._rate&&r._acs>cur._acs))best[r.ticker]=r;
+    });
+    var cands=Object.keys(best).map(function(t){return best[t];});
+    if(!cands.length){miDropPanel('mi-analyst-list');return;}
+    // "Past few days" window, weekend/holiday-safe: widen until the panel fills.
+    var freshBy=function(maxD){return cands.filter(function(r){var de=r.days_elapsed;return de!=null&&Number(de)<=maxD;});};
+    var recent=freshBy(3);
+    if(recent.length<6)recent=freshBy(7);
+    if(recent.length>=4)cands=recent;
+    // Rating actions first, then analyst credibility, then recency.
+    cands.sort(function(a,b){
+      if(a._rate!==b._rate)return a._rate?-1:1;
+      if(b._acs!==a._acs)return b._acs-a._acs;
+      return String(b.genesis_date||'').localeCompare(String(a.genesis_date||''));
+    });
+    list.innerHTML=cands.slice(0,8).map(function(r,i){
+      var acsNum=Number(r.acs)||0;
+      var vc=miVerdictColor(r.verdict);
+      var gen=miShortDate(r.genesis_date);
+      var firm=r.analyst_firm||r.source_outlet||'';
+      var logo=(typeof logoHTML==='function')?logoHTML(r.ticker,'sm'):'';
+      var tag=r._rate?miPill('RATING CALL','#00DE94'):miPill('COVERAGE','#00AEFF');
+      return '<a class="mi-wks-row" href="/ticker/'+encodeURIComponent(r.ticker)+'" style="animation-delay:'+(i*0.05)+'s;">'
+        +'<span class="mi-wks-rank'+(i===0?' mi-r1':i===1?' mi-r2':i===2?' mi-r3':'')+'">'+(i+1)+'</span>'
+        +logo
+        +'<span class="mi-wks-mid"><span class="mi-wks-narr" style="display:block;">'+miEsc(r.narrative)+'</span>'
+        +'<span class="mi-wks-meta"><b style="color:var(--mp-text-secondary);font-weight:700;">'+miEsc(r.ticker)+'</b>'
+        +tag
+        +(firm?'<span style="font-weight:600;color:var(--mp-text-secondary);">'+miEsc(firm)+'</span>':'')
+        +(r.verdict?miPill(r.verdict,vc):'')
+        +(gen?'<span title="When this call was first detected">since '+gen+'</span>':'')
+        +'</span></span>'
+        +'<span class="mi-wks-score"><span class="mi-wks-num" data-mi-count="'+acsNum.toFixed(1)+'">0</span><span class="mi-wks-num-lbl">ACS</span><span class="mi-wks-track" style="display:block;"><span class="mi-wks-fill" style="display:block;" data-mi-w="'+acsNum+'"></span></span></span>'
+      +'</a>';
+    }).join('');
+    miAnimateBars(list);miCountUp(list);
+  }catch(e){miDropPanel('mi-analyst-list');}
 }
 
 /* 4) SECTOR STORIES — sector_news, claim vs structural rebuttal */
@@ -19566,6 +19649,8 @@ function miSkeleton(){
   if(ml)ml.innerHTML=miSkels(4,120);
   var wl=document.getElementById('mi-wks-list');
   if(wl)wl.innerHTML=miSkels(6,76);
+  var al=document.getElementById('mi-analyst-list');
+  if(al)al.innerHTML=miSkels(5,76);
   var sg=document.getElementById('mi-story-grid');
   if(sg)sg.innerHTML=miSkels(6,170);
 }
@@ -19583,13 +19668,13 @@ async function loadMarketInsights(opts){
   opts=opts||{};
   miRestorePanels();
   if(!SUPABASE_URL||!SUPABASE_ANON){
-    ['mi-nmap-mosaic','mi-macro-list','mi-wks-list','mi-story-grid'].forEach(function(id){miDropPanel(id);});
+    ['mi-nmap-mosaic','mi-macro-list','mi-wks-list','mi-analyst-list','mi-story-grid'].forEach(function(id){miDropPanel(id);});
     miQuietNote();
     return;
   }
   if(!opts.silent)miSkeleton();
   miDate();
-  await Promise.all([miLoadNmap(),miLoadMacro(),miLoadTopStories(),miLoadStories()]);
+  await Promise.all([miLoadNmap(),miLoadMacro(),miLoadTopStories(),miLoadAnalystCalls(),miLoadStories()]);
   miQuietNote();
   _miLastLoad=Date.now();
 }
