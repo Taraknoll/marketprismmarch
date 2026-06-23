@@ -4531,6 +4531,11 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
 /* Strategy tiles reuse the .lb-section board look (above); keep the subtitle to one line. */
 .sl-grid .lb-hsub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sl-grid .lb-section .sl-foot{border-top:1px solid var(--mp-border);}
+.sl-grid .lb-head{align-items:flex-start;}
+.sl-thesis{font-size:12px;color:var(--mp-text-secondary);margin-top:6px;line-height:1.45;}
+.sl-dir{flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:6px;border:1px solid;white-space:nowrap;}
+.sl-dir-long{color:#00DE94;border-color:rgba(0,222,148,.4);background:rgba(0,222,148,.1);}
+.sl-dir-short{color:#FF4D4D;border-color:rgba(255,77,77,.4);background:rgba(255,77,77,.1);}
 @media(max-width:767px){.sl-grid{grid-template-columns:1fr;}.sl-conv{width:66px;}.sl-select{margin-left:0;}}
 
 /* ── Leaderboard Toolbar ── */
@@ -5837,7 +5842,7 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
         <div class="sl-header">
           <div class="sl-eyebrow">Market Prism · Daily Strategy Screener</div>
           <h2 class="sl-title">Daily Strategy Leaderboards</h2>
-          <p class="sl-sub">Today's fired signals from eight classic, research-backed short-term strategies — each named after its originator. One row per ticker&nbsp;×&nbsp;strategy that fired on the latest scan, ranked by conviction.</p>
+          <p class="sl-sub">Today's fired signals from eight classic, research-backed short-term strategies — each named after its originator. <b style="color:var(--mp-text-secondary);font-weight:600;">All are long-only</b>: a fired ticker is a long-side candidate (a mean-reversion bounce, breakout, or momentum continuation), never a short. One row per ticker&nbsp;×&nbsp;strategy on the latest scan, ranked by conviction.</p>
           <div class="sl-stats" id="sl-stats"></div>
         </div>
         <div class="sl-disclaimer">Candidate research screen — classic strategies, not trade advice. Edge is calibration-only (one market regime). “Fires” ≠ buy signal.</div>
@@ -19224,6 +19229,25 @@ window.computeBoardJaccard = function(opts){
   var SHORT={CONNORS_RSI2:'RSI(2)',WILLIAMS_R:'Williams %R',BOLLINGER_REVERT:'Bollinger',
     IBS_REVERSION:'IBS',LEHMANN_REVERSAL:'S-T Reversal',DONCHIAN_TURTLE:'Donchian',
     DARVAS_BOX:'Darvas',GEORGE_HWANG_52W:'52W High'};
+  // Plain-English "what this setup is betting on" — every strategy is long-only,
+  // so the read makes the direction explicit (an oversold name is a long bounce
+  // candidate, NOT a short). Falls back to a per-family line for unfired ones.
+  var THESIS={
+    WILLIAMS_R:      'Deeply oversold on Williams %R — bets on a mean-reversion bounce. Long, not short.',
+    CONNORS_RSI2:    'RSI(2) oversold inside an uptrend — bets on a short-term bounce. Long, not short.',
+    BOLLINGER_REVERT:'Stretched below the lower Bollinger band — bets on a snap back up. Long, not short.',
+    IBS_REVERSION:   'Closed weak near the day low — bets on a next-day reversion higher. Long, not short.',
+    LEHMANN_REVERSAL:'Worst recent short-term losers — bets on a cross-sectional reversal up. Long, not short.',
+    DONCHIAN_TURTLE: 'Broke above its N-day high — rides the new uptrend. Long-side breakout.',
+    DARVAS_BOX:      'Broke out of a Darvas box on strength — long-side breakout / continuation.',
+    GEORGE_HWANG_52W:'Near 52-week highs with momentum — long-side trend continuation.'
+  };
+  var FAM_THESIS={
+    MEAN_REVERSION:'Oversold / stretched names that tend to revert — long-side bounce candidates, not shorts.',
+    BREAKOUT:'Names breaking out to new highs — long-side breakout / continuation candidates.',
+    MOMENTUM:'Strong-trend names near their highs — long-side momentum continuation.'
+  };
+  function thesisFor(s){return THESIS[s.strategy]||FAM_THESIS[s.family]||'';}
 
   function $(id){return document.getElementById(id);}
   function esc(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;}
@@ -19289,10 +19313,19 @@ window.computeBoardJaccard = function(opts){
       ? shown.map(function(r,i){return strategyRow(r,i,fc,maxConv);}).join('')
       : '<div class="lb-empty">No names.</div>';
     var foot=(shown[0]&&shown[0].citation)?('<div class="sl-foot">'+esc(shown[0].citation)+'</div>'):'';
+    // Direction is on-spec to surface — every strategy here is LONG. Show it as a
+    // tag plus a plain-English thesis so a fired ticker reads as a long candidate.
+    var dir=(shown[0]&&shown[0].direction)||'LONG';
+    var hz=shown[0]&&num(shown[0].horizon_days);
+    var dirCls=/SHORT/i.test(dir)?'sl-dir-short':'sl-dir-long';
+    var dirTag='<span class="sl-dir '+dirCls+'">'+esc(dir)+(hz!=null?' · '+hz+'d':'')+'</span>';
+    var thesis=thesisFor(s);
     return '<div class="lb-section">'
       +'<div class="lb-accent" style="background:'+fc+';"></div>'
-      +'<div class="lb-head"><div><div class="lb-htitle">'+esc(s.strategy_name)+'</div>'
-        +'<div class="lb-hsub">'+esc(sub)+'</div></div></div>'
+      +'<div class="lb-head"><div style="flex:1;min-width:0;"><div class="lb-htitle">'+esc(s.strategy_name)+'</div>'
+        +'<div class="lb-hsub">'+esc(sub)+'</div>'
+        +(thesis?'<div class="sl-thesis">'+esc(thesis)+'</div>':'')
+      +'</div>'+dirTag+'</div>'
       +'<div class="lb-rows">'+rowsHtml+'</div>'
       + foot
     +'</div>';
