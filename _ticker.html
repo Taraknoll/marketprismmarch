@@ -1568,6 +1568,16 @@
   .nf-verdict strong { color: var(--mp-text-primary); font-weight: 700; }
   .nf-verdict .nf-v-flag { color: #FF6B6B; font-weight: 700; }
   .nf-verdict .nf-v-ok { color: #34d99b; font-weight: 700; }
+  .nf-share-btn {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; font-family: var(--font-body);
+    color: #00AEFF; background: rgba(0,174,255,0.08);
+    border: 1px solid rgba(0,174,255,0.22); border-radius: 8px;
+    padding: 6px 11px; cursor: pointer; white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .nf-share-btn:hover { background: rgba(0,174,255,0.14); border-color: rgba(0,174,255,0.40); }
+  .nf-share-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
 
   /* ── Keyword chips (inside expanded body) ── */
   .narr-kw-wrap {
@@ -4880,6 +4890,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
             Trending Narratives
             <span class="section-label-sub">Top stories being cited in the market</span>
             <span class="narr-info-btn" id="narr-info-toggle" style="cursor:pointer;margin-left:4px;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:rgba(0,174,255,0.08);border:1px solid rgba(0,174,255,0.2);color:#00AEFF;font-size:11px;font-weight:700;font-family:var(--font-body);transition:all 0.15s;" title="What are Trending Narratives?">i</span>
+            <button type="button" class="nf-share-btn" onclick="shareNarrativeVerdict()" title="Share this forensic verdict"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
           </div>
           <div class="narr-info-box" id="narr-info-box" style="display:none;padding:14px 18px;margin:0 0 4px;background:rgba(0,174,255,0.04);border:1px solid rgba(0,174,255,0.12);border-radius:10px;font-size:13px;color:var(--mp-text-secondary);line-height:1.6;">
             <strong style="color:var(--mp-text-primary);">Trending Narratives</strong> are the most-cited market stories about this ticker, clustered by theme. Each narrative is scored by our four-agent pipeline for verification quality, source credibility, and data-backing. The rank number reflects how many independent citations we found across news sources. Click any narrative to expand its claim verification, quality signals, and full source list.
@@ -5074,6 +5085,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
         Trending Narratives
         <span class="section-label-sub">Top stories being cited in the market</span>
         <span class="narr-info-btn" style="cursor:pointer;margin-left:4px;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:rgba(0,174,255,0.08);border:1px solid rgba(0,174,255,0.2);color:#00AEFF;font-size:11px;font-weight:700;font-family:var(--font-body);transition:all 0.15s;" title="What are Trending Narratives?">i</span>
+        <button type="button" class="nf-share-btn" onclick="shareNarrativeVerdict()" title="Share this forensic verdict"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
       </div>
       <div class="narr-info-box" style="display:none;padding:14px 18px;margin:0 0 4px;background:rgba(0,174,255,0.04);border:1px solid rgba(0,174,255,0.12);border-radius:10px;font-size:13px;color:var(--mp-text-secondary);line-height:1.6;">
         <strong style="color:var(--mp-text-primary);">Trending Narratives</strong> are the most-cited market stories about this ticker, clustered by theme. Each narrative is scored by our four-agent pipeline for verification quality, source credibility, and data-backing. The rank number reflects how many independent citations we found across news sources. Click any narrative to expand its claim verification, quality signals, and full source list.
@@ -9743,6 +9755,41 @@ async function loadNarratives() {
     if(narrListTopErr) narrListTopErr.innerHTML = `<div class="inline-err">Narratives: ${esc(err.message)}</div>`;
   }
 }
+
+// ── Share the narrative-integrity verdict (viral loop) ───────────────────────
+// User-initiated: opens the native share sheet (mobile) or an X compose window
+// (desktop) pre-filled with the live verdict line + canonical ticker URL, and
+// copies the link as a fallback. Never auto-posts — the user confirms the send.
+function shareNarrativeVerdict() {
+  var tk = (typeof TICKER === 'string' ? TICKER : '').toUpperCase();
+  if (!tk) return;
+  var vEls = ['narr-list-top', 'narr-list']
+    .map(function (id) { var el = document.getElementById(id); return el ? el.querySelector('.nf-verdict') : null; })
+    .filter(Boolean);
+  var vEl = vEls.filter(function (e) { return e.offsetParent !== null; })[0] || vEls[0];
+  var verdict = vEl ? vEl.textContent.replace(/\s+/g, ' ').trim() : ('Forensic narrative check on ' + tk);
+  var url = 'https://www.marketprism.co/ticker/' + encodeURIComponent(tk);
+  var text = verdict + ' — forensic narrative check via Market Prism';
+  try { if (typeof gtag === 'function') gtag('event', 'share_verdict', { ticker: tk }); } catch (e) {}
+  function nfToast(msg) {
+    var t = document.getElementById('mp-toast');
+    if (!t) return;
+    t.textContent = msg; t.classList.add('active');
+    clearTimeout(t._hide); t._hide = setTimeout(function () { t.classList.remove('active'); }, 2600);
+  }
+  if (navigator.share) {
+    navigator.share({ title: 'Market Prism — ' + tk + ' forensic check', text: verdict, url: url }).catch(function () {});
+    return;
+  }
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url),
+    '_blank', 'noopener,noreferrer');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function () { nfToast('Link copied — verdict ready to share.'); }, function () {});
+  } else {
+    nfToast('Opening share…');
+  }
+}
+window.shareNarrativeVerdict = shareNarrativeVerdict;
 
 // ── Keyword Price Outlook (Overview tab, after Warranted vs Hype) ────────────
 function renderKeywordOutlook() {
