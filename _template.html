@@ -14198,8 +14198,13 @@ async function loadStrategyData(){
     // (low-conviction) cards into trade_cards_live, which the gallery has no
     // limit/floor to suppress — exclude them so the count reflects conviction
     // cards only. Remove this filter if upstream stops emitting STANDARD.
+    // Confidence floor: only surface cards the model is >=65% confident in.
+    // confidence is stored as a 0-1 fraction (rendered ×100 in buildStratCard),
+    // so 0.65 = 65%. gte excludes null-confidence rows, which would otherwise
+    // render as the 50% default and fall below the floor anyway.
     var cardUrl=SUPABASE_URL+'/rest/v1/trade_cards_live?select='+cols
       +'&card_tier=in.(UNICORN,PLATINUM,GOLD,SURPRISE)'
+      +'&confidence=gte.0.65'
       +'&order=trade_score.desc';
     var res=await fetch(cardUrl,{headers:hdrs});
     if(!res.ok)throw new Error('trade_cards_live fetch failed: '+res.status);
@@ -19340,7 +19345,11 @@ async function miLoadMacro(){
 /* 3) TOP STORIES — biggest LIVE price+volume movers among today's scored
    narratives. Authority (SRS/ACS/CCP) picks the most credible narrative per
    ticker and shows alongside; ranking is movement-first. Reuses the .mi-wks-*
-   row styles. */
+   row styles.
+   2026-06-23: overlaid the RS_BREAKOUT "Rising Winners" lane (momentum_signals).
+   Sustained price-RS leaders get a "RISING ↗" badge, a ranking boost, and bypass
+   the 24h-recency filter so a multi-week winner surfaces here even if it didn't
+   break today. Additive + read-only — no momentum data ⇒ original behavior. */
 // Narrative authority 0-100 from source reliability, analyst credibility, and
 // composite confidence. Reweights if a metric is missing so partial rows still
 // score fairly.
@@ -19382,7 +19391,17 @@ var MP_CONTENTLESS_RX = [
   /\bis\s+an?\s+entity\s+with\s+a\s+profile\b/i,
   /\bstock\s+information\s+including\s+price\b/i,
   /\bstock\s+price,\s*trades\s*(?:and|&)\s*news\b/i,
-  /\bstock\s+(?:price,\s*quote,\s*news\s*(?:and|&)\s*analysis\s+)?information(?:\s+including[^.]*)?\s+(?:is|are)\s+available\b/i
+  /\bstock\s+(?:price,\s*quote,\s*news\s*(?:and|&)\s*analysis\s+)?information(?:\s+including[^.]*)?\s+(?:is|are)\s+available\b/i,
+  // Tolerate intervening words between the data-noun and "available" — e.g.
+  // "stock information and news are available on GuruFocus" (the narrow pattern
+  // above misses the "and news" insertion).
+  /\bstock\s+(?:price|quote|quotes|news|information|info|data|headlines?|details?|profile|analysis|charts?|financials?|fundamentals?|overview)\b[^.]{0,40}?\b(?:is|are)\s+available\b/i,
+  // "available on <financial-data aggregator>" landing tell.
+  /\bavailable\s+(?:on|at|via|from|through)\s+(?:guru\s*focus|yahoo|finviz|tip\s*ranks|stock\s*analysis|market\s*watch|nasdaq|market\s*beat|trading\s*view|seeking\s*alpha|stock\s*twits|bar\s*chart|zacks|simply\s*wall\s*st|wallmine|webull|moomoo|morningstar|investing\.com|benzinga|tikr|wallstreetzen)\b/i,
+  // Aggregator "<descriptor> page by/on <outlet>" / "stock information page" tells —
+  // e.g. "is the subject of a general news and trade information page by GuruFocus".
+  /\b(?:information|profile|quote|data|summary|overview|landing)\s+page\s+(?:by|on|at|from|for)\b/i,
+  /\b(?:stock|company|corporate|ticker)\s+(?:information|profile|quote|data|summary|overview|news\s+and\s+trade\s+information)\s+page\b/i
 ];
 function mpIsContentless(txt){
   if(!txt) return false;
@@ -19425,6 +19444,24 @@ async function miLoadTopStories(){
     });
     var cands=Object.keys(best).map(function(t){return best[t];});
     if(!cands.length){miDropPanel('mi-wks-list');return;}
+    // ── Price-momentum / relative-strength overlay (RS_BREAKOUT "Rising Winners" lane) ──
+    // momentum_signals is the SUSTAINED price-RS axis the movement+recency ranking below
+    // can't see (a multi-week leader that didn't pop today). Read-only (anon has SELECT).
+    // A "leader" = fired the lane OR sits in the top momentum decile. We use it to badge
+    // leader rows, boost their rank, and let leaders bypass the 24h-recency filter.
+    // Fully additive: any failure / empty map leaves Top Stories exactly as it was.
+    var momMap={};
+    try{
+      var md=await miq('momentum_signals?select=snapshot_date&order=snapshot_date.desc&limit=1');
+      var mday=md&&md[0]&&md[0].snapshot_date;
+      if(mday&&miFreshDay(mday,4)){
+        var mrows=await miq('momentum_signals?select=ticker,momentum_rank,momentum_composite,momentum_decile,rs_spy_20d,fires&snapshot_date=eq.'+encodeURIComponent(mday)+'&limit=300');
+        (mrows||[]).forEach(function(m){
+          momMap[m.ticker]={rank:Number(m.momentum_rank),comp:Number(m.momentum_composite)||0,
+            rs:Number(m.rs_spy_20d),leader:(m.fires===true)||Number(m.momentum_decile)===1};
+        });
+      }
+    }catch(_){momMap={};}
     // Top Stories = what BROKE in the last ~24h, not every still-active narrative.
     // Honor that window but stay weekend/holiday-safe: widen the lookback until
     // the panel has enough to fill, and only as a last resort keep the full set
@@ -19432,10 +19469,21 @@ async function miLoadTopStories(){
     var freshBy=function(maxD){return cands.filter(function(r){var de=r.days_elapsed;return de!=null&&Number(de)<=maxD;});};
     var recent=freshBy(1);
     if(recent.length<8)recent=freshBy(3);
-    if(recent.length>=6)cands=recent;
+    if(recent.length>=6){
+      // keep the recent set, but re-admit momentum leaders the 24h filter dropped —
+      // a sustained rising winner often rides an older narrative (high days_elapsed).
+      var keep={};recent.forEach(function(r){keep[r.ticker]=1;});
+      var momExtra=cands.filter(function(r){return momMap[r.ticker]&&momMap[r.ticker].leader&&!keep[r.ticker];});
+      cands=recent.concat(momExtra);
+    }
     // Bound the live-quote call: rank candidates by narrative significance (WKS)
     // and quote the top slice — among those, movement decides the order.
-    cands.sort(function(a,b){return b._wks-a._wks;});
+    // momentum leaders first (so they survive the slice), then by WKS significance.
+    cands.sort(function(a,b){
+      var la=(momMap[a.ticker]&&momMap[a.ticker].leader)?1:0,lb=(momMap[b.ticker]&&momMap[b.ticker].leader)?1:0;
+      if(la!==lb)return lb-la;
+      return b._wks-a._wks;
+    });
     cands=cands.slice(0,60);
     var quotes=await miLiveQuotes(cands.map(function(r){return r.ticker;}));
     var maxPm=0,maxVm=0;
@@ -19451,13 +19499,24 @@ async function miLoadTopStories(){
     // WKS/authority instead. After-hours stays on movement-ranking so real
     // post-close earnings reactions still surface.
     var useMove=anyMove&&!miIsPremarket();
+    // Momentum is ADDITIVE to the movement score (never dilutes a genuine big mover):
+    // a name's sort key gets up to MOM_BOOST_PTS for sustained RS, plus a flat
+    // MOM_LEADER_BONUS for fired/top-decile leaders so they surface even on a quiet
+    // tape. With no momentum data the formula collapses back to the original exactly.
+    var MOM_BOOST_PTS=50;        // momentum's max add to the movement-scale key (0-100)
+    var MOM_LEADER_BONUS=40000;  // guaranteed lift for a Rising-Winners leader
     cands.forEach(function(r){
       var pmN=maxPm>0?(r._pm/maxPm)*100:0;
       var vmN=maxVm>0?(r._vm/maxVm)*100:0;
       r._move=0.5*pmN+0.5*vmN;
-      // movement-first, authority as a gentle tiebreak. Fall back to pure
-      // authority when live quotes are unavailable (weekend / holiday / API down).
-      r._rank=useMove?(r._move*1000+r._auth):r._auth;
+      var m=momMap[r.ticker];
+      r._mom=m?m.comp:0;                       // 0-100 momentum composite
+      r._momLeader=!!(m&&m.leader);
+      r._momRank=m?m.rank:null;
+      r._momRs=(m&&isFinite(m.rs))?m.rs:null;
+      // movement-first (or 0 pre-open), momentum boost on top, authority tiebreak.
+      var base=useMove?r._move:0;
+      r._rank=(base+MOM_BOOST_PTS*(r._mom/100))*1000+(r._momLeader?MOM_LEADER_BONUS:0)+r._auth;
     });
     cands.sort(function(a,b){return b._rank-a._rank;});
     list.innerHTML=cands.slice(0,10).map(function(r,i){
@@ -19481,6 +19540,7 @@ async function miLoadTopStories(){
         +'<span data-live-price="'+miEsc(r.ticker)+'" style="font-size:11px;color:var(--mp-text-tertiary);font-weight:500;font-family:var(--font-body);"></span>'
         +(cpStr?'<span style="font-size:11px;font-weight:700;color:'+cpCol+';font-family:var(--font-body);">'+cpStr+'</span>':'')
         +(rvStr?'<span title="Today\'s volume vs. the prior session">'+rvStr+'</span>':'')
+        +(r._momLeader?('<span class="mi-pill" title="Price-momentum leader — top-decile relative strength vs SPY (Rising Winners lane)" style="color:#00DE94;background:'+miTint('#00DE94',0.12)+';border:1px solid '+miTint('#00DE94',0.28)+';">RISING ↗'+(r._momRank?(' #'+r._momRank):'')+'</span>'):'')
         +(srs?miPill('SRS '+srs,'#00AEFF'):'')
         +(acs?miPill('ACS '+acs,'#38C8B8'):'')
         +(r.verdict?miPill(r.verdict,vc):'')
