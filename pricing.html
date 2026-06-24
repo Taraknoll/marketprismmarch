@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8VZETTJQ27"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-8VZETTJQ27');</script>
 <!-- Vercel Web Analytics -->
 <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -507,6 +510,7 @@ body::before{
         throw new Error(payload.error || payload.message || 'Unable to start Stripe Checkout.');
       }
 
+      try { if (typeof gtag === 'function') gtag('event', 'begin_checkout', { currency: 'USD', value: 25, items: [{ item_id: priceId, item_name: 'Market Prism Pro', price: 25, quantity: 1 }] }); } catch(_){}
       window.location.href = payload.url;
     } catch(err){
       showMessage('error', err && err.message ? err.message : 'Checkout failed. Please try again.');

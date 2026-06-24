@@ -477,6 +477,7 @@ body::before{
       localStorage.setItem('mp-beta-expires', grantedExpires);
       localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()}));
       showMsg('success','Beta access granted. Redirecting…');
+      try { if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'beta_code' }); } catch(_){}
       document.getElementById('btn-beta').classList.add('success');
       setTimeout(function(){ window.location.href = nextDestination(); }, 700);
     } catch(err){
@@ -537,6 +538,7 @@ body::before{
       var result = await supabase.auth.signInWithPassword({ email: email, password: password });
       if(result.error) throw result.error;
       showMsg('success','Signed in successfully. Redirecting…');
+      try { if (typeof gtag === 'function') gtag('event', 'login', { method: 'email' }); } catch(_){}
       document.getElementById('btn-signin').classList.add('success');
       var token = result.data && result.data.session ? result.data.session.access_token : null;
       await mintSessionCookie(token);
@@ -571,6 +573,7 @@ body::before{
       var result = await supabase.auth.signUp({ email: email, password: password, options: { emailRedirectTo: window.location.origin + '/dashboard' } });
       if(result.error) throw result.error;
       showMsg('success','Account created! Redirecting to dashboard…');
+      try { if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'email' }); } catch(_){}
       // Auto-sign in and redirect regardless of confirmation setting
       if(!result.data.session){
         var signIn = await supabase.auth.signInWithPassword({ email: email, password: password });
