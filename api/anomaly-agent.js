@@ -587,6 +587,63 @@ async function execWhatChanged(input, ctx) {
   return { card, rowCount: rows.length, summary };
 }
 
+// Validate a narrative/thesis against the historical corpus via the existing
+// /api/dots-predict engine (embeds the thesis, pgvector-searches narrative_dots).
+// Honest framing: descriptive precedent, NOT a forward return signal.
+async function execValidateNarrative(input, ctx) {
+  const ticker = cleanTicker(input && input.ticker);
+  const narrativeText = String((input && input.narrative) || '').trim();
+  if (!ticker) return { rowCount: 0, summary: { error: 'validate_narrative needs a ticker (the company the thesis is about).' } };
+  if (narrativeText.length < 10) return { rowCount: 0, summary: { error: 'validate_narrative needs a narrative/thesis of at least a sentence.' } };
+  if (!ctx.origin) return { rowCount: 0, summary: { error: 'analogue engine unavailable (no request origin).' } };
+
+  let data;
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 28000);
+    const r = await fetch(`${ctx.origin}/api/dots-predict`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker, narrativeText: narrativeText.slice(0, 4000) }),
+      signal: ctl.signal,
+    });
+    clearTimeout(timer);
+    data = await r.json().catch(() => ({}));
+    if (ctx.debugQueries) ctx.debugQueries.push(`POST /api/dots-predict (${ticker}, ${data && data.n_similar_dots != null ? data.n_similar_dots + ' dots' : 'err'})`);
+    if (!r.ok || (data && data.error)) return { rowCount: 0, summary: { error: (data && data.error) || `dots-predict ${r.status}` } };
+  } catch (e) {
+    return { rowCount: 0, summary: { error: 'analogue search failed: ' + (e && e.message ? e.message : 'unknown') } };
+  }
+
+  if (data.warning === 'no_similar_dots' || !data.n_similar_dots) {
+    const card = { ui: 'narrative_validate', ticker, query: narrativeText.slice(0, 240), nSimilar: 0, warning: 'no_similar_dots' };
+    return { card, rowCount: 0, summary: { ticker, n_similar_dots: 0, note: 'no close historical analogues in the corpus' } };
+  }
+
+  const pctOf = (v) => (v == null ? null : Math.round(Number(v) * 1000) / 10); // fraction -> % (1 decimal)
+  const card = {
+    ui: 'narrative_validate',
+    ticker,
+    query: narrativeText.slice(0, 240),
+    nSimilar: data.n_similar_dots,
+    nResolved: data.n_resolved_neighbors,
+    consensusPct: pctOf(data.narrative_hit_rate_5d),
+    cluster: data.cluster_thesis_label ? {
+      thesis: data.cluster_thesis_label,
+      hitRatePct: pctOf(data.cluster_hit_rate_5d),
+      nResolved: data.cluster_n_resolved,
+      baselineDeltaPct: pctOf(data.cluster_baseline_delta),
+    } : null,
+    predicted: { d5: pctOf(data.predicted_5d_return), d10: pctOf(data.predicted_10d_return), d20: pctOf(data.predicted_20d_return) },
+    examples: Array.isArray(data.neighbor_examples) ? data.neighbor_examples.slice(0, 3).map((n) => ({ ticker: n.ticker, narrative: n.narrative, at: n.observed_at })) : [],
+  };
+  const summary = {
+    ticker, n_similar_dots: data.n_similar_dots, analogue_consensus_pct: card.consensusPct,
+    cluster_thesis: data.cluster_thesis_label, cluster_hit_rate_pct: card.cluster ? card.cluster.hitRatePct : null,
+    predicted_5d_pct: card.predicted.d5, note: 'descriptive precedent from similar past narratives — NOT a validated forward return signal',
+  };
+  return { card, rowCount: data.n_similar_dots, summary };
+}
+
 async function execStructuralScreen(input, ctx) {
   const limit = clampLimit(input && input.limit, 25);
   const snap = await ctx.latestSnapshot('narrative_scorecard');
@@ -869,6 +926,7 @@ const EXECUTORS = {
   narrative_lab: execNarrativeLab,
   daily_anomaly_feed: execDailyAnomalyFeed,
   what_changed: execWhatChanged,
+  validate_narrative: execValidateNarrative,
   structural_screen: execStructuralScreen,
   bubble_screen: execBubbleScreen,
   circular_finance_lookup: execCircularFinanceLookup,
@@ -917,6 +975,18 @@ const TOOLS = [
       properties: {
         limit: { type: 'integer', description: 'Max rows (<=50, default 25).' },
       },
+    },
+  },
+  {
+    name: 'validate_narrative',
+    description: 'Validate a NARRATIVE / THESIS / CLAIM against the 3.5M-observation history: embeds the thesis and finds the most similar PAST narratives (semantic search over the narrative_dots corpus), returning how those analogues resolved (analogue consensus = % that rose over 5 days), the matched pattern-cluster (its thesis label + hit rate), example precedent cases ("what it rhymes with"), and a descriptive historical move. This is the "Narrative Lab" engine. Use when the user PASTES or STATES a narrative/thesis to check, or asks "is this thesis real/likely?", "what does this rhyme with?", "what happened to similar narratives?", "validate: <claim>", "has this story played out before?". REQUIRES the ticker the thesis is about and the narrative text. Results are descriptive precedent, NOT a price prediction.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ticker: { type: 'string', description: 'Ticker the thesis is about, e.g. NVDA.' },
+        narrative: { type: 'string', description: 'The narrative/thesis/claim text to validate (a sentence or short paragraph).' },
+      },
+      required: ['ticker', 'narrative'],
     },
   },
   {
@@ -1105,12 +1175,13 @@ module.exports = async (req, res) => {
   }
 
   const debugQueries = [];
-  const ctx = { latestSnapshot: makeSnapshotCache(debugQueries), debugQueries };
+  const origin = (req.headers && req.headers.host) ? `https://${req.headers.host}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+  const ctx = { latestSnapshot: makeSnapshotCache(debugQueries), debugQueries, origin };
 
   // Execute one tool and record card + debug.
   async function runTool(name, input) {
     const localQueries = [];
-    const toolCtx = { latestSnapshot: ctx.latestSnapshot, debugQueries: localQueries };
+    const toolCtx = { latestSnapshot: ctx.latestSnapshot, debugQueries: localQueries, origin: ctx.origin };
     let result;
     try {
       const exec = EXECUTORS[name];

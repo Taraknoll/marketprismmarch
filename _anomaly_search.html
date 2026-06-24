@@ -146,6 +146,14 @@ h1{font-size:clamp(20px,2.4vw,26px);font-weight:700;letter-spacing:-.025em;line-
 .rcp-phrase{font-size:11.5px;color:var(--mp-text-tertiary);background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:6px;padding:4px 9px;margin-top:5px;font-style:italic;}
 .rcp-snip{margin-top:6px;font-size:12px;font-style:italic;color:var(--mp-text-tertiary);line-height:1.5;border-left:2px solid var(--mp-border);padding-left:11px;}
 
+/* Narrative validation — pattern-match cluster */
+.nv-cluster{margin:16px 0;padding:13px 15px;border:1px solid var(--mp-border);border-radius:12px;background:var(--mp-obsidian);}
+.nv-thesis{font-size:14px;font-weight:600;color:var(--mp-text-primary);margin:2px 0 6px;line-height:1.4;}
+.cluster-delta{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-left:4px;}
+.cluster-delta.up{background:rgba(0,222,148,.10);color:var(--mp-green);border:1px solid rgba(0,222,148,.25);}
+.cluster-delta.dn{background:rgba(255,77,77,.10);color:var(--mp-red);border:1px solid rgba(255,77,77,.25);}
+.cluster-delta.flat{background:rgba(255,255,255,.04);color:var(--mp-text-tertiary);border:1px solid var(--mp-border);}
+
 .flag{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--mp-border);}
 .flag:first-child{border-top:none;}
 .dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0;}
@@ -240,7 +248,8 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     'Show me the AI-capex circular-finance loops',
     'Any active idiosyncratic bubbles right now?',
     'Coordinated, high-drift, richly valued names',
-    'The story on TSLA and what it rhymes with'
+    'The story on TSLA and what it rhymes with',
+    'Validate: "NVDA stays the AI hardware leader for years"'
   ];
 
   // ── DOM helpers ─────────────────────────────────────────────────────────────
@@ -359,6 +368,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     switch(card.ui){
       case 'risk_dossier':     return cardRiskDossier(card);
       case 'narrative_lab':    return cardNarrativeLab(card);
+      case 'narrative_validate': return cardNarrativeValidate(card);
       case 'anomaly_feed':     return cardAnomalyFeed(card);
       case 'circular_finance': return cardCircularFinance(card);
       case 'table':            return cardTable(card);
@@ -540,6 +550,48 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
       +(scatterChart?'<div class="chart-cap">Same-state peers · drift × valuation premium</div>'+scatterChart:'')
       +'<table><thead><tr><th>Peer</th><th>State</th><th>VMS</th><th>Drift</th><th>FVD%</th></tr></thead><tbody>'+peers+'</tbody></table>'
       +'<div class="foot">Analogues = same-state peers on the latest snapshot. Foreign filers excluded. Descriptive, not predictive.</div>'
+      +'</div>';
+  }
+
+  // narrative_validate — the real Narrative Lab engine (analogue consensus + pattern match)
+  function cardNarrativeValidate(c){
+    if(c.warning==='no_similar_dots' || !c.nSimilar){
+      return '<div class="card"><div class="card-top"><div class="tkr">'+esc(c.ticker||'')+'<small>Narrative validation</small></div></div>'
+        +(c.query?'<p class="synth"><em>Testing: "'+esc(c.query)+'"</em></p>':'')
+        +'<div class="empty">No close historical analogues found — this narrative doesn’t resemble past cases in the corpus.</div></div>';
+    }
+    var lead='This narrative rhymes with '+c.nSimilar+' past case'+(c.nSimilar===1?'':'s')+' in the corpus.'
+      +(c.consensusPct!=null?(' Of the resolved analogues, '+c.consensusPct+'% rose over the next 5 days.'):'');
+    var gauge=c.consensusPct!=null
+      ? '<div class="gauge">'+ringSvg(c.consensusPct)+'<div class="cap"><b style="color:var(--mp-text-secondary)">'+c.consensusPct
+        +'% analogue consensus</b><br>'+(c.nResolved!=null?(c.nResolved+' resolved past cases'):'')+'</div></div>'
+      : '';
+    var cluster='';
+    if(c.cluster && c.cluster.thesis){
+      var cl=c.cluster;
+      var delta=cl.baselineDeltaPct!=null
+        ? '<span class="cluster-delta '+(cl.baselineDeltaPct>0?'up':cl.baselineDeltaPct<0?'dn':'flat')+'">'+(cl.baselineDeltaPct>0?'+':'')+cl.baselineDeltaPct+' pts vs baseline</span>'
+        : '';
+      cluster='<div class="nv-cluster"><div class="rcp-h">Pattern match</div><div class="nv-thesis">'+esc(humanizeInline(cl.thesis))+'</div>'
+        +'<div class="rcp-line">'+(cl.hitRatePct!=null?(cl.hitRatePct+'% hit rate within this pattern'):'')+(cl.nResolved?(' · '+cl.nResolved+' cases'):'')+' '+delta+'</div></div>';
+    }
+    var examples='';
+    if(c.examples && c.examples.length){
+      examples='<div class="rcp-grp"><div class="rcp-h">What it rhymes with</div>'+c.examples.map(function(e){
+        return '<div class="rcp-art"><b>'+esc(e.ticker||'')+'</b>'+(e.narrative?' — '+esc(e.narrative):'')+'<div class="rcp-meta">'+(e.at?fmtDate(e.at):'')+'</div></div>';
+      }).join('')+'</div>';
+    }
+    var pred='';
+    if(c.predicted && (c.predicted.d5!=null||c.predicted.d10!=null||c.predicted.d20!=null)){
+      var mv=function(v){ return v==null?'—':((v>0?'+':'')+v+'%'); };
+      pred='<div class="rcp-grp"><div class="rcp-h">Historical move of similar narratives (descriptive)</div><div class="rcp-line">5-day '+mv(c.predicted.d5)+' · 10-day '+mv(c.predicted.d10)+' · 20-day '+mv(c.predicted.d20)+'</div></div>';
+    }
+    return '<div class="card">'
+      +'<div class="card-top"><div class="tkr">'+esc(c.ticker||'')+'<small>Narrative validation</small></div></div>'
+      +(c.query?'<p class="synth"><em>Testing: "'+esc(c.query)+'"</em></p>':'')
+      +'<div class="verdict-line">'+esc(lead)+'</div>'
+      +gauge+cluster+examples+pred
+      +'<div class="foot">Descriptive precedent from similar past narratives in the corpus — NOT a price prediction. Hit rates and moves describe what comparable stories did historically; the dot corpus is a ledger of past cases, not a validated forward signal.</div>'
       +'</div>';
   }
 
