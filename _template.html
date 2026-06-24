@@ -3617,6 +3617,7 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
   display:flex;align-items:center;gap:6px;
 }
 .gc-back-section-label .gc-label-icon{font-size:12px;}
+.gc-narr-asof{text-transform:none;letter-spacing:0;font-weight:600;color:var(--mp-text-muted);opacity:.85;}
 .gc-back-section-text{font-size:13px;color:var(--mp-text-secondary);line-height:1.6;}
 
 /* Stats grid on back */
@@ -14172,6 +14173,16 @@ function buildStratCard(d){
   /* ── BACK FACE ── */
   var storyClaim=gcEsc(d.story_claim||'No narrative available.');
   var rebuttal=gcEsc(d.forensic_rebuttal||'No rebuttal available.');
+  /* When today's card row arrived without a narrative, backfillMissingNarratives
+     patches in the ticker's most recent PRIOR story_claim/forensic_rebuttal and
+     stamps _narrative_as_of — surface that honestly with a muted dated marker. */
+  var narAsOf='';
+  if(d._narrative_as_of){
+    try{
+      var _nd=new Date(d._narrative_as_of+'T00:00:00');
+      narAsOf=' <span class="gc-narr-asof">· as of '+_nd.toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>';
+    }catch(_){}
+  }
   var dpSignal=d.dark_pool_signal||'\u2014';
   var dpDir=d.dark_pool_direction||'';
   var coordClass=d.coordination_class||'';
@@ -14186,11 +14197,11 @@ function buildStratCard(d){
       +'<div class="gc-back-price" style="text-align:center;">$'+fmtPrice(price)+'</div>'
     +'</div>'
     +'<div class="gc-back-section">'
-      +'<div class="gc-back-section-label"><span class="gc-label-icon">\uD83D\uDCF0</span> Story Claim</div>'
+      +'<div class="gc-back-section-label"><span class="gc-label-icon">\uD83D\uDCF0</span> Story Claim'+narAsOf+'</div>'
       +'<div class="gc-back-section-text">'+storyClaim+'</div>'
     +'</div>'
     +'<div class="gc-back-section">'
-      +'<div class="gc-back-section-label"><span class="gc-label-icon">\uD83D\uDD0D</span> Forensic Rebuttal</div>'
+      +'<div class="gc-back-section-label"><span class="gc-label-icon">\uD83D\uDD0D</span> Forensic Rebuttal'+narAsOf+'</div>'
       +'<div class="gc-back-section-text">'+rebuttal+'</div>'
     +'</div>'
     +'<div class="gc-back-stats">'
@@ -14316,11 +14327,58 @@ async function loadStrategyData(){
     renderStratCards(STRAT_FILTER);
     loadCollectionStats();
     overlayLiveStratPrices(rows);
+    backfillMissingNarratives(rows);
   }catch(e){
     console.warn('[MP] Trade cards gallery load failed:',e);
     STRAT_DATA=[];
     renderStratCards(STRAT_FILTER);
   }
+}
+
+// ── Narrative backfill ───────────────────────────────────────────────────────
+// trade_cards_live occasionally arrives without a story_claim/forensic_rebuttal
+// for a ticker even though the signal itself is valid — the upstream card writer
+// skipped the narrative that day. Rather than render a "No narrative available."
+// placeholder, pull that ticker's most recent PRIOR narrative from
+// v_dash_daily_story (which keeps dated history of the SAME story_claim +
+// forensic_rebuttal pair) and patch it in, stamped with _narrative_as_of so the
+// card can show a muted "as of <date>" marker. Real fix is upstream.
+async function backfillMissingNarratives(rows){
+  try{
+    if(!SUPABASE_URL||!SUPABASE_ANON||!rows||!rows.length)return;
+    var gaps=rows.filter(function(r){return r&&r.ticker&&!(r.story_claim&&String(r.story_claim).trim());});
+    if(!gaps.length)return;
+    var uniq=[];
+    gaps.forEach(function(r){if(uniq.indexOf(r.ticker)===-1)uniq.push(r.ticker);});
+    var hdrs={'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};
+    // One bounded request, newest-first; we keep the first non-null row per ticker.
+    var url=SUPABASE_URL+'/rest/v1/v_dash_daily_story'
+      +'?select=ticker,story_claim,forensic_rebuttal,snapshot_date'
+      +'&ticker=in.('+uniq.map(encodeURIComponent).join(',')+')'
+      +'&story_claim=not.is.null'
+      +'&order=snapshot_date.desc&limit=400';
+    var res=await fetch(url,{headers:hdrs});
+    if(!res.ok)return;
+    var hist=await res.json();
+    if(!hist||!hist.length)return;
+    var latest={};
+    hist.forEach(function(h){
+      if(!h||!h.ticker||latest[h.ticker])return;
+      if(!(h.story_claim&&String(h.story_claim).trim()))return;
+      latest[h.ticker]=h;
+    });
+    var patched=false;
+    STRAT_DATA.forEach(function(d){
+      if(d.story_claim&&String(d.story_claim).trim())return;
+      var h=latest[d.ticker];
+      if(!h)return;
+      d.story_claim=h.story_claim;
+      if(!(d.forensic_rebuttal&&String(d.forensic_rebuttal).trim())&&h.forensic_rebuttal)d.forensic_rebuttal=h.forensic_rebuttal;
+      d._narrative_as_of=h.snapshot_date;
+      patched=true;
+    });
+    if(patched)renderStratCards(STRAT_FILTER);
+  }catch(e){console.warn('[MP] narrative backfill failed:',e);}
 }
 
 // ── Collection Stats ─────────────────────────────────────────────────────────
