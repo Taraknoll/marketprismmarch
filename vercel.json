@@ -73,6 +73,10 @@
       "destination": "/api/anomaly-search"
     },
     {
+      "source": "/ask",
+      "destination": "/api/anomaly-search"
+    },
+    {
       "source": "/heatmap",
       "destination": "/api/heatmap"
     },

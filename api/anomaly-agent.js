@@ -22,6 +22,7 @@ const ROW_CAP = 50;
 // Read-only text-to-SQL escape hatch (Option 1: dedicated SELECT-only Postgres role).
 const ro = require('./_ro_sql');
 const { SCHEMA_DIGEST, describeSchema } = require('./_schema_digest');
+const requireAuth = require('./_require-auth');
 
 // Foreign-filer artifacts: VMS≈50 / drift=100 artifacts with no real 10-K to
 // anchor — excluded from every scorecard cross-section.
@@ -1157,6 +1158,10 @@ module.exports = async (req, res) => {
     res.status(405).json({ ok: false, answer: '', cards: [], debug: { ...debug, ms: Date.now() - started }, error: 'method not allowed' });
     return;
   }
+
+  // Gated: require a logged-in or beta session (returns JSON 401 if not).
+  const auth = await requireAuth(req, res, { jsonOnly: true });
+  if (!auth) return;
 
   let messages;
   try {

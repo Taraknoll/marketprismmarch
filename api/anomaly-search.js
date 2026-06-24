@@ -1,4 +1,5 @@
 const resolveTemplate = require('./_resolve-template');
+const requireAuth = require('./_require-auth');
 
 // ──────────────────────────────────────────────────────────────────────────
 // /anomaly-search — AI Semantic Anomaly Search (lightweight MVP, preview)
@@ -8,13 +9,13 @@ const resolveTemplate = require('./_resolve-template');
 // rest of the dashboard (see lib/mp-core.js MP.rest). No server SQL, no LLM, no
 // new dependency or env: SUPABASE_URL / SUPABASE_ANON already exist in prod.
 //
-// Intentionally NOT behind requireAuth: this is an UNLISTED test page (noindex,
-// not linked in nav). To gate it before any production merge, add:
-//     const requireAuth = require('./_require-auth');
-//     const auth = await requireAuth(req, res); if (!auth) return;
+// Gated behind requireAuth (login or beta cookie) — same gate as the dashboard.
+// Linked in the app sidebar as "AI Search" (/ask). noindex (beta).
 // ──────────────────────────────────────────────────────────────────────────
 
 module.exports = async (req, res) => {
+  const auth = await requireAuth(req, res);
+  if (!auth) return;
   try {
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseAnon = process.env.SUPABASE_ANON || '';
