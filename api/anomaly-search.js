@@ -9,13 +9,23 @@ const requireAuth = require('./_require-auth');
 // rest of the dashboard (see lib/mp-core.js MP.rest). No server SQL, no LLM, no
 // new dependency or env: SUPABASE_URL / SUPABASE_ANON already exist in prod.
 //
-// Gated behind requireAuth (login or beta cookie) — same gate as the dashboard.
-// Linked in the app sidebar as "AI Search" (/ask). noindex (beta).
+// PRIVATE BETA: requires the beta-code cookie (mp_beta), not just any login.
+// Non-beta visitors are bounced to /login to enter a code (validated vs BETA_CODES).
+// Linked in the app sidebar as "AI Search" (/ask). noindex.
 // ──────────────────────────────────────────────────────────────────────────
 
 module.exports = async (req, res) => {
   const auth = await requireAuth(req, res);
   if (!auth) return;
+  // Private beta: must hold a valid beta code (mp_beta). Logged-in users without
+  // a code are sent to /login to enter one.
+  if (!auth.hasBeta) {
+    res.statusCode = 302;
+    res.setHeader('Location', '/login?next=%2Fask');
+    res.setHeader('Cache-Control', 'no-store');
+    res.end();
+    return;
+  }
   try {
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseAnon = process.env.SUPABASE_ANON || '';

@@ -1159,9 +1159,13 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Gated: require a logged-in or beta session (returns JSON 401 if not).
+  // Gated: PRIVATE BETA — require the beta-code cookie (mp_beta), not just any login.
   const auth = await requireAuth(req, res, { jsonOnly: true });
   if (!auth) return;
+  if (!auth.hasBeta) {
+    res.status(403).json({ ok: false, answer: '', cards: [], debug: { ...debug, ms: Date.now() - started }, error: 'beta_required' });
+    return;
+  }
 
   let messages;
   try {
