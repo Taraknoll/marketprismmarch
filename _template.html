@@ -19743,6 +19743,11 @@ async function miLiveQuotes(tickers){
 var MP_CONTENTLESS_RX = [
   /\bprovides?\s+(?:an?\s+|the\s+)?(?:company\s+|general\s+|basic\s+|brief\s+|corporate\s+)*profile\s+(?:of|for)\b/i,
   /\bgeneral\s+overview\s+of\b/i,
+  // GuruFocus-style landing tell — "<outlet> provides general information on
+  // <Company>'s stock price, recent trades, and news." Anchored on "general
+  // information on … stock price" so it can't fire on a real "general information
+  // on its restructuring/sector outlook" thesis.
+  /\b(?:provides?|offers?)\s+general\s+(?:information|info)\s+on\b[^.]{0,80}?\bstock\s+price\b/i,
   /\b(?:company\s+|corporate\s+)?profile\s+(?:is|are)\s+(?:available|accessible|presented|provided)\b/i,
   /\bavailable\s+financial\s+information\b/i,
   /\bfinancial\s+information\s+(?:is|are)\s+available\b/i,
@@ -19758,6 +19763,12 @@ var MP_CONTENTLESS_RX = [
   // merely *providing* the stock's data. ("provides stock-based compensation" is safe —
   // the hyphen blocks the \s+ after "stock".)
   /\bprovides?\s+stock\s+(?:price|quotes?|trades?|trading|news|data|information|info|details?|headlines?|charts?|fundamentals?)\b/i,
+  // TipRanks-style aggregator landing tell — "<outlet> offers/provides current
+  // price, quote, news, and analysis information for <Company> stock." Uses "offers"
+  // + "current price" so it dodges the "provides stock …" rule above. The
+  // comma-separated data-noun list ("price, quote, news … analysis information") is
+  // pure landing boilerplate — a real thesis never enumerates the outlet's data menu.
+  /\b(?:offers?|provides?)\s+(?:current\s+)?(?:stock\s+)?price,\s*quotes?,?\s*news,?\s*(?:and\s+|&\s*)?analysis\s+information\b/i,
   /\bstock\s+(?:price,\s*quote,\s*news\s*(?:and|&)\s*analysis\s+)?information(?:\s+including[^.]*)?\s+(?:is|are)\s+available\b/i,
   // Tolerate intervening words between the data-noun and "available" — e.g.
   // "stock information and news are available on GuruFocus" (the narrow pattern
