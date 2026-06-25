@@ -19769,6 +19769,15 @@ var MP_CONTENTLESS_RX = [
   // comma-separated data-noun list ("price, quote, news … analysis information") is
   // pure landing boilerplate — a real thesis never enumerates the outlet's data menu.
   /\b(?:offers?|provides?)\s+(?:current\s+)?(?:stock\s+)?price,\s*quotes?,?\s*news,?\s*(?:and\s+|&\s*)?analysis\s+information\b/i,
+  // Aggregator-as-SUBJECT landing tell — a pure data/screener site named as the
+  // sentence subject doing the providing: "TipRanks offers…", "MarketBeat provides…",
+  // "StockAnalysis shows…", "WallStreetZen gives…". Their ticker pages are 100%
+  // boilerplate. Verb must follow the name IMMEDIATELY, so "TipRanks data shows 15
+  // analysts…" and "GuruFocus (GF) Score of 87" (real data points) stay. Real-news
+  // outlets (Benzinga/Zacks/Seeking Alpha/Morningstar/Yahoo/Nasdaq) are intentionally
+  // excluded here — they publish genuine articles; their stubs are caught by the
+  // "available on <aggregator>" / "<descriptor> page" rules below instead.
+  /\b(?:tip\s*ranks|guru\s*focus|market\s*beat|wall\s*street\s*zen|stock\s*analysis|fin\s*viz|wall\s*mine|tikr|simply\s*wall\s*st|bar\s*chart|stock\s*twits|we\s*bull|moo\s*moo|trading\s*view)\s+(?:offers?|provides?|shows?|displays?|lists?|presents?|gives?|has\b)/i,
   /\bstock\s+(?:price,\s*quote,\s*news\s*(?:and|&)\s*analysis\s+)?information(?:\s+including[^.]*)?\s+(?:is|are)\s+available\b/i,
   // Tolerate intervening words between the data-noun and "available" — e.g.
   // "stock information and news are available on GuruFocus" (the narrow pattern
