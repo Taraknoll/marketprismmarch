@@ -7444,6 +7444,25 @@ async function loadHero() {
     const netMargin   = cv.sec_net_margin ?? r.sec_net_margin;
     const peRatio     = r.pe_ratio;
 
+    // "Earnings In" must count down to the NEXT report. days_to_earnings on the
+    // story row goes negative right after a print (e.g. -1 = reported yesterday)
+    // while next_earnings_date has already advanced — so recompute forward from
+    // next_earnings_date (same basis as the hero pill) instead of showing a
+    // confusing "-1d / Earnings window". When a print just landed, surface that
+    // explicitly so it's clear the latest earnings were considered.
+    const _earnNext = (earnContextRows && earnContextRows[0] && earnContextRows[0].next_earnings_date) || r.next_earnings_date;
+    let _earnFwdDte = null;
+    if (_earnNext) {
+      const _ep = String(_earnNext).split('-');
+      const _ed = new Date(Number(_ep[0]), Number(_ep[1]) - 1, Number(_ep[2]));
+      const _now = new Date(); _now.setHours(0,0,0,0);
+      _earnFwdDte = Math.round((_ed - _now) / 86400000);
+    } else if (r.days_to_earnings != null) {
+      _earnFwdDte = Number(r.days_to_earnings);
+    }
+    // Raw days_to_earnings < 0 (and within ~5d) means the most recent print just landed.
+    const _earnRecent = r.days_to_earnings != null && Number(r.days_to_earnings) < 0 && Number(r.days_to_earnings) >= -5;
+
     document.getElementById('metrics-strip').innerHTML = `
       <div class="metric-cell">
         <div class="metric-label">Revenue</div>
@@ -7467,8 +7486,8 @@ async function loadHero() {
       </div>
       <div class="metric-cell">
         <div class="metric-label">Earnings In</div>
-        <div class="metric-value">${r.days_to_earnings != null ? r.days_to_earnings + 'd' : '—'}</div>
-        <div class="metric-sub">${r.earnings_window_flag ? '⚠ Earnings window' : r.guidance_direction && r.guidance_direction !== 'Neutral' ? esc(r.guidance_direction) : 'Next report'}</div>
+        <div class="metric-value">${_earnFwdDte != null && _earnFwdDte >= 0 && _earnFwdDte <= 95 ? _earnFwdDte + 'd' : '—'}</div>
+        <div class="metric-sub">${_earnRecent ? ('Reported' + (fiscalPeriod ? ' ' + esc(fiscalPeriod) : '')) : (r.earnings_window_flag && _earnFwdDte != null && _earnFwdDte <= 3 ? '⚠ Earnings window' : r.guidance_direction && r.guidance_direction !== 'Neutral' ? esc(r.guidance_direction) : 'Next report')}</div>
       </div>
       <div class="metric-cell">
         <div class="metric-label">P/E Ratio</div>
