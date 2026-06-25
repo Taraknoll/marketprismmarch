@@ -704,7 +704,7 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
 <script src="/billing-config.js"></script>
 <script src="/billing-ui.js"></script>
 <!-- Env vars injected by Vercel API handler -->
-<script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', SCHOLAR_ENABLED: '', ANTHROPIC_KEY: '', MASSIVE_API: '' };</script>
+<script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', SCHOLAR_ENABLED: '' };</script>
 
 <script>
 // === mp-core.js ===
@@ -718,7 +718,6 @@ var MP = window.MP || {};
 // ── Supabase ─────────────────────────────────────────────────────────────────
 MP.supabaseUrl  = (window.__env||{}).SUPABASE_URL  || '';
 MP.supabaseAnon = (window.__env||{}).SUPABASE_ANON || '';
-MP.massiveApi   = (window.__env||{}).MASSIVE_API   || '';
 MP.supa = (window.supabase && MP.supabaseUrl && MP.supabaseAnon)
   ? window.supabase.createClient(MP.supabaseUrl, MP.supabaseAnon)
   : null;

@@ -17,6 +17,10 @@
       "destination": "/api/hero-summary"
     },
     {
+      "source": "/api/daily-brief",
+      "destination": "/api/daily-brief"
+    },
+    {
       "source": "/api/live-quote",
       "destination": "/api/live-quote"
     },

@@ -5208,7 +5208,7 @@ body{
 <script src="/billing-config.js"></script>
 <script src="/billing-ui.js"></script>
 <!-- Env vars injected by Vercel API handler — do not edit this line -->
-<script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', SCHOLAR_ENABLED: '', ANTHROPIC_KEY: '', MASSIVE_API: '' };</script>
+<script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', SCHOLAR_ENABLED: '' };</script>
 <script>
 // ── Mobile nav ────────────────────────────────────────────────────────────────
 (function(){
@@ -8901,25 +8901,19 @@ function populateNHTDropdown(){
 
 // ── Fetch price data from Massive API ────────────────────────────────────────
 async function fetchMassivePrices(ticker){
-  // Try Massive API first if key is available
-  if(MASSIVE_API){
-    try{
-      var to=new Date().toISOString().slice(0,10);
-      var from=new Date();from.setFullYear(from.getFullYear()-2);
-      var fromStr=from.toISOString().slice(0,10);
-      var url='https://api.massive.com/v2/aggs/ticker/'+encodeURIComponent(ticker)+'/range/1/day/'+fromStr+'/'+to+'?adjusted=true&sort=asc&limit=50000&apiKey='+encodeURIComponent(MASSIVE_API);
-      var r=await fetch(url);
-      if(r.ok){
-        var json=await r.json();
-        if(json.results&&json.results.length){
-          return json.results.map(function(bar){
-            var d=new Date(bar.t).toISOString().slice(0,10);
-            return {date:d,dateLabel:fmtDateLabel(d),o:bar.o,h:bar.h,l:bar.l,c:bar.c,v:bar.v};
-          });
-        }
+  // Price history via the server-side proxy (/api/price-history). The Massive
+  // /Polygon key stays on the server and is never exposed to the browser.
+  try{
+    var r=await fetch('/api/price-history?ticker='+encodeURIComponent(ticker)+'&days=730');
+    if(r.ok){
+      var json=await r.json();
+      if(json.series&&json.series.length){
+        return json.series.map(function(bar){
+          return {date:bar.snapshot_date,dateLabel:fmtDateLabel(bar.snapshot_date),o:bar.price_open,h:bar.price_high,l:bar.price_low,c:bar.price_close,v:0};
+        });
       }
-    }catch(e){console.warn('Massive fetch error, falling back to Supabase:',e);}
-  }
+    }
+  }catch(e){console.warn('price-history proxy error, falling back to Supabase:',e);}
   // Fallback: fetch from ticker_snapshots via Supabase
   if(!SUPABASE_URL||!SUPABASE_ANON)return [];
   try{
@@ -10591,22 +10585,20 @@ function renderStratCards(filter){
 
 // ── Fetch live prices from Massive API (batch) ──
 async function fetchMassiveBatchPrices(tickers){
-  var MASSIVE_KEY=(window.__env||{}).MASSIVE_API||'';
-  if(!MASSIVE_KEY||!tickers.length)return{};
+  if(!tickers.length)return{};
+  // Live quotes via the server-side proxy (/api/live-quotes-batch). The Massive
+  // /Polygon key stays on the server and is never exposed to the browser.
   var priceMap={};
-  var to=new Date().toISOString().slice(0,10);
-  var from=new Date();from.setDate(from.getDate()-5);var fromStr=from.toISOString().slice(0,10);
-  await Promise.all(tickers.map(function(t){
-    var url='https://api.massive.com/v2/aggs/ticker/'+encodeURIComponent(t)+'/range/1/day/'+fromStr+'/'+to+'?adjusted=true&sort=desc&limit=2&apiKey='+encodeURIComponent(MASSIVE_KEY);
-    return fetch(url).then(function(r){return r.ok?r.json():null;}).then(function(j){
-      if(j&&j.results&&j.results.length){
-        var latest=j.results[0];
-        var prev=j.results[1]||latest;
-        var chg=prev.c?((latest.c-prev.c)/prev.c)*100:0;
-        priceMap[t]={price:latest.c,price_change_pct:chg};
-      }
-    }).catch(function(){});
-  }));
+  try{
+    var r=await fetch('/api/live-quotes-batch?tickers='+encodeURIComponent(tickers.join(',')));
+    if(r.ok){
+      var j=await r.json();
+      var q=(j&&j.quotes)||{};
+      tickers.forEach(function(t){
+        if(q[t]&&q[t].price!=null)priceMap[t]={price:q[t].price,price_change_pct:q[t].changePct!=null?q[t].changePct:0};
+      });
+    }
+  }catch(e){console.warn('live-quotes-batch proxy error:',e);}
   return priceMap;
 }
 

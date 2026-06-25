@@ -6892,7 +6892,7 @@ function ensureJsPDF(){
 <script src="/billing-config.js"></script>
 <script src="/billing-ui.js"></script>
 <!-- Env vars injected by Vercel API handler — do not edit this line -->
-<script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', SCHOLAR_ENABLED: '', ANTHROPIC_KEY: '', MASSIVE_API: '' };</script>
+<script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', SCHOLAR_ENABLED: '' };</script>
 <script>
 // ── Sidebar toggle (mobile only) ─────────────────────────────────────────────
 // Desktop (≥768px): sidebar is ALWAYS visible — there is no hide/collapse.
@@ -12549,25 +12549,19 @@ function populateNHTDropdown(){
 
 // ── Fetch price data from Massive API ────────────────────────────────────────
 async function fetchMassivePrices(ticker){
-  // Try Massive API first if key is available
-  if(MASSIVE_API){
-    try{
-      var to=new Date().toISOString().slice(0,10);
-      var from=new Date();from.setFullYear(from.getFullYear()-2);
-      var fromStr=from.toISOString().slice(0,10);
-      var url='https://api.massive.com/v2/aggs/ticker/'+encodeURIComponent(ticker)+'/range/1/day/'+fromStr+'/'+to+'?adjusted=true&sort=asc&limit=50000&apiKey='+encodeURIComponent(MASSIVE_API);
-      var r=await fetch(url);
-      if(r.ok){
-        var json=await r.json();
-        if(json.results&&json.results.length){
-          return json.results.map(function(bar){
-            var d=new Date(bar.t).toISOString().slice(0,10);
-            return {date:d,dateLabel:fmtDateLabel(d),o:bar.o,h:bar.h,l:bar.l,c:bar.c,v:bar.v};
-          });
-        }
+  // Price history via the server-side proxy (/api/price-history). The Massive
+  // /Polygon key stays on the server and is never exposed to the browser.
+  try{
+    var r=await fetch('/api/price-history?ticker='+encodeURIComponent(ticker)+'&days=730');
+    if(r.ok){
+      var json=await r.json();
+      if(json.series&&json.series.length){
+        return json.series.map(function(bar){
+          return {date:bar.snapshot_date,dateLabel:fmtDateLabel(bar.snapshot_date),o:bar.price_open,h:bar.price_high,l:bar.price_low,c:bar.price_close,v:0};
+        });
       }
-    }catch(e){console.warn('Massive fetch error, falling back to Supabase:',e);}
-  }
+    }
+  }catch(e){console.warn('price-history proxy error, falling back to Supabase:',e);}
   // Fallback: fetch from ticker_snapshots via Supabase
   if(!SUPABASE_URL||!SUPABASE_ANON)return [];
   try{

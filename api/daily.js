@@ -8,14 +8,15 @@ module.exports = async (req, res) => {
 
     const supabaseUrl  = process.env.SUPABASE_URL  || '';
     const supabaseAnon = process.env.SUPABASE_ANON || '';
-    const anthropicKey = process.env.ANTHROPIC_KEY || '';
-    const massiveApi   = process.env.MASSIVE_API   || '';
+    // ANTHROPIC_KEY / MASSIVE_API are deliberately NOT injected into the client.
+    // They are secrets — client-initiated Claude/Massive calls go through the
+    // server-side proxies (api/daily-brief.js, api/price-history.js) instead.
 
     let html = resolveTemplate('_daily.html');
 
     html = html.replace(
-      "window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', ANTHROPIC_KEY: '', MASSIVE_API: '' };",
-      `window.__env = { SUPABASE_URL: '${supabaseUrl}', SUPABASE_ANON: '${supabaseAnon}', ANTHROPIC_KEY: '${anthropicKey}', MASSIVE_API: '${massiveApi}' };`
+      "window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '' };",
+      `window.__env = { SUPABASE_URL: '${supabaseUrl}', SUPABASE_ANON: '${supabaseAnon}' };`
     );
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
