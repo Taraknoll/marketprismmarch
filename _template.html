@@ -19795,6 +19795,32 @@ function mpIsContentless(txt){
   var s=String(txt);
   return MP_CONTENTLESS_RX.some(function(rx){return rx.test(s);});
 }
+/* Structural landing-page gate — the QUALITY GATE that runs BEFORE Top Stories
+   ranking. MP_CONTENTLESS_RX above is precise but phrasing-specific (whack-a-mole);
+   this adds a structural net for external-site TICKER LANDING PAGES the scraper
+   keeps surfacing as "narratives". Tell: a pure data/screener site is NAMED and the
+   sentence is just a menu of the data it carries (price/quote/news/chart/profile/…)
+   with NO specific claim. Those sites (unlike Benzinga/Zacks/Seeking Alpha/Morningstar/
+   Yahoo/Nasdaq/MarketWatch, which also publish real articles) produce essentially
+   only ticker pages, so the site name itself is a strong signal — but we still KEEP
+   anything carrying a real claim (a price move, a %/$ figure, a price target, a rating
+   change, a valuation verdict, a corporate event, a chart breakout) so a genuine story
+   that merely CITES one of these sites survives. Real-news outlets are intentionally
+   absent from MP_SCREENER_SITES; their stubs are caught by the precise "available on
+   <agg>" / "<descriptor> page" rules in mpIsContentless instead. */
+var MP_SCREENER_SITES = /\b(?:tip\s*ranks|guru\s*focus|market\s*beat|wall\s*street\s*zen|stock\s*analysis|fin\s*viz|wall\s*mine|tikr|simply\s*wall\s*st|bar\s*chart|stock\s*twits|we\s*bull|moo\s*moo|trading\s*view|fin\s*box|stock\s*invest|chart\s*mill)\b/i;
+var MP_DATA_MENU_RX = /\b(?:price|quotes?|news|trad(?:e|es|ing)|data|information|info|details?|headlines?|charts?|fundamentals?|financials?|profile|overview|summary|analysis|dividends?|forecasts?|scores?|ratios?|valuation|metrics?|statistics|stats|sentiment|revenue|earnings|eps|sales|margins?|ratings?|estimates?|consensus|recommendations?|holdings?|ownership|institutional|peers?|performance|returns?|targets?)\b/i;
+var MP_REAL_CLAIM_RX = /\b(?:surged?|surges|plunged?|plunges|soared?|soars|tumbled?|tumbles|jumped?|jumps|plummet\w*|rall(?:y|ies|ied)|cratered?|spiked?|spikes|slumped?|sank|sinks?|climbed?|climbs|slid|slides?|sell[-\s]?off|beat|beats|missed?|misses|raised?|raises|cut|cuts|slashed?|hiked?|hikes|upgrad\w*|downgrad\w*|reiterat\w*|initiat\w*|acqui\w*|merg\w*|lawsuit|sued?|sues|recall\w*|guidance|buyback|layoff\w*|undervalued?|overvalued?|fairly\s+valued|mispriced|intrinsic\s+value|(?:strong\s+|moderate\s+)?(?:buy|sell|hold)|outperform\w*|underperform\w*|overweight|underweight|broke|breakout|breaking\s+out|broke\s+out|breakdown|rebound\w*|recover\w*|bounce\w*|reversal)\b|\$\s?\d|\d+(?:\.\d+)?\s*%|\bprice\s+targets?\b|\ball[-\s]time\s+highs?\b|\b52[-\s]week\b/i;
+function mpIsLandingStub(txt){
+  if(!txt) return false;
+  var s=String(txt);
+  if(mpIsContentless(s)) return true;            // precise phrase patterns (highest confidence)
+  if(MP_SCREENER_SITES.test(s)){                 // structural net: a pure-screener site is named…
+    if(MP_REAL_CLAIM_RX.test(s)) return false;   // …but it carries a real claim → genuine story citing it
+    if(MP_DATA_MENU_RX.test(s)) return true;     // …and it's just a data menu → external ticker landing page
+  }
+  return false;
+}
 // True during pre-market / overnight / weekend — before the US equity session
 // opens, live quotes are thin and price "moves" are noise. Used so Top Stories
 // ranks by WKS/authority pre-open instead of letting tiny pre-market wiggles
@@ -19823,7 +19849,7 @@ async function miLoadTopStories(){
     rows.forEach(function(r){
       if(Number(r.narrative_mass_score)>1&&(r.nrs==null||Number(r.nrs)===0))return;   // wrong-scale rows
       if(/^[A-Z][A-Z.\-]{0,7}\s+narrative\s*:/i.test(String(r.narrative||'')))return; // template stub
-      if(mpIsContentless(r.narrative))return;                                          // contentless ticker/profile page
+      if(mpIsLandingStub(r.narrative))return;                                          // external ticker landing page (quality gate)
       r._auth=miAuthority(r);
       r._wks=Number(r.wks_score)||0;
       var cur=best[r.ticker];
@@ -19961,7 +19987,7 @@ async function miLoadAnalystCalls(){
     var best={};
     rows.forEach(function(r){
       if(/^[A-Z][A-Z.\-]{0,7}\s+narrative\s*:/i.test(String(r.narrative||'')))return;   // template stub
-      if(typeof mpIsContentless==='function'&&mpIsContentless(r.narrative))return;        // contentless page
+      if(typeof mpIsLandingStub==='function'&&mpIsLandingStub(r.narrative))return;        // external ticker landing page
       r._rate=MP_RATING_RX.test(String(r.narrative||''));
       r._acs=Number(r.acs)||0;
       var cur=best[r.ticker];
@@ -20018,7 +20044,7 @@ async function miLoadStories(){
     // just half-empty cards, so they're excluded outright.
     var rows=await miq('sector_news?select=sector,subsector,headline,source,published_at,associated_ticker,narrative_claim,structural_rebuttal,drift_score,coordination_flag,verdict,sector_trap_active&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative_claim=not.is.null&structural_rebuttal=not.is.null&order=published_at.desc.nullslast&limit=240');
     rows=(rows||[]).filter(function(r){return String(r.narrative_claim||'').trim()&&String(r.structural_rebuttal||'').trim();})
-      .filter(function(r){return !mpIsContentless(String(r.headline||'')+' '+String(r.narrative_claim||''));});
+      .filter(function(r){return !mpIsLandingStub(String(r.headline||'')+' '+String(r.narrative_claim||''));});
     if(!rows.length){miDropPanel('mi-story-grid');if(chips)chips.innerHTML='';return;}
     miStories=rows;miSector='__all__';miStoryCap=12;
     miRenderSectorChips();miRenderStories();
