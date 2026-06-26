@@ -12444,11 +12444,20 @@ async function refreshAll() {
           window._mpCurrentUserEmail = (user.email || '').toLowerCase();
           // Admin bypass
           if(window._mpCurrentUserEmail === 'tara@vtlbranding.com'){ isAuthed = true; isAdminEmail = true; }
-          var res = await supa.from('subscriptions').select('*').eq('user_id', user.id).in('status', ['active','trialing']).single();
-          if(!res.error && res.data){ sub = res.data; isAuthed = true; subResolved = true; }
-          // PGRST116 = zero rows — a positive "logged in, no active sub".
-          // Any other error leaves subResolved false → teaser fails open.
-          else if(res.error && res.error.code === 'PGRST116'){ subResolved = true; }
+          // A user can legitimately have >1 active/trialing row (e.g. they
+          // re-subscribed), and .single() ERRORS on multiple rows — which
+          // previously blurred the verdict/forecast for paying customers.
+          // Use order+limit(1) and read data[0], mirroring the server gate in
+          // api/_require-auth.js. Pick the row with the furthest period end.
+          var res = await supa.from('subscriptions').select('*')
+            .eq('user_id', user.id)
+            .in('status', ['active','trialing'])
+            .order('current_period_end', { ascending: false, nullsFirst: false })
+            .limit(1);
+          // No error (even zero rows) = positively resolved paying-vs-free.
+          // data[0] is the active row, or undefined for a logged-in free user.
+          // Any error leaves subResolved false → teaser fails open.
+          if(!res.error){ sub = (res.data && res.data[0]) || null; subResolved = true; }
           // Even without subscription, logged-in users can view (free preview)
           if(user){ isAuthed = true; }
         }

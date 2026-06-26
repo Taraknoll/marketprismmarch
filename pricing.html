@@ -422,17 +422,21 @@ body::before{
     var user = userResult && userResult.data ? userResult.data.user : null;
     if(!user) return null;
 
+    // order+limit(1), not .single(): a user can have >1 active/trialing row
+    // (e.g. re-subscribed) and .single() errors on multiple rows. Pick the row
+    // with the furthest period end. Mirrors api/_require-auth.js.
     var activeResult = await supabase.from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
       .in('status', ['active', 'trialing'])
-      .single();
+      .order('current_period_end', { ascending: false, nullsFirst: false })
+      .limit(1);
 
-    if(!activeResult.error && activeResult.data){
-      return activeResult.data;
-    }
-    if(activeResult.error && activeResult.error.code !== 'PGRST116'){
+    if(activeResult.error){
       throw activeResult.error;
+    }
+    if(activeResult.data && activeResult.data[0]){
+      return activeResult.data[0];
     }
 
     var fallbackResult = await supabase.from('subscriptions')
