@@ -18797,6 +18797,13 @@ async function miLoadTopStories(){
    coverage", NOT "re-ratings" — analyst_firm is often a research outlet
    (GuruFocus, Trefis, Motley Fool), not a clean sell-side rating transition. */
 var MP_RATING_RX=/\b(?:upgrades?|upgraded|upgrading|downgrades?|downgraded|downgrading|price\s+target|price\s+objective|initiates?|initiated|initiating|initiation|reiterates?|reiterated|reiterating|reaffirms?|reaffirmed|reaffirming|top\s+pick|(?:buy|sell|hold|neutral|overweight|underweight|outperform|underperform)\s+rating|rated\s+(?:buy|sell|hold|neutral|overweight|underweight|outperform|underperform)|maintain(?:s|ed)?\s+(?:a\s+|its\s+|their\s+)?(?:buy|sell|hold|overweight|underweight|outperform|rating)|(?:raises?|raised|raising|cuts?|cutting|lowers?|lowered|lowering|boosts?|boosted|hikes?|hiked|trims?|trimmed)\s+(?:its\s+|their\s+|the\s+)?(?:price\s+)?(?:pt|target|price\s+objective|price\s+target|price))/i;
+/* analyst_firm is frequently populated upstream with a PUBLICATION/aggregator
+   (GuruFocus, Motley Fool, Benzinga, Trefis…) rather than a real sell-side or
+   research analyst — so a panel titled "Recent Analyst Calls" ends up citing
+   media outlets as analysts. Drop those firms here. Tested against analyst_firm
+   ONLY (never source_outlet): legit firms like UBS/Roth Capital/Citi can carry a
+   media source_outlet (GuruFocus/CNBC) and must be kept. Real fix is upstream. */
+var MP_NON_ANALYST_RX=/\b(?:guru\s*focus|gurufocus|motley\s*fool|the\s*fool|fool\.com|benzinga|trefis|seeking\s*alpha|tipranks|investorplace|simply\s*wall|24\/7\s*wall|insider\s*monkey|the\s*?street|thestreet|market\s*watch|marketwatch|yahoo|cnbc|bloomberg|reuters|barron|globe\s*and\s*mail|forbes|kiplinger|investing\.com|investor'?s?\s*business\s*daily|ibd|investopedia|fortune|business\s*insider)\b/i;
 async function miLoadAnalystCalls(){
   var list=document.getElementById('mi-analyst-list');
   if(!list)return;
@@ -18811,6 +18818,7 @@ async function miLoadAnalystCalls(){
     rows.forEach(function(r){
       if(/^[A-Z][A-Z.\-]{0,7}\s+narrative\s*:/i.test(String(r.narrative||'')))return;   // template stub
       if(typeof mpIsContentless==='function'&&mpIsContentless(r.narrative))return;        // contentless page
+      if(MP_NON_ANALYST_RX.test(String(r.analyst_firm||'')))return;                       // publication, not an analyst
       r._rate=MP_RATING_RX.test(String(r.narrative||''));
       r._acs=Number(r.acs)||0;
       var cur=best[r.ticker];
@@ -18855,6 +18863,15 @@ async function miLoadAnalystCalls(){
 
 /* 4) SECTOR STORIES — sector_news, claim vs structural rebuttal */
 var miStories=[],miSector='__all__',miStoryCap=12;
+// Normalized identity for a story row — strips case, punctuation and runs of
+// whitespace so near-identical re-scrapes (different source casing, trailing
+// "...", stray spaces) collapse to one key. Headline + claim is enough to catch
+// the duplicate-card cases without merging genuinely distinct stories.
+function miStoryKey(r){
+  var h=String((r&&r.headline)||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  var c=String((r&&r.narrative_claim)||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  return (h+'|'+c).trim()==='|'?'':h+'|'+c;
+}
 async function miLoadStories(){
   var grid=document.getElementById('mi-story-grid');
   var chips=document.getElementById('mi-sector-chips');
@@ -18867,6 +18884,17 @@ async function miLoadStories(){
     // just half-empty cards, so they're excluded outright.
     var rows=await miq('sector_news?select=sector,subsector,headline,source,published_at,associated_ticker,narrative_claim,structural_rebuttal,drift_score,coordination_flag,verdict,sector_trap_active&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative_claim=not.is.null&structural_rebuttal=not.is.null&order=published_at.desc.nullslast&limit=240');
     rows=(rows||[]).filter(function(r){return String(r.narrative_claim||'').trim()&&String(r.structural_rebuttal||'').trim();});
+    // The same story gets scraped under multiple sector/subsector rows (and
+    // sometimes re-published minutes apart) so it shows up as side-by-side
+    // duplicate cards. Collapse on a normalized headline+claim key, keeping the
+    // first (freshest — rows are published_at desc) occurrence.
+    var miSeen={};
+    rows=rows.filter(function(r){
+      var k=miStoryKey(r);
+      if(!k)return true;
+      if(miSeen[k])return false;
+      miSeen[k]=1;return true;
+    });
     if(!rows.length){miDropPanel('mi-story-grid');if(chips)chips.innerHTML='';return;}
     miStories=rows;miSector='__all__';miStoryCap=12;
     miRenderSectorChips();miRenderStories();
