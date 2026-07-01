@@ -21,6 +21,21 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // ── Determine the US market session in ET so an "After Hours" price only
+    //    surfaces during extended hours. Regular session is 09:30–16:00 ET
+    //    Mon–Fri; pre-market 04:00–09:30; after-hours 16:00–20:00. During
+    //    regular trading the last trade legitimately differs from the day close,
+    //    so a >0.5¢ gap is NOT an extended-hours print — without this guard the
+    //    header showed "After Hours" at, e.g., 10:30 AM.
+    const nowET = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const etDow = nowET.getDay();                                        // 0 Sun … 6 Sat
+    const etMins = nowET.getHours() * 60 + nowET.getMinutes();
+    const isWeekdayET = etDow >= 1 && etDow <= 5;
+    const isPreMarket = isWeekdayET && etMins >= 240 && etMins < 570;    // 04:00–09:30 ET
+    const isAfterHoursET = isWeekdayET && etMins >= 960 && etMins < 1200; // 16:00–20:00 ET
+    const isExtendedHours = isPreMarket || isAfterHoursET;
+    const sessionLabel = isPreMarket ? 'Pre-Market' : isAfterHoursET ? 'After Hours' : null;
+
     // Strategy: try endpoints in order of plan compatibility
     // 1. Snapshot (paid plans) — real-time
     // 2. Last trade (most plans) — real-time
@@ -43,8 +58,10 @@ module.exports = async (req, res) => {
         if (price) {
           const prevClose = prevDay.c || null;
           const regularClose = day.c || null;
-          // After-hours: if lastTrade price differs from day close, it's an extended-hours trade
-          const ahPrice = (lastTrade.p && regularClose && Math.abs(lastTrade.p - regularClose) > 0.005) ? lastTrade.p : null;
+          // Extended-hours price: only during pre-market / after-hours (isExtendedHours).
+          // The >0.5¢ gap vs the day close stays as a secondary guard, but the
+          // session check is primary so this never fires during regular trading.
+          const ahPrice = (isExtendedHours && lastTrade.p && regularClose && Math.abs(lastTrade.p - regularClose) > 0.005) ? lastTrade.p : null;
           result = {
             ticker,
             price,
@@ -58,6 +75,7 @@ module.exports = async (req, res) => {
             bid: lastQuote.p || null,
             ask: lastQuote.P || null,
             afterHours: ahPrice,
+            ahLabel: ahPrice ? sessionLabel : null,
             ahChange: (ahPrice && regularClose) ? Number((ahPrice - regularClose).toFixed(2)) : null,
             ahChangePct: (ahPrice && regularClose) ? Number(((ahPrice - regularClose) / regularClose * 100).toFixed(2)) : null,
             timestamp: lastTrade.t || snap.updated || null,

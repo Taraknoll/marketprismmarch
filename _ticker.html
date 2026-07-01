@@ -5534,7 +5534,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
       </div>
 
       <!-- SECTION 3: Quote -->
-      <div class="section">
+      <div class="section" id="fin-quote-section">
         <div class="section-label">Last Quote</div>
         <div class="section-body" style="padding:20px;">
           <div class="strat-insights-grid" style="grid-template-columns:repeat(2,1fr);">
@@ -5552,7 +5552,7 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
       </div>
 
       <!-- SECTION 4: Previous Day -->
-      <div class="section">
+      <div class="section" id="fin-prevday-section">
         <div class="section-label">Previous Session</div>
         <div class="section-body" style="padding:20px;">
           <div class="strat-insights-grid" style="grid-template-columns:repeat(4,1fr);">
@@ -6268,6 +6268,23 @@ function ttNarrativeTone(sentiment) {
   return 'MIXED';
 }
 
+// ── No-coverage guard (D4) ────────────────────────────────────────────────────
+// wks_score is keyword-derived and returns 0 when a ticker has NO matching news
+// (thinly-covered names, foreign 6-K/40-F filers like STN). In that state the
+// backend's "exhausted narrative / energy faded to 0%" labels are an ARTIFACT of
+// zero coverage, not real exhaustion. Detect it — only when a scorecard row
+// exists (a wholly-missing row is the separate "Mixed signals" case) — so the UI
+// can fall back to a neutral "no coverage" state instead of a confident verdict.
+function mpNoNarrativeCoverage(sc) {
+  // Require an actual scorecard row. A wholly-missing row arrives here as {} (see
+  // the `|| {}` default at the call site) for not-yet-scored tickers — that's the
+  // separate "Mixed signals" case, NOT a thin-coverage / foreign-filer state, so
+  // don't hijack it. Real rows always carry the selected `ticker` field.
+  if (!sc || sc.ticker == null) return false;
+  var w = sc.wks_score;
+  return w == null || Number(w) === 0;
+}
+
 // Deterministic synthesized state label + action chip + tone for the
 // narrative strip. Order matters — first match wins. Adapted to columns
 // that actually exist on narrative_scorecard:
@@ -6798,6 +6815,12 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
   // function (operates on narrative_scorecard fields plus a small ctx for
   // non-scorecard signals like today's price change — no LLM).
   var state = deriveState(sc, { priceChangePct: story && story.price_change_pct });
+  // D4: a wks=0 scorecard means no keyword-matched coverage — the backend's
+  // "exhausted / energy faded to 0%" label is a no-coverage artifact, not a real
+  // bearish read. Neutralize the chip + tone so it doesn't look like a confident
+  // verdict on a thinly-covered or foreign-filer name.
+  var noCoverage = mpNoNarrativeCoverage(sc);
+  if (noCoverage) state = { label: 'Low / No Coverage', action: 'NO SIGNAL', tone: 'neutral' };
   var pal = ttTonePalette(state.tone);
   var narrTitle = state.label;
   var titleColor = pal.titleLight;
@@ -6847,6 +6870,18 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
       + '</details>';
   }
 
+  // #tt-headline: normally a spinner that /api/hero-summary fills with the rich
+  // LLM line. For no-coverage names we skip the LLM swap and show a neutral
+  // one-line note instead of restating the "energy faded to 0%" prose — the
+  // data-nocoverage flag tells the hero-summary IIFE to leave this slot alone.
+  var descHtml = noCoverage
+    ? '<div class="tt-narr-desc" id="tt-headline" data-nocoverage="1" style="color:var(--mp-text-tertiary);">'
+        + esc('Thinly-covered or foreign-filer name — narrative signals limited.')
+      + '</div>'
+    : '<div class="tt-narr-desc" id="tt-headline" data-pending="1" data-fallback="'+ esc(headline || '') +'">'
+        + '<span class="tt-loading-inline"><span class="tt-loading-spinner"></span>Analyzing narrative<span class="tt-loading-dots"></span></span>'
+      + '</div>';
+
   // Narrative card: 70/30 split with the Reality-Belief gauge in the right
   // column. Price position bar nests inside the left column under signals.
   var narrHtml = ''
@@ -6858,9 +6893,7 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
               + '<span class="tt-narr-title" style="color:'+titleColor+';">'+ esc(narrTitle) +'</span>'
             + '</div>'
           + '</div>'
-          + '<div class="tt-narr-desc" id="tt-headline" data-pending="1" data-fallback="'+ esc(headline || '') +'">'
-            + '<span class="tt-loading-inline"><span class="tt-loading-spinner"></span>Analyzing narrative<span class="tt-loading-dots"></span></span>'
-          + '</div>'
+          + descHtml
           + signalsHtml
           + pricePosHtml
         + '</div>'
@@ -7570,6 +7603,9 @@ async function loadHero() {
       (function(){
         var hl = document.getElementById('tt-headline');
         if (!hl || !r.ticker) return;
+        // D4: no-coverage names already show a neutral note — don't let the LLM
+        // headline swap reintroduce confident "exhausted narrative" prose.
+        if (hl.getAttribute('data-nocoverage') === '1') return;
         var fallback = hl.getAttribute('data-fallback') || '';
         var revealFallback = function(){
           // Always clear the loading spinner — if fallback is empty, the slot
@@ -7756,6 +7792,27 @@ function mpStudySummary(text, maxLen) {
   if (sp >= 90) slice = slice.slice(0, sp);
   return slice.replace(/[\s.,;:—-]+$/, '') + '…';
 }
+// ── Scholarly section coordination (D3) ───────────────────────────────────────
+// The "Scientific Premise" panel and its "Evidence corpus" load concurrently
+// (Promise.allSettled). The corpus fetch includes a catch-all set that ALWAYS
+// returns rows, so it used to reveal a big generic corpus even under a "No
+// testable scientific premise" note — contradictory and off-topic. Gate the
+// corpus reveal on a REAL, ticker-relevant premise: each loader sets its flag
+// then calls the reconciler, so the final state is correct no matter which
+// resolves first (reconcile is idempotent and reads both flags).
+var _scholPremiseReal = null;   // null = premise still loading; true/false once known
+var _scholCorpusReady = false;  // corpus grid built with ticker-relevant papers
+function mpReconcileSchol() {
+  var section = document.getElementById('scholarly-section');
+  var corpus  = document.getElementById('schol-corpus');
+  // Evidence corpus shows ONLY when a genuine scientific premise exists AND we
+  // actually loaded relevant papers. Anything else keeps it hidden.
+  var showCorpus = (_scholPremiseReal === true && _scholCorpusReady === true);
+  if (corpus) corpus.style.display = showCorpus ? 'block' : 'none';
+  // Never reveal the section for a bare generic corpus with no premise; the
+  // premise loader reveals it once a real premise is confirmed.
+  if (section && _scholPremiseReal === true) section.style.display = 'block';
+}
 async function loadScholarlyReferences(heroRow) {
   var section = document.getElementById('scholarly-section');
   var grid = document.getElementById('schol-grid');
@@ -7803,6 +7860,11 @@ async function loadScholarlyReferences(heroRow) {
     }
     var rows = pool
       .map(function (p) { return { p: p, k: relScore(p), r: (p.recency_weight != null ? Number(p.recency_weight) : 0) }; })
+      // Drop pure "other" catch-all rows (base=1 → k<=8 after the 0–7 jitter):
+      // these are the generic, off-topic papers that made the corpus look
+      // irrelevant. Keep cross-cutting narrative (base=10) and anything
+      // sector/ticker-specific so the corpus only ever carries relevant studies.
+      .filter(function (x) { return x.k >= 9; })
       .sort(function (a, c) { return (c.k - a.k) || (c.r - a.r); })
       .slice(0, 6)
       .map(function (x) { return x.p; });
@@ -7831,9 +7893,10 @@ async function loadScholarlyReferences(heroRow) {
         : '<div class="schol-card">' + inner + '</div>';
     }).join('');
 
-    var corpus = document.getElementById('schol-corpus');
-    if (corpus) corpus.style.display = 'block';
-    section.style.display = 'block';
+    // Corpus grid is built; defer the actual reveal to the reconciler, which
+    // only surfaces it when a real scientific premise exists (mpReconcileSchol).
+    _scholCorpusReady = true;
+    mpReconcileSchol();
   } catch (e) {
     console.warn('[ticker] loadScholarlyReferences failed:', e);
   }
@@ -8040,9 +8103,13 @@ async function loadPremiseVerdicts() {
     var symEl = document.getElementById('premise-sym');
     if (symEl) symEl.textContent = ' — ' + TK;
     if (!rows.length) {
-      // No scientific claim at all → calm note, but DON'T reveal the section here;
-      // the evidence-corpus reveal (if any papers exist) controls visibility.
-      host.innerHTML = '<div class="premise-empty">No testable scientific premise in this narrative &mdash; its claims are business- or market-based. See the evidence corpus below.</div>';
+      // No scientific claim at all → mark the premise absent and HIDE the
+      // evidence corpus (the catch-all set would otherwise leave a generic,
+      // off-topic corpus under this note). With no real premise the whole
+      // section stays hidden — the reconciler enforces that.
+      _scholPremiseReal = false;
+      host.innerHTML = '<div class="premise-empty">No testable scientific premise in this narrative &mdash; its claims are business- or market-based.</div>';
+      mpReconcileSchol();
       return;
     }
     var rank = { refuted: 0, supported: 1, insufficient: 2, non_adjudicable: 3 };
@@ -8060,7 +8127,10 @@ async function loadPremiseVerdicts() {
       html += '<div class="premise-more">+' + hiddenN + ' more adjudicated claim' + (hiddenN === 1 ? '' : 's') + '</div>';
     }
     host.innerHTML = html;
-    section.style.display = 'block';
+    // A genuine scientific premise exists — reveal the section, and let the
+    // reconciler surface the evidence corpus if its relevant papers loaded.
+    _scholPremiseReal = true;
+    mpReconcileSchol();
   } catch (e) {
     console.warn('[ticker] loadPremiseVerdicts failed:', e);
   }
@@ -12591,6 +12661,10 @@ async function loadFinancialsData() {
       const spreadPct = ((d.ask - d.bid) / d.ask * 100).toFixed(3);
       document.getElementById('fin-spread').textContent = 'Spread: $' + spread + ' (' + spreadPct + '%)';
     }
+    // Hide the whole "Last Quote" panel on illiquid names that report no
+    // bid/ask (otherwise it renders BID/ASK "—" with an empty spread line).
+    var quoteSection = document.getElementById('fin-quote-section');
+    if (quoteSection) quoteSection.style.display = (d.bid == null && d.ask == null) ? 'none' : '';
 
     // Previous day (from snapshot prevDay if available — use current API data)
     document.getElementById('fin-prev-open').textContent = '—';
@@ -12599,17 +12673,22 @@ async function loadFinancialsData() {
     document.getElementById('fin-prev-vol').textContent = '—';
 
     // Now fetch the full snapshot for previous day detail
+    var hasPrevDay = false;
     try {
       const snapRes = await fetch('/api/ticker-snapshot?ticker=' + encodeURIComponent(TICKER));
       if (snapRes.ok) {
         const snapData = await snapRes.json();
         const prev = snapData.prevDay || {};
-        if (prev.o) document.getElementById('fin-prev-open').textContent = fmtP(prev.o);
-        if (prev.h) document.getElementById('fin-prev-high').textContent = fmtP(prev.h);
-        if (prev.l) document.getElementById('fin-prev-low').textContent = fmtP(prev.l);
-        if (prev.v) document.getElementById('fin-prev-vol').textContent = fmtV(prev.v);
+        if (prev.o) { document.getElementById('fin-prev-open').textContent = fmtP(prev.o); hasPrevDay = true; }
+        if (prev.h) { document.getElementById('fin-prev-high').textContent = fmtP(prev.h); hasPrevDay = true; }
+        if (prev.l) { document.getElementById('fin-prev-low').textContent = fmtP(prev.l); hasPrevDay = true; }
+        if (prev.v) { document.getElementById('fin-prev-vol').textContent = fmtV(prev.v); hasPrevDay = true; }
       }
     } catch(_) {}
+    // Hide the "Previous Session" panel when the snapshot carried no OHLCV
+    // (foreign filers / thin names) — an all-"—" grid is noise, not data.
+    var prevSection = document.getElementById('fin-prevday-section');
+    if (prevSection) prevSection.style.display = hasPrevDay ? '' : 'none';
 
     // Timestamp
     if (d.timestamp) {
@@ -12942,7 +13021,8 @@ async function fetchLivePrice() {
         var ahClr = ahUp ? '#00DE94' : ahDn ? '#FF4D4D' : 'var(--mp-text-tertiary)';
         var ahSign = ahUp ? '+' : '';
         var ahPx = q.afterHours >= 100 ? q.afterHours.toFixed(2) : q.afterHours.toFixed(3);
-        ahEl.innerHTML = 'After Hours <span style="color:' + ahClr + ';">$' + ahPx + ' ' + ahSign + q.ahChange.toFixed(2) + ' (' + ahSign + q.ahChangePct.toFixed(2) + '%)</span>';
+        var ahLbl = q.ahLabel || 'After Hours';
+        ahEl.innerHTML = esc(ahLbl) + ' <span style="color:' + ahClr + ';">$' + ahPx + ' ' + ahSign + q.ahChange.toFixed(2) + ' (' + ahSign + q.ahChangePct.toFixed(2) + '%)</span>';
         ahEl.style.display = 'block';
       } else {
         ahEl.style.display = 'none';
