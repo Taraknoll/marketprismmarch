@@ -2948,7 +2948,6 @@ async function loadHero() {
 
     document.getElementById('hero').innerHTML = `
       <div class="hero-left">
-        ${(function(t){var d=window.MP_DOMAINS&&window.MP_DOMAINS[t];return d?'<img src="https://www.google.com/s2/favicons?domain='+d+'&sz=128" alt="'+t+'" class="hero-ticker-logo" onerror="this.style.display=\'none\'">':'';})( r.ticker )}
         <div class="hero-ticker-row">
           <span class="hero-ticker">${esc(r.ticker)}</span>
           ${insightHtml || `<span class="hero-state-badge ${stateClass(r.narrative_state)}">${esc(r.narrative_state || '—')}</span>`}
