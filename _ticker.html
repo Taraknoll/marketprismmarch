@@ -7917,6 +7917,15 @@ async function loadClaimTrap() {
       return;
     }
 
+    // Frontend-wide "GF Value" content ban — suppress the claim-integrity read
+    // when the assessed claim (or its filing check) is built around GuruFocus's
+    // proprietary "GF Value" metric.
+    if (mpHasBannedKeyword(r.claim) || mpHasBannedKeyword(r.drift_explanation)) {
+      host.innerHTML = '<div class="ci-clean">No claim-integrity read for this ticker yet.</div>';
+      section.style.display = 'block';
+      return;
+    }
+
     var flags = Array.isArray(r.trap_flags) ? r.trap_flags : [];
     var hasFlags = Number(r.n_flags) > 0 && flags.length > 0;
     var sev = String(r.severity || '').toUpperCase();
@@ -8022,6 +8031,13 @@ async function loadPremiseVerdicts() {
       claim_type: 'eq.scientific_premise'
     }).catch(function () { return []; });
     rows = Array.isArray(rows) ? rows : [];
+    // Frontend-wide "GF Value" content ban — drop any premise built around
+    // GuruFocus's proprietary "GF Value" metric.
+    rows = rows.filter(function (v) {
+      return !mpHasBannedKeyword(v.claim_excerpt)
+          && !mpHasBannedKeyword(v.rationale_quote)
+          && !mpHasBannedKeyword(v.adjudication_note);
+    });
     var symEl = document.getElementById('premise-sym');
     if (symEl) symEl.textContent = ' — ' + TK;
     if (!rows.length) {
@@ -9195,8 +9211,18 @@ const NON_ARTICLE_URL_RE = /(?:finviz\.com\/quote\.ashx|gurufocus\.com\/stock\/[
 //   "…with no specific narrative or direct analysis related to AMD."
 //   "The article does not contain a dominant narrative about AAPL."
 const NON_ARTICLE_TEXT_RE = /general information (?:about|regarding)|stock price and quote|basic financial data|comprehensive data point|stock price,? trades?,? and news|\bprovides?\s+stock\s+(?:price|quotes?|trades?|trading|news|data|information|info|details?|headlines?|charts?|fundamentals?)\b|stock information including price|is an entity with a profile|stock (?:price, quote, news (?:and|&) analysis )?information(?: including[^.]*)? (?:is|are) available|\bstock\s+(?:price|quote|quotes|news|information|info|data|headlines?|details?|profile|analysis|charts?|financials?|fundamentals?|overview)\b[^.]{0,40}?\b(?:is|are)\s+available\b|\bavailable\s+(?:on|at|via|from|through)\s+(?:guru\s*focus|yahoo|finviz|tip\s*ranks|stock\s*analysis|market\s*watch|nasdaq|market\s*beat|trading\s*view|seeking\s*alpha|stock\s*twits|bar\s*chart|zacks|simply\s*wall\s*st|wallmine|webull|moomoo|morningstar|investing\.com|benzinga|tikr|wallstreetzen)\b|\b(?:information|profile|quote|data|summary|overview|landing)\s+page\s+(?:by|on|at|from|for)\b|\b(?:stock|company|corporate|ticker)\s+(?:information|profile|quote|data|summary|overview|news\s+and\s+trade\s+information)\s+page\b|holding history|is being tracked, suggesting institutional|^\s*the article['’]?s title (?:indicates|suggests|implies|states|says|reads|notes|mentions)|^\s*the article (?:is|appears to be) (?:just |merely |simply |only )?a link to|\bno (?:specific |direct )?(?:narrative|analysis|relevance|relation|relationship|connection|details?|information|mention)(?: or [a-z ]+){0,2} (?:related to|regarding|about|on|involving)\b|\b(?:does\s+not|doesn['’]?t|did\s+not|didn['’]?t)\s+(?:contain|include|present|have|offer|focus\s+on|center\s+on|discuss|mention)\s+(?:a\s+)?(?:\w+\s+){0,3}(?:narrative|story|claim|discussion|focus|theme)\b/i;
+// ── Hard content ban: "GF Value" ────────────────────────────────────────────
+// Product decision — never surface narratives built around GuruFocus's
+// proprietary "GF Value" valuation metric anywhere on the frontend. Matches
+// "GF Value", "GF-Value", "GFValue" and "GF Values", case-insensitively.
+const MP_BANNED_KEYWORD_RE = /\bGF[\s\-]?values?\b/i;
+function mpHasBannedKeyword(text) {
+  return !!text && MP_BANNED_KEYWORD_RE.test(String(text));
+}
 function isNonArticleNarrative(r) {
   if (!r) return false;
+  // Frontend-wide "GF Value" content ban (see MP_BANNED_KEYWORD_RE).
+  if (mpHasBannedKeyword(r.narrative_text)) return true;
   if (r.article_url && NON_ARTICLE_URL_RE.test(r.article_url)) return true;
   if (r.narrative_text && NON_ARTICLE_TEXT_RE.test(r.narrative_text)) return true;
   // Structural rows with no numeric anchor are landing-page descriptions

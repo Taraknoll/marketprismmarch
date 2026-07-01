@@ -19815,9 +19815,17 @@ function mpIsContentless(txt){
 var MP_SCREENER_SITES = /\b(?:tip\s*ranks|guru\s*focus|market\s*beat|wall\s*street\s*zen|stock\s*analysis|fin\s*viz|wall\s*mine|tikr|simply\s*wall\s*st|bar\s*chart|stock\s*twits|we\s*bull|moo\s*moo|trading\s*view|fin\s*box|stock\s*invest|chart\s*mill)\b/i;
 var MP_DATA_MENU_RX = /\b(?:price|quotes?|news|trad(?:e|es|ing)|data|information|info|details?|headlines?|charts?|fundamentals?|financials?|profile|overview|summary|analysis|dividends?|forecasts?|scores?|ratios?|valuation|metrics?|statistics|stats|sentiment|revenue|earnings|eps|sales|margins?|ratings?|estimates?|consensus|recommendations?|holdings?|ownership|institutional|peers?|performance|returns?|targets?)\b/i;
 var MP_REAL_CLAIM_RX = /\b(?:surged?|surges|plunged?|plunges|soared?|soars|tumbled?|tumbles|jumped?|jumps|plummet\w*|rall(?:y|ies|ied)|cratered?|spiked?|spikes|slumped?|sank|sinks?|climbed?|climbs|slid|slides?|sell[-\s]?off|beat|beats|missed?|misses|raised?|raises|cut|cuts|slashed?|hiked?|hikes|upgrad\w*|downgrad\w*|reiterat\w*|initiat\w*|acqui\w*|merg\w*|lawsuit|sued?|sues|recall\w*|guidance|buyback|layoff\w*|undervalued?|overvalued?|fairly\s+valued|mispriced|intrinsic\s+value|(?:strong\s+|moderate\s+)?(?:buy|sell|hold)|outperform\w*|underperform\w*|overweight|underweight|broke|breakout|breaking\s+out|broke\s+out|breakdown|rebound\w*|recover\w*|bounce\w*|reversal)\b|\$\s?\d|\d+(?:\.\d+)?\s*%|\bprice\s+targets?\b|\ball[-\s]time\s+highs?\b|\b52[-\s]week\b/i;
+// Hard content ban: never surface narratives built around GuruFocus's
+// proprietary "GF Value" valuation metric anywhere on the frontend (product
+// decision). Matches "GF Value", "GF-Value", "GFValue" and "GF Values".
+var MP_BANNED_KEYWORD_RX = /\bGF[\s\-]?values?\b/i;
+function mpHasBannedKeyword(txt){
+  return !!txt && MP_BANNED_KEYWORD_RX.test(String(txt));
+}
 function mpIsLandingStub(txt){
   if(!txt) return false;
   var s=String(txt);
+  if(mpHasBannedKeyword(s)) return true;          // frontend-wide "GF Value" content ban
   if(mpIsContentless(s)) return true;            // precise phrase patterns (highest confidence)
   if(MP_SCREENER_SITES.test(s)){                 // structural net: a pure-screener site is named…
     if(MP_REAL_CLAIM_RX.test(s)) return false;   // …but it carries a real claim → genuine story citing it
