@@ -425,7 +425,7 @@ function markdownToHtml(md) {
     const cells = line.split('|').slice(1, -1).map(c => c.trim());
     return '<tr>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>';
   });
-  html = html.replace(/<!-- separator -->/g, '');
+  html = html.replace(/<!-- separator -->\n?/g, '');
   html = html.replace(/((<tr>.*<\/tr>\n?)+)/g, function(m) {
     const rows = m.trim().split('\n');
     const header = rows[0].replace(/<td>/g, '<th>').replace(/<\/td>/g, '</th>');
