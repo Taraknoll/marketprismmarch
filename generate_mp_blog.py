@@ -15,12 +15,15 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 load_dotenv()
 
 import anthropic
+import httpx
+from postgrest.exceptions import APIError
 from supabase import create_client
 
 # ── CONFIG ───────────────────────────────────────────────────────────────────
@@ -59,6 +62,30 @@ if _supabase_key_role(SUPABASE_KEY) == "anon":
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 claude = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+
+# The Supabase instance saturates intermittently — Cloudflare then answers
+# 522/5xx for a few minutes and PostgREST surfaces an APIError whose code is a
+# numeric HTTP status instead of a PGRST/SQLSTATE code. One blip at cron time
+# must not cost the day's post.
+SB_RETRY_DELAYS = (30, 60, 120)
+
+
+def sb_retry(fn, label: str):
+    """Run a Supabase call, retrying only transient infrastructure failures."""
+    for attempt, delay in enumerate((*SB_RETRY_DELAYS, None), start=1):
+        try:
+            return fn()
+        except APIError as e:
+            code = str(e.code or "")
+            if not (code.isdigit() and 500 <= int(code) <= 599):
+                raise  # real PostgREST/SQL error — retrying won't help
+            err = f"HTTP {code}"
+        except (httpx.TimeoutException, httpx.TransportError) as e:
+            err = type(e).__name__
+        if delay is None:
+            sys.exit(f"FATAL: {label} still failing after {attempt} attempts ({err}) — Supabase unreachable.")
+        print(f"  ⚠ {label}: transient Supabase error ({err}) — retrying in {delay}s...")
+        time.sleep(delay)
 
 # Bylines — fictional editorial personas, kept stable across articles so Google
 # News and topical-authority signals can attribute work to consistent authors.
@@ -115,13 +142,30 @@ WHAT YOU NEVER DO
 
 # ── CONTEXT FETCHER ──────────────────────────────────────────────────────────
 
+def already_published_today() -> str | None:
+    """Slug of a post already created today (UTC), if any. Lets the backstop
+    cron re-run the workflow without double-posting."""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    rows = sb_retry(
+        lambda: supabase.table("blog_posts")
+            .select("slug")
+            .gte("created_at", f"{today}T00:00:00Z")
+            .limit(1).execute(),
+        "blog_posts today-check",
+    )
+    return rows.data[0]["slug"] if rows.data else None
+
+
 def get_hottest_ticker() -> dict:
     """Pull the highest-signal ticker from narrative_scorecard."""
-    rows = supabase.table("narrative_scorecard") \
-        .select("ticker, snapshot_date, verdict, vms, fvd, coordination_score, narrative, energy_remaining, decay_rate") \
-        .order("snapshot_date", desc=True) \
-        .order("vms", desc=True) \
-        .limit(50).execute()
+    rows = sb_retry(
+        lambda: supabase.table("narrative_scorecard")
+            .select("ticker, snapshot_date, verdict, vms, fvd, coordination_score, narrative, energy_remaining, decay_rate")
+            .order("snapshot_date", desc=True)
+            .order("vms", desc=True)
+            .limit(50).execute(),
+        "narrative_scorecard fetch",
+    )
 
     if not rows.data:
         raise RuntimeError("No data in narrative_scorecard — has the pipeline run today?")
@@ -153,15 +197,21 @@ def get_hottest_ticker() -> dict:
 
 def get_ticker_context(ticker: str) -> dict:
     """Pull full context from narrative_scorecard + v_trade_cards."""
-    sc = supabase.table("narrative_scorecard") \
-        .select("*").eq("ticker", ticker) \
-        .order("snapshot_date", desc=True) \
-        .limit(1).execute()
+    sc = sb_retry(
+        lambda: supabase.table("narrative_scorecard")
+            .select("*").eq("ticker", ticker)
+            .order("snapshot_date", desc=True)
+            .limit(1).execute(),
+        "narrative_scorecard context",
+    )
 
-    tc = supabase.table("v_trade_cards") \
-        .select("*").eq("ticker", ticker) \
-        .order("snapshot_date", desc=True) \
-        .limit(1).execute()
+    tc = sb_retry(
+        lambda: supabase.table("v_trade_cards")
+            .select("*").eq("ticker", ticker)
+            .order("snapshot_date", desc=True)
+            .limit(1).execute(),
+        "v_trade_cards context",
+    )
 
     scorecard = sc.data[0] if sc.data else {}
     card = tc.data[0] if tc.data else {}
@@ -470,7 +520,12 @@ def publish_to_supabase(ticker: str, title: str, body: str, ctx: dict, dry_run: 
         print(json.dumps({k: v[:80] if isinstance(v, str) and len(v) > 80 else v for k, v in row.items()}, indent=2))
         return {"success": True, "dry_run": True, "slug": slug}
 
-    result = supabase.table("blog_posts").insert(row).execute()
+    # Upsert on the unique slug so a retry after an ambiguous network failure
+    # can't double-post.
+    result = sb_retry(
+        lambda: supabase.table("blog_posts").upsert(row, on_conflict="slug").execute(),
+        "blog_posts publish",
+    )
     if result.data:
         print(f"  ✓ Inserted into blog_posts: {slug}")
         return {"success": True, "slug": slug, "id": result.data[0].get("id")}
@@ -488,10 +543,24 @@ def main():
                         help="Story angle: bull, bear, or auto (derived from signal)")
     parser.add_argument("--topic", help="Free-form topic e.g. 'How to Spot Market Manipulation' — bypasses ticker logic entirely")
     parser.add_argument("--dry-run", action="store_true", help="Generate but don't insert into Supabase")
+    parser.add_argument("--force", action="store_true", help="Publish even if a post was already created today")
     args = parser.parse_args()
 
     print("\n[Market Prism Blog Generator]")
-    print(f"  Time: {datetime.now().strftime('%Y-%m-%d %H:%M ET')}\n")
+    try:
+        from zoneinfo import ZoneInfo
+        stamp = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d %H:%M ET")
+    except Exception:
+        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    print(f"  Time: {stamp}\n")
+
+    # Scheduled runs (primary + backstop cron) must not double-post. Explicit
+    # --ticker/--topic/--force runs and dry runs always proceed.
+    if not (args.ticker or args.topic or args.force or args.dry_run):
+        existing = already_published_today()
+        if existing:
+            print(f"✓ Post already published today ({existing}) — nothing to do.")
+            return
 
     # ── TOPIC MODE: free-form article, no ticker required ──────────────────
     if args.topic:

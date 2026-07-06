@@ -3,6 +3,7 @@ name: Generate Market Prism Blog Post
 on:
   schedule:
     - cron: '0 12 * * 1-5'   # 7am ET (12:00 UTC) Monday–Friday
+    - cron: '0 15 * * 1-5'   # backstop 3h later — exits early if the noon run already published
   workflow_dispatch:           # manual trigger from GitHub Actions UI
     inputs:
       ticker:
@@ -27,11 +28,22 @@ on:
         type: boolean
         required: false
         default: false
+      force:
+        description: 'Publish even if a post already exists today'
+        type: boolean
+        required: false
+        default: false
+
+# Primary and backstop crons must not run concurrently — the second run queues
+# behind the first, then the script's already-published-today guard skips it.
+concurrency:
+  group: generate-mp-blog
+  cancel-in-progress: false
 
 jobs:
   generate-blog:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25   # leaves room for the script's Supabase retry backoff
 
     steps:
       - name: Checkout repo
@@ -70,6 +82,9 @@ jobs:
           fi
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             ARGS="$ARGS --dry-run"
+          fi
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            ARGS="$ARGS --force"
           fi
           eval python generate_mp_blog.py $ARGS
 
