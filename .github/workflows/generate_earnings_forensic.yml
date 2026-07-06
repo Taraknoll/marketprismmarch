@@ -57,7 +57,9 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON }}
+          # Service-role key — this script imports generate_mp_blog (publishes to blog_posts,
+          # where RLS blocks anon inserts); the blog module guard exits on the anon key.
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           ARGS="--mode ${{ github.event.inputs.mode || 'both' }}"
           if [ -n "${{ github.event.inputs.ticker }}" ]; then
