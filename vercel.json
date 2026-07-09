@@ -258,10 +258,10 @@
       "includeFiles": "_home_v4.html"
     },
     "api/dashboard.js": {
-      "includeFiles": "{_template.html,_signal_lab_tab.html,_ticker_tab.html}"
+      "includeFiles": "{_template.html,_signal_lab_tab.html,_ticker_tab.html,_universe_tab.html}"
     },
     "api/dashboard-black.js": {
-      "includeFiles": "{_template_black.html,_signal_lab_tab.html,_ticker_tab.html}"
+      "includeFiles": "{_template_black.html,_signal_lab_tab.html,_ticker_tab.html,_universe_tab.html}"
     },
     "api/narrative-heatmap.js": {
       "includeFiles": "_narrative_heatmap.html"

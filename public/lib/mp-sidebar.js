@@ -40,6 +40,7 @@
     // (escapes the .nav-item svg{opacity:.5} default via inline style).
     sparkleFeature:'<svg viewBox="0 0 24 24" fill="none" stroke="#4DC8F0" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="opacity:1;filter:drop-shadow(0 0 4px rgba(77,200,240,0.55));"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>',
     sparkle2:     '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#00DE94" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>',
+    universe:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(-25 12 12)"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(35 12 12)"/></svg>',
     // Panel-left close / open — desktop sidebar collapse toggle + reopen tab.
     collapse:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m16 15-3-3 3-3"/></svg>',
     expand:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m13 9 3 3-3 3"/></svg>',
@@ -63,7 +64,7 @@
   var NAV_CONFIG = [
     { type:'section', label:'Today' },
     { type:'item',    tab:'daily',       label:'Daily Plays',    icon:ICONS.daily },
-    { type:'item',    tab:'insights',    label:'Market Insights', icon:ICONS.insights,  badge:{ style:BADGE_NEW_GREEN, text:'NEW' } },
+    { type:'item',    tab:'insights',    label:'Market Insights', icon:ICONS.insights },
     { type:'item',    tab:'leaderboard', label:'Leaderboard',    icon:ICONS.leaderboard },
     { type:'item',    tab:'cards',       label:'Trading Cards',  icon:ICONS.cards },
 
@@ -80,12 +81,15 @@
                       tooltip:'Validate any narrative against 3.5M historical analogues — works on any US-listed ticker, not just our tracked universe.' },
     { type:'item',    href:'/ask',       label:'AI Search',      icon:ICONS.sparkleFeature,
                       subtitle:'Ask anything — one box',
-                      badge:{ style:BADGE_NEW_GREEN, text:'NEW' },
                       tooltip:'Conversational forensic search — dossiers, anomalies, what changed today, narrative validation, circular finance, and custom screens in one box.' },
     { type:'item',    tab:'signallab',   label:'Signal Lab',     icon:ICONS.signallab,
                       subtitle:'Forces & regime, one ticker' },
     { type:'item',    tab:'prism',       label:'Market Physics', icon:ICONS.prism,
                       subtitle:'Every tracked ticker, one map' },
+    { type:'item',    tab:'universe',    label:'Narrative Universe', icon:ICONS.universe,
+                      subtitle:'The market as a 3D field',
+                      badge:{ style:BADGE_NEW_GREEN, text:'NEW' },
+                      tooltip:'Every tracked narrative in one 3D field — valuation stretch × tape energy × exhaustion, with live traps flagged and a guided tour.' },
 
     // Research section hidden 2026-05-01 — to restore, uncomment:
     // { type:'item', tab:'calendar', label:'Trading Calendar', icon:ICONS.calendar, badge:{ cls:'teal', text:'New', id:'nav-badge-calendar' } },

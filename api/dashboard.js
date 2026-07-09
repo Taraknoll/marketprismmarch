@@ -30,6 +30,14 @@ module.exports = async (req, res) => {
       console.warn('Ticker tab not found:', e.message);
     }
 
+    // Inject Narrative Universe tab partial
+    try {
+      const uvTab = resolveTemplate('_universe_tab.html');
+      html = html.replace('<!-- UNIVERSE_TAB_INJECT -->', function() { return uvTab; });
+    } catch (e) {
+      console.warn('Universe tab not found:', e.message);
+    }
+
     const scholarEnabled = process.env.ANTHROPIC_KEY ? 'true' : '';
 
     html = html.replace(

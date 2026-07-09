@@ -4881,6 +4881,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 
     <!-- TICKER_TAB_INJECT -->
 
+    <!-- UNIVERSE_TAB_INJECT -->
+
     <!-- ══════════════════════════════════════
          TAB: MARKET INSIGHTS (macro + sector intelligence)
     ═══════════════════════════════════════ -->
@@ -6626,8 +6628,8 @@ document.querySelectorAll('.page-header p').forEach(function(p,i){
   if(i===0) return;
 });
 // ── Tab switching (hook-based — sections register via onTabSwitch) ────────────
-var TABS = ['daily','insights','leaderboard','prism','cards','calendar','memes','signallab','ticker','sector','scorer','validation','help'];
-var TAB_TITLES = {daily:'Daily Plays',insights:'Market Insights',leaderboard:'Leaderboard',prism:'Prism',cards:'Trading Cards',calendar:'Trading Calendar',memes:'Market Sharing',signallab:'Signal Lab',ticker:'Stock Research',sector:'Sector Pulse',scorer:'Score Any Stock',validation:'Track Record',help:'Help & Account'};
+var TABS = ['daily','insights','leaderboard','prism','cards','calendar','memes','signallab','ticker','universe','sector','scorer','validation','help'];
+var TAB_TITLES = {daily:'Daily Plays',insights:'Market Insights',leaderboard:'Leaderboard',prism:'Prism',cards:'Trading Cards',calendar:'Trading Calendar',memes:'Market Sharing',signallab:'Signal Lab',ticker:'Stock Research',universe:'Narrative Universe',sector:'Sector Pulse',scorer:'Score Any Stock',validation:'Track Record',help:'Help & Account'};
 var _tabHooks = [];
 /** Register a callback to run after any tab switch. fn(id) */
 function onTabSwitch(fn){ if(typeof fn==='function') _tabHooks.push(fn); }
@@ -6711,6 +6713,7 @@ function switchTab(id, btn){
   if(id==='prism'&&typeof prismInit==='function')setTimeout(prismInit,50);
   if(id==='signallab'&&typeof slInit==='function')setTimeout(slInit,50);
   if(id==='ticker'&&typeof trInit==='function')setTimeout(trInit,50);
+  if(id==='universe'&&typeof uvInit==='function')setTimeout(uvInit,50);
   if(id==='cards'&&typeof renderCardsGallery==='function'){TCG_RENDERED=false;setTimeout(renderCardsGallery,50);}
   if(id==='calendar'&&typeof calendarBoot==='function')setTimeout(calendarBoot,50);
   if(id==='trapradar'&&typeof initTrapRadar==='function')setTimeout(initTrapRadar,50);
