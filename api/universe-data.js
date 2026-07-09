@@ -15,7 +15,13 @@
 // Payload is identical for every caller → CDN-cached (s-maxage).
 
 const rateLimit = require('./_rate-limit');
+const requireAuth = require('./_require-auth');
 const { isHidden } = require('./_hidden-tickers');
+
+// Dashboard-wide exclusion: scorecard values for these foreign filers are
+// wildly wrong (mirrors MP_EXCLUDED_TICKERS in _template.html).
+const EXCLUDED = new Set(['SONY', 'HMC', 'TM', 'TSM', 'DJT']);
+const dropTicker = (t) => isHidden(t) || EXCLUDED.has(String(t || '').toUpperCase());
 
 const TODAY_COLS = [
   'ticker', 'verdict', 'verdict_confidence', 'narrative_mass', 'wks_score',
@@ -85,6 +91,10 @@ async function fetchAll(url, headers, cap) {
 
 module.exports = async (req, res) => {
   if (!rateLimit(req, res, 'universe-data', 60)) return;
+  // Gated like the dashboard that hosts it: this payload is the full latest-day
+  // signal layer in one GET — not an anonymous bulk export.
+  const auth = await requireAuth(req, res, { jsonOnly: true });
+  if (!auth) return;
   try {
     const url = new URL(req.url, 'http://localhost');
     const days = Math.min(Math.max(parseInt(url.searchParams.get('days') || '16', 10) || 16, 7), 30);
@@ -129,7 +139,7 @@ module.exports = async (req, res) => {
 
     const trails = {};
     for (const r of hist) {
-      if (isHidden(r.ticker)) continue;
+      if (dropTicker(r.ticker)) continue;
       (trails[r.ticker] = trails[r.ticker] || []).push([
         num(r.wks_score, 1),
         exhaustLevel(r.exhaustion_status, num(r.exhaustion_confidence), r.walsh_regime, r.verdict),
@@ -139,7 +149,7 @@ module.exports = async (req, res) => {
 
     const stocks = [];
     for (const r of today) {
-      if (isHidden(r.ticker)) continue;
+      if (dropTicker(r.ticker)) continue;
       stocks.push({
         t: r.ticker,
         sec: secOf[r.ticker] || 'Other',
@@ -171,7 +181,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=900');
+    // Auth-gated response — never CDN-cache it.
+    res.setHeader('Cache-Control', 'private, no-store');
     return sendJson(res, 200, { date, days, count: stocks.length, stocks });
   } catch (error) {
     if (error && error.detail !== undefined) {

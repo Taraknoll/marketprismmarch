@@ -3,7 +3,9 @@ const requireAuth = require('./_require-auth');
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireAuth(req, res, { next: '/dashboard' });
+    // Preserve deep-link queries (e.g. ?tab=universe) through the login round-trip.
+    const qs = (req.url || '').includes('?') ? (req.url || '').slice((req.url || '').indexOf('?')) : '';
+    const auth = await requireAuth(req, res, { next: '/dashboard' + qs });
     if (!auth) return;
 
     const supabaseUrl  = process.env.SUPABASE_URL  || '';

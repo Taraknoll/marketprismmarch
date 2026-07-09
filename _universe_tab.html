@@ -18,7 +18,7 @@
   #tab-universe .uv-stat:last-child{border-right:none;}
   #tab-universe .uv-stat .n{font-size:18px;font-weight:700;color:var(--uv-ink);font-variant-numeric:tabular-nums;}
   #tab-universe .uv-stat .n.hot{color:#FF4D4D;}
-  #tab-universe .uv-stat .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--uv-ink3);margin-top:2px;}
+  #tab-universe .uv-stat .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--uv-ink3);margin-top:2px;}
   #tab-universe .uv-ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;}
   #tab-universe .uv-ctl{height:36px;box-sizing:border-box;font-family:var(--font-body,'Inter',sans-serif);font-size:13px;
     color:var(--uv-ink);background:var(--uv-card);border:1px solid var(--uv-border);border-radius:10px;padding:0 12px;outline:none;}
@@ -43,7 +43,7 @@
     overflow:hidden;height:clamp(520px,66vh,840px);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
   #tab-universe .uv-stage::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
     background:linear-gradient(90deg,#00AEFF,#7B61FF);z-index:4;}
-  #tab-universe #uv-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;}
+  #tab-universe #uv-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y pinch-zoom;}
   #tab-universe #uv-canvas.dragging{cursor:grabbing;}
   #tab-universe .uv-hintbar{position:absolute;left:14px;bottom:10px;z-index:5;font-size:11px;letter-spacing:.04em;
     color:rgba(255,255,255,0.38);pointer-events:none;}
@@ -63,7 +63,7 @@
   #tab-universe #uv-tip{position:absolute;z-index:8;pointer-events:none;display:none;padding:9px 12px;border-radius:10px;
     background:rgba(8,11,17,0.95);border:1px solid rgba(255,255,255,0.14);line-height:1.5;max-width:230px;}
   #tab-universe #uv-tip .t{font-weight:700;font-size:16px;letter-spacing:.02em;}
-  #tab-universe #uv-tip .v{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
+  #tab-universe #uv-tip .v{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
   #tab-universe #uv-tip .m{color:rgba(255,255,255,0.6);font-size:11px;margin-top:2px;}
 
   /* dossier */
@@ -78,22 +78,22 @@
   #tab-universe .uv-dossier .x{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.45);font-size:16px;
     cursor:pointer;padding:2px 7px;border-radius:7px;line-height:1;}
   #tab-universe .uv-dossier .x:hover{color:#fff;background:rgba(255,255,255,0.08);}
-  #tab-universe .uv-dossier .sec{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-top:3px;}
+  #tab-universe .uv-dossier .sec{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-top:3px;}
   #tab-universe .uv-chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:.06em;
     text-transform:uppercase;font-weight:700;border:1px solid;}
   #tab-universe .uv-chip.dim{color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.14);font-weight:500;}
   #tab-universe .uv-dossier .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
   #tab-universe .uv-dossier .db{flex:1;overflow-y:auto;padding:14px 18px 16px;scrollbar-width:thin;}
   #tab-universe .uv-blk{margin-bottom:16px;}
-  #tab-universe .uv-blk h4{margin:0 0 8px;font-size:10px;letter-spacing:.16em;color:rgba(255,255,255,0.4);
+  #tab-universe .uv-blk h4{margin:0 0 8px;font-size:11px;letter-spacing:.16em;color:rgba(255,255,255,0.4);
     text-transform:uppercase;font-weight:600;}
-  #tab-universe .uv-kv{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:3px 0;color:rgba(255,255,255,0.65);}
+  #tab-universe .uv-kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;color:rgba(255,255,255,0.65);}
   #tab-universe .uv-kv b{color:#fff;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;}
   #tab-universe .uv-bar{display:grid;grid-template-columns:98px 1fr 36px;gap:9px;align-items:center;padding:3.5px 0;}
-  #tab-universe .uv-bar .lb{font-size:10px;letter-spacing:.06em;color:rgba(255,255,255,0.45);font-weight:600;}
+  #tab-universe .uv-bar .lb{font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,0.45);font-weight:600;}
   #tab-universe .uv-bar .tr{height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;}
   #tab-universe .uv-bar .fl{height:100%;border-radius:3px;background:var(--uv-cyan);}
-  #tab-universe .uv-bar .vl{font-size:12px;color:#fff;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+  #tab-universe .uv-bar .vl{font-size:13px;color:#fff;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
   #tab-universe .uv-fvd{font-size:26px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums;}
   #tab-universe .uv-fvdcap{font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;line-height:1.5;}
   #tab-universe .uv-syn{font-size:13px;line-height:1.55;color:rgba(255,255,255,0.65);margin:0;}
@@ -107,7 +107,7 @@
     border:1px solid rgba(255,255,255,0.12);border-radius:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden;}
   #tab-universe .uv-tourcard.open{display:block;}
   #tab-universe .uv-tourcard .in{padding:14px 18px 12px;}
-  #tab-universe .uv-tourcard .st{font-size:10px;letter-spacing:.16em;color:#4DC8F0;text-transform:uppercase;font-weight:600;}
+  #tab-universe .uv-tourcard .st{font-size:11px;letter-spacing:.16em;color:#4DC8F0;text-transform:uppercase;font-weight:600;}
   #tab-universe .uv-tourcard h3{margin:5px 0 6px;font-size:17px;font-weight:700;letter-spacing:-0.01em;color:#fff;text-wrap:balance;}
   #tab-universe .uv-tourcard p{margin:0;font-size:13px;line-height:1.55;color:rgba(255,255,255,0.7);}
   #tab-universe .uv-tourcard .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
@@ -244,7 +244,7 @@ var tween=null, eye, Rv, Uv, Fw, FOC=900;
 var dragging=false, moved=false, px0=0, py0=0, lastInteract=0, pinch0=0;
 var hovered=null, selected=null, projCache=[];
 var hiddenFams={}, sectorFilter='';
-var tourOpen=false, tourIdx=0, tourT0=0, TOUR=[], TOUR_DWELL=9000;
+var tourOpen=false, tourIdx=0, tourElapsed=0, TOUR=[], TOUR_DWELL=9000;
 var rafId=null, lastT=0;
 var uvActive=false, needResize=true;   // layout reads happen OUTSIDE the frame loop only
 
@@ -252,8 +252,10 @@ var uvActive=false, needResize=true;   // layout reads happen OUTSIDE the frame 
 window.uvInit = function(){
   var panel=$id('tab-universe');
   if(!panel) return;
-  uvActive=true;                        // uvInit only fires on activation
-  if(UV_BOOTED){ needResize=true; kick(); return; }
+  // Read the real state — a fast tab switch can deactivate the panel inside
+  // the 50ms lazy-init window, and uvActive must not stick true.
+  uvActive=panel.classList.contains('active');
+  if(UV_BOOTED){ needResize=true; if(uvActive) kick(); return; }
   UV_BOOTED=true;
   cv=$id('uv-canvas'); ctx=cv.getContext('2d'); stage=$id('uv-stage');
   wireInput();
@@ -427,7 +429,11 @@ function makeStars(){
 
 /* ── input ── */
 function wireInput(){
+  // Page scrolls invalidate the cached canvas rect; refresh lazily on next pick
+  // (never read layout during the scroll itself).
+  addEventListener('scroll',function(){ rectDirty=true; },{capture:true,passive:true});
   cv.addEventListener('pointerenter',refreshRect);
+  cv.addEventListener('pointercancel',function(){ dragging=false; pinch0=0; cv.classList.remove('dragging'); });
   cv.addEventListener('pointerdown',function(e){
     refreshRect();
     dragging=true; moved=false; px0=e.clientX; py0=e.clientY; lastInteract=performance.now();
@@ -475,10 +481,10 @@ function wireInput(){
   $id('uvt-prev').onclick=function(){ tourGo(tourIdx-1); };
   $id('uvt-exit').onclick=exitTour;
 }
-var cvRect=null;
-function refreshRect(){ if(cv) cvRect=cv.getBoundingClientRect(); }
+var cvRect=null, rectDirty=true;
+function refreshRect(){ if(cv){ cvRect=cv.getBoundingClientRect(); rectDirty=false; } }
 function pick(e){
-  if(!cvRect) refreshRect();
+  if(rectDirty||!cvRect) refreshRect();
   var rect=cvRect;
   var mx=e.clientX-rect.left, my=e.clientY-rect.top;
   var best=null,bd=1e9;
@@ -532,8 +538,11 @@ function select(s){
 function closeDossier(){ selected=null; $id('uv-dossier').classList.remove('open'); }
 function drawRadar(s){
   var c=$id('uv-radar'), g=c.getContext('2d');
-  g.clearRect(0,0,c.width,c.height);
-  var cx=c.width/2, cy=c.height/2+4, rad=74;
+  var dpr=Math.min(2,window.devicePixelRatio||1), RW=272, RH=216;
+  if(c.width!==RW*dpr){ c.width=RW*dpr; c.height=RH*dpr; c.style.width=RW+'px'; c.style.height=RH+'px'; }
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,RW,RH);
+  var cx=RW/2, cy=RH/2+4, rad=74;
   var axes=[['SEC',s.vms==null?0:s.vms],['SOURCE',s.srs==null?0:s.srs],['CONF',s.ccp==null?0:s.ccp],
             ['PERSIST',s.npi==null?0:s.npi],['SAFETY',100-(s.nrs==null?50:s.nrs)],['FRESH',100-(s.exh==null?0.4:s.exh)*100]];
   var N=axes.length;
@@ -552,7 +561,7 @@ function drawRadar(s){
   for(i=0;i<=N;i++){ var q=pt(i%N,axes[i%N][1]); i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]); }
   g.closePath(); g.fillStyle=hexA(s.color,.14); g.fill();
   g.strokeStyle=s.color; g.lineWidth=1.6; g.stroke();
-  g.fillStyle='rgba(255,255,255,0.55)'; g.font='600 10px '+UV_FONT; g.textAlign='center';
+  g.fillStyle='rgba(255,255,255,0.55)'; g.font='600 11px '+UV_FONT; g.textAlign='center';
   for(i=0;i<N;i++){
     var a=-Math.PI/2+i*2*Math.PI/N;
     g.fillText(axes[i][0], cx+(rad+17)*Math.cos(a), cy+(rad+17)*Math.sin(a)+3);
@@ -604,6 +613,7 @@ function startTour(){
   if(tourOpen||!stocks.length) return;
   TOUR=buildTour(); tourOpen=true; closeDossier();
   $id('uv-tourcard').classList.add('open');
+  if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
   tourGo(0);
 }
 function tourGo(i){
@@ -615,9 +625,11 @@ function tourGo(i){
   $id('uvt-body').textContent=st.body;
   $id('uvt-chips').innerHTML=st.chips.map(function(c){ return '<span class="uv-chip dim">'+uvEsc(c)+'</span>'; }).join('');
   tweenCam(st.cam,1900);
+  // Highlight the focus body (white ring) but keep the dossier CLOSED —
+  // it renders underneath the tour card and hides it entirely on mobile.
+  closeDossier();
   selected=st.focus?byTicker[st.focus]:null;
-  if(selected) select(selected); else closeDossier();
-  tourT0=performance.now();   // auto-advance rides the rAF clock — pauses while hidden
+  tourElapsed=0;   // dwell accumulates rAF dt only — truly pauses while hidden
 }
 function exitTour(){
   tourOpen=false;
@@ -781,10 +793,11 @@ function frame(now){
     if(pc){ tip.style.left=Math.min(W-240,pc.sx+14)+'px'; tip.style.top=Math.max(8,pc.sy-62)+'px'; }
   } else tip.style.display='none';
 
-  // tour progress + auto-advance (rAF clock: pauses with the tab, never skips stops)
+  // tour progress + auto-advance (accumulated rAF dt: pauses with the tab, never skips stops)
   if(tourOpen&&!reduceMotion){
-    $id('uvt-prog').style.width=Math.min(100,(now-tourT0)/TOUR_DWELL*100)+'%';
-    if(now-tourT0>TOUR_DWELL) tourGo(tourIdx+1);
+    tourElapsed+=dt;
+    $id('uvt-prog').style.width=Math.min(100,tourElapsed/TOUR_DWELL*100)+'%';
+    if(tourElapsed>TOUR_DWELL) tourGo(tourIdx+1);
   }
   rafId=requestAnimationFrame(frame);
 }
