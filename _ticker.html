@@ -6269,12 +6269,20 @@ function ttNarrativeTone(sentiment) {
 }
 
 // ── No-coverage guard (D4) ────────────────────────────────────────────────────
-// wks_score is keyword-derived and returns 0 when a ticker has NO matching news
-// (thinly-covered names, foreign 6-K/40-F filers like STN). In that state the
-// backend's "exhausted narrative / energy faded to 0%" labels are an ARTIFACT of
-// zero coverage, not real exhaustion. Detect it — only when a scorecard row
-// exists (a wholly-missing row is the separate "Mixed signals" case) — so the UI
-// can fall back to a neutral "no coverage" state instead of a confident verdict.
+// Detects scorecard rows where the backend's "exhausted narrative / energy faded
+// to 0%" labels are an ARTIFACT of zero keyword coverage (thinly-covered names,
+// foreign 6-K/40-F filers), not real exhaustion, so the UI can fall back to a
+// neutral "no coverage" state instead of a confident verdict.
+//
+// Two signals must BOTH read thin:
+//   1. wks_score 0/null. The scorer writes wks_score as a copy of
+//      current_sentiment, so 0 also just means "sentiment netted out neutral
+//      today" — alone it mislabeled heavily-covered names (RDDT/COIN/KLAC at
+//      400+ energy) as no-coverage on every neutral-sentiment day.
+//   2. narrative_energy_absolute < 100 — the reliable coverage measure at
+//      render time (same threshold as deriveState's "genuinely quiet" guard).
+//      Missing/non-numeric energy counts as NOT thin, erring toward the normal
+//      state labels rather than hijacking the strip on incomplete data.
 function mpNoNarrativeCoverage(sc) {
   // Require an actual scorecard row. A wholly-missing row arrives here as {} (see
   // the `|| {}` default at the call site) for not-yet-scored tickers — that's the
@@ -6282,7 +6290,10 @@ function mpNoNarrativeCoverage(sc) {
   // don't hijack it. Real rows always carry the selected `ticker` field.
   if (!sc || sc.ticker == null) return false;
   var w = sc.wks_score;
-  return w == null || Number(w) === 0;
+  var zeroWks = w == null || Number(w) === 0;
+  var nea = sc.narrative_energy_absolute;
+  var lowEnergy = nea != null && isFinite(Number(nea)) && Number(nea) < 100;
+  return zeroWks && lowEnergy;
 }
 
 // Deterministic synthesized state label + action chip + tone for the
@@ -6815,10 +6826,12 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
   // function (operates on narrative_scorecard fields plus a small ctx for
   // non-scorecard signals like today's price change — no LLM).
   var state = deriveState(sc, { priceChangePct: story && story.price_change_pct });
-  // D4: a wks=0 scorecard means no keyword-matched coverage — the backend's
-  // "exhausted / energy faded to 0%" label is a no-coverage artifact, not a real
-  // bearish read. Neutralize the chip + tone so it doesn't look like a confident
-  // verdict on a thinly-covered or foreign-filer name.
+  // D4: wks=0 AND low narrative energy together mean no keyword-matched
+  // coverage — there the backend's "exhausted / energy faded to 0%" label is a
+  // no-coverage artifact, not a real bearish read. Neutralize the chip + tone so
+  // it doesn't look like a confident verdict on a thinly-covered or
+  // foreign-filer name. (wks=0 alone is just a neutral-sentiment day — see
+  // mpNoNarrativeCoverage.)
   var noCoverage = mpNoNarrativeCoverage(sc);
   if (noCoverage) state = { label: 'Low / No Coverage', action: 'NO SIGNAL', tone: 'neutral' };
   var pal = ttTonePalette(state.tone);
