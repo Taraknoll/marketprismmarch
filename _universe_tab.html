@@ -572,22 +572,55 @@ function drawRadar(s){
 function avg(a){ var s=0; for(var i=0;i<a.length;i++)s+=a[i]; return s/a.length; }
 function fmtFvd(s){ return s&&s.fvd!=null ? (s.fvd>0?'+':'')+Math.round(s.fvd)+'%' : '—'; }
 function buildTour(){
-  var stops=[];
+  // Data-driven, deduped: each axis toured pole-to-pole, then the two channels
+  // position can't show (glow = coordination, size = mass). One ticker never
+  // stars in two chapters — pickFirst() claims each pick.
+  var stops=[], used={};
+  function pickFirst(arr){ for(var i=0;i<arr.length;i++){ if(arr[i]&&!used[arr[i].t]){ used[arr[i].t]=1; return arr[i]; } } return null; }
+  function hum(x){ return x?String(x).split('_').join(' ').toLowerCase():''; }
+  function pct(x){ return Math.round((x||0)*100); }
+
   var traps=stocks.filter(function(s){return s.fam.id==='trap';}).sort(function(a,b){return (b.fvd||0)-(a.fvd||0);}).slice(0,2);
+  traps.forEach(function(s){ used[s.t]=1; });
+  var value=pickFirst(stocks.filter(function(s){return s.fvd!=null&&s.fvd<-15&&(s.fam.id==='support'||s.fam.id==='accum'||s.fam.id==='conviction');})
+    .sort(function(a,b){return (a.fvd||0)-(b.fvd||0);}));
   var topE=stocks.slice().sort(function(a,b){return (b.wks||0)-(a.wks||0);}).slice(0,4).filter(function(s){return (s.wks||0)>30;});
-  var lowE=stocks.slice().sort(function(a,b){return (a.wks||0)-(b.wks||0);})[0];
-  var spent=stocks.filter(function(s){return s.v==='Exhausted Narrative';})
-    .sort(function(a,b){return (b.exh-a.exh)||((b.coord||0)-(a.coord||0));})[0];
+  var lowE=pickFirst(stocks.slice().sort(function(a,b){return (a.wks||0)-(b.wks||0);}));
+  var fresh=pickFirst(stocks.filter(function(s){return s.exh!=null&&s.exh<=0.30;})
+    .sort(function(a,b){return (a.exh-b.exh)||((b.wks||0)-(a.wks||0));}));
+  var spent=pickFirst(stocks.filter(function(s){return s.v==='Exhausted Narrative';})
+    .sort(function(a,b){return (b.exh-a.exh)||((b.coord||0)-(a.coord||0));}));
+  var chorus=pickFirst(stocks.filter(function(s){return (s.coord||0)>=40;})
+    .sort(function(a,b){return ((b.coord||0)-(a.coord||0))||((b.mass||0)-(a.mass||0));}));
+  var heavy=pickFirst(stocks.slice().sort(function(a,b){return (b.mass||0)-(a.mass||0);}));
+
+  // 1 — the instrument
   stops.push({title:'One field. '+stocks.length+' narratives.', step:'THE INSTRUMENT',
     body:'Every light is a stock, placed by forensic physics: how stretched the price is against its SEC-anchored fair value, how much energy the tape carries, and how exhausted the story has become. Size is narrative mass; glow is coordinated media heat.',
     chips:[(UV_DATA.date||'today')+' snapshot','scored ~6×/day','194 metrics per ticker'],
     cam:{tx:0,ty:0,tz:0,dist:1350,phi:.30}});
+  // 2 — how to read the space
+  stops.push({title:'Three axes. One language.', step:'THE MAP',
+    body:'Left to right: price versus its SEC-anchored fair value — from discount to dangerously rich. Bottom to top: tape energy, the Wyckoff read of who is really buying. Near to far: narrative freshness to exhaustion. Once you can read the space, every stock is a sentence.',
+    chips:['X — price vs fair value','Y — tape energy','Z — exhaustion'],
+    cam:{tx:0,ty:-50,tz:0,dist:1520,phi:.10,theta:cam.theta+.85}});
+  // 3..4 — the valuation axis, hot end (or the empty gate)
   traps.forEach(function(s,i){
     stops.push({title:s.t+' — a live Narrative Trap', step:'TRAP '+(i+1)+' OF '+traps.length, color:s.color,
       body:'The claims verify — SEC verification '+(s.vms==null?'—':s.vms)+'/100 against actual filings. But price sits '+fmtFvd(s)+' above the fundamental anchor'+((s.coord||0)>=40?(' while coordination runs at '+s.coord+'/100'):'')+'. A true story at the wrong price is still a trap.',
       chips:['FVD '+fmtFvd(s),'SEC verification '+(s.vms==null?'—':s.vms),'coordination '+(s.coord==null?'—':s.coord),'confidence '+(s.conf==null?'—':s.conf)],
       cam:{tx:s.x,ty:s.y,tz:s.z,dist:520,phi:.18}, focus:s.t});
   });
+  if(!traps.length) stops.push({title:'The trap gate stands empty.', step:'TRAP GATE',
+    body:'No name clears the full gate today — price at least 150% above its anchor with claims that verify and a coordinated chorus behind them. The red slab waits all the same. When a story walks in, it gets a beacon.',
+    chips:['gate: ≥150% above fair value','claims verify (SEC)','coordinated heat'],
+    cam:{tx:(xOf(150)+SX)/2,ty:0,tz:0,dist:950,phi:.28}});
+  // 5 — the valuation axis, cold end
+  if(value) stops.push({title:value.t+' — priced below its anchor', step:'THE DISCOUNT SHELF', color:value.color,
+    body:'At '+fmtFvd(value)+' versus fair value with a '+value.v+' verdict, '+value.t+' sits at the opposite end of the valuation axis from the traps. Cheap plus structurally sound is a different animal from cheap plus broken — the physics tells them apart.',
+    chips:['FVD '+fmtFvd(value),'verdict: '+value.v,'SEC verification '+(value.vms==null?'—':value.vms)],
+    cam:{tx:value.x,ty:value.y,tz:value.z,dist:540,phi:.16}, focus:value.t});
+  // 6..7 — the energy axis, top and floor
   if(topE.length>=3){
     var c={x:avg(topE.map(function(p){return p.x;})), y:avg(topE.map(function(p){return p.y;})), z:avg(topE.map(function(p){return p.z;}))};
     stops.push({title:'The top of the energy axis', step:'TAPE ENERGY',
@@ -599,10 +632,26 @@ function buildTour(){
     body:'Tape energy '+lowE.wks+' — the most bearish tape in the field'+(lowE.fvd!=null?(', at '+fmtFvd(lowE)+' versus anchor'):'')+'. The bottom of the energy axis is where narratives go to bleed.',
     chips:['energy '+lowE.wks,'verdict: '+lowE.v],
     cam:{tx:lowE.x,ty:lowE.y,tz:lowE.z,dist:560,phi:.12}, focus:lowE.t});
+  // 8..9 — the exhaustion axis, fresh wall and deep end
+  if(fresh) stops.push({title:fresh.t+' — a story with fuel left', step:'FRESH FUEL', color:fresh.color,
+    body:'Exhaustion just '+pct(fresh.exh)+'% — hugging the FRESH wall. Attention is a resource narratives spend, and this one has barely touched the tank'+(fresh.regime&&fresh.regime.indexOf('FRESH')>=0?(' — the decay regime reads '+hum(fresh.regime)):'')+'.',
+    chips:['exhaustion '+pct(fresh.exh)+'%','energy '+(fresh.wks==null?'—':fresh.wks),'verdict: '+fresh.v],
+    cam:{tx:fresh.x,ty:fresh.y,tz:fresh.z,dist:540,phi:.20}, focus:fresh.t});
   if(spent) stops.push({title:spent.t+' — a spent story', step:'EXHAUSTION', color:spent.color,
-    body:'The exhaustion read is '+Math.round(spent.exh*100)+'% and the verdict is Exhausted Narrative — deep on the exhaustion axis'+((spent.coord||0)>=30?(' while the media chorus still sings at coordination '+spent.coord):'')+'. Attention decays like radiation: mass without fresh energy. Market Prism measures that decay instead of guessing at it.',
-    chips:['exhaustion '+Math.round(spent.exh*100)+'%','coordination '+(spent.coord==null?'—':spent.coord),'mass '+(spent.mass==null?'—':spent.mass)],
+    body:'The exhaustion read is '+pct(spent.exh)+'% and the verdict is Exhausted Narrative — deep on the exhaustion axis'+((spent.coord||0)>=30?(' while the media chorus still sings at coordination '+spent.coord):'')+'. Attention decays like radiation: mass without fresh energy. Market Prism measures that decay instead of guessing at it.',
+    chips:['exhaustion '+pct(spent.exh)+'%','coordination '+(spent.coord==null?'—':spent.coord),'mass '+(spent.mass==null?'—':spent.mass)],
     cam:{tx:spent.x,ty:spent.y,tz:spent.z,dist:560,phi:.22}, focus:spent.t});
+  // 10 — the glow channel
+  if(chorus) stops.push({title:chorus.t+' — the loudest chorus in the field', step:'THE CHORUS', color:chorus.color,
+    body:'The coordination detector reads timing and phrasing across outlets, and '+chorus.t+' burns at '+chorus.coord+'/100'+(chorus.coordCls?(' — '+hum(chorus.coordCls)):'')+'. That is the glow you can see from across the room. A chorus is not a crime; the engine watches whether the chorus and the filings agree.',
+    chips:['coordination '+chorus.coord, chorus.coordCls?hum(chorus.coordCls):null, 'verdict: '+chorus.v].filter(Boolean),
+    cam:{tx:chorus.x,ty:chorus.y,tz:chorus.z,dist:540,phi:.20}, focus:chorus.t});
+  // 11 — the size channel
+  if(heavy) stops.push({title:heavy.t+' — the heaviest story in the market', step:'NARRATIVE MASS', color:heavy.color,
+    body:'Narrative mass '+heavy.mass+' — the biggest body in the field. Mass is accumulated narrative weight: coverage, repetition, persistence. Heavy stories bend attention around them, move slowly, and die slowly.'+(heavy.streak?(' This one has been building for '+heavy.streak+' straight days.'):''),
+    chips:['mass '+heavy.mass, heavy.streak?(heavy.streak+'d streak'):null, 'verdict: '+heavy.v].filter(Boolean),
+    cam:{tx:heavy.x,ty:heavy.y,tz:heavy.z,dist:520,phi:.24}, focus:heavy.t});
+  // 12 — close
   stops.push({title:'Which stories are physics — and which are theater?', step:'MARKET PRISM',
     body:'A patent-pending forensic layer over '+stocks.length+' names: narrative mass, decay half-lives, source authority, coordination detection — recomputed through every trading day, auditable back to the filings. This is not another chart. It is the narrative field the chart floats on.',
     chips:['patent pending 63/971,470','SEC-anchored','updated intraday'],
