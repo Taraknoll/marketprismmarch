@@ -54,17 +54,6 @@
   .page-title { font-family: var(--font-body); font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
   .page-subtitle { font-size: 14px; color: var(--mp-text-secondary); max-width: 720px; }
 
-  /* ── Beta gate ── */
-  .beta-gate { position: fixed; inset: 0; background: var(--mp-obsidian); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-  .beta-gate-card { background: var(--mp-surface); border: 1px solid var(--mp-border-mid); border-radius: 16px; padding: 40px 36px; width: 380px; max-width: 90vw; text-align: center; }
-  .beta-gate-title { font-family: var(--font-display); font-size: 24px; font-weight: 400; margin-bottom: 6px; }
-  .beta-gate-sub { font-size: 13px; color: var(--mp-text-secondary); margin-bottom: 24px; }
-  .beta-gate-input { font-family: var(--font-body); font-size: 16px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--mp-border-mid); background: var(--mp-deep); color: var(--mp-text-primary); width: 100%; text-align: center; outline: none; margin-bottom: 12px; }
-  .beta-gate-input:focus { border-color: var(--mp-blue); }
-  .beta-gate-btn { font-family: var(--font-body); font-size: 14px; font-weight: 500; padding: 10px 32px; border-radius: 10px; border: none; cursor: pointer; background: var(--mp-blue); color: #FFFFFF; width: 100%; transition: opacity 0.15s; }
-  .beta-gate-btn:hover { opacity: 0.85; }
-  .beta-gate-error { font-size: 12px; color: var(--mp-red); margin-top: 10px; display: none; }
-
   /* ============================================================
      NARRATIVE HEATMAP — self-contained block (.nhm- scope).
      Tokens mapped onto the page's --mp-* palette so it themes
@@ -148,16 +137,6 @@
 </head>
 <body>
 
-<!-- Beta Access Gate -->
-<div class="beta-gate" id="beta-gate">
-  <div class="beta-gate-card">
-    <div class="beta-gate-title">Narrative Heatmap</div>
-    <div class="beta-gate-sub">This feature is in beta. Enter your access code to continue.</div>
-    <input class="beta-gate-input" id="beta-code" type="password" placeholder="Access code" autocomplete="off">
-    <button class="beta-gate-btn" id="beta-submit">Enter</button>
-    <div class="beta-gate-error" id="beta-error">Invalid access code. Try again.</div>
-  </div>
-</div>
 
 <!-- Sidebar -->
 <nav class="side-nav">
@@ -239,25 +218,8 @@
   </div>
 </div>
 
-<!-- Beta gate + theme toggle -->
+<!-- Theme toggle -->
 <script>
-(function() {
-  if (sessionStorage.getItem('narrative-heatmap-access') === '1') { document.getElementById('beta-gate').style.display = 'none'; return; }
-  document.getElementById('beta-submit').onclick = checkCode;
-  document.getElementById('beta-code').onkeydown = function(e) { if (e.key === 'Enter') checkCode(); };
-  function checkCode() {
-    var code = document.getElementById('beta-code').value.trim();
-    if (code.toLowerCase() === 'karma') {
-      sessionStorage.setItem('narrative-heatmap-access', '1');
-      document.getElementById('beta-gate').style.display = 'none';
-    } else {
-      document.getElementById('beta-error').style.display = 'block';
-      document.getElementById('beta-code').value = '';
-      document.getElementById('beta-code').focus();
-    }
-  }
-  document.getElementById('beta-code').focus();
-})();
 document.getElementById('theme-toggle').onclick = function() {
   var isL = document.documentElement.getAttribute('data-theme') === 'light';
   document.documentElement.setAttribute('data-theme', isL ? 'dark' : 'light');

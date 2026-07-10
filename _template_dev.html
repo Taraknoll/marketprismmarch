@@ -3472,49 +3472,6 @@ body{
   .scholar-fab.open{width:48px;height:48px;position:fixed;bottom:0;right:0;left:auto;border-radius:0;border-top:1px solid rgba(0,174,255,0.12);border-left:1px solid rgba(0,174,255,0.12);}
   .scholar-panel{bottom:48px;right:0;left:0;width:auto;max-width:none;max-height:calc(100vh - 56px);border-radius:16px 16px 0 0;}
 }
-/* ── PASSWORD GATE ── */
-.pw-gate{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--mp-obsidian);
-  display:flex;align-items:center;justify-content:center;
-  transition:opacity .4s,visibility .4s;
-}
-.pw-gate.hidden{opacity:0;visibility:hidden;pointer-events:none;}
-.pw-box{
-  width:340px;padding:36px 32px;border-radius:16px;
-  background:var(--mp-surface);
-  border:1px solid var(--mp-border);
-  box-shadow:0 8px 40px rgba(0,0,0,0.5),0 0 80px rgba(0,174,255,0.04);
-  text-align:center;
-}
-.pw-box-logo{
-  display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;
-}
-.pw-box-logo span{font-family:'Inter',var(--font-body);font-size:18px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--mp-text-primary);}
-.pw-box h2{
-  font-family:var(--font-body);font-size:15px;font-weight:500;
-  color:var(--mp-text-secondary);margin-bottom:20px;
-}
-.pw-input{
-  width:100%;padding:12px 16px;border-radius:10px;
-  background:var(--mp-obsidian);border:1px solid var(--mp-border);
-  color:var(--mp-text-primary);font-family:var(--font-body);font-size:14px;
-  outline:none;transition:border-color .2s;
-}
-.pw-input:focus{border-color:rgba(0,174,255,0.4);}
-.pw-input.error{border-color:#FF4D4D;animation:pwShake .4s ease;}
-.pw-submit{
-  width:100%;margin-top:12px;padding:11px;border-radius:10px;border:none;
-  background:linear-gradient(135deg,#00AEFF,#0090DD);
-  color:#fff;font-family:var(--font-body);font-size:13px;font-weight:600;
-  cursor:pointer;transition:opacity .2s;letter-spacing:.02em;
-}
-.pw-submit:hover{opacity:.9;}
-.pw-error-msg{
-  font-family:var(--font-body);font-size:12px;color:#FF4D4D;
-  margin-top:10px;min-height:18px;
-}
-@keyframes pwShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}50%{transform:translateX(6px);}75%{transform:translateX(-4px);}}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    NARRATIVE FEED — 2-column tabbed scrollable layout
@@ -4204,60 +4161,6 @@ body{
 </style>
 </head>
 <body>
-<!-- ── PASSWORD GATE ── -->
-<div class="pw-gate" id="pw-gate">
-  <div class="pw-box">
-    <div class="pw-box-logo">
-      <span>Market Prism</span>
-    </div>
-    <h2>Enter password to access the dashboard</h2>
-    <form id="pw-form" onsubmit="return checkPw(event)">
-      <input class="pw-input" id="pw-input" type="password" placeholder="Password" autocomplete="off" autofocus>
-      <button class="pw-submit" type="submit">Enter</button>
-      <div class="pw-error-msg" id="pw-error"></div>
-    </form>
-  </div>
-</div>
-<script>
-(function(){
-  // The password hash — change DASHBOARD_PW to set a new password
-  // Default password: "marketprism"
-  var PW_HASH = '8f14e45fceea167a5a36dedd4bea2543'; // md5 of "marketprism" — replace with your own
-  var STORAGE_KEY = 'mp_auth';
-  var SESSION_HOURS = 24;
-
-  function simpleHash(s){
-    // Simple hash for client-side gating (not security-critical)
-    var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}
-    return h.toString(36);
-  }
-
-  // Check if already authenticated this session
-  try{
-    var stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-    if(stored.t && (Date.now()-stored.t)<SESSION_HOURS*3600000){
-      document.getElementById('pw-gate').classList.add('hidden');
-    }
-  }catch(e){}
-
-  window.checkPw=function(e){
-    e.preventDefault();
-    var input=document.getElementById('pw-input');
-    var val=input.value.trim();
-    // Accept the literal password — edit this string to change the password
-    if(val==='Karma'){
-      localStorage.setItem(STORAGE_KEY,JSON.stringify({t:Date.now()}));
-      document.getElementById('pw-gate').classList.add('hidden');
-      input.value='';
-    }else{
-      input.classList.add('error');
-      document.getElementById('pw-error').textContent='Incorrect password';
-      setTimeout(function(){input.classList.remove('error');},500);
-    }
-    return false;
-  };
-})();
-</script>
 <!-- Mobile topbar -->
 <div class="mobile-topbar">
   <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">

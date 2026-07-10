@@ -262,7 +262,6 @@ body::before{
       <button class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
       <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
       <button class="auth-tab" onclick="switchAuthTab('reset')">Reset</button>
-      <button class="auth-tab" onclick="switchAuthTab('beta')">Beta Code</button>
     </div>
 
     <!-- Message area -->
@@ -305,18 +304,6 @@ body::before{
         <input class="form-input" id="reset-email" type="email" placeholder="you@example.com" required autocomplete="email">
       </div>
       <button class="btn-submit" type="submit" id="btn-reset">Send Reset Link</button>
-    </form>
-
-    <!-- Beta Code Form -->
-    <form class="auth-form" id="form-beta" onsubmit="handleBetaCode(event)">
-      <div style="font-size:12px;color:var(--mp-text-tertiary);line-height:1.55;margin-bottom:14px;">
-        Have a beta access code? Redeem it here for 7 days of full dashboard access — no subscription required.
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="beta-code">Beta access code</label>
-        <input class="form-input" id="beta-code" type="text" placeholder="Enter your code" autocomplete="off" autocapitalize="off" spellcheck="false" required style="text-transform:none;letter-spacing:.04em;font-weight:500;">
-      </div>
-      <button class="btn-submit" type="submit" id="btn-beta">Redeem &amp; enter dashboard</button>
     </form>
   </div>
 
@@ -401,15 +388,6 @@ body::before{
     }).catch(function(){});
   }
 
-  function mintBetaCookie(code, expiresIso){
-    return fetch('/api/session', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      credentials:'same-origin',
-      body: JSON.stringify({ beta:true, code: code, expires: expiresIso })
-    });
-  }
-
   // Check if already logged in (don't hang the page if provider is down)
   try {
     var sessionTimeout = setTimeout(function(){}, 0);
@@ -419,8 +397,8 @@ body::before{
     ]).then(function(result){
       if(result && result.data && result.data.session){
         // Self-heal: mint the cookie for legacy localStorage-only sessions, then continue.
-        // Also set mp_auth so the legacy pw-gate overlay on _template.html dismisses for
-        // returning paid users (matches what handleBetaCode does).
+        // Also set mp_auth so the legacy pw-gate overlay on dev pages dismisses for
+        // returning paid users.
         try { localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()})); } catch(_){}
         mintSessionCookie(result.data.session.access_token).then(function(){
           window.location.href = nextDestination();
@@ -431,59 +409,13 @@ body::before{
 
   // ── Tab switching ──
   window.switchAuthTab = function(tab){
-    ['signin','register','reset','beta'].forEach(function(t){
+    ['signin','register','reset'].forEach(function(t){
       var form = document.getElementById('form-'+t);
       var btn = document.querySelector('.auth-tab[onclick*="\''+t+'\'"]');
       if(form) form.classList.toggle('active', t===tab);
       if(btn)  btn.classList.toggle('active', t===tab);
     });
     clearMsg();
-  };
-
-  // ── Beta Code Redemption ──
-  // Codes are validated server-side by /api/session against the BETA_CODES
-  // env var. The client only does a non-empty sanity check before submitting —
-  // it does NOT know which codes are valid (that lived in client source
-  // historically and was a security regression).
-  window.handleBetaCode = async function(e){
-    e.preventDefault();
-    clearMsg();
-    var raw  = document.getElementById('beta-code').value || '';
-    var code = raw.trim();
-    if(!code){ showMsg('error','Enter your beta access code.'); return; }
-    setLoading('btn-beta', true);
-    try {
-      var expires = new Date(); expires.setDate(expires.getDate() + 7);
-      // Mint the HttpOnly mp_beta cookie via /api/session. Server validates
-      // the code against the BETA_CODES env var; rejects with 401 if invalid
-      // or 503 if BETA_CODES is unset.
-      var resp = await mintBetaCookie(code, expires.toISOString());
-      if(!resp.ok){
-        var msg = 'Could not redeem code. Try again.';
-        try { var body = await resp.json(); if(body && body.error) msg = body.error; } catch(_){}
-        showMsg('error', msg);
-        setLoading('btn-beta', false);
-        return;
-      }
-      // Use the server-authoritative expiry when provided (per-code TTL — e.g. a
-      // 24h Reddit code returns ~24h, not the 7d we asked for); fall back to our
-      // requested window for older deployments that don't return one.
-      var grantedExpires = expires.toISOString();
-      try { var ok = await resp.json(); if(ok && ok.expires) grantedExpires = ok.expires; } catch(_){}
-      // Mirror the same localStorage flags the existing register flow sets, so
-      // every client-side soft-gate keeps treating beta users as authed.
-      localStorage.setItem('mp-beta-access', 'true');
-      localStorage.setItem('mp-beta-tier', 'pro');
-      localStorage.setItem('mp-beta-expires', grantedExpires);
-      localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()}));
-      showMsg('success','Beta access granted. Redirecting…');
-      try { if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'beta_code' }); } catch(_){}
-      document.getElementById('btn-beta').classList.add('success');
-      setTimeout(function(){ window.location.href = nextDestination(); }, 700);
-    } catch(err){
-      showMsg('error', err && err.message ? err.message : 'Could not redeem code. Try again.');
-      setLoading('btn-beta', false);
-    }
   };
 
   // Auto-switch tab from URL hash (e.g. /login#register)
@@ -542,7 +474,7 @@ body::before{
       document.getElementById('btn-signin').classList.add('success');
       var token = result.data && result.data.session ? result.data.session.access_token : null;
       await mintSessionCookie(token);
-      // Dismiss the legacy pw-gate overlay on gated pages (same flag handleBetaCode sets).
+      // Dismiss the legacy pw-gate overlay on gated pages.
       try { localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()})); } catch(_){}
       setTimeout(function(){ window.location.href = nextDestination(); }, 800);
     } catch(err){
@@ -582,7 +514,7 @@ body::before{
       }
       var regToken = result.data && result.data.session ? result.data.session.access_token : null;
       await mintSessionCookie(regToken);
-      // Dismiss the legacy pw-gate overlay on gated pages (same flag handleBetaCode sets).
+      // Dismiss the legacy pw-gate overlay on gated pages.
       try { localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()})); } catch(_){}
       setTimeout(function(){ window.location.href = nextDestination(); }, 800);
     } catch(err){
