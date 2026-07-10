@@ -126,6 +126,65 @@
   #tab-universe .uv-caption{margin-top:10px;font-size:11px;color:var(--uv-ink3);line-height:1.6;}
   #tab-universe .uv-caption b{color:var(--uv-ink2);font-weight:600;}
 
+  /* ── engagement layer: shifts feed / replay / compare / snapshot / watch ── */
+  #tab-universe .uv-feed{position:absolute;top:12px;left:12px;z-index:6;width:272px;max-width:calc(100% - 24px);
+    background:rgba(12,16,24,0.92);border:1px solid rgba(255,255,255,0.10);border-radius:12px;overflow:hidden;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  #tab-universe .uv-feed .fh{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;user-select:none;}
+  #tab-universe .uv-feed .fh .t{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#4DC8F0;}
+  #tab-universe .uv-feed .fh .n{font-size:11px;color:rgba(255,255,255,.5);font-variant-numeric:tabular-nums;}
+  #tab-universe .uv-feed .fh .c{margin-left:auto;color:rgba(255,255,255,.45);font-size:11px;}
+  #tab-universe .uv-feed .fb{max-height:196px;overflow-y:auto;scrollbar-width:thin;border-top:1px solid rgba(255,255,255,0.07);}
+  #tab-universe .uv-feed.closed .fb{display:none;}
+  #tab-universe .uv-frow{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;cursor:pointer;
+    background:none;border:none;border-bottom:1px solid rgba(255,255,255,0.05);padding:7px 12px;
+    font-family:var(--font-body,'Inter',sans-serif);}
+  #tab-universe .uv-frow:last-child{border-bottom:none;}
+  #tab-universe .uv-frow:hover{background:rgba(255,255,255,0.05);}
+  #tab-universe .uv-frow .tk{font-size:13px;font-weight:700;flex-shrink:0;}
+  #tab-universe .uv-frow .tx{font-size:13px;line-height:1.45;color:rgba(255,255,255,.68);}
+  #tab-universe .uv-empty{padding:10px 12px;font-size:13px;color:rgba(255,255,255,.45);line-height:1.5;}
+
+  #tab-universe .uv-snap{position:absolute;top:12px;right:12px;z-index:6;cursor:pointer;
+    font-family:var(--font-body,'Inter',sans-serif);font-size:11px;font-weight:600;letter-spacing:.06em;
+    color:rgba(255,255,255,.75);background:rgba(12,16,24,0.85);border:1px solid rgba(255,255,255,0.12);
+    border-radius:9px;padding:7px 12px;}
+  #tab-universe .uv-snap:hover{border-color:#00AEFF;color:#fff;}
+  #tab-universe .uv-stage.dossier-open .uv-snap{display:none;}
+
+  #tab-universe .uv-replay{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:8;display:none;
+    align-items:center;gap:10px;background:rgba(12,16,24,0.95);border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px;padding:9px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  #tab-universe .uv-replay.open{display:flex;}
+  #tab-universe .uv-replay button{cursor:pointer;background:none;border:1px solid rgba(255,255,255,0.14);
+    color:rgba(255,255,255,.8);border-radius:8px;font-size:13px;padding:4px 10px;font-family:var(--font-body,'Inter',sans-serif);}
+  #tab-universe .uv-replay button:hover{border-color:#00AEFF;color:#fff;}
+  #tab-universe .uv-replay input[type=range]{width:min(240px,34vw);accent-color:#00AEFF;}
+  #tab-universe .uv-replay .lb{font-size:13px;color:#fff;font-weight:600;min-width:88px;text-align:center;font-variant-numeric:tabular-nums;}
+
+  #tab-universe .uv-comparecard{position:absolute;bottom:14px;left:14px;z-index:8;display:none;width:308px;max-width:calc(100% - 28px);
+    background:rgba(12,16,24,0.95);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 14px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  #tab-universe .uv-comparecard.open{display:block;}
+  #tab-universe .uv-comparecard .ch{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  #tab-universe .uv-comparecard .ch b{font-size:16px;font-weight:700;}
+  #tab-universe .uv-comparecard .ch .x3{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.5);
+    font-size:14px;cursor:pointer;padding:2px 6px;border-radius:6px;}
+  #tab-universe .uv-comparecard .ch .x3:hover{color:#fff;background:rgba(255,255,255,.08);}
+  #tab-universe .uv-crow{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;font-size:13px;padding:3px 0;color:rgba(255,255,255,.6);}
+  #tab-universe .uv-crow b{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;}
+  #tab-universe .uv-cpend{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);z-index:8;display:none;
+    font-size:13px;color:#fff;background:rgba(12,16,24,0.95);border:1px solid #00AEFF;border-radius:20px;padding:8px 16px;}
+  #tab-universe .uv-cpend.open{display:block;}
+
+  #tab-universe .uv-cmpbtn{margin-top:10px;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;color:rgba(255,255,255,.7);background:none;border:1px solid rgba(255,255,255,.14);
+    border-radius:8px;padding:6px 12px;font-family:var(--font-body,'Inter',sans-serif);}
+  #tab-universe .uv-cmpbtn:hover{border-color:#00AEFF;color:#fff;}
+  #tab-universe .uv-dossier .x.watch{margin-left:auto;font-size:15px;}
+  #tab-universe .uv-dossier .x.watch.on{color:#FFB800;}
+  #tab-universe .uv-dossier #uvd-x{margin-left:0;}
+
   @media(max-width:767px){
     #tab-universe .uv-stats{margin-left:0;width:100%;justify-content:space-between;}
     #tab-universe .uv-stat{padding:0 10px;}
@@ -133,6 +192,8 @@
     #tab-universe .uv-dossier{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-height:56%;}
     #tab-universe #uv-search{width:120px;}
     #tab-universe .uv-hintbar{display:none;}
+    #tab-universe .uv-feed{display:none;}
+    #tab-universe .uv-comparecard{left:10px;right:10px;width:auto;}
   }
   @media (prefers-reduced-motion:reduce){
     #tab-universe .uv-spin{animation:none;}
@@ -155,6 +216,7 @@
     <datalist id="uv-tickers"></datalist>
     <select class="uv-ctl" id="uv-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
     <button class="uv-ctl" id="uv-tour">▸ Guided tour</button>
+    <button class="uv-ctl" id="uv-replaybtn" title="Replay the field over the last trading days">⏮ Replay</button>
   </div>
 
   <div class="uv-fams" id="uv-fams" role="group" aria-label="Verdict families — click to isolate"></div>
@@ -164,12 +226,32 @@
     <div class="uv-hintbar"><b>Scroll</b> to fly in · <b>WASD</b> to walk (Q/E rise · Shift sprint) · <b>Drag</b> to orbit · <b>Click</b> a body for its dossier</div>
     <div id="uv-tip"></div>
 
+    <div class="uv-feed" id="uv-feed" aria-label="Today's shifts">
+      <div class="fh" id="uvf-head"><span class="t">Today's shifts</span><span class="n" id="uvf-n"></span><span class="c" id="uvf-c">▾</span></div>
+      <div class="fb" id="uvf-list"></div>
+    </div>
+    <button class="uv-snap" id="uv-snap" title="Download this view as an image">⤓ Snapshot</button>
+    <div class="uv-replay" id="uv-replay" aria-label="Replay controls">
+      <button id="uvr-play" aria-label="Play replay">▸</button>
+      <input type="range" id="uvr-slider" min="0" max="10" value="10" step="1" aria-label="Replay day">
+      <span class="lb" id="uvr-label">today</span>
+      <button id="uvr-exit" aria-label="Exit replay">✕</button>
+    </div>
+    <div class="uv-comparecard" id="uv-compare" aria-label="Compare two stocks">
+      <div class="ch"><b id="uvc-a"></b><span style="color:rgba(255,255,255,.4)">⇄</span><b id="uvc-b"></b>
+        <button class="x3" id="uvc-x" aria-label="Close compare">✕</button></div>
+      <div id="uvc-rows"></div>
+    </div>
+    <div class="uv-cpend" id="uv-cpend">Comparing <b id="uvcp-t"></b> — click another body</div>
+
     <aside class="uv-dossier" id="uv-dossier" aria-label="Stock dossier">
       <div class="dh">
         <div class="r1"><span class="tk" id="uvd-tk"></span><span class="px" id="uvd-px"></span>
+          <button class="x watch" id="uvd-watch" aria-label="Watch ticker">☆</button>
           <button class="x" id="uvd-x" aria-label="Close dossier">✕</button></div>
         <div class="sec" id="uvd-sec"></div>
         <div class="chips" id="uvd-chips"></div>
+        <button class="uv-cmpbtn" id="uvd-cmp">⇄ Compare with another body</button>
       </div>
       <div class="db">
         <div class="uv-blk"><h4>Price vs fair value</h4>
@@ -258,6 +340,11 @@ var dragging=false, moved=false, px0=0, py0=0, lastInteract=0, pinch0=0;
 var hovered=null, selected=null, projCache=[];
 var hiddenFams={}, sectorFilter='';
 var tourOpen=false, tourIdx=0, tourElapsed=0, TOUR=[], TOUR_DWELL=9000;
+var replayOpen=false, replayD=0, replayMax=0, replayPlaying=false, replayAcc=0;
+var cmpA=null, cmpB=null, cmpPending=false;
+var watch={}, placedLbl=[];
+try{ (JSON.parse(localStorage.getItem('mpUvWatch')||'[]')).forEach(function(t){ watch[t]=1; }); }catch(e){}
+function saveWatch(){ try{ localStorage.setItem('mpUvWatch', JSON.stringify(Object.keys(watch))); }catch(e){} }
 var rafId=null, lastT=0;
 var uvActive=false, needResize=true;   // layout reads happen OUTSIDE the frame loop only
 
@@ -359,10 +446,159 @@ function buildScene(){
     var s=byTicker[se.value.toUpperCase().trim()];
     if(s){ select(s); flyTo(s,480); se.blur(); }
   };
+  replayMax=0;
+  stocks.forEach(function(s){ replayMax=Math.max(replayMax,(s.trailPts?s.trailPts.length:1)-1); });
+  replayMax=Math.min(replayMax,14);
+  $id('uvr-slider').max=String(replayMax);
+  $id('uv-replaybtn').style.display=replayMax>0?'':'none';
+  exitReplay(); closeCompare();
+  buildFeed();
   makeStars(); makeDust();
 }
 
+/* ── today's shifts feed (verdict flips, new traps, overnight FVD movers) ── */
+function buildFeed(){
+  var list=$id('uvf-list'); if(!list) return;
+  var rows=[];
+  stocks.forEach(function(s){
+    if(s.pv&&s.pv!==s.v){
+      var toTrap=s.v==='Narrative Trap';
+      rows.push({s:s,pri:toTrap?0:1,mag:s.mass||0,
+        txt:toTrap?('entered the trap gate — was '+s.pv):(s.pv+' → '+s.v)});
+    }
+  });
+  stocks.forEach(function(s){
+    var n=s.trail?s.trail.length:0;
+    if(n>=2&&s.trail[n-1][2]!=null&&s.trail[n-2][2]!=null){
+      var d=s.trail[n-1][2]-s.trail[n-2][2];
+      if(Math.abs(d)>=10) rows.push({s:s,pri:2,mag:Math.abs(d),
+        txt:(d>0?'+':'−')+Math.abs(Math.round(d))+' pts vs fair value overnight'});
+    }
+  });
+  rows.sort(function(a,b){ return a.pri-b.pri || b.mag-a.mag; });
+  rows=rows.slice(0,8);
+  $id('uvf-n').textContent=rows.length?String(rows.length):'';
+  list.innerHTML='';
+  if(!rows.length){
+    list.innerHTML='<div class="uv-empty">No overnight shifts — the field held its shape.</div>';
+    return;
+  }
+  rows.forEach(function(f){
+    var b=document.createElement('button'); b.type='button'; b.className='uv-frow';
+    b.innerHTML='<span class="tk" style="color:'+f.s.color+'">'+uvEsc(f.s.t)+'</span>'+
+                '<span class="tx">'+uvEsc(f.txt)+'</span>';
+    b.onclick=function(){ select(f.s); flyTo(f.s,480); };
+    list.appendChild(b);
+  });
+}
+
+/* ── replay (time machine over the trail window) ── */
+function setReplayD(d){
+  replayD=Math.max(0,Math.min(replayMax,d));
+  $id('uvr-slider').value=String(replayMax-replayD);
+  $id('uvr-label').textContent=replayD?('today − '+replayD+'d'):'today';
+}
+function toggleReplay(){
+  if(replayOpen){ exitReplay(); return; }
+  if(!replayMax) return;
+  if(tourOpen) exitTour();
+  replayOpen=true; $id('uv-replay').classList.add('open');
+  setReplayD(replayMax);
+}
+function exitReplay(){
+  replayOpen=false; replayPlaying=false; replayD=0;
+  var p=$id('uvr-play'); if(p) p.textContent='▸';
+  var r=$id('uv-replay'); if(r) r.classList.remove('open');
+}
+function playReplay(){
+  if(!replayOpen) return;
+  replayPlaying=!replayPlaying;
+  $id('uvr-play').textContent=replayPlaying?'❚❚':'▸';
+  if(replayPlaying&&replayD===0) setReplayD(replayMax);
+  replayAcc=0;
+}
+
+/* ── compare mode ── */
+function closeCompare(){
+  cmpA=null; cmpB=null; cmpPending=false;
+  var p=$id('uv-cpend'); if(p) p.classList.remove('open');
+  var c=$id('uv-compare'); if(c) c.classList.remove('open');
+}
+function openCompare(a,b){
+  cmpA=a; cmpB=b; cmpPending=false;
+  $id('uv-cpend').classList.remove('open');
+  $id('uvc-a').textContent=a.t; $id('uvc-a').style.color=a.color;
+  $id('uvc-b').textContent=b.t; $id('uvc-b').style.color=b.color;
+  function fmt(v,suf){ return v==null?'—':(v>0&&suf==='%'?'+':'')+v+(suf||''); }
+  function row(lbl,va,vb,d){
+    return '<div class="uv-crow"><span>'+lbl+'</span><b style="color:'+a.color+'">'+va+'</b>'+
+           '<b style="color:'+b.color+'">'+vb+'</b><b>'+d+'</b></div>';
+  }
+  var h='';
+  h+=row('vs fair value', fmt(a.fvd==null?null:Math.round(a.fvd),'%'), fmt(b.fvd==null?null:Math.round(b.fvd),'%'),
+    (a.fvd!=null&&b.fvd!=null)?('Δ'+Math.abs(Math.round(a.fvd-b.fvd))):'—');
+  h+=row('tape energy', fmt(a.wks), fmt(b.wks),
+    (a.wks!=null&&b.wks!=null)?('Δ'+Math.abs(Math.round(a.wks-b.wks))):'—');
+  h+=row('exhaustion', Math.round((a.exh||0)*100)+'%', Math.round((b.exh||0)*100)+'%',
+    'Δ'+Math.abs(Math.round(((a.exh||0)-(b.exh||0))*100)));
+  h+=row('narrative mass', fmt(a.mass), fmt(b.mass), '');
+  h+=row('coordination', fmt(a.coord), fmt(b.coord), '');
+  $id('uvc-rows').innerHTML=h;
+  $id('uv-compare').classList.add('open');
+}
+
+/* ── snapshot export ── */
+function snapshot(){
+  if(!cv||!W||!H) return;
+  var bar=56;
+  var out=document.createElement('canvas');
+  out.width=cv.width; out.height=cv.height+Math.round(bar*DPR);
+  var g=out.getContext('2d');
+  g.fillStyle='#0C1018'; g.fillRect(0,0,out.width,Math.round(bar*DPR));
+  g.setTransform(DPR,0,0,DPR,0,0);
+  g.fillStyle='#FFFFFF'; g.font='700 18px '+UV_FONT; g.textAlign='left';
+  g.fillText('MARKET PRISM — NARRATIVE UNIVERSE',16,24);
+  g.fillStyle='rgba(255,255,255,0.6)'; g.font='600 12px '+UV_FONT;
+  g.fillText(((UV_DATA&&UV_DATA.date)?UV_DATA.date+' · ':'')+counts.total+' narratives · '+
+    counts.trap+' live traps · marketprism.co',16,44);
+  g.setTransform(1,0,0,1,0,0);
+  g.drawImage(cv,0,Math.round(bar*DPR));
+  out.toBlob(function(b){
+    if(!b) return;
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='marketprism-universe-'+((UV_DATA&&UV_DATA.date)||'today')+'.png';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000);
+  },'image/png');
+}
+
 function visible(s){ return !hiddenFams[s.fam.id] && (!sectorFilter || s.sec===sectorFilter); }
+// Position source honoring the replay scrubber: d days back = that day's trail
+// point; null = the ticker wasn't scored that day (body skips the frame).
+function p3(s){
+  if(!replayD) return s;
+  var n=s.trailPts.length, i=n-1-replayD;
+  return i>=0 ? s.trailPts[i] : null;
+}
+// Screen-space label arbitration — labels claim rects in priority order each
+// frame; a label that would overlap an already-placed one is skipped instead
+// of stacking (the old behavior piled ticks into a heap when an axis went
+// edge-on to the camera).
+function lblFits(x,y,w,h){
+  for(var i=0;i<placedLbl.length;i++){ var r=placedLbl[i];
+    if(x<r.x+r.w && x+w>r.x && y<r.y+r.h && y+h>r.y) return false; }
+  placedLbl.push({x:x,y:y,w:w,h:h});
+  return true;
+}
+function text3D(p,label,style,font,dy){
+  var pr=project(p); if(!pr) return false;
+  ctx.font=font||('600 11px '+UV_FONT);
+  var w=ctx.measureText(label).width;
+  if(!lblFits(pr.x-w/2,pr.y+(dy||0)-11,w,13)) return false;
+  ctx.fillStyle=style; ctx.textAlign='center'; ctx.fillText(label,pr.x,pr.y+(dy||0));
+  return true;
+}
 
 /* ── camera / projection ── */
 function resize(){
@@ -386,7 +622,7 @@ function stepTween(now){
   ['phi','dist','tx','ty','tz'].forEach(function(p){ cam[p]=tween.from[p]+(tween.to[p]-tween.from[p])*e; });
   if(k===1) tween=null;
 }
-function flyTo(s,dist){ tweenCam({tx:s.x,ty:s.y,tz:s.z,dist:dist||480,phi:Math.max(.12,cam.phi*.7)},1600); }
+function flyTo(s,dist){ var P=p3(s)||s; tweenCam({tx:P.x,ty:P.y,tz:P.z,dist:dist||480,phi:Math.max(.12,cam.phi*.7)},1600); }
 function nrm(v){ var l=Math.hypot(v.x,v.y,v.z)||1; return {x:v.x/l,y:v.y/l,z:v.z/l}; }
 function crs(a,b){ return {x:a.y*b.z-a.z*b.y, y:a.z*b.x-a.x*b.z, z:a.x*b.y-a.y*b.x}; }
 function updateCamera(){
@@ -507,7 +743,12 @@ function wireInput(){
     if(!panel || !panel.classList.contains('active')) return;
     var tag=(document.activeElement&&document.activeElement.tagName)||'';
     if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
-    if(e.key==='Escape'){ if(tourOpen) exitTour(); else closeDossier(); }
+    if(e.key==='Escape'){
+      if(tourOpen) exitTour();
+      else if(cmpPending||cmpB) closeCompare();
+      else if(replayOpen) exitReplay();
+      else closeDossier();
+    }
     if(e.key==='t'||e.key==='T') startTour();
     if(tourOpen&&e.key==='ArrowRight') tourGo(tourIdx+1);
     if(tourOpen&&e.key==='ArrowLeft')  tourGo(tourIdx-1);
@@ -523,6 +764,34 @@ function wireInput(){
   $id('uvt-next').onclick=function(){ tourGo(tourIdx+1); };
   $id('uvt-prev').onclick=function(){ tourGo(tourIdx-1); };
   $id('uvt-exit').onclick=exitTour;
+  $id('uvf-head').onclick=function(){
+    var f=$id('uv-feed'); f.classList.toggle('closed');
+    $id('uvf-c').textContent=f.classList.contains('closed')?'▸':'▾';
+  };
+  $id('uv-snap').onclick=snapshot;
+  $id('uv-replaybtn').onclick=toggleReplay;
+  $id('uvr-exit').onclick=exitReplay;
+  $id('uvr-play').onclick=playReplay;
+  $id('uvr-slider').oninput=function(){ setReplayD(replayMax-parseInt(this.value,10)); };
+  $id('uvd-watch').onclick=function(){
+    if(!selected) return;
+    if(watch[selected.t]) delete watch[selected.t]; else watch[selected.t]=1;
+    saveWatch(); syncWatchBtn();
+  };
+  $id('uvd-cmp').onclick=function(){
+    if(!selected) return;
+    cmpA=selected; cmpB=null; cmpPending=true;
+    closeDossier();
+    $id('uvcp-t').textContent=cmpA.t;
+    $id('uv-cpend').classList.add('open');
+  };
+  $id('uvc-x').onclick=closeCompare;
+}
+function syncWatchBtn(){
+  var b=$id('uvd-watch'); if(!b||!selected) return;
+  var on=!!watch[selected.t];
+  b.textContent=on?'★':'☆'; b.classList.toggle('on',on);
+  b.title=on?'Remove from watchlist':'Add to watchlist';
 }
 var cvRect=null, rectDirty=true;
 function refreshRect(){ if(cv){ cvRect=cv.getBoundingClientRect(); rectDirty=false; } }
@@ -543,8 +812,10 @@ function pick(e){
 function kvRow(k,v){ return v==null?'':'<div class="uv-kv"><span>'+k+'</span><b>'+uvEsc(String(v))+'</b></div>'; }
 function select(s){
   if(!s) return;
+  if(cmpPending&&cmpA&&s!==cmpA){ openCompare(cmpA,s); return; }
   selected=s;
   $id('uv-dossier').classList.add('open');
+  if(stage) stage.classList.add('dossier-open');
   // The dossier lives inside the stage — if the stage bottom hangs below the
   // fold, the dossier gets clipped. 'nearest' scrolls only when needed.
   if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
@@ -579,9 +850,13 @@ function select(s){
     kvRow('tape anomaly', (s.susp==null?'—':s.susp)+(s.suspCls?' · '+s.suspCls.split('_').join(' ').toLowerCase():'')) +
     kvRow('narrative risk', s.nrs);
   $id('uvd-syn').textContent=s.syn||'No synopsis recorded for this snapshot.';
+  syncWatchBtn();
   drawRadar(s);
 }
-function closeDossier(){ selected=null; $id('uv-dossier').classList.remove('open'); }
+function closeDossier(){
+  selected=null; $id('uv-dossier').classList.remove('open');
+  if(stage) stage.classList.remove('dossier-open');
+}
 function drawRadar(s){
   var c=$id('uv-radar'), g=c.getContext('2d');
   var dpr=Math.min(2,window.devicePixelRatio||1), RW=272, RH=216;
@@ -706,6 +981,7 @@ function buildTour(){
 }
 function startTour(){
   if(tourOpen||!stocks.length) return;
+  exitReplay(); closeCompare();
   TOUR=buildTour(); tourOpen=true; closeDossier();
   $id('uv-tourcard').classList.add('open');
   if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
@@ -764,18 +1040,24 @@ function drawFrame(now){
   line3({x:-SX,y:gy,z:SZ*1.12},{x:-SX-13,y:gy,z:SZ*1.12-22},AC,1.2);
   line3({x:-SX,y:gy,z:SZ*1.12},{x:-SX+13,y:gy,z:SZ*1.12-22},AC,1.2);
   var lf='600 11px '+UV_FONT;
-  // Pole labels sit AT their pole and carry its sentiment color, so the label
-  // reads correctly from any camera angle: red text over the red traps.
-  text3({x:SX*1.2,y:gy,z:-SZ},'OVERVALUED','rgba(255,77,77,.95)',lf);
-  text3({x:-SX*1.28,y:gy,z:-SZ},'DISCOUNT','rgba(56,200,184,.95)',lf);
-  text3({x:-SX,y:SY*1.24,z:-SZ},'TAPE ENERGY','rgba(255,255,255,.62)',lf);
-  text3({x:-SX,y:gy-16,z:SZ*1.2},'EXHAUSTED','rgba(123,97,255,.95)',lf);
-  text3({x:-SX,y:gy-16,z:-SZ*1.25},'FRESH','rgba(90,190,255,.75)',lf);
+  // Pole labels claim screen space in priority order via text3D — a label that
+  // would land on an already-drawn one fades out for the frame instead of
+  // stacking (FRESH/DISCOUNT collided whenever their poles projected close).
+  text3D({x:SX*1.2,y:gy,z:-SZ},'OVERVALUED','rgba(255,77,77,.95)',lf);
+  text3D({x:-SX*1.28,y:gy,z:-SZ},'DISCOUNT','rgba(56,200,184,.95)',lf);
+  text3D({x:-SX,y:SY*1.24,z:-SZ},'TAPE ENERGY','rgba(255,255,255,.62)',lf);
+  text3D({x:-SX,y:gy-16,z:SZ*1.2},'EXHAUSTED','rgba(123,97,255,.95)',lf);
+  text3D({x:-SX,y:gy-16,z:-SZ*1.25},'FRESH','rgba(90,190,255,.75)',lf);
   // Fair-value meridian + % ticks — absolute references that survive any orbit
   line3({x:0,y:gy,z:-SZ},{x:0,y:gy,z:SZ},'rgba(255,255,255,.17)',1);
-  text3({x:0,y:gy-13,z:-SZ*1.08},'FAIR VALUE','rgba(255,255,255,.55)',lf);
-  var TICKS=[[-50,'-50%'],[50,'+50%'],[150,'+150%'],[300,'+300%']];
-  for(i=0;i<TICKS.length;i++) text3({x:xOf(TICKS[i][0]),y:gy-13,z:-SZ*1.08},TICKS[i][1],'rgba(255,255,255,.4)',lf);
+  text3D({x:0,y:gy-13,z:-SZ*1.08},'FAIR VALUE','rgba(255,255,255,.55)',lf);
+  // Ticks only render while the axis is face-on enough to read — when it goes
+  // edge-on their projected spacing collapses and they all hide together.
+  var tA=project({x:xOf(50),y:gy,z:-SZ}), tB=project({x:xOf(150),y:gy,z:-SZ});
+  if(tA&&tB&&Math.hypot(tA.x-tB.x,tA.y-tB.y)>=34){
+    var TICKS=[[-50,'-50%'],[50,'+50%'],[150,'+150%'],[300,'+300%']];
+    for(i=0;i<TICKS.length;i++) text3D({x:xOf(TICKS[i][0]),y:gy-13,z:-SZ*1.08},TICKS[i][1],'rgba(255,255,255,.4)',lf);
+  }
   var x0=xOf(150);
   var cs=[{x:x0,y:-SY,z:-SZ},{x:SX*1.1,y:-SY,z:-SZ},{x:SX*1.1,y:SY,z:-SZ},{x:x0,y:SY,z:-SZ},
           {x:x0,y:-SY,z:SZ},{x:SX*1.1,y:-SY,z:SZ},{x:SX*1.1,y:SY,z:SZ},{x:x0,y:SY,z:SZ}].map(project);
@@ -786,8 +1068,46 @@ function drawFrame(now){
     ctx.setLineDash([5,5]);
     ctx.beginPath(); ctx.moveTo(cs[0].x,cs[0].y); ctx.lineTo(cs[3].x,cs[3].y); ctx.lineTo(cs[7].x,cs[7].y); ctx.lineTo(cs[4].x,cs[4].y); ctx.closePath(); ctx.stroke();
     ctx.setLineDash([]);
-    text3({x:(x0+SX)/2,y:SY*1.05,z:0},'TRAP ZONE · ≥150% ABOVE FAIR VALUE','rgba(255,77,77,.75)','700 11px '+UV_FONT);
+    text3D({x:(x0+SX)/2,y:SY*1.05,z:0},'TRAP ZONE · ≥150% ABOVE FAIR VALUE','rgba(255,77,77,.75)','700 11px '+UV_FONT);
   }
+}
+
+/* ── axis compass gizmo ── */
+// Fixed-size HUD in the corner, like a 3D editor's axis widget: three colored
+// arms project the true world axes through the live camera, so orientation is
+// always readable at a glance even when in-scene labels are foreshortened away.
+function drawGizmo(){
+  if(!Rv||!Uv) return;
+  var gx=W-66, gyy=H-66, R=30;
+  ctx.save();
+  ctx.fillStyle='rgba(8,11,17,.78)';
+  ctx.beginPath(); ctx.arc(gx,gyy,52,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.10)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(gx,gyy,52,0,7); ctx.stroke();
+  ctx.font='600 11px '+UV_FONT; ctx.textAlign='center';
+  var arms=[
+    [{x:1,y:0,z:0},'#FF4D4D','OVER'],
+    [{x:0,y:1,z:0},'#E8F1FF','ENERGY'],
+    [{x:0,y:0,z:1},'#7B61FF','EXHAUST']
+  ];
+  for(var ai=0;ai<arms.length;ai++){
+    var v=arms[ai][0], col=arms[ai][1];
+    var sx=v.x*Rv.x+v.y*Rv.y+v.z*Rv.z;
+    var sy=v.x*Uv.x+v.y*Uv.y+v.z*Uv.z;
+    var dx=sx, dy=-sy, len=Math.hypot(dx,dy);
+    ctx.strokeStyle=hexA(col,.22); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(gx,gyy); ctx.lineTo(gx-dx*R*.55,gyy-dy*R*.55); ctx.stroke();
+    ctx.strokeStyle=col; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(gx,gyy); ctx.lineTo(gx+dx*R,gyy+dy*R); ctx.stroke();
+    ctx.fillStyle=col;
+    ctx.beginPath(); ctx.arc(gx+dx*R,gyy+dy*R,2,0,7); ctx.fill();
+    if(len>.35){
+      ctx.globalAlpha=Math.min(1,(len-.35)/.3);
+      ctx.fillText(arms[ai][2],gx+dx*(R+13),gyy+dy*(R+13)+4);
+      ctx.globalAlpha=1;
+    }
+  }
+  ctx.restore();
 }
 
 /* ── main loop ── */
@@ -822,6 +1142,7 @@ function frame(now){
   warp+=((reduceMotion?0:Math.min(1,spd/1.2))-warp)*Math.min(1,dt*.008);
 
   ctx.clearRect(0,0,W,H);
+  placedLbl.length=0;
   if(backdrop) ctx.drawImage(backdrop,0,0,W,H);
 
   ctx.save(); ctx.globalCompositeOperation='lighter';
@@ -870,12 +1191,13 @@ function frame(now){
 
   drawFrame(now);
 
-  // trails
+  // trails — during replay only the path up to the scrubbed day is drawn
   ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineWidth=1;
   for(var ti=0;ti<stocks.length;ti++){
     var s=stocks[ti];
-    if(!visible(s)||s.trailPts.length<2) continue;
-    var n=s.trailPts.length, prev=null;
+    var n=s.trailPts.length-replayD;
+    if(!visible(s)||n<2) continue;
+    var prev=null;
     for(var j=0;j<n;j++){
       var tp=s.trailPts[j];
       if(!tp){ prev=null; continue; }
@@ -886,17 +1208,67 @@ function frame(now){
       }
       prev=pr;
     }
-    var lastPt=s.trailPts[n-1], cur=project({x:s.x,y:s.y,z:s.z});
-    if(lastPt&&cur){ var pl=project(lastPt);
-      if(pl){ ctx.strokeStyle=hexA(s.color,.35); ctx.beginPath(); ctx.moveTo(pl.x,pl.y); ctx.lineTo(cur.x,cur.y); ctx.stroke(); } }
+    if(!replayD){
+      var lastPt=s.trailPts[n-1], cur=project({x:s.x,y:s.y,z:s.z});
+      if(lastPt&&cur){ var pl=project(lastPt);
+        if(pl){ ctx.strokeStyle=hexA(s.color,.35); ctx.beginPath(); ctx.moveTo(pl.x,pl.y); ctx.lineTo(cur.x,cur.y); ctx.stroke(); } }
+    }
   }
   ctx.restore();
 
-  // bodies far→near
+  // sector constellation — filtered sector draws faint rays to its centroid
+  if(sectorFilter){
+    var cn=0,ccx=0,ccy=0,ccz=0,cf=0,cfn=0;
+    for(var ci=0;ci<stocks.length;ci++){
+      var cs2=stocks[ci]; if(!visible(cs2)) continue;
+      var cq=p3(cs2); if(!cq) continue;
+      cn++; ccx+=cq.x; ccy+=cq.y; ccz+=cq.z;
+      if(cs2.fvd!=null){ cf+=cs2.fvd; cfn++; }
+    }
+    if(cn>=2){
+      var cen={x:ccx/cn,y:ccy/cn,z:ccz/cn};
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      for(ci=0;ci<stocks.length;ci++){
+        var cs3=stocks[ci]; if(!visible(cs3)) continue;
+        var cq2=p3(cs3); if(!cq2) continue;
+        line3(cen,cq2,'rgba(77,200,240,.08)');
+      }
+      ctx.restore();
+      var clb=sectorFilter.toUpperCase()+' · '+cn+' NAMES'+
+        (cfn?(' · AVG '+((cf/cfn)>0?'+':'')+Math.round(cf/cfn)+'% VS VALUE'):'');
+      ctx.shadowColor='rgba(4,6,11,.9)'; ctx.shadowBlur=4;
+      text3D(cen,clb,'rgba(160,220,255,.85)','600 11px '+UV_FONT,-24);
+      ctx.shadowBlur=0;
+    }
+  }
+
+  // watchlist beacons — starred tickers get a pillar of light from the floor
+  var wkeys=Object.keys(watch);
+  if(wkeys.length){
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(var wi=0;wi<wkeys.length;wi++){
+      var ws=byTicker[wkeys[wi]]; if(!ws||!visible(ws)) continue;
+      var wp=p3(ws); if(!wp) continue;
+      line3({x:wp.x,y:-SY,z:wp.z},wp,'rgba(255,184,0,.30)',1.2);
+      var bp=project({x:wp.x,y:-SY,z:wp.z});
+      if(bp){ ctx.fillStyle='rgba(255,184,0,.5)'; ctx.beginPath(); ctx.arc(bp.x,bp.y,2.2,0,7); ctx.fill(); }
+    }
+    ctx.restore();
+  }
+
+  // compare tether
+  if(cmpA&&cmpB){
+    var ca3=p3(cmpA), cb3=p3(cmpB);
+    if(ca3&&cb3) line3(ca3,cb3,'rgba(255,255,255,.4)',1.3);
+  }
+
+  // bodies far→near (replay scrubs each body back along its own trail)
   projCache=[];
   var drawList=[];
   for(var bi=0;bi<stocks.length;bi++){
-    var b=stocks[bi], pj=project({x:b.x,y:b.y,z:b.z});
+    var b=stocks[bi], b3=p3(b);
+    if(!b3) continue;
+    var pj=project({x:b3.x,y:b3.y,z:b3.z});
     if(pj) drawList.push({s:b,p:pj});
   }
   drawList.sort(function(a,b){ return b.p.vz-a.p.vz; });
@@ -936,20 +1308,35 @@ function frame(now){
         ctx.beginPath(); ctx.arc(pp.x,pp.y,sr+7+ping*30,0,7); ctx.stroke();
       }
     }
-    if(sb===selected||sb===hovered){
+    if(sb===selected||sb===hovered||sb===cmpA||sb===cmpB){
       ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=1.3;
       ctx.beginPath(); ctx.arc(pp.x,pp.y,sr+4,0,7); ctx.stroke();
     }
   }
-  // labels (≥11px per house minimums)
+  // ticker labels (≥11px per house minimums) — priority-sorted, then placed
+  // through the same screen-space arbiter as the axis text, so dense clusters
+  // drop their least important labels instead of stacking into a smear.
   ctx.font='600 11px '+UV_FONT; ctx.textAlign='center';
+  var lbls=[];
   for(var li=0;li<projCache.length;li++){
     var lc=projCache[li], ls=lc.s;
-    var want = ls===hovered || ls===selected || ls.fam.id==='trap' || (alwaysLabel[ls.t] && cam.dist<1600);
-    if(!want) continue;
-    ctx.fillStyle = (ls===hovered||ls===selected)?'#FFFFFF':'rgba(210,220,235,.78)';
+    var pri = (ls===hovered||ls===selected)?0
+      : (ls===cmpA||ls===cmpB)?1
+      : watch[ls.t]?2
+      : ls.fam.id==='trap'?3
+      : (alwaysLabel[ls.t]&&cam.dist<1600)?4 : -1;
+    if(pri>=0) lbls.push({lc:lc,ls:ls,pri:pri});
+  }
+  lbls.sort(function(a,b){ return a.pri-b.pri || b.lc.sr-a.lc.sr; });
+  for(li=0;li<lbls.length;li++){
+    var L=lbls[li], lw=ctx.measureText(L.ls.t).width;
+    var lx=L.lc.sx-lw/2, ly=L.lc.sy-L.lc.sr-7-11;
+    var ok=lblFits(lx,ly,lw,13);
+    if(!ok&&L.pri>0) continue;              // hovered/selected always draws
+    ctx.fillStyle=(L.ls===hovered||L.ls===selected)?'#FFFFFF'
+      :(watch[L.ls.t]?'rgba(255,214,120,.9)':'rgba(210,220,235,.78)');
     ctx.shadowColor='rgba(4,6,11,.9)'; ctx.shadowBlur=4;
-    ctx.fillText(ls.t,lc.sx,lc.sy-lc.sr-7);
+    ctx.fillText(L.ls.t,L.lc.sx,L.lc.sy-L.lc.sr-7);
     ctx.shadowBlur=0;
   }
   // tooltip
@@ -973,6 +1360,16 @@ function frame(now){
     if(tourElapsed>TOUR_DWELL) tourGo(tourIdx+1);
   }
 
+  // replay auto-play — steps one trading day forward every 650ms of rAF time
+  if(replayPlaying){
+    replayAcc+=dt;
+    if(replayAcc>650){
+      replayAcc=0;
+      if(replayD>0) setReplayD(replayD-1);
+      if(replayD===0){ replayPlaying=false; $id('uvr-play').textContent='▸'; }
+    }
+  }
+
   // immersion vignette — the world closes around your periphery as you dive in
   if(imm>0.01){
     var vg=ctx.createRadialGradient(W/2,H*.46,Math.min(W,H)*.34,W/2,H*.46,Math.max(W,H)*.72);
@@ -980,6 +1377,8 @@ function frame(now){
     vg.addColorStop(1,'rgba(3,5,10,'+(0.42*imm)+')');
     ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
   }
+
+  if(W>=560) drawGizmo();
   rafId=requestAnimationFrame(frame);
 }
 })();

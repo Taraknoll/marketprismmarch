@@ -165,8 +165,13 @@ module.exports = async (req, res) => {
     }
 
     const trails = {};
+    // last pre-today verdict per ticker — powers the client's "Today's shifts"
+    // feed (verdict flips / new traps). hist is ordered by date asc, so the
+    // final overwrite is the most recent day before `date`.
+    const prevV = {};
     for (const r of hist) {
       if (dropTicker(r.ticker)) continue;
+      if (r.snapshot_date !== date) prevV[r.ticker] = r.verdict || null;
       (trails[r.ticker] = trails[r.ticker] || []).push([
         num(r.wks_score, 1),
         exhaustLevel(r.exhaustion_status, num(r.exhaustion_confidence), r.walsh_regime, r.verdict),
@@ -182,6 +187,7 @@ module.exports = async (req, res) => {
         sec: secOf[r.ticker] || 'Other',
         ind: indOf[r.ticker] || null,
         v: r.verdict || 'Monitoring',
+        pv: prevV[r.ticker] || null,
         conf: num(r.verdict_confidence, 0),
         mass: num(r.narrative_mass, 2),
         wks: num(r.wks_score, 1),
