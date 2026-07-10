@@ -200,8 +200,10 @@
     </div>
   </div>
 
-  <div class="uv-caption"><b>Reading the field:</b> right = priced above its SEC-anchored fair value · up = bullish tape
-    energy · deep = exhausted story. The red slab marks the trap gate (≥150% above fair value). Trails show each
+  <div class="uv-caption"><b>Reading the field:</b> toward <b>OVERVALUED</b> = priced above its SEC-anchored fair value
+    (past the FAIR VALUE meridian) · toward <b>DISCOUNT</b> = below it · <b>TAPE ENERGY</b> = bullish tape ·
+    <b>EXHAUSTED</b> = a spent story. The labels and arrowheads ride the 3D frame, so they stay true as you orbit.
+    The red slab marks the trap gate (≥150% above fair value). Trails show each
     narrative's 10-day path. Exhaustion is the engine's composite read (status classifier × confidence, verdict and
     decay-regime adjusted). <b>Scroll to fly in</b> — the lens widens, the dust streams past, and you move through
     the field itself. <b>WASD walks you through it</b> like a game (Q/E rise and sink, hold Shift to sprint —
@@ -638,9 +640,9 @@ function buildTour(){
     cam:{tx:0,ty:0,tz:0,dist:1350,phi:.30}});
   // 2 — how to read the space
   stops.push({title:'Three axes. One language.', step:'THE MAP',
-    body:'Left to right: price versus its SEC-anchored fair value — from discount to dangerously rich. Bottom to top: tape energy, the Wyckoff read of who is really buying. Near to far: narrative freshness to exhaustion. Once you can read the space, every stock is a sentence.',
-    chips:['X — price vs fair value','Y — tape energy','Z — exhaustion'],
-    cam:{tx:0,ty:-50,tz:0,dist:1520,phi:.10,theta:cam.theta+.85}});
+    body:'Follow the labels — they ride the frame as it turns. Toward OVERVALUED, price runs above its SEC-anchored fair value, crossing the FAIR VALUE meridian; toward DISCOUNT it runs below. TAPE ENERGY climbs with the Wyckoff read of who is really buying. And every story ages from FRESH toward EXHAUSTED. Once you can read the space, every stock is a sentence.',
+    chips:['valuation — DISCOUNT ⇄ OVERVALUED','tape energy — bearish ⇄ bullish','story age — FRESH ⇄ EXHAUSTED'],
+    cam:{tx:0,ty:-50,tz:0,dist:1520,phi:.10,theta:1.47}});
   // 3..4 — the valuation axis, hot end (or the empty gate)
   traps.forEach(function(s,i){
     stops.push({title:s.t+' — a live Narrative Trap', step:'TRAP '+(i+1)+' OF '+traps.length, color:s.color,
@@ -743,12 +745,30 @@ function drawFrame(now){
   line3({x:-SX,y:gy,z:-SZ},{x:SX*1.12,y:gy,z:-SZ},'rgba(0,174,255,.32)',1.2);
   line3({x:-SX,y:gy,z:-SZ},{x:-SX,y:SY*1.15,z:-SZ},'rgba(0,174,255,.32)',1.2);
   line3({x:-SX,y:gy,z:-SZ},{x:-SX,y:gy,z:SZ*1.12},'rgba(0,174,255,.32)',1.2);
+  // Arrowheads are 3D chevrons on the axis lines, NOT text glyphs — a "→"
+  // baked into a label points the wrong way as soon as the camera orbits past
+  // the axis (AMD at +300% FVD read as "discount"). World-space chevrons
+  // rotate with the scene and always aim at the true pole.
+  var AC='rgba(0,174,255,.5)';
+  line3({x:SX*1.12,y:gy,z:-SZ},{x:SX*1.12-22,y:gy,z:-SZ-13},AC,1.2);
+  line3({x:SX*1.12,y:gy,z:-SZ},{x:SX*1.12-22,y:gy,z:-SZ+13},AC,1.2);
+  line3({x:-SX,y:SY*1.15,z:-SZ},{x:-SX-13,y:SY*1.15-22,z:-SZ},AC,1.2);
+  line3({x:-SX,y:SY*1.15,z:-SZ},{x:-SX+13,y:SY*1.15-22,z:-SZ},AC,1.2);
+  line3({x:-SX,y:gy,z:SZ*1.12},{x:-SX-13,y:gy,z:SZ*1.12-22},AC,1.2);
+  line3({x:-SX,y:gy,z:SZ*1.12},{x:-SX+13,y:gy,z:SZ*1.12-22},AC,1.2);
   var lf='600 11px '+UV_FONT;
-  text3({x:SX*1.2,y:gy,z:-SZ},'OVERVALUED →','rgba(255,255,255,.62)',lf);
-  text3({x:-SX*1.28,y:gy,z:-SZ},'← DISCOUNT','rgba(255,255,255,.45)',lf);
-  text3({x:-SX,y:SY*1.24,z:-SZ},'TAPE ENERGY ↑','rgba(255,255,255,.62)',lf);
-  text3({x:-SX,y:gy-16,z:SZ*1.2},'EXHAUSTED ⇢','rgba(255,255,255,.55)',lf);
-  text3({x:-SX,y:gy-16,z:-SZ*1.25},'FRESH','rgba(255,255,255,.38)',lf);
+  // Pole labels sit AT their pole and carry its sentiment color, so the label
+  // reads correctly from any camera angle: red text over the red traps.
+  text3({x:SX*1.2,y:gy,z:-SZ},'OVERVALUED','rgba(255,77,77,.95)',lf);
+  text3({x:-SX*1.28,y:gy,z:-SZ},'DISCOUNT','rgba(56,200,184,.95)',lf);
+  text3({x:-SX,y:SY*1.24,z:-SZ},'TAPE ENERGY','rgba(255,255,255,.62)',lf);
+  text3({x:-SX,y:gy-16,z:SZ*1.2},'EXHAUSTED','rgba(123,97,255,.95)',lf);
+  text3({x:-SX,y:gy-16,z:-SZ*1.25},'FRESH','rgba(90,190,255,.75)',lf);
+  // Fair-value meridian + % ticks — absolute references that survive any orbit
+  line3({x:0,y:gy,z:-SZ},{x:0,y:gy,z:SZ},'rgba(255,255,255,.17)',1);
+  text3({x:0,y:gy-13,z:-SZ*1.08},'FAIR VALUE','rgba(255,255,255,.55)',lf);
+  var TICKS=[[-50,'-50%'],[50,'+50%'],[150,'+150%'],[300,'+300%']];
+  for(i=0;i<TICKS.length;i++) text3({x:xOf(TICKS[i][0]),y:gy-13,z:-SZ*1.08},TICKS[i][1],'rgba(255,255,255,.4)',lf);
   var x0=xOf(150);
   var cs=[{x:x0,y:-SY,z:-SZ},{x:SX*1.1,y:-SY,z:-SZ},{x:SX*1.1,y:SY,z:-SZ},{x:x0,y:SY,z:-SZ},
           {x:x0,y:-SY,z:SZ},{x:SX*1.1,y:-SY,z:SZ},{x:SX*1.1,y:SY,z:SZ},{x:x0,y:SY,z:SZ}].map(project);
