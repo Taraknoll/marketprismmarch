@@ -134,8 +134,35 @@ module.exports = async (req, res) => {
       fetchAll(rest + 'ticker_valuation_config?select=ticker,sector,primary_sector_override&active=eq.true&order=ticker.asc', headers, 1000)
     ]);
 
-    const secOf = {};
-    for (const r of sectors) secOf[r.ticker] = r.primary_sector_override || r.sector || 'Other';
+    // ticker_valuation_config mixes broad sectors with curated narrative themes
+    // ("AI Infrastructure" = one ticker). The Universe filter needs families with
+    // real populations, so themes roll up to a canonical family here and the
+    // theme itself ships separately as `ind` for the dossier. DB rows stay
+    // untouched — other surfaces keep the curated labels.
+    const SECTOR_FAMILY = {
+      'AI Infrastructure': 'Technology',
+      'Cloud Computing': 'Technology',
+      'Quantum Computing': 'Technology',
+      'Defense Technology': 'Technology',
+      'Software': 'Technology',
+      'Cybersecurity': 'Technology',
+      'Aerospace & Defense': 'Industrials',
+      'Robotics & Automation': 'Industrials',
+      'Electric Vehicles & Autonomous Transport': 'Consumer Discretionary',
+      'Social Media & Digital Advertising': 'Communications',
+      'Streaming & Entertainment': 'Communications',
+      'REITs': 'Real Estate',
+      'Fintech': 'Financials',
+      'Crypto & Digital Assets': 'Financials',
+      'Biotechnology': 'Healthcare'
+    };
+    const secOf = {}, indOf = {};
+    for (const r of sectors) {
+      const raw = r.primary_sector_override || r.sector || 'Other';
+      const fam = SECTOR_FAMILY[raw] || raw;
+      secOf[r.ticker] = fam;
+      if (fam !== raw) indOf[r.ticker] = raw;
+    }
 
     const trails = {};
     for (const r of hist) {
@@ -153,6 +180,7 @@ module.exports = async (req, res) => {
       stocks.push({
         t: r.ticker,
         sec: secOf[r.ticker] || 'Other',
+        ind: indOf[r.ticker] || null,
         v: r.verdict || 'Monitoring',
         conf: num(r.verdict_confidence, 0),
         mass: num(r.narrative_mass, 2),

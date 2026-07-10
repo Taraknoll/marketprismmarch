@@ -341,9 +341,9 @@ function buildScene(){
     famsEl.appendChild(row);
   });
   var sel=$id('uv-sector'); sel.innerHTML='<option value="">All sectors</option>';
-  var secs={}; stocks.forEach(function(s){ secs[s.sec]=1; });
+  var secs={}; stocks.forEach(function(s){ secs[s.sec]=(secs[s.sec]||0)+1; });
   Object.keys(secs).sort().forEach(function(sec){
-    var o=document.createElement('option'); o.value=sec; o.textContent=sec; sel.appendChild(o);
+    var o=document.createElement('option'); o.value=sec; o.textContent=sec+' ('+secs[sec]+')'; sel.appendChild(o);
   });
   sel.onchange=function(){ sectorFilter=sel.value; };
   var dl=$id('uv-tickers'); dl.innerHTML='';
@@ -543,7 +543,7 @@ function select(s){
   $id('uv-dossier').classList.add('open');
   $id('uvd-tk').textContent=s.t; $id('uvd-tk').style.color=s.color;
   $id('uvd-px').textContent=s.price!=null?('$'+Number(s.price).toLocaleString()):'—';
-  $id('uvd-sec').textContent=s.sec||'';
+  $id('uvd-sec').textContent=(s.sec||'')+(s.ind?' · '+s.ind:'');
   var chips='<span class="uv-chip" style="color:'+s.color+';border-color:'+s.color+'">'+uvEsc(s.v)+'</span>';
   if(s.conf!=null) chips+='<span class="uv-chip dim">conf '+uvEsc(String(s.conf))+'</span>';
   if(s.regime) chips+='<span class="uv-chip dim">'+uvEsc(s.regime.split('_').join(' '))+'</span>';
