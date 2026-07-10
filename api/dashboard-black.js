@@ -57,6 +57,14 @@ module.exports = async (req, res) => {
       console.warn('Universe tab not found:', e.message);
     }
 
+    // Inject Market Physics tab partial (3D price-physics field)
+    try {
+      const pxTab = neutralize(resolveTemplate('_physics_tab.html'));
+      html = html.replace('<!-- PHYSICS_TAB_INJECT -->', function() { return pxTab; });
+    } catch (e) {
+      console.warn('Physics tab not found:', e.message);
+    }
+
     const scholarEnabled = process.env.ANTHROPIC_KEY ? 'true' : '';
 
     html = html.replace(

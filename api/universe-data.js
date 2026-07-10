@@ -33,7 +33,8 @@ const TODAY_COLS = [
 ].join(',');
 const HIST_COLS = [
   'ticker', 'snapshot_date', 'wks_score', 'fvd_pct', 'exhaustion_status',
-  'exhaustion_confidence', 'walsh_regime', 'verdict'
+  'exhaustion_confidence', 'walsh_regime', 'verdict',
+  'current_price', 'narrative_mass'   // per-day price + mass power the Market Physics view
 ].join(',');
 
 function sendJson(res, status, obj) {
@@ -172,10 +173,13 @@ module.exports = async (req, res) => {
     for (const r of hist) {
       if (dropTicker(r.ticker)) continue;
       if (r.snapshot_date !== date) prevV[r.ticker] = r.verdict || null;
+      // [wks, exh, fvd, price, mass] — universe reads 0-2; Market Physics reads 3-4 too
       (trails[r.ticker] = trails[r.ticker] || []).push([
         num(r.wks_score, 1),
         exhaustLevel(r.exhaustion_status, num(r.exhaustion_confidence), r.walsh_regime, r.verdict),
-        num(r.fvd_pct, 1)
+        num(r.fvd_pct, 1),
+        num(r.current_price, 2),
+        num(r.narrative_mass, 2)
       ]);
     }
 
