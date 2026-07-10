@@ -5,7 +5,7 @@
        X = days to earnings — the EARNINGS WALL stands at report day; bodies
            march toward it session by session (replay shows the march)
        Y = where price sits inside the ticker's OWN trail-window range
-       Z = price vs SEC-anchored fair value (trap gate ≥150% at the deep end)
+       Z = tape energy — who is really buying into the print (bullish = deep)
        size = narrative mass — PER DAY, so bodies grow/shrink through replay
      Data: /api/universe-data (edays/edate per ticker; trails carry price+mass).
 ═══════════════════════════════════════ -->
@@ -168,8 +168,8 @@
     <div class="px-title">
       <h2>Market Physics</h2>
       <p>Every tracked ticker versus its report date. <b>The wall is earnings</b> — bodies march toward it
-        session by session. Height is price inside its own range; depth is stretch above fair value;
-        size is narrative mass, re-weighed every day. Hit replay and watch the field flow into the wall.</p>
+        session by session. Height is price inside its own range; depth is tape energy — who is really
+        buying into the print; size is narrative mass, re-weighed every day. Hit replay and watch the field flow into the wall.</p>
     </div>
     <div class="px-stats" id="px-stats" aria-live="polite"></div>
   </div>
@@ -229,8 +229,8 @@
   <div class="px-caption"><b>Reading the field:</b> the amber <b>EARNINGS WALL</b> is report day — a body's distance
     from it is how many days remain (7D/30D/60D/90D ticks on the floor; unscheduled names park at the far edge).
     Amber countdown rings mark tickers reporting within a week. Height = where price sits inside its <b>own</b>
-    trail-window range (RANGE HIGH at the ceiling). Depth = price vs SEC-anchored fair value — the red slab at the
-    deep end is the trap gate (≥150%). Size is narrative mass, re-measured every session. <b>Press ⏮ Replay</b> and
+    trail-window range (RANGE HIGH at the ceiling). Depth = tape energy, the Wyckoff read of who is really buying —
+    <b>BULLISH TAPE</b> runs deep, <b>BEARISH TAPE</b> sits near. Size is narrative mass, re-measured every session. <b>Press ⏮ Replay</b> and
     the whole field marches toward the wall while bodies grow and shrink with their stories. Pick tickers to isolate
     a cast, or filter a sector. <b>T</b> starts the guided tour.</div>
 </div>
@@ -252,22 +252,21 @@ var FAMS = [
   {id:'support',   name:'Structurally Supported', color:'#00DE94', verdicts:['Structurally Supported']}
 ];
 function famOf(v){ for(var i=0;i<FAMS.length;i++){ if(FAMS[i].verdicts.indexOf(v)>=0) return FAMS[i]; } return FAMS[5]; }
-var SX=340, SY=230, SZ=250, FVD_REF=80, FVD_MAX=420, EDAY_MAX=95;
+var SX=340, SY=230, SZ=250, EDAY_MAX=95;
 var MIN_DIST=70, MAX_DIST=3200;
 var DUSTX=1700, DUSTY=1200, DUSTZ=1700;
 var FOG_NEAR=900, FOG_FAR=3400;
 var UV_FONT="'Inter',system-ui,sans-serif";
 var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function asinh(x){ return Math.log(x + Math.sqrt(x*x+1)); }
 // X: days to earnings. sqrt scale gives the tense last two weeks the most room.
 // Report day = +SX (the wall); 95d+ or unscheduled = the far edge on the left.
 function xOfDays(d){
   if(d==null) return -SX*1.05;
   return SX*(1 - 2*Math.sqrt(Math.max(0,Math.min(d,EDAY_MAX))/EDAY_MAX));
 }
-// Z: valuation stretch (same asinh map the Universe tab uses on X).
-function zOfV(f){ return f==null ? 0 : Math.max(-1,Math.min(1.15, asinh(f/FVD_REF)/asinh(FVD_MAX/FVD_REF))) * SZ; }
+// Z: tape energy (same wks map the Universe tab uses on Y) — bullish runs deep.
+function zOfW(w){ return Math.max(-1,Math.min(1.25,(w==null?0:w)/80)) * SZ; }
 function rOf(m){ return 3.5 + Math.max(0,Math.min(1,((m==null?0.5:m)-0.35)/0.5)) * 9; }
 function yOfPrice(lo,hi,price){
   if(price==null||lo==null||hi==null||hi<=lo) return 0;
@@ -342,13 +341,13 @@ function buildScene(){
     var trailLen=(s.trail||[]).length;
     return Object.assign({}, s, {
       fam:fam, color:fam.color, lo:lo, hi:hi,
-      x:xOfDays(s.edays), y:yOfPrice(lo,hi,s.price), z:zOfV(s.fvd), r:rOf(s.mass),
+      x:xOfDays(s.edays), y:yOfPrice(lo,hi,s.price), z:zOfW(s.wks), r:rOf(s.mass),
       phase:(s.t.charCodeAt(0)*7+s.t.length*13)%628/100,
       // node i sat (trailLen-1-i) days further from the wall — the trail IS the march
       trailPts:(s.trail||[]).map(function(p,i){
         if(p==null||p[0]==null||p[3]==null) return null;
         var back=trailLen-1-i;
-        return {x:xOfDays(s.edays==null?null:s.edays+back), y:yOfPrice(lo,hi,p[3]), z:zOfV(p[2]), m:p[4]};
+        return {x:xOfDays(s.edays==null?null:s.edays+back), y:yOfPrice(lo,hi,p[3]), z:zOfW(p[0]), m:p[4]};
       })
     });
   });
@@ -475,33 +474,33 @@ function buildTour(){
   function pickFirst(arr){ for(var i=0;i<arr.length;i++){ if(arr[i]&&!used[arr[i].t]){ used[arr[i].t]=1; return arr[i]; } } return null; }
   var sched=stocks.filter(function(s){ return s.edays!=null; });
   var nearest=pickFirst(sched.slice().sort(function(a,b){ return a.edays-b.edays || (b.mass||0)-(a.mass||0); }));
-  var perfection=pickFirst(sched.filter(function(s){ return s.edays<=21 && s.fvd!=null && s.fvd>=100; })
-    .sort(function(a,b){ return (b.fvd||0)-(a.fvd||0); }));
+  var cold=pickFirst(sched.filter(function(s){ return s.edays<=21 && s.wks!=null && s.wks<0; })
+    .sort(function(a,b){ return (a.wks||0)-(b.wks||0); }));
   var heavyNear=pickFirst(sched.filter(function(s){ return s.edays<=30; })
     .sort(function(a,b){ return (b.mass||0)-(a.mass||0); }));
   var farOut=stocks.filter(function(s){ return s.edays==null||s.edays>=90; }).length;
 
   stops.push({title:'One field. '+stocks.length+' tickers. One clock.', step:'THE INSTRUMENT',
-    body:'Every light is a stock, and the amber wall on the right is report day. Distance from the wall is time — how many sessions before each company must show its numbers. Height is price inside its own range; depth is stretch above fair value; size is narrative mass.',
+    body:'Every light is a stock, and the amber wall on the right is report day. Distance from the wall is time — how many sessions before each company must show its numbers. Height is price inside its own range; depth is tape energy; size is narrative mass.',
     chips:[(PX_DATA.date||'today')+' snapshot',counts.week+' report within 7d',counts.month+' within 30d'],
     cam:{tx:0,ty:0,tz:0,dist:1350,phi:.30,theta:.62}});
   stops.push({title:'The wall does not move. Everything else does.', step:'THE MAP',
-    body:'Follow the floor ticks — 90D, 60D, 30D, 7D — each session every body takes one step toward the wall. The FAIR VALUE meridian and the red trap slab run along the depth axis: a stock can walk into its print cheap and quiet, or stretched 150% above what its filings support. Same wall, very different physics.',
-    chips:['X — days to earnings','Y — price in its range','Z — vs fair value','size — narrative mass'],
+    body:'Follow the floor ticks — 90D, 60D, 30D, 7D — each session every body takes one step toward the wall. Depth is the tape: the Wyckoff read of who is really buying. A stock can walk into its print carried by bullish tape, or with the tape already walking away. Same wall, very different physics.',
+    chips:['X — days to earnings','Y — price in its range','Z — tape energy','size — narrative mass'],
     cam:{tx:0,ty:-40,tz:0,dist:1450,phi:.12,theta:1.35}});
   if(nearest) stops.push({title:nearest.t+' — next through the wall', step:'THE WALL', color:nearest.color,
-    body:nearest.t+' reports in '+fmtD(nearest.edays)+(nearest.edate?(' ('+nearest.edate+')'):'')+' — the closest body to the wall'+(nearest.fvd!=null?(', carrying '+(nearest.fvd>0?'+':'')+Math.round(nearest.fvd)+'% versus its fair value into the print'):'')+'. The last week before earnings is where narratives get audited by numbers.',
+    body:nearest.t+' reports in '+fmtD(nearest.edays)+(nearest.edate?(' ('+nearest.edate+')'):'')+' — the closest body to the wall'+(nearest.wks!=null?(', carrying tape energy '+Math.round(nearest.wks)+' into the print'):'')+'. The last week before earnings is where narratives get audited by numbers.',
     chips:['reports '+fmtD(nearest.edays), nearest.edate||null, 'verdict: '+nearest.v].filter(Boolean),
     cam:{tx:nearest.x,ty:nearest.y,tz:nearest.z,dist:480,phi:.18}, focus:nearest.t});
   if(counts.week>1) stops.push({title:counts.week+' names pressed against the wall', step:'THE HOT ZONE',
     body:'Everything inside the 7D tick reports within a week. Watch how they carry themselves in: high in their range and heavy with mass is a crowd expecting a beat — low and light is a story the market has already left. The wall settles both.',
     chips:[counts.week+' reporting ≤7d','watch the 7D tick'],
     cam:{tx:xOfDays(4),ty:0,tz:0,dist:820,phi:.22}});
-  if(perfection) stops.push({title:perfection.t+' — priced for perfection into the print', step:'DANGER COMBO', color:perfection.color,
-    body:perfection.t+' walks into earnings in '+fmtD(perfection.edays)+' at +'+Math.round(perfection.fvd)+'% above its SEC-anchored fair value'+(perfection.fvd>=150?' — inside the trap gate':'')+'. Near the wall AND deep on the valuation axis is the most dangerous corner of this field: the print has to be perfect, and perfect is priced in.',
-    chips:['reports '+fmtD(perfection.edays),'FVD +'+Math.round(perfection.fvd)+'%','verdict: '+perfection.v],
-    cam:{tx:perfection.x,ty:perfection.y,tz:perfection.z,dist:440,phi:.16}, focus:perfection.t});
-  if(heavyNear&&heavyNear!==perfection) stops.push({title:heavyNear.t+' — the heaviest story on the clock', step:'MASS MEETS THE WALL', color:heavyNear.color,
+  if(cold) stops.push({title:cold.t+' — walking into the print cold', step:'DANGER COMBO', color:cold.color,
+    body:cold.t+' reports in '+fmtD(cold.edays)+' with tape energy '+Math.round(cold.wks)+' — the tape has been leaving while the clock runs down. Near the wall with bearish tape is the most dangerous corner of this field: the sellers voted before the numbers did.',
+    chips:['reports '+fmtD(cold.edays),'energy '+Math.round(cold.wks),'verdict: '+cold.v],
+    cam:{tx:cold.x,ty:cold.y,tz:cold.z,dist:440,phi:.16}, focus:cold.t});
+  if(heavyNear&&heavyNear!==cold) stops.push({title:heavyNear.t+' — the heaviest story on the clock', step:'MASS MEETS THE WALL', color:heavyNear.color,
     body:'Narrative mass '+heavyNear.mass+' with '+fmtD(heavyNear.edays)+' to go. Heavy stories bend attention — when a name this loud reports, the whole sector feels the shockwave. Size here is not market cap; it is how much story the market is carrying.',
     chips:['mass '+heavyNear.mass,'reports '+fmtD(heavyNear.edays),'verdict: '+heavyNear.v],
     cam:{tx:heavyNear.x,ty:heavyNear.y,tz:heavyNear.z,dist:480,phi:.22}, focus:heavyNear.t});
@@ -776,7 +775,6 @@ function select(s){
   var dm=(m0!=null&&s.mass!=null)?Math.round((s.mass-m0)*100)/100:null;
   $id('pxd-rows').innerHTML=
     kvRow('next report', s.edate||(s.edays!=null?('in '+s.edays+'d'):null))+
-    kvRow('vs fair value', s.fvd==null?'no anchor':(s.fvd>0?'+':'')+Math.round(s.fvd)+'%')+
     kvRow('narrative mass', s.mass!=null?(s.mass+(dm!=null?(' ('+(dm>=0?'+':'')+dm+' this window)'):'')):null)+
     kvRow('tape energy', s.wks)+
     kvRow('sector', s.sec+(s.ind?' · '+s.ind:''));
@@ -829,20 +827,12 @@ function drawFrame(now){
   quad3([{x:SX,y:-SY,z:-SZ},{x:SX,y:SY,z:-SZ},{x:SX,y:SY,z:SZ},{x:SX,y:-SY,z:SZ}],
     'rgba(255,184,0,'+wallA+')','rgba(255,184,0,.30)',true);
   text3D({x:SX,y:SY*1.08,z:0},'EARNINGS WALL · REPORT DAY','rgba(255,184,0,.9)','700 11px '+UV_FONT);
-  // trap gate slab lives on the valuation (depth) axis in this view
-  var zg=zOfV(150);
-  quad3([{x:-SX,y:-SY,z:zg},{x:-SX,y:SY,z:zg},{x:SX,y:SY,z:zg},{x:SX,y:-SY,z:zg}],
-    'rgba(255,77,77,.03)','rgba(255,77,77,.22)',true);
-  text3D({x:0,y:SY*1.05,z:zg},'TRAP GATE · ≥150% ABOVE FAIR VALUE','rgba(255,77,77,.75)','700 11px '+UV_FONT);
   // pole labels — colored by meaning, decluttered
   text3D({x:-SX*1.22,y:gy,z:-SZ},'90+ DAYS OUT','rgba(160,168,176,.85)',lf);
   text3D({x:-SX,y:SY*1.24,z:-SZ},'RANGE HIGH','rgba(0,222,148,.95)',lf);
   text3D({x:-SX,y:gy-16,z:-SZ*1.02},'RANGE LOW','rgba(255,140,120,.9)',lf);
-  text3D({x:-SX,y:gy-16,z:SZ*1.2},'OVERVALUED','rgba(255,77,77,.95)',lf);
-  text3D({x:-SX,y:gy-16,z:-SZ*1.25},'DISCOUNT','rgba(56,200,184,.95)',lf);
-  // fair-value meridian runs along the day axis
-  line3({x:-SX,y:gy,z:0},{x:SX,y:gy,z:0},'rgba(255,255,255,.17)',1);
-  text3D({x:-SX*1.14,y:gy-13,z:0},'FAIR VALUE','rgba(255,255,255,.55)',lf);
+  text3D({x:-SX,y:gy-16,z:SZ*1.2},'BULLISH TAPE','rgba(0,222,148,.95)',lf);
+  text3D({x:-SX,y:gy-16,z:-SZ*1.25},'BEARISH TAPE','rgba(255,77,77,.85)',lf);
   // day ticks — hidden together when the axis is edge-on
   var tA=project({x:xOfDays(7),y:gy,z:-SZ}), tB=project({x:xOfDays(30),y:gy,z:-SZ});
   if(tA&&tB&&Math.hypot(tA.x-tB.x,tA.y-tB.y)>=30){
@@ -862,7 +852,7 @@ function drawGizmo(){
   var arms=[
     [{x:1,y:0,z:0},'#FFB800','EARNINGS'],
     [{x:0,y:1,z:0},'#00DE94','PRICE'],
-    [{x:0,y:0,z:1},'#FF4D4D','OVERVAL']
+    [{x:0,y:0,z:1},'#00AEFF','TAPE']
   ];
   for(var ai=0;ai<arms.length;ai++){
     var v=arms[ai][0], col=arms[ai][1];
@@ -1063,8 +1053,7 @@ function frame(now){
     tip.innerHTML='<div class="t" style="color:'+h.color+'">'+uvEsc(h.t)+'</div>'+
       '<div class="v" style="color:'+h.color+'">'+uvEsc(h.v)+'</div>'+
       '<div class="m">'+(h.edays!=null?('earnings in '+h.edays+'d · '):'no report set · ')+
-      (h.price!=null?'$'+h.price+' · ':'')+(pos==null?'no range':pos+'% of range')+' · '+
-      (h.fvd!=null?((h.fvd>0?'+':'')+Math.round(h.fvd)+'% vs value'):'no anchor')+'</div>';
+      (h.price!=null?'$'+h.price+' · ':'')+(pos==null?'no range':pos+'% of range')+' · energy '+(h.wks==null?'—':Math.round(h.wks))+'</div>';
     var pc=null;
     for(var pi=0;pi<projCache.length;pi++){ if(projCache[pi].s===h){ pc=projCache[pi]; break; } }
     if(pc){ tip.style.left=Math.min(W-260,pc.sx+14)+'px'; tip.style.top=Math.max(8,pc.sy-62)+'px'; }
