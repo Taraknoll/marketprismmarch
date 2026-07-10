@@ -18719,6 +18719,26 @@ var BOARDS=[
       return picks.filter(function(p){return convictionAllowed(p,localMap);}).map(toRow);
     }catch(e){window.__lbAiPicksError=String(e&&e.message||e);console.warn('[Leaderboard AI Picks] fetch failed:',e);return [];}
   }},
+  {id:'momentum-leaders',title:'MOMENTUM LEADERS',sub:'Strongest sustained price momentum on the latest scan',color:'#FFB800',bg:'rgba(255,184,0,0.12)',scoreLabel:'Momentum',
+  // Reads v_momentum_leaders — an anon view pinned to the latest momentum_signals
+  // snapshot (the base table is RLS-on with zero policies, so a direct browser
+  // read returns []). momentum_rank 1 = strongest composite in the ~190-name
+  // universe; ret_20d / rs_spy_20d are decimal fractions (0.23 = +23%).
+  fetch:async function(){
+    try{
+      var rows=await sq('v_momentum_leaders?select=ticker,momentum_rank,momentum_composite,ret_20d,rs_spy_20d,fires&order=momentum_rank.asc&limit=10');
+      if(!rows||!rows.length) return [];
+      return rows.map(function(r){
+        var comp=Number(r.momentum_composite)||0;
+        var r20=(Number(r.ret_20d)||0)*100;
+        var rs=(Number(r.rs_spy_20d)||0)*100;
+        var meta=(r.fires===true?'Fired ↗ · ':'')
+          +'20d '+(r20>=0?'+':'')+r20.toFixed(1)+'%'
+          +' · vs SPY '+(rs>=0?'+':'')+rs.toFixed(1)+'%';
+        return{name:r.ticker,link:'/ticker/'+r.ticker,meta:meta,score:comp,scoreDisplay:Math.round(comp),_scoreColor:rs>=0?'#00DE94':'#FF4D4D'};
+      });
+    }catch(e){console.warn('[Leaderboard Momentum] fetch failed:',e);return [];}
+  }},
   {id:'manipulation',title:'NARRATIVE TRAPS',sub:'The story doesn’t match the filings',color:'#FF4D4D',bg:'rgba(255,77,77,0.12)',scoreLabel:'Confidence',
   // FIX 2B: a trap/risk verdict alone is not a trap \u2014 require the suspicion
   // signal to be elevated (>= MIN_TRAP_SUSPICION). This drops NORMAL_ACTIVITY
@@ -19873,17 +19893,18 @@ async function miLoadTopStories(){
     var cands=Object.keys(best).map(function(t){return best[t];});
     if(!cands.length){miDropPanel('mi-wks-list');return;}
     // ── Price-momentum / relative-strength overlay (RS_BREAKOUT "Rising Winners" lane) ──
-    // momentum_signals is the SUSTAINED price-RS axis the movement+recency ranking below
-    // can't see (a multi-week leader that didn't pop today). Read-only (anon has SELECT).
+    // The SUSTAINED price-RS axis the movement+recency ranking below can't see (a
+    // multi-week leader that didn't pop today). Reads v_momentum_leaders — the anon
+    // view pinned to the latest momentum_signals snapshot (the base table is RLS-on
+    // with zero policies, so a direct browser read returns []).
     // A "leader" = fired the lane OR sits in the top momentum decile. We use it to badge
     // leader rows, boost their rank, and let leaders bypass the 24h-recency filter.
     // Fully additive: any failure / empty map leaves Top Stories exactly as it was.
     var momMap={};
     try{
-      var md=await miq('momentum_signals?select=snapshot_date&order=snapshot_date.desc&limit=1');
-      var mday=md&&md[0]&&md[0].snapshot_date;
+      var mrows=await miq('v_momentum_leaders?select=ticker,snapshot_date,momentum_rank,momentum_composite,momentum_decile,rs_spy_20d,fires&limit=300');
+      var mday=mrows&&mrows[0]&&mrows[0].snapshot_date;
       if(mday&&miFreshDay(mday,4)){
-        var mrows=await miq('momentum_signals?select=ticker,momentum_rank,momentum_composite,momentum_decile,rs_spy_20d,fires&snapshot_date=eq.'+encodeURIComponent(mday)+'&limit=300');
         (mrows||[]).forEach(function(m){
           momMap[m.ticker]={rank:Number(m.momentum_rank),comp:Number(m.momentum_composite)||0,
             rs:Number(m.rs_spy_20d),leader:(m.fires===true)||Number(m.momentum_decile)===1};
