@@ -157,7 +157,7 @@
 
   <div class="uv-stage" id="uv-stage">
     <canvas id="uv-canvas"></canvas>
-    <div class="uv-hintbar"><b>Drag</b> orbit · <b>Scroll</b> zoom · <b>Click</b> a body for its dossier</div>
+    <div class="uv-hintbar"><b>Scroll</b> to fly in · <b>Drag</b> to orbit · <b>Click</b> a body for its dossier</div>
     <div id="uv-tip"></div>
 
     <aside class="uv-dossier" id="uv-dossier" aria-label="Stock dossier">
@@ -203,7 +203,8 @@
   <div class="uv-caption"><b>Reading the field:</b> right = priced above its SEC-anchored fair value · up = bullish tape
     energy · deep = exhausted story. The red slab marks the trap gate (≥150% above fair value). Trails show each
     narrative's 10-day path. Exhaustion is the engine's composite read (status classifier × confidence, verdict and
-    decay-regime adjusted).</div>
+    decay-regime adjusted). <b>Scroll to fly in</b> — the lens widens, the dust streams past, and you move through
+    the field itself.</div>
 </div>
 
 <script>
@@ -224,6 +225,9 @@ var FAMS = [
 ];
 function famOf(v){ for(var i=0;i<FAMS.length;i++){ if(FAMS[i].verdicts.indexOf(v)>=0) return FAMS[i]; } return FAMS[5]; }
 var SX=340, SY=230, SZ=250, FVD_REF=80, FVD_MAX=420;
+var MIN_DIST=70, MAX_DIST=3200;            // deep zoom → the camera flies inside the field
+var DUSTX=1700, DUSTY=1200, DUSTZ=1700;    // volumetric dust box you stream through on approach
+var FOG_NEAR=900, FOG_FAR=3400;            // depth atmosphere (haze grows with distance)
 var UV_FONT="'Inter',system-ui,sans-serif";
 var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -238,9 +242,9 @@ function $id(i){ return document.getElementById(i); }
 
 var UV_BOOTED=false, UV_DATA=null;
 var stocks=[], byTicker={}, alwaysLabel={}, counts={total:0,trap:0,coordN:0,exhaust:0};
-var cv=null, ctx=null, stage=null, W=0, H=0, DPR=1, backdrop=null, stars=[], spriteCache={};
+var cv=null, ctx=null, stage=null, W=0, H=0, DPR=1, backdrop=null, stars=[], dust=[], spriteCache={};
 var cam={theta:0.62, phi:0.30, dist:1250, tx:0, ty:0, tz:0};
-var tween=null, eye, Rv, Uv, Fw, FOC=900;
+var tween=null, eye, Rv, Uv, Fw, FOC=900, imm=0;
 var dragging=false, moved=false, px0=0, py0=0, lastInteract=0, pinch0=0;
 var hovered=null, selected=null, projCache=[];
 var hiddenFams={}, sectorFilter='';
@@ -344,9 +348,9 @@ function buildScene(){
   var se=$id('uv-search');
   se.onchange=function(){
     var s=byTicker[se.value.toUpperCase().trim()];
-    if(s){ select(s); flyTo(s,620); se.blur(); }
+    if(s){ select(s); flyTo(s,480); se.blur(); }
   };
-  makeStars();
+  makeStars(); makeDust();
 }
 
 function visible(s){ return !hiddenFams[s.fam.id] && (!sectorFilter || s.sec===sectorFilter); }
@@ -373,7 +377,7 @@ function stepTween(now){
   ['phi','dist','tx','ty','tz'].forEach(function(p){ cam[p]=tween.from[p]+(tween.to[p]-tween.from[p])*e; });
   if(k===1) tween=null;
 }
-function flyTo(s,dist){ tweenCam({tx:s.x,ty:s.y,tz:s.z,dist:dist||620,phi:Math.max(.12,cam.phi*.7)},1600); }
+function flyTo(s,dist){ tweenCam({tx:s.x,ty:s.y,tz:s.z,dist:dist||480,phi:Math.max(.12,cam.phi*.7)},1600); }
 function nrm(v){ var l=Math.hypot(v.x,v.y,v.z)||1; return {x:v.x/l,y:v.y/l,z:v.z/l}; }
 function crs(a,b){ return {x:a.y*b.z-a.z*b.y, y:a.z*b.x-a.x*b.z, z:a.x*b.y-a.y*b.x}; }
 function updateCamera(){
@@ -382,12 +386,15 @@ function updateCamera(){
   Fw=nrm({x:cam.tx-eye.x, y:cam.ty-eye.y, z:cam.tz-eye.z});
   Rv=nrm(crs(Fw,{x:0,y:1,z:0}));
   Uv=crs(Rv,Fw);
-  FOC=1.15*Math.min(W,H);
+  // immersion 0→1 as you push in; the lens widens on approach so the field
+  // opens up and wraps around you — a game camera stepping into the world.
+  imm=Math.max(0,Math.min(1,(1250-cam.dist)/(1250-MIN_DIST)));
+  FOC=Math.min(W,H)*(0.70+0.45*(1-imm));
 }
 function project(p){
   var rx=p.x-eye.x, ry=p.y-eye.y, rz=p.z-eye.z;
   var vz=rx*Fw.x+ry*Fw.y+rz*Fw.z;
-  if(vz<40) return null;
+  if(vz<26) return null;
   var vx=rx*Rv.x+ry*Rv.y+rz*Rv.z, vy=rx*Uv.x+ry*Uv.y+rz*Uv.z;
   var k=FOC/vz;
   return {x:W/2+vx*k, y:H/2-vy*k, k:k, vz:vz};
@@ -426,6 +433,27 @@ function makeStars(){
       s:.4+((i*97)%100)/100*1.1, tw:((i*31)%628)/100});
   }
 }
+// Volumetric dust — a living cloud filling the space between the bodies. Unlike
+// the far starfield shell, these motes are near enough to STREAM PAST as you fly
+// in, which is what sells the "walking through the field" feel. Seeded so the
+// cloud is identical every reload.
+var DUST_TINTS=['190,214,246','120,180,255','96,232,214','150,150,255'];
+function makeDust(){
+  if(dust.length) return;
+  var seed=0x51ed3;
+  function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+  var mobile=(window.innerWidth||1200)<760;
+  var N=reduceMotion?220:(mobile?360:640);
+  for(var i=0;i<N;i++){
+    dust.push({
+      x:(rnd()*2-1)*DUSTX, y:(rnd()*2-1)*DUSTY, z:(rnd()*2-1)*DUSTZ,
+      vx:(rnd()*2-1)*0.03, vy:(rnd()*2-1)*0.02, vz:(rnd()*2-1)*0.03,
+      s:.5+rnd()*rnd()*1.7, tw:rnd()*6.28,
+      c:DUST_TINTS[(i*7)%DUST_TINTS.length], px:null, py:null
+    });
+  }
+}
+function fogOf(vz){ var f=(FOG_FAR-vz)/(FOG_FAR-FOG_NEAR); return f<0?0:f>1?1:f; }
 
 /* ── input ── */
 function wireInput(){
@@ -455,12 +483,12 @@ function wireInput(){
   cv.addEventListener('pointerleave',function(){ hovered=null; });
   cv.addEventListener('wheel',function(e){
     e.preventDefault(); lastInteract=performance.now(); tween=null;
-    cam.dist=Math.max(320,Math.min(3200,cam.dist*(1+Math.sign(e.deltaY)*.09)));
+    cam.dist=Math.max(MIN_DIST,Math.min(MAX_DIST,cam.dist*(1+Math.sign(e.deltaY)*.09)));
   },{passive:false});
   cv.addEventListener('touchmove',function(e){
     if(e.touches.length===2){
       var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-      if(pinch0) cam.dist=Math.max(320,Math.min(3200,cam.dist*pinch0/d));
+      if(pinch0) cam.dist=Math.max(MIN_DIST,Math.min(MAX_DIST,cam.dist*pinch0/d));
       pinch0=d; tween=null;
     }
   },{passive:true});
@@ -750,6 +778,40 @@ function frame(now){
   }
   ctx.restore();
 
+  // ── volumetric dust: the environment you fly through ──
+  // Faint ambient haze at rest; asserts itself and streaks past as you dive in.
+  var driftT=reduceMotion?0:dt;
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  for(var duI=0;duI<dust.length;duI++){
+    var du=dust[duI];
+    if(driftT){
+      du.x+=du.vx*driftT; du.y+=du.vy*driftT; du.z+=du.vz*driftT;
+      if(du.x> DUSTX)du.x-=2*DUSTX; else if(du.x<-DUSTX)du.x+=2*DUSTX;
+      if(du.y> DUSTY)du.y-=2*DUSTY; else if(du.y<-DUSTY)du.y+=2*DUSTY;
+      if(du.z> DUSTZ)du.z-=2*DUSTZ; else if(du.z<-DUSTZ)du.z+=2*DUSTZ;
+    }
+    var dp=project(du);
+    if(!dp){ du.px=null; continue; }
+    var dfog=fogOf(dp.vz);
+    if(dfog<=0.02){ du.px=dp.x; du.py=dp.y; continue; }
+    var dtw=reduceMotion?.7:(.55+.45*Math.sin(now*.0013+du.tw));
+    var da=dfog*dtw*(.10+.55*imm);            // near-invisible at rest, vivid on approach
+    var dsz=du.s*(.7+1.6*dp.k); if(dsz>26)dsz=26;   // motes swell as they near the lens
+    if(du.px!=null){
+      var mdx=dp.x-du.px, mdy=dp.y-du.py, mlen=mdx*mdx+mdy*mdy;
+      if(mlen>9&&mlen<19600){                 // streak while moving; cap filters teleports/resume
+        ctx.strokeStyle='rgba('+du.c+','+Math.min(.6,da*1.5)+')';
+        ctx.lineWidth=Math.max(.6,dsz*.6);
+        ctx.beginPath(); ctx.moveTo(du.px,du.py); ctx.lineTo(dp.x,dp.y); ctx.stroke();
+        du.px=dp.x; du.py=dp.y; continue;
+      }
+    }
+    ctx.fillStyle='rgba('+du.c+','+da+')';
+    ctx.fillRect(dp.x-dsz*.5,dp.y-dsz*.5,dsz,dsz);
+    du.px=dp.x; du.py=dp.y;
+  }
+  ctx.restore();
+
   drawFrame(now);
 
   // trails
@@ -791,17 +853,23 @@ function frame(now){
       continue;
     }
     projCache.push({s:sb,sx:pp.x,sy:pp.y,sr:sr});
+    // depth atmosphere: full brightness at rest (imm 0), but as you fly in the
+    // near bodies pop and the far ones sink into haze — volume you're inside of.
+    var bfog=1-imm*(1-fogOf(pp.vz));
     var heat=(sb.coord||0)/100;
     var pulse=(!reduceMotion&&sb.coord>=40)?1+.09*Math.sin(now*.002+sb.phase):1;
     var glowR=sr*(2.1+1.6*heat)*pulse;
+    var glowCap=Math.max(W,H)*1.4; if(glowR>glowCap)glowR=glowCap;
     ctx.save(); ctx.globalCompositeOperation='lighter';
-    ctx.globalAlpha=.5+.4*heat;
+    ctx.globalAlpha=(.5+.4*heat)*bfog;
     ctx.drawImage(sprite(sb.color),pp.x-glowR,pp.y-glowR,glowR*2,glowR*2);
     ctx.restore();
+    ctx.save(); ctx.globalAlpha=bfog;
     ctx.fillStyle=sb.color;
     ctx.beginPath(); ctx.arc(pp.x,pp.y,sr,0,7); ctx.fill();
     ctx.fillStyle='rgba(255,255,255,.75)';
     ctx.beginPath(); ctx.arc(pp.x-sr*.28,pp.y-sr*.28,sr*.32,0,7); ctx.fill();
+    ctx.restore();
     if(sb.fam.id==='trap'){
       ctx.strokeStyle=hexA(sb.color,.9); ctx.lineWidth=1.4;
       ctx.setLineDash([4,4]); ctx.lineDashOffset=reduceMotion?0:-now*.02;
@@ -847,6 +915,14 @@ function frame(now){
     tourElapsed+=dt;
     $id('uvt-prog').style.width=Math.min(100,tourElapsed/TOUR_DWELL*100)+'%';
     if(tourElapsed>TOUR_DWELL) tourGo(tourIdx+1);
+  }
+
+  // immersion vignette — the world closes around your periphery as you dive in
+  if(imm>0.01){
+    var vg=ctx.createRadialGradient(W/2,H*.46,Math.min(W,H)*.34,W/2,H*.46,Math.max(W,H)*.72);
+    vg.addColorStop(0,'rgba(4,7,13,0)');
+    vg.addColorStop(1,'rgba(3,5,10,'+(0.42*imm)+')');
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
   }
   rafId=requestAnimationFrame(frame);
 }
