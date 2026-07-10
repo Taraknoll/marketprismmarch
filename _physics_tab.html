@@ -1,12 +1,13 @@
 <!-- PHYSICS TAB: injected into _template.html / _template_black.html by dashboard.js -->
 <!-- ══════════════════════════════════════
-     TAB: MARKET PHYSICS (3D price-physics field — every tracked ticker, one map)
-     Same engine family as the Narrative Universe tab, different scene math:
-       X = price vs SEC-anchored fair value (fvd, asinh)
+     TAB: MARKET PHYSICS (3D earnings field — every tracked ticker vs its report date)
+     Same engine family as the Narrative Universe tab; scene math:
+       X = days to earnings — the EARNINGS WALL stands at report day; bodies
+           march toward it session by session (replay shows the march)
        Y = where price sits inside the ticker's OWN trail-window range
-       Z = narrative exhaustion
+       Z = price vs SEC-anchored fair value (trap gate ≥150% at the deep end)
        size = narrative mass — PER DAY, so bodies grow/shrink through replay
-     Data: /api/universe-data (trail rows carry per-day price + mass).
+     Data: /api/universe-data (edays/edate per ticker; trails carry price+mass).
 ═══════════════════════════════════════ -->
 <style>
   #tab-prism{--px-card:var(--mp-surface,#0C1018);--px-border:var(--mp-border,rgba(255,255,255,0.06));
@@ -22,6 +23,7 @@
   #tab-prism .px-stat{padding:0 16px;border-right:1px solid var(--px-border);text-align:center;}
   #tab-prism .px-stat:last-child{border-right:none;}
   #tab-prism .px-stat .n{font-size:18px;font-weight:700;color:var(--px-ink);font-variant-numeric:tabular-nums;}
+  #tab-prism .px-stat .n.hot{color:#FFB800;}
   #tab-prism .px-stat .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--px-ink3);margin-top:2px;}
   #tab-prism .px-ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
   #tab-prism .px-ctl{height:36px;box-sizing:border-box;font-family:var(--font-body,'Inter',sans-serif);font-size:13px;
@@ -30,9 +32,11 @@
   #tab-prism #px-pick{width:170px;}
   #tab-prism #px-pick::placeholder{color:var(--px-ink3);}
   #tab-prism select.px-ctl{cursor:pointer;}
-  #tab-prism #px-replaybtn{cursor:pointer;font-weight:700;font-size:13px;letter-spacing:.04em;color:#04121C;
+  #tab-prism #px-tour{cursor:pointer;font-weight:700;font-size:13px;letter-spacing:.04em;color:#04121C;
     background:var(--px-cyan);border-color:var(--px-cyan);transition:filter .15s;}
-  #tab-prism #px-replaybtn:hover{filter:brightness(1.12);}
+  #tab-prism #px-tour:hover{filter:brightness(1.12);}
+  #tab-prism #px-replaybtn{cursor:pointer;font-weight:600;}
+  #tab-prism #px-replaybtn:hover{border-color:#00AEFF;color:#fff;}
   /* picked-ticker chips */
   #tab-prism .px-picks{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;}
   #tab-prism .px-picks:empty{display:none;}
@@ -56,7 +60,7 @@
     overflow:hidden;height:clamp(500px,calc(100vh - 300px),1040px);height:clamp(500px,calc(100dvh - 300px),1040px);
     filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
   #tab-prism .px-stage::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,#00AEFF,#00DE94);z-index:4;}
+    background:linear-gradient(90deg,#00AEFF,#FFB800);z-index:4;}
   #tab-prism #px-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y pinch-zoom;}
   #tab-prism #px-canvas.dragging{cursor:grabbing;}
   #tab-prism .px-hintbar{position:absolute;left:14px;bottom:10px;z-index:5;font-size:11px;letter-spacing:.04em;
@@ -78,7 +82,7 @@
 
   /* tooltip */
   #tab-prism #px-tip{position:absolute;z-index:8;pointer-events:none;display:none;padding:9px 12px;border-radius:10px;
-    background:rgba(8,11,17,0.95);border:1px solid rgba(255,255,255,0.14);line-height:1.5;max-width:240px;}
+    background:rgba(8,11,17,0.95);border:1px solid rgba(255,255,255,0.14);line-height:1.5;max-width:250px;}
   #tab-prism #px-tip .t{font-weight:700;font-size:16px;letter-spacing:.02em;}
   #tab-prism #px-tip .v{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
   #tab-prism #px-tip .m{color:rgba(255,255,255,0.6);font-size:11px;margin-top:2px;}
@@ -96,6 +100,8 @@
   #tab-prism .px-dossier .x:hover{color:#fff;background:rgba(255,255,255,0.08);}
   #tab-prism .px-chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:.06em;
     text-transform:uppercase;font-weight:700;border:1px solid;margin-top:8px;}
+  #tab-prism .px-echip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase;font-weight:700;border:1px solid #FFB800;color:#FFB800;margin:8px 0 0 6px;}
   #tab-prism .px-rangebar{height:6px;border-radius:3px;background:rgba(255,255,255,0.08);margin:12px 0 4px;position:relative;}
   #tab-prism .px-rangebar i{position:absolute;top:-3px;width:12px;height:12px;border-radius:50%;background:#fff;
     box-shadow:0 0 8px rgba(255,255,255,.6);transform:translateX(-50%);}
@@ -104,7 +110,7 @@
   #tab-prism .px-kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;color:rgba(255,255,255,0.65);}
   #tab-prism .px-kv b{color:#fff;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;}
 
-  /* replay bar + snapshot (same pattern as the Universe tab) */
+  /* replay bar + snapshot */
   #tab-prism .px-replay{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:8;display:none;
     align-items:center;gap:10px;background:rgba(12,16,24,0.95);border:1px solid rgba(255,255,255,0.12);
     border-radius:12px;padding:9px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
@@ -120,6 +126,26 @@
     border-radius:9px;padding:7px 12px;}
   #tab-prism .px-snap:hover{border-color:#00AEFF;color:#fff;}
 
+  /* tour card (same pattern as the Universe tab) */
+  #tab-prism .px-tourcard{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+    width:min(560px,calc(100% - 28px));display:none;z-index:9;background:rgba(12,16,24,0.95);
+    border:1px solid rgba(255,255,255,0.12);border-radius:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden;}
+  #tab-prism .px-tourcard.open{display:block;}
+  #tab-prism .px-tourcard .in{padding:14px 18px 12px;}
+  #tab-prism .px-tourcard .st{font-size:11px;letter-spacing:.16em;color:#4DC8F0;text-transform:uppercase;font-weight:600;}
+  #tab-prism .px-tourcard h3{margin:5px 0 6px;font-size:17px;font-weight:700;letter-spacing:-0.01em;color:#fff;text-wrap:balance;}
+  #tab-prism .px-tourcard p{margin:0;font-size:13px;line-height:1.55;color:rgba(255,255,255,0.7);}
+  #tab-prism .px-tourcard .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+  #tab-prism .px-tourcard .chips .px-chip{margin-top:0;color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.14);font-weight:500;}
+  #tab-prism .px-tourcard .nav{display:flex;align-items:center;gap:8px;padding:9px 18px;border-top:1px solid rgba(255,255,255,0.08);}
+  #tab-prism .px-tourcard .nav button{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    cursor:pointer;background:none;border:1px solid rgba(255,255,255,0.14);color:rgba(255,255,255,0.7);border-radius:8px;padding:6px 12px;
+    font-family:var(--font-body,'Inter',sans-serif);}
+  #tab-prism .px-tourcard .nav button:hover{border-color:#00AEFF;color:#fff;}
+  #tab-prism .px-tourcard .nav .x2{margin-left:auto;}
+  #tab-prism .px-prog{height:2px;background:rgba(255,255,255,0.08);}
+  #tab-prism .px-prog i{display:block;height:100%;width:0;background:#00AEFF;}
+
   #tab-prism .px-caption{margin-top:10px;font-size:11px;color:var(--px-ink3);line-height:1.6;}
   #tab-prism .px-caption b{color:var(--px-ink2);font-weight:600;}
 
@@ -133,6 +159,7 @@
   }
   @media (prefers-reduced-motion:reduce){
     #tab-prism .px-spin{animation:none;}
+    #tab-prism .px-prog{display:none;}
   }
 </style>
 
@@ -140,9 +167,9 @@
   <div class="px-head">
     <div class="px-title">
       <h2>Market Physics</h2>
-      <p>Every tracked ticker, one map. <b>Height is price</b> — where each name sits inside its own
-        trading range. Right is stretch above fair value; deep is a spent story. Size is narrative
-        mass — and mass moves: hit replay and watch the bodies grow, shrink, and drift.</p>
+      <p>Every tracked ticker versus its report date. <b>The wall is earnings</b> — bodies march toward it
+        session by session. Height is price inside its own range; depth is stretch above fair value;
+        size is narrative mass, re-weighed every day. Hit replay and watch the field flow into the wall.</p>
     </div>
     <div class="px-stats" id="px-stats" aria-live="polite"></div>
   </div>
@@ -151,6 +178,7 @@
     <input class="px-ctl" id="px-pick" list="px-tickers" placeholder="Add tickers…" autocomplete="off" aria-label="Pick tickers to show">
     <datalist id="px-tickers"></datalist>
     <select class="px-ctl" id="px-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
+    <button class="px-ctl" id="px-tour">▸ Guided tour</button>
     <button class="px-ctl" id="px-replaybtn" title="Replay the field over the last trading days">⏮ Replay</button>
   </div>
   <div class="px-picks" id="px-picks" aria-label="Picked tickers — click a chip to remove"></div>
@@ -159,14 +187,14 @@
 
   <div class="px-stage" id="px-stage">
     <canvas id="px-canvas"></canvas>
-    <div class="px-hintbar"><b>Scroll</b> to fly in · <b>WASD</b> to walk (Q/E rise · Shift sprint) · <b>Drag</b> to orbit · <b>Click</b> a body</div>
+    <div class="px-hintbar"><b>Scroll</b> to fly in · <b>WASD</b> to walk (Q/E rise · Shift sprint) · <b>Drag</b> to orbit · <b>Click</b> a body · <b>T</b> tour</div>
     <div id="px-tip"></div>
     <button class="px-snap" id="px-snap" title="Download this view as an image">⤓ Snapshot</button>
 
     <aside class="px-dossier" id="px-dossier" aria-label="Ticker card">
       <div class="r1"><span class="tk" id="pxd-tk"></span><span class="pxp" id="pxd-px"></span>
         <button class="x" id="pxd-x" aria-label="Close">✕</button></div>
-      <span class="px-chip" id="pxd-verdict"></span>
+      <span class="px-chip" id="pxd-verdict"></span><span class="px-echip" id="pxd-earn"></span>
       <div class="px-rangebar"><i id="pxd-dot"></i></div>
       <div class="px-rangecap"><span id="pxd-lo"></span><span id="pxd-pos"></span><span id="pxd-hi"></span></div>
       <div id="pxd-rows"></div>
@@ -179,24 +207,38 @@
       <button id="pxr-exit" aria-label="Exit replay">✕</button>
     </div>
 
+    <div class="px-tourcard" id="px-tourcard">
+      <div class="in">
+        <div class="st" id="pxt-step"></div>
+        <h3 id="pxt-title"></h3>
+        <p id="pxt-body"></p>
+        <div class="chips" id="pxt-chips"></div>
+      </div>
+      <div class="nav">
+        <button id="pxt-prev">← Prev</button><button id="pxt-next">Next →</button>
+        <button class="x2" id="pxt-exit">Exit tour</button>
+      </div>
+      <div class="px-prog"><i id="pxt-prog"></i></div>
+    </div>
+
     <div class="px-state" id="px-state">
-      <div class="px-spin"></div><p>Loading the physics field…</p>
+      <div class="px-spin"></div><p>Loading the earnings field…</p>
     </div>
   </div>
 
-  <div class="px-caption"><b>Reading the field:</b> each body's height = where its price sits inside its <b>own</b>
-    trail-window range — <b>RANGE HIGH</b> at the top, <b>RANGE LOW</b> at the floor (heights compare position, not
-    dollars). Toward <b>OVERVALUED</b> = priced above its SEC-anchored fair value; toward <b>EXHAUSTED</b> = a spent
-    story. Size is narrative mass, <b>re-measured every session</b> — in replay the bodies physically grow and shrink
-    as their stories gain and lose weight. Pick tickers to isolate them, or filter a sector. Scroll flies you in;
-    WASD walks you through.</div>
+  <div class="px-caption"><b>Reading the field:</b> the amber <b>EARNINGS WALL</b> is report day — a body's distance
+    from it is how many days remain (7D/30D/60D/90D ticks on the floor; unscheduled names park at the far edge).
+    Amber countdown rings mark tickers reporting within a week. Height = where price sits inside its <b>own</b>
+    trail-window range (RANGE HIGH at the ceiling). Depth = price vs SEC-anchored fair value — the red slab at the
+    deep end is the trap gate (≥150%). Size is narrative mass, re-measured every session. <b>Press ⏮ Replay</b> and
+    the whole field marches toward the wall while bodies grow and shrink with their stories. Pick tickers to isolate
+    a cast, or filter a sector. <b>T</b> starts the guided tour.</div>
 </div>
 
 <script>
 (function(){
 'use strict';
-/* ═══ Market Physics tab — same engine family as the Universe tab (namespaced
-   px in the DOM, self-contained IIFE); exposes window.prismInit only ═══ */
+/* ═══ Market Physics tab — earnings field; exposes window.prismInit only ═══ */
 
 var FAMS = [
   {id:'trap',      name:'Narrative Trap',    color:'#FF4D4D', verdicts:['Narrative Trap']},
@@ -210,7 +252,7 @@ var FAMS = [
   {id:'support',   name:'Structurally Supported', color:'#00DE94', verdicts:['Structurally Supported']}
 ];
 function famOf(v){ for(var i=0;i<FAMS.length;i++){ if(FAMS[i].verdicts.indexOf(v)>=0) return FAMS[i]; } return FAMS[5]; }
-var SX=340, SY=230, SZ=250, FVD_REF=80, FVD_MAX=420;
+var SX=340, SY=230, SZ=250, FVD_REF=80, FVD_MAX=420, EDAY_MAX=95;
 var MIN_DIST=70, MAX_DIST=3200;
 var DUSTX=1700, DUSTY=1200, DUSTZ=1700;
 var FOG_NEAR=900, FOG_FAR=3400;
@@ -218,10 +260,15 @@ var UV_FONT="'Inter',system-ui,sans-serif";
 var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function asinh(x){ return Math.log(x + Math.sqrt(x*x+1)); }
-function xOf(f){ return f==null ? 0 : Math.max(-1,Math.min(1.15, asinh(f/FVD_REF)/asinh(FVD_MAX/FVD_REF))) * SX; }
-function zOf(lv){ return ((lv==null?0.4:lv)*2 - 1) * SZ; }
+// X: days to earnings. sqrt scale gives the tense last two weeks the most room.
+// Report day = +SX (the wall); 95d+ or unscheduled = the far edge on the left.
+function xOfDays(d){
+  if(d==null) return -SX*1.05;
+  return SX*(1 - 2*Math.sqrt(Math.max(0,Math.min(d,EDAY_MAX))/EDAY_MAX));
+}
+// Z: valuation stretch (same asinh map the Universe tab uses on X).
+function zOfV(f){ return f==null ? 0 : Math.max(-1,Math.min(1.15, asinh(f/FVD_REF)/asinh(FVD_MAX/FVD_REF))) * SZ; }
 function rOf(m){ return 3.5 + Math.max(0,Math.min(1,((m==null?0.5:m)-0.35)/0.5)) * 9; }
-// Y is per-ticker: where a price sits inside that ticker's own window range.
 function yOfPrice(lo,hi,price){
   if(price==null||lo==null||hi==null||hi<=lo) return 0;
   return (((price-lo)/(hi-lo))*2-1)*SY;
@@ -231,7 +278,7 @@ function hexA(hex,a){ var n=parseInt(hex.slice(1),16); return 'rgba('+(n>>16&255
 function $id(i){ return document.getElementById(i); }
 
 var PX_BOOTED=false, PX_DATA=null;
-var stocks=[], byTicker={}, alwaysLabel={}, counts={total:0,shown:0};
+var stocks=[], byTicker={}, alwaysLabel={}, counts={total:0,week:0,month:0};
 var cv=null, ctx=null, stage=null, W=0, H=0, DPR=1, backdrop=null, stars=[], dust=[], spriteCache={};
 var cam={theta:0.62, phi:0.30, dist:1250, tx:0, ty:0, tz:0};
 var tween=null, eye, Rv, Uv, Fw, FOC=900, imm=0;
@@ -241,6 +288,7 @@ var dragging=false, moved=false, px0=0, py0=0, lastInteract=0, pinch0=0;
 var hovered=null, selected=null, projCache=[];
 var hiddenFams={}, sectorFilter='', picks={}, pickCount=0;
 var replayOpen=false, replayD=0, replayMax=0, replayPlaying=false, replayAcc=0;
+var tourOpen=false, tourIdx=0, tourElapsed=0, TOUR=[], TOUR_DWELL=9000;
 var placedLbl=[];
 var rafId=null, lastT=0;
 var uvActive=false, needResize=true;
@@ -265,7 +313,7 @@ window.prismInit = function(){
 function setState(html){ var s=$id('px-state'); if(!s) return; if(html==null){ s.style.display='none'; } else { s.style.display='flex'; s.innerHTML=html; } }
 
 function loadData(){
-  setState('<div class="px-spin"></div><p>Loading the physics field…</p>');
+  setState('<div class="px-spin"></div><p>Loading the earnings field…</p>');
   var ac = (typeof AbortController!=='undefined') ? new AbortController() : null;
   var timer = ac ? setTimeout(function(){ ac.abort(); }, 15000) : null;
   fetch('/api/universe-data', ac ? {signal:ac.signal} : {})
@@ -277,7 +325,7 @@ function loadData(){
     })
     .catch(function(e){
       if(timer) clearTimeout(timer);
-      setState('<p>Could not load the physics field ('+uvEsc(e.message||'network error')+').</p>'+
+      setState('<p>Could not load the earnings field ('+uvEsc(e.message||'network error')+').</p>'+
                '<button class="px-retry" id="px-retry">Retry</button>');
       var b=$id('px-retry'); if(b) b.onclick=loadData;
     });
@@ -286,20 +334,21 @@ function loadData(){
 function buildScene(){
   stocks = PX_DATA.stocks.map(function(s){
     var fam=famOf(s.v);
-    // per-ticker price range across the trail window (today included)
     var lo=null, hi=null;
     (s.trail||[]).forEach(function(p){
       if(p&&p[3]!=null){ if(lo==null||p[3]<lo)lo=p[3]; if(hi==null||p[3]>hi)hi=p[3]; }
     });
     if(s.price!=null){ if(lo==null||s.price<lo)lo=s.price; if(hi==null||s.price>hi)hi=s.price; }
+    var trailLen=(s.trail||[]).length;
     return Object.assign({}, s, {
       fam:fam, color:fam.color, lo:lo, hi:hi,
-      x:xOf(s.fvd), y:yOfPrice(lo,hi,s.price), z:zOf(s.exh), r:rOf(s.mass),
+      x:xOfDays(s.edays), y:yOfPrice(lo,hi,s.price), z:zOfV(s.fvd), r:rOf(s.mass),
       phase:(s.t.charCodeAt(0)*7+s.t.length*13)%628/100,
-      // node keeps that day's mass so bodies resize through the replay
-      trailPts:(s.trail||[]).map(function(p){
-        return (p[0]==null||p[3]==null) ? null
-          : {x:xOf(p[2]), y:yOfPrice(lo,hi,p[3]), z:zOf(p[1]), m:p[4]};
+      // node i sat (trailLen-1-i) days further from the wall — the trail IS the march
+      trailPts:(s.trail||[]).map(function(p,i){
+        if(p==null||p[0]==null||p[3]==null) return null;
+        var back=trailLen-1-i;
+        return {x:xOfDays(s.edays==null?null:s.edays+back), y:yOfPrice(lo,hi,p[3]), z:zOfV(p[2]), m:p[4]};
       })
     });
   });
@@ -307,14 +356,14 @@ function buildScene(){
   alwaysLabel={};
   stocks.slice().sort(function(a,b){ return (b.mass||0)-(a.mass||0); }).slice(0,10)
     .forEach(function(s){ alwaysLabel[s.t]=1; });
-  stocks.forEach(function(s){ if(s.fam.id==='trap') alwaysLabel[s.t]=1; });
-  var atHigh=stocks.filter(function(s){ return s.hi!=null&&s.lo!=null&&s.hi>s.lo&&s.price!=null&&(s.price-s.lo)/(s.hi-s.lo)>=0.9; }).length;
-  var atLow =stocks.filter(function(s){ return s.hi!=null&&s.lo!=null&&s.hi>s.lo&&s.price!=null&&(s.price-s.lo)/(s.hi-s.lo)<=0.1; }).length;
+  stocks.forEach(function(s){ if(s.fam.id==='trap'||(s.edays!=null&&s.edays<=7)) alwaysLabel[s.t]=1; });
   counts.total=stocks.length;
+  counts.week=stocks.filter(function(s){ return s.edays!=null&&s.edays<=7; }).length;
+  counts.month=stocks.filter(function(s){ return s.edays!=null&&s.edays<=30; }).length;
   $id('px-stats').innerHTML =
-    '<div class="px-stat"><div class="n">'+stocks.length+'</div><div class="k">tickers</div></div>'+
-    '<div class="px-stat"><div class="n">'+atHigh+'</div><div class="k">at range highs</div></div>'+
-    '<div class="px-stat"><div class="n">'+atLow+'</div><div class="k">at range lows</div></div>';
+    '<div class="px-stat"><div class="n">'+counts.total+'</div><div class="k">tickers</div></div>'+
+    '<div class="px-stat"><div class="n hot">'+counts.week+'</div><div class="k">report ≤7d</div></div>'+
+    '<div class="px-stat"><div class="n">'+counts.month+'</div><div class="k">report ≤30d</div></div>';
   var famsEl=$id('px-fams'); famsEl.innerHTML='';
   FAMS.forEach(function(f){
     var n=stocks.filter(function(s){ return s.fam===f; }).length;
@@ -350,7 +399,7 @@ function buildScene(){
   makeStars(); makeDust();
 }
 
-/* ── ticker picker: hand-build the cast you want on stage ── */
+/* ── ticker picker ── */
 function renderPicks(){
   var box=$id('px-picks'); box.innerHTML='';
   Object.keys(picks).sort().forEach(function(t){
@@ -370,7 +419,7 @@ function renderPicks(){
 }
 function visible(s){
   if(hiddenFams[s.fam.id]) return false;
-  if(pickCount>0) return !!picks[s.t];          // picked cast overrides the sector filter
+  if(pickCount>0) return !!picks[s.t];
   return !sectorFilter || s.sec===sectorFilter;
 }
 function p3(s){
@@ -402,6 +451,7 @@ function setReplayD(d){
 function toggleReplay(){
   if(replayOpen){ exitReplay(); return; }
   if(!replayMax) return;
+  if(tourOpen) exitTour();
   replayOpen=true; $id('px-replay').classList.add('open');
   setReplayD(replayMax);
 }
@@ -418,6 +468,80 @@ function playReplay(){
   replayAcc=0;
 }
 
+/* ── guided tour (data-driven) ── */
+function fmtD(d){ return d==null?'—':(d+'d'); }
+function buildTour(){
+  var stops=[], used={};
+  function pickFirst(arr){ for(var i=0;i<arr.length;i++){ if(arr[i]&&!used[arr[i].t]){ used[arr[i].t]=1; return arr[i]; } } return null; }
+  var sched=stocks.filter(function(s){ return s.edays!=null; });
+  var nearest=pickFirst(sched.slice().sort(function(a,b){ return a.edays-b.edays || (b.mass||0)-(a.mass||0); }));
+  var perfection=pickFirst(sched.filter(function(s){ return s.edays<=21 && s.fvd!=null && s.fvd>=100; })
+    .sort(function(a,b){ return (b.fvd||0)-(a.fvd||0); }));
+  var heavyNear=pickFirst(sched.filter(function(s){ return s.edays<=30; })
+    .sort(function(a,b){ return (b.mass||0)-(a.mass||0); }));
+  var farOut=stocks.filter(function(s){ return s.edays==null||s.edays>=90; }).length;
+
+  stops.push({title:'One field. '+stocks.length+' tickers. One clock.', step:'THE INSTRUMENT',
+    body:'Every light is a stock, and the amber wall on the right is report day. Distance from the wall is time — how many sessions before each company must show its numbers. Height is price inside its own range; depth is stretch above fair value; size is narrative mass.',
+    chips:[(PX_DATA.date||'today')+' snapshot',counts.week+' report within 7d',counts.month+' within 30d'],
+    cam:{tx:0,ty:0,tz:0,dist:1350,phi:.30,theta:.62}});
+  stops.push({title:'The wall does not move. Everything else does.', step:'THE MAP',
+    body:'Follow the floor ticks — 90D, 60D, 30D, 7D — each session every body takes one step toward the wall. The FAIR VALUE meridian and the red trap slab run along the depth axis: a stock can walk into its print cheap and quiet, or stretched 150% above what its filings support. Same wall, very different physics.',
+    chips:['X — days to earnings','Y — price in its range','Z — vs fair value','size — narrative mass'],
+    cam:{tx:0,ty:-40,tz:0,dist:1450,phi:.12,theta:1.35}});
+  if(nearest) stops.push({title:nearest.t+' — next through the wall', step:'THE WALL', color:nearest.color,
+    body:nearest.t+' reports in '+fmtD(nearest.edays)+(nearest.edate?(' ('+nearest.edate+')'):'')+' — the closest body to the wall'+(nearest.fvd!=null?(', carrying '+(nearest.fvd>0?'+':'')+Math.round(nearest.fvd)+'% versus its fair value into the print'):'')+'. The last week before earnings is where narratives get audited by numbers.',
+    chips:['reports '+fmtD(nearest.edays), nearest.edate||null, 'verdict: '+nearest.v].filter(Boolean),
+    cam:{tx:nearest.x,ty:nearest.y,tz:nearest.z,dist:480,phi:.18}, focus:nearest.t});
+  if(counts.week>1) stops.push({title:counts.week+' names pressed against the wall', step:'THE HOT ZONE',
+    body:'Everything inside the 7D tick reports within a week. Watch how they carry themselves in: high in their range and heavy with mass is a crowd expecting a beat — low and light is a story the market has already left. The wall settles both.',
+    chips:[counts.week+' reporting ≤7d','watch the 7D tick'],
+    cam:{tx:xOfDays(4),ty:0,tz:0,dist:820,phi:.22}});
+  if(perfection) stops.push({title:perfection.t+' — priced for perfection into the print', step:'DANGER COMBO', color:perfection.color,
+    body:perfection.t+' walks into earnings in '+fmtD(perfection.edays)+' at +'+Math.round(perfection.fvd)+'% above its SEC-anchored fair value'+(perfection.fvd>=150?' — inside the trap gate':'')+'. Near the wall AND deep on the valuation axis is the most dangerous corner of this field: the print has to be perfect, and perfect is priced in.',
+    chips:['reports '+fmtD(perfection.edays),'FVD +'+Math.round(perfection.fvd)+'%','verdict: '+perfection.v],
+    cam:{tx:perfection.x,ty:perfection.y,tz:perfection.z,dist:440,phi:.16}, focus:perfection.t});
+  if(heavyNear&&heavyNear!==perfection) stops.push({title:heavyNear.t+' — the heaviest story on the clock', step:'MASS MEETS THE WALL', color:heavyNear.color,
+    body:'Narrative mass '+heavyNear.mass+' with '+fmtD(heavyNear.edays)+' to go. Heavy stories bend attention — when a name this loud reports, the whole sector feels the shockwave. Size here is not market cap; it is how much story the market is carrying.',
+    chips:['mass '+heavyNear.mass,'reports '+fmtD(heavyNear.edays),'verdict: '+heavyNear.v],
+    cam:{tx:heavyNear.x,ty:heavyNear.y,tz:heavyNear.z,dist:480,phi:.22}, focus:heavyNear.t});
+  if(farOut>0) stops.push({title:'The quiet shelf', step:'FAR FROM THE CLOCK',
+    body:farOut+' names sit at the far edge — 90+ days out or unscheduled. No event risk on the clock, which is its own signal: whatever moves them out here is pure narrative, not calendar.',
+    chips:[farOut+' names 90d+ / unscheduled'],
+    cam:{tx:-SX*.9,ty:0,tz:0,dist:900,phi:.26}});
+  stops.push({title:'Now press play.', step:'THE MARCH',
+    body:'Hit ⏮ Replay and drag the slider: the whole field marches toward the wall one session at a time while every body grows and shrinks with its narrative mass. Watch who accelerates into their print — and who deflates before it. That is the tape deciding early.',
+    chips:['⏮ Replay — the field in motion','size = mass, per day'],
+    cam:{tx:0,ty:20,tz:0,dist:1450,phi:.40}});
+  return stops;
+}
+function startTour(){
+  if(tourOpen||!stocks.length) return;
+  exitReplay();
+  TOUR=buildTour(); tourOpen=true; closeDossier();
+  $id('px-tourcard').classList.add('open');
+  if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
+  tourGo(0);
+}
+function tourGo(i){
+  if(i<0||i>=TOUR.length){ exitTour(); return; }
+  tourIdx=i; var st=TOUR[i];
+  $id('pxt-step').textContent=(i+1)+' / '+TOUR.length+' — '+st.step;
+  $id('pxt-title').textContent=st.title;
+  $id('pxt-title').style.color=st.color||'#fff';
+  $id('pxt-body').textContent=st.body;
+  $id('pxt-chips').innerHTML=st.chips.map(function(c){ return '<span class="px-chip">'+uvEsc(c)+'</span>'; }).join('');
+  tweenCam(st.cam,1900);
+  closeDossier();
+  selected=st.focus?byTicker[st.focus]:null;
+  tourElapsed=0;
+}
+function exitTour(){
+  tourOpen=false;
+  $id('px-tourcard').classList.remove('open');
+  tweenCam({tx:0,ty:0,tz:0,dist:1250,phi:.3},1400);
+}
+
 /* ── snapshot ── */
 function snapshot(){
   if(!cv||!W||!H) return;
@@ -430,7 +554,7 @@ function snapshot(){
   g.fillStyle='#FFFFFF'; g.font='700 18px '+UV_FONT; g.textAlign='left';
   g.fillText('MARKET PRISM — MARKET PHYSICS',16,24);
   g.fillStyle='rgba(255,255,255,0.6)'; g.font='600 12px '+UV_FONT;
-  g.fillText(((PX_DATA&&PX_DATA.date)?PX_DATA.date+' · ':'')+counts.total+' tickers · height = price in range · size = narrative mass · marketprism.co',16,44);
+  g.fillText(((PX_DATA&&PX_DATA.date)?PX_DATA.date+' · ':'')+counts.total+' tickers · '+counts.week+' report within 7d · the wall is earnings · marketprism.co',16,44);
   g.setTransform(1,0,0,1,0,0);
   g.drawImage(cv,0,Math.round(bar*DPR));
   out.toBlob(function(b){
@@ -504,7 +628,7 @@ function buildBackdrop(){
   var grad=g.createRadialGradient(W*.5,H*.42,0,W*.5,H*.42,Math.max(W,H)*.75);
   grad.addColorStop(0,'#0C1220'); grad.addColorStop(.55,'#080B11'); grad.addColorStop(1,'#04060B');
   g.fillStyle=grad; g.fillRect(0,0,W,H);
-  [[.22,.7,.5,'rgba(0,174,255,.05)'],[.8,.25,.45,'rgba(0,222,148,.04)'],[.65,.85,.4,'rgba(56,200,184,.04)']].forEach(function(nb){
+  [[.22,.7,.5,'rgba(0,174,255,.05)'],[.8,.25,.45,'rgba(255,184,0,.04)'],[.65,.85,.4,'rgba(56,200,184,.04)']].forEach(function(nb){
     var ng=g.createRadialGradient(W*nb[0],H*nb[1],0,W*nb[0],H*nb[1],Math.max(W,H)*nb[2]);
     ng.addColorStop(0,nb[3]); ng.addColorStop(1,'rgba(0,0,0,0)');
     g.fillStyle=ng; g.fillRect(0,0,W,H);
@@ -519,7 +643,7 @@ function makeStars(){
       s:.4+((i*97)%100)/100*1.1, tw:((i*31)%628)/100});
   }
 }
-var DUST_TINTS=['190,214,246','120,180,255','96,232,214','150,150,255'];
+var DUST_TINTS=['190,214,246','120,180,255','96,232,214','255,214,150'];
 function makeDust(){
   if(dust.length) return;
   var seed=0x9a7c1;
@@ -579,8 +703,13 @@ function wireInput(){
     var tag=(document.activeElement&&document.activeElement.tagName)||'';
     if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
     if(e.key==='Escape'){
-      if(replayOpen) exitReplay(); else closeDossier();
+      if(tourOpen) exitTour();
+      else if(replayOpen) exitReplay();
+      else closeDossier();
     }
+    if(e.key==='t'||e.key==='T') startTour();
+    if(tourOpen&&e.key==='ArrowRight') tourGo(tourIdx+1);
+    if(tourOpen&&e.key==='ArrowLeft')  tourGo(tourIdx-1);
     var fk=e.key.toLowerCase();
     if(FLY_KEYS[fk]){ keys[fk]=1; lastInteract=performance.now(); }
   });
@@ -588,6 +717,10 @@ function wireInput(){
   addEventListener('blur',function(){ keys={}; });
   $id('pxd-x').onclick=closeDossier;
   $id('px-snap').onclick=snapshot;
+  $id('px-tour').onclick=startTour;
+  $id('pxt-next').onclick=function(){ tourGo(tourIdx+1); };
+  $id('pxt-prev').onclick=function(){ tourGo(tourIdx-1); };
+  $id('pxt-exit').onclick=exitTour;
   $id('px-replaybtn').onclick=toggleReplay;
   $id('pxr-exit').onclick=exitReplay;
   $id('pxr-play').onclick=playReplay;
@@ -632,20 +765,20 @@ function select(s){
   $id('pxd-px').textContent=s.price!=null?('$'+Number(s.price).toLocaleString()):'—';
   var vd=$id('pxd-verdict');
   vd.textContent=s.v; vd.style.color=s.color; vd.style.borderColor=s.color;
+  $id('pxd-earn').textContent=s.edays!=null?('earnings in '+s.edays+'d'):'no report scheduled';
   var pos=rangePos(s);
   $id('pxd-dot').style.left=(pos==null?50:pos)+'%';
   $id('pxd-lo').textContent=s.lo!=null?('$'+s.lo):'—';
   $id('pxd-pos').textContent=pos==null?'no range':(pos+'% of range');
   $id('pxd-hi').textContent=s.hi!=null?('$'+s.hi):'—';
-  // mass change over the window: today vs the oldest scored day
   var m0=null;
   for(var i=0;i<(s.trail||[]).length;i++){ if(s.trail[i]&&s.trail[i][4]!=null){ m0=s.trail[i][4]; break; } }
   var dm=(m0!=null&&s.mass!=null)?Math.round((s.mass-m0)*100)/100:null;
   $id('pxd-rows').innerHTML=
+    kvRow('next report', s.edate||(s.edays!=null?('in '+s.edays+'d'):null))+
     kvRow('vs fair value', s.fvd==null?'no anchor':(s.fvd>0?'+':'')+Math.round(s.fvd)+'%')+
     kvRow('narrative mass', s.mass!=null?(s.mass+(dm!=null?(' ('+(dm>=0?'+':'')+dm+' this window)'):'')):null)+
     kvRow('tape energy', s.wks)+
-    kvRow('exhaustion', Math.round((s.exh||0)*100)+'%')+
     kvRow('sector', s.sec+(s.ind?' · '+s.ind:''));
 }
 function closeDossier(){ selected=null; $id('px-dossier').classList.remove('open'); }
@@ -656,15 +789,28 @@ function line3(a,b,style,w){
   ctx.strokeStyle=style; ctx.lineWidth=w||1;
   ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
 }
-function drawFrame(){
-  var gy=-SY, step=SX/4, i;
-  for(i=-4;i<=4;i++){
-    line3({x:i*step,y:gy,z:-SZ},{x:i*step,y:gy,z:SZ},'rgba(0,174,255,.06)');
-    line3({x:-SX,y:gy,z:i*SZ/4},{x:SX,y:gy,z:i*SZ/4},'rgba(0,174,255,.06)');
+function quad3(pts,fill,stroke,dash){
+  var q=pts.map(project);
+  if(!q.every(function(p){return !!p;})) return;
+  if(fill){ ctx.fillStyle=fill;
+    ctx.beginPath(); ctx.moveTo(q[0].x,q[0].y); ctx.lineTo(q[1].x,q[1].y); ctx.lineTo(q[2].x,q[2].y); ctx.lineTo(q[3].x,q[3].y); ctx.closePath(); ctx.fill(); }
+  if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=1;
+    if(dash) ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(q[0].x,q[0].y); ctx.lineTo(q[1].x,q[1].y); ctx.lineTo(q[2].x,q[2].y); ctx.lineTo(q[3].x,q[3].y); ctx.closePath(); ctx.stroke();
+    ctx.setLineDash([]); }
+}
+function drawFrame(now){
+  var gy=-SY, i;
+  // floor grid: day lines toward the wall + valuation lines across
+  var DAYLINES=[0,7,14,30,60,90];
+  for(i=0;i<DAYLINES.length;i++){
+    var dlx=xOfDays(DAYLINES[i]);
+    line3({x:dlx,y:gy,z:-SZ},{x:dlx,y:gy,z:SZ},'rgba(0,174,255,.07)');
   }
-  // ceiling grid marks the RANGE HIGH plane — the price cage has a real top
+  for(i=-4;i<=4;i++) line3({x:-SX,y:gy,z:i*SZ/4},{x:SX,y:gy,z:i*SZ/4},'rgba(0,174,255,.05)');
+  // ceiling grid marks the RANGE HIGH plane
   for(i=-4;i<=4;i++){
-    line3({x:i*step,y:SY,z:-SZ},{x:i*step,y:SY,z:SZ},'rgba(0,222,148,.05)');
+    line3({x:i*SX/4,y:SY,z:-SZ},{x:i*SX/4,y:SY,z:SZ},'rgba(0,222,148,.05)');
     line3({x:-SX,y:SY,z:i*SZ/4},{x:SX,y:SY,z:i*SZ/4},'rgba(0,222,148,.05)');
   }
   line3({x:-SX,y:gy,z:-SZ},{x:SX*1.12,y:gy,z:-SZ},'rgba(0,174,255,.32)',1.2);
@@ -678,29 +824,30 @@ function drawFrame(){
   line3({x:-SX,y:gy,z:SZ*1.12},{x:-SX-13,y:gy,z:SZ*1.12-22},AC,1.2);
   line3({x:-SX,y:gy,z:SZ*1.12},{x:-SX+13,y:gy,z:SZ*1.12-22},AC,1.2);
   var lf='600 11px '+UV_FONT;
+  // ── THE EARNINGS WALL: glowing amber plane at report day, gentle breath ──
+  var wallA=reduceMotion?.05:.04+.02*Math.sin(now*.0012);
+  quad3([{x:SX,y:-SY,z:-SZ},{x:SX,y:SY,z:-SZ},{x:SX,y:SY,z:SZ},{x:SX,y:-SY,z:SZ}],
+    'rgba(255,184,0,'+wallA+')','rgba(255,184,0,.30)',true);
+  text3D({x:SX,y:SY*1.08,z:0},'EARNINGS WALL · REPORT DAY','rgba(255,184,0,.9)','700 11px '+UV_FONT);
+  // trap gate slab lives on the valuation (depth) axis in this view
+  var zg=zOfV(150);
+  quad3([{x:-SX,y:-SY,z:zg},{x:-SX,y:SY,z:zg},{x:SX,y:SY,z:zg},{x:SX,y:-SY,z:zg}],
+    'rgba(255,77,77,.03)','rgba(255,77,77,.22)',true);
+  text3D({x:0,y:SY*1.05,z:zg},'TRAP GATE · ≥150% ABOVE FAIR VALUE','rgba(255,77,77,.75)','700 11px '+UV_FONT);
+  // pole labels — colored by meaning, decluttered
+  text3D({x:-SX*1.22,y:gy,z:-SZ},'90+ DAYS OUT','rgba(160,168,176,.85)',lf);
   text3D({x:-SX,y:SY*1.24,z:-SZ},'RANGE HIGH','rgba(0,222,148,.95)',lf);
   text3D({x:-SX,y:gy-16,z:-SZ*1.02},'RANGE LOW','rgba(255,140,120,.9)',lf);
-  text3D({x:SX*1.2,y:gy,z:-SZ},'OVERVALUED','rgba(255,77,77,.95)',lf);
-  text3D({x:-SX*1.28,y:gy,z:-SZ},'DISCOUNT','rgba(56,200,184,.95)',lf);
-  text3D({x:-SX,y:gy-16,z:SZ*1.2},'EXHAUSTED','rgba(123,97,255,.95)',lf);
-  text3D({x:-SX,y:gy-16,z:-SZ*1.25},'FRESH','rgba(90,190,255,.75)',lf);
-  line3({x:0,y:gy,z:-SZ},{x:0,y:gy,z:SZ},'rgba(255,255,255,.17)',1);
-  text3D({x:0,y:gy-13,z:-SZ*1.08},'FAIR VALUE','rgba(255,255,255,.55)',lf);
-  var tA=project({x:xOf(50),y:gy,z:-SZ}), tB=project({x:xOf(150),y:gy,z:-SZ});
-  if(tA&&tB&&Math.hypot(tA.x-tB.x,tA.y-tB.y)>=34){
-    var TICKS=[[-50,'-50%'],[50,'+50%'],[150,'+150%'],[300,'+300%']];
-    for(i=0;i<TICKS.length;i++) text3D({x:xOf(TICKS[i][0]),y:gy-13,z:-SZ*1.08},TICKS[i][1],'rgba(255,255,255,.4)',lf);
-  }
-  var x0=xOf(150);
-  var cs=[{x:x0,y:-SY,z:-SZ},{x:x0,y:SY,z:-SZ},{x:x0,y:SY,z:SZ},{x:x0,y:-SY,z:SZ}].map(project);
-  if(cs.every(function(p){return !!p;})){
-    ctx.fillStyle='rgba(255,77,77,.035)';
-    ctx.beginPath(); ctx.moveTo(cs[0].x,cs[0].y); ctx.lineTo(cs[1].x,cs[1].y); ctx.lineTo(cs[2].x,cs[2].y); ctx.lineTo(cs[3].x,cs[3].y); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='rgba(255,77,77,.22)'; ctx.lineWidth=1;
-    ctx.setLineDash([5,5]);
-    ctx.beginPath(); ctx.moveTo(cs[0].x,cs[0].y); ctx.lineTo(cs[1].x,cs[1].y); ctx.lineTo(cs[2].x,cs[2].y); ctx.lineTo(cs[3].x,cs[3].y); ctx.closePath(); ctx.stroke();
-    ctx.setLineDash([]);
-    text3D({x:(x0+SX)/2,y:SY*1.05,z:0},'TRAP ZONE · ≥150% ABOVE FAIR VALUE','rgba(255,77,77,.75)','700 11px '+UV_FONT);
+  text3D({x:-SX,y:gy-16,z:SZ*1.2},'OVERVALUED','rgba(255,77,77,.95)',lf);
+  text3D({x:-SX,y:gy-16,z:-SZ*1.25},'DISCOUNT','rgba(56,200,184,.95)',lf);
+  // fair-value meridian runs along the day axis
+  line3({x:-SX,y:gy,z:0},{x:SX,y:gy,z:0},'rgba(255,255,255,.17)',1);
+  text3D({x:-SX*1.14,y:gy-13,z:0},'FAIR VALUE','rgba(255,255,255,.55)',lf);
+  // day ticks — hidden together when the axis is edge-on
+  var tA=project({x:xOfDays(7),y:gy,z:-SZ}), tB=project({x:xOfDays(30),y:gy,z:-SZ});
+  if(tA&&tB&&Math.hypot(tA.x-tB.x,tA.y-tB.y)>=30){
+    var TICKS=[[7,'7D'],[30,'30D'],[60,'60D'],[90,'90D']];
+    for(i=0;i<TICKS.length;i++) text3D({x:xOfDays(TICKS[i][0]),y:gy-13,z:-SZ*1.08},TICKS[i][1],'rgba(255,255,255,.45)',lf);
   }
 }
 function drawGizmo(){
@@ -713,9 +860,9 @@ function drawGizmo(){
   ctx.beginPath(); ctx.arc(gx,gyy,52,0,7); ctx.stroke();
   ctx.font='600 11px '+UV_FONT; ctx.textAlign='center';
   var arms=[
-    [{x:1,y:0,z:0},'#FF4D4D','OVER'],
+    [{x:1,y:0,z:0},'#FFB800','EARNINGS'],
     [{x:0,y:1,z:0},'#00DE94','PRICE'],
-    [{x:0,y:0,z:1},'#7B61FF','EXHAUST']
+    [{x:0,y:0,z:1},'#FF4D4D','OVERVAL']
   ];
   for(var ai=0;ai<arms.length;ai++){
     var v=arms[ai][0], col=arms[ai][1];
@@ -806,9 +953,9 @@ function frame(now){
   }
   ctx.restore();
 
-  drawFrame();
+  drawFrame(now);
 
-  // trails
+  // trails — the march toward the wall (replay slices to the scrubbed day)
   ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineWidth=1;
   for(var ti=0;ti<stocks.length;ti++){
     var s=stocks[ti];
@@ -833,7 +980,7 @@ function frame(now){
   }
   ctx.restore();
 
-  // bodies far→near — radius comes from THAT DAY's mass, so replay breathes
+  // bodies far→near — radius from THAT DAY's mass
   projCache=[];
   var drawList=[];
   for(var bi=0;bi<stocks.length;bi++){
@@ -868,7 +1015,12 @@ function frame(now){
     ctx.fillStyle='rgba(255,255,255,.75)';
     ctx.beginPath(); ctx.arc(pp.x-sr*.28,pp.y-sr*.28,sr*.32,0,7); ctx.fill();
     ctx.restore();
-    if(sb.fam.id==='trap'){
+    // reporting within a week: amber countdown ring — the wall is close
+    if(sb.edays!=null&&sb.edays<=7&&!replayD){
+      ctx.strokeStyle='rgba(255,184,0,.85)'; ctx.lineWidth=1.4;
+      ctx.setLineDash([4,4]); ctx.lineDashOffset=reduceMotion?0:-now*.02;
+      ctx.beginPath(); ctx.arc(pp.x,pp.y,sr+7,0,7); ctx.stroke(); ctx.setLineDash([]);
+    } else if(sb.fam.id==='trap'){
       ctx.strokeStyle=hexA(sb.color,.9); ctx.lineWidth=1.4;
       ctx.setLineDash([4,4]); ctx.lineDashOffset=reduceMotion?0:-now*.02;
       ctx.beginPath(); ctx.arc(pp.x,pp.y,sr+7,0,7); ctx.stroke(); ctx.setLineDash([]);
@@ -878,15 +1030,16 @@ function frame(now){
       ctx.beginPath(); ctx.arc(pp.x,pp.y,sr+4,0,7); ctx.stroke();
     }
   }
-  // ticker labels — same screen-space arbitration as the Universe tab
+  // ticker labels — priority-sorted through the screen-space arbiter
   ctx.font='600 11px '+UV_FONT; ctx.textAlign='center';
   var lbls=[];
   for(var li=0;li<projCache.length;li++){
     var lc=projCache[li], ls=lc.s;
     var pri = (ls===hovered||ls===selected)?0
       : picks[ls.t]?1
-      : ls.fam.id==='trap'?2
-      : (alwaysLabel[ls.t]&&cam.dist<1600)?3 : -1;
+      : (ls.edays!=null&&ls.edays<=7)?2
+      : ls.fam.id==='trap'?3
+      : (alwaysLabel[ls.t]&&cam.dist<1600)?4 : -1;
     if(pri>=0) lbls.push({lc:lc,ls:ls,pri:pri});
   }
   lbls.sort(function(a,b){ return a.pri-b.pri || b.lc.sr-a.lc.sr; });
@@ -896,7 +1049,8 @@ function frame(now){
     var ok=lblFits(lx,ly,lw,13);
     if(!ok&&L.pri>0) continue;
     ctx.fillStyle=(L.ls===hovered||L.ls===selected)?'#FFFFFF'
-      :(picks[L.ls.t]?'rgba(160,220,255,.95)':'rgba(210,220,235,.78)');
+      :(picks[L.ls.t]?'rgba(160,220,255,.95)'
+      :((L.ls.edays!=null&&L.ls.edays<=7)?'rgba(255,214,120,.9)':'rgba(210,220,235,.78)'));
     ctx.shadowColor='rgba(4,6,11,.9)'; ctx.shadowBlur=4;
     ctx.fillText(L.ls.t,L.lc.sx,L.lc.sy-L.lc.sr-7);
     ctx.shadowBlur=0;
@@ -908,12 +1062,20 @@ function frame(now){
     tip.style.display='block';
     tip.innerHTML='<div class="t" style="color:'+h.color+'">'+uvEsc(h.t)+'</div>'+
       '<div class="v" style="color:'+h.color+'">'+uvEsc(h.v)+'</div>'+
-      '<div class="m">'+(h.price!=null?'$'+h.price+' · ':'')+(pos==null?'no range':pos+'% of its range')+' · '+
-      (h.fvd!=null?((h.fvd>0?'+':'')+Math.round(h.fvd)+'% vs value'):'no anchor')+' · mass '+(h.mass==null?'—':h.mass)+'</div>';
+      '<div class="m">'+(h.edays!=null?('earnings in '+h.edays+'d · '):'no report set · ')+
+      (h.price!=null?'$'+h.price+' · ':'')+(pos==null?'no range':pos+'% of range')+' · '+
+      (h.fvd!=null?((h.fvd>0?'+':'')+Math.round(h.fvd)+'% vs value'):'no anchor')+'</div>';
     var pc=null;
     for(var pi=0;pi<projCache.length;pi++){ if(projCache[pi].s===h){ pc=projCache[pi]; break; } }
-    if(pc){ tip.style.left=Math.min(W-250,pc.sx+14)+'px'; tip.style.top=Math.max(8,pc.sy-62)+'px'; }
+    if(pc){ tip.style.left=Math.min(W-260,pc.sx+14)+'px'; tip.style.top=Math.max(8,pc.sy-62)+'px'; }
   } else tip.style.display='none';
+
+  // tour progress + auto-advance
+  if(tourOpen&&!reduceMotion){
+    tourElapsed+=dt;
+    $id('pxt-prog').style.width=Math.min(100,tourElapsed/TOUR_DWELL*100)+'%';
+    if(tourElapsed>TOUR_DWELL) tourGo(tourIdx+1);
+  }
 
   // replay auto-play
   if(replayPlaying){

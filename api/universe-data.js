@@ -29,7 +29,7 @@ const TODAY_COLS = [
   'coordination_class', 'suspicion_score', 'suspicion_class', 'nrs', 'vms',
   'srs', 'ccp', 'npi', 'current_price', 'narrative_state', 'narrative_tone',
   'energy_remaining_dynamic', 'mass_streak_days', 'exhaustion_status',
-  'exhaustion_confidence', 'synopsis'
+  'exhaustion_confidence', 'synopsis', 'days_to_earnings'
 ].join(',');
 const HIST_COLS = [
   'ticker', 'snapshot_date', 'wks_score', 'fvd_pct', 'exhaustion_status',
@@ -128,12 +128,31 @@ module.exports = async (req, res) => {
     const cutoff = new Date(new Date(date + 'T00:00:00Z').getTime() - days * 86400000)
       .toISOString().slice(0, 10);
 
-    // 2-4. latest day + trail history + sector map
-    const [today, hist, sectors] = await Promise.all([
+    // 2-5. latest day + trail history + sector map + earnings calendar
+    const [today, hist, sectors, earnRows] = await Promise.all([
       fetchAll(rest + `narrative_scorecard?select=${TODAY_COLS}&snapshot_date=eq.${encodeURIComponent(date)}&order=ticker.asc`, headers, 2000),
       fetchAll(rest + `narrative_scorecard?select=${HIST_COLS}&snapshot_date=gte.${encodeURIComponent(cutoff)}&order=ticker.asc,snapshot_date.asc`, headers, 8000),
-      fetchAll(rest + 'ticker_valuation_config?select=ticker,sector,primary_sector_override&active=eq.true&order=ticker.asc', headers, 1000)
+      fetchAll(rest + 'ticker_valuation_config?select=ticker,sector,primary_sector_override&active=eq.true&order=ticker.asc', headers, 1000),
+      // Market Physics: freshest next_earnings_date per ticker. Same resolution
+      // order as the retired 2D Prism — earnings_context first, scorecard
+      // days_to_earnings as fallback. Non-fatal on failure.
+      fetchAll(rest + `earnings_context?select=ticker,days_to_earnings,next_earnings_date,snapshot_date&next_earnings_date=gte.${encodeURIComponent(date)}&order=ticker.asc,snapshot_date.desc`, headers, 3000)
+        .catch(() => [])
     ]);
+
+    const earnByT = {};
+    for (const e of earnRows) if (!earnByT[e.ticker]) earnByT[e.ticker] = e;   // desc order → first is freshest
+    const dateMs = new Date(date + 'T00:00:00Z').getTime();
+    const dteOf = (r) => {
+      const e = earnByT[r.ticker];
+      if (e && e.next_earnings_date) {
+        const d = Math.round((new Date(e.next_earnings_date + 'T00:00:00Z').getTime() - dateMs) / 86400000);
+        if (Number.isFinite(d) && d >= 0) return d;
+      }
+      if (e && e.days_to_earnings != null) return num(e.days_to_earnings, 0);
+      if (r.days_to_earnings != null) return num(r.days_to_earnings, 0);
+      return null;
+    };
 
     // ticker_valuation_config mixes broad sectors with curated narrative themes
     // ("AI Infrastructure" = one ticker). The Universe filter needs families with
@@ -190,6 +209,8 @@ module.exports = async (req, res) => {
         t: r.ticker,
         sec: secOf[r.ticker] || 'Other',
         ind: indOf[r.ticker] || null,
+        edays: dteOf(r),
+        edate: (earnByT[r.ticker] && earnByT[r.ticker].next_earnings_date) || null,
         v: r.verdict || 'Monitoring',
         pv: prevV[r.ticker] || null,
         conf: num(r.verdict_confidence, 0),
