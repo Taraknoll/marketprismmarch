@@ -177,7 +177,7 @@
     font-size:13px;color:#fff;background:rgba(12,16,24,0.95);border:1px solid #00AEFF;border-radius:20px;padding:8px 16px;}
   #tab-universe .uv-cpend.open{display:block;}
 
-  #tab-universe .uv-cmpbtn{margin-top:10px;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.06em;
+  #tab-universe .uv-cmpbtn{margin-top:10px;margin-right:6px;cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.06em;
     text-transform:uppercase;color:rgba(255,255,255,.7);background:none;border:1px solid rgba(255,255,255,.14);
     border-radius:8px;padding:6px 12px;font-family:var(--font-body,'Inter',sans-serif);}
   #tab-universe .uv-cmpbtn:hover{border-color:#00AEFF;color:#fff;}
@@ -251,6 +251,7 @@
           <button class="x" id="uvd-x" aria-label="Close dossier">✕</button></div>
         <div class="sec" id="uvd-sec"></div>
         <div class="chips" id="uvd-chips"></div>
+        <button class="uv-cmpbtn" id="uvd-story">▸ Play its 10-day story</button>
         <button class="uv-cmpbtn" id="uvd-cmp">⇄ Compare with another body</button>
       </div>
       <div class="db">
@@ -342,6 +343,7 @@ var hiddenFams={}, sectorFilter='';
 var tourOpen=false, tourIdx=0, tourElapsed=0, TOUR=[], TOUR_DWELL=9000;
 var replayOpen=false, replayD=0, replayMax=0, replayPlaying=false, replayAcc=0;
 var cmpA=null, cmpB=null, cmpPending=false;
+var storyS=null;   // story mode: narrate this one ticker's trail, dim the rest
 var watch={}, placedLbl=[];
 try{ (JSON.parse(localStorage.getItem('mpUvWatch')||'[]')).forEach(function(t){ watch[t]=1; }); }catch(e){}
 function saveWatch(){ try{ localStorage.setItem('mpUvWatch', JSON.stringify(Object.keys(watch))); }catch(e){} }
@@ -599,6 +601,14 @@ function text3D(p,label,style,font,dy){
   ctx.fillStyle=style; ctx.textAlign='center'; ctx.fillText(label,pr.x,pr.y+(dy||0));
   return true;
 }
+// Valid trail entries for a ticker, raw values + scaled point, oldest→today.
+function storyTrail(s){
+  var out=[];
+  (s.trail||[]).forEach(function(p,i){
+    if(p&&p[0]!=null&&s.trailPts[i]) out.push({w:p[0],e:p[1],f:p[2],pt:s.trailPts[i]});
+  });
+  return out;
+}
 
 /* ── camera / projection ── */
 function resize(){
@@ -786,6 +796,7 @@ function wireInput(){
     $id('uv-cpend').classList.add('open');
   };
   $id('uvc-x').onclick=closeCompare;
+  $id('uvd-story').onclick=function(){ if(selected) startStory(selected); };
 }
 function syncWatchBtn(){
   var b=$id('uvd-watch'); if(!b||!selected) return;
@@ -850,6 +861,7 @@ function select(s){
     kvRow('tape anomaly', (s.susp==null?'—':s.susp)+(s.suspCls?' · '+s.suspCls.split('_').join(' ').toLowerCase():'')) +
     kvRow('narrative risk', s.nrs);
   $id('uvd-syn').textContent=s.syn||'No synopsis recorded for this snapshot.';
+  $id('uvd-story').style.display = storyTrail(s).length>=3 ? '' : 'none';
   syncWatchBtn();
   drawRadar(s);
 }
@@ -980,9 +992,11 @@ function buildTour(){
   return stops;
 }
 function startTour(){
+  if(storyS) exitTour();                    // a running story yields to the tour
   if(tourOpen||!stocks.length) return;
   exitReplay(); closeCompare();
   TOUR=buildTour(); tourOpen=true; closeDossier();
+  $id('uvt-exit').textContent='Exit tour';
   $id('uv-tourcard').classList.add('open');
   if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
   tourGo(0);
@@ -1003,9 +1017,99 @@ function tourGo(i){
   tourElapsed=0;   // dwell accumulates rAF dt only — truly pauses while hidden
 }
 function exitTour(){
-  tourOpen=false;
+  tourOpen=false; storyS=null;
+  $id('uvt-exit').textContent='Exit tour';
   $id('uv-tourcard').classList.remove('open');
   tweenCam({tx:0,ty:0,tz:0,dist:1250,phi:.3},1400);
+}
+
+/* ── ticker story mode: narrate one trail chapter by chapter, dim the rest ── */
+// Rides the tour machinery (card, nav, keyboard, dwell) with storyS set, so
+// the frame loop knows to spotlight one body and its trail.
+function startStory(s){
+  var tr=storyTrail(s);
+  if(!s||tr.length<3) return;
+  if(tourOpen) exitTour();
+  exitReplay(); closeCompare();
+  storyS=s;
+  TOUR=buildStory(s,tr); tourOpen=true;
+  closeDossier();
+  $id('uvt-exit').textContent='Exit story';
+  $id('uv-tourcard').classList.add('open');
+  if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
+  tourGo(0);
+}
+function buildStory(s,tr){
+  var steps=[];
+  var days=tr.length, first=tr[0], last=tr[days-1], ago=days-1, i;
+  var dF=(last.f!=null&&first.f!=null)?last.f-first.f:null;
+  var dW=(last.w!=null&&first.w!=null)?last.w-first.w:null;
+  var dE=last.e-first.e;
+  function pctE(e){ return Math.round((e||0)*100); }
+  function fp(v){ return v==null?'—':(v>0?'+':'')+Math.round(v)+'%'; }
+  // 1 — where it started
+  steps.push({title:s.t+' — where the story stood', step:'CHAPTER 1 · '+ago+' SESSIONS AGO', color:s.color,
+    body:'Every trail is a road through the physics. '+s.t+' entered this window at '+fp(first.f)+
+      ' versus its SEC-anchored fair value, tape energy '+(first.w==null?'—':Math.round(first.w))+
+      ', with '+pctE(first.e)+'% of its narrative fuel spent. The line brightens as it approaches today — follow it.',
+    chips:[fp(first.f)+' vs value','energy '+(first.w==null?'—':Math.round(first.w)),'exhaustion '+pctE(first.e)+'%'],
+    cam:{tx:first.pt.x,ty:first.pt.y,tz:first.pt.z,dist:470,phi:.20}, focus:s.t, node:first.pt});
+  // 2 — the valuation leg
+  if(dF!=null&&Math.abs(dF)>=15){
+    var vi=0,vm=0;
+    for(i=1;i<days;i++){ var dd=Math.abs((tr[i].f||0)-(tr[i-1].f||0)); if(dd>vm){vm=dd;vi=i;} }
+    steps.push({title:dF>0?(s.t+' — the stretch'):(s.t+' — walking back to the anchor'), step:'THE VALUATION LEG', color:s.color,
+      body:dF>0
+        ?('Across '+ago+' sessions price pulled '+fp(dF)+' further above the anchor — the market paying more for the same verified filings. It stands at '+fp(last.f)+' today'+(last.f>=150?', inside the trap gate.':last.f>=100?', closing on the trap gate.':'.'))
+        :('Across '+ago+' sessions price gave back '+fp(Math.abs(dF))+' of stretch — narrative heat cooling toward what the filings support. It stands at '+fp(last.f)+' today.'),
+      chips:['start '+fp(first.f),'today '+fp(last.f),'sharpest day ±'+Math.round(vm)+' pts'],
+      cam:{tx:tr[vi].pt.x,ty:tr[vi].pt.y,tz:tr[vi].pt.z,dist:440,phi:.18}, focus:s.t, node:tr[vi].pt});
+  }
+  // 3 — the energy leg
+  if(dW!=null&&Math.abs(dW)>=12){
+    steps.push({title:dW>0?'The tape filled its lungs':'The tape bled out', step:'THE ENERGY LEG', color:s.color,
+      body:'Tape energy moved '+Math.round(first.w)+' → '+Math.round(last.w)+'. The Wyckoff read asks who is really buying: '+
+        (dW>0?'rising energy under a verified story reads as accumulation — under a stretched one, it reads as the crowd arriving late.'
+             :'falling energy is the tape walking away — distribution wearing a narrative’s clothes.'),
+      chips:['energy '+Math.round(first.w)+' → '+Math.round(last.w),'Δ '+(dW>0?'+':'')+Math.round(dW)],
+      cam:{tx:(first.pt.x+last.pt.x)/2,ty:(first.pt.y+last.pt.y)/2,tz:(first.pt.z+last.pt.z)/2,dist:480,phi:.14}, focus:s.t});
+  }
+  // 4 — the age leg
+  if(Math.abs(dE)>=0.12){
+    steps.push({title:dE>0?'The story is spending itself':'Fresh fuel found', step:'THE AGE LEG', color:s.color,
+      body:dE>0
+        ?('Exhaustion climbed '+pctE(first.e)+'% → '+pctE(last.e)+'%. Attention decays like radiation — mass without fresh energy. The deeper the trail runs, the less fuel the story has left to move price.')
+        :('Exhaustion fell '+pctE(first.e)+'% → '+pctE(last.e)+'% — the rare direction. Stories usually only age; this one found new fuel.'),
+      chips:['exhaustion '+pctE(first.e)+'% → '+pctE(last.e)+'%'],
+      cam:{tx:last.pt.x,ty:last.pt.y,tz:last.pt.z,dist:500,phi:.26}, focus:s.t});
+  }
+  // 5 — the day it crossed the trap gate (if it did, inside this window)
+  for(i=1;i<days;i++){
+    if(tr[i-1].f!=null&&tr[i].f!=null&&tr[i-1].f<150&&tr[i].f>=150){
+      steps.push({title:'The day it crossed the gate', step:'TRAP GATE', color:'#FF4D4D',
+        body:'Between session −'+(days-i)+' and −'+(days-1-i)+', '+s.t+' crossed 150% above its fair value — the line where a true story at the wrong price becomes trap-shaped. The engine watches what the chorus and the filings do next.',
+        chips:['crossed ≥150%','now '+fp(last.f)],
+        cam:{tx:tr[i].pt.x,ty:tr[i].pt.y,tz:tr[i].pt.z,dist:380,phi:.16}, focus:s.t, node:tr[i].pt});
+      break;
+    }
+  }
+  // 6 — today
+  var MEAN={trap:'claims that verify at a price that doesn’t — a true story at the wrong price',
+    risk:'strained structure — priced ahead of what the filings carry',
+    coord:'a chorus singing in sync; the engine is checking the chorus against the filings',
+    overval:'rich but stable — stretched without the full trap structure',
+    exhaust:'a story that has spent its attention',
+    neutral:'no strong structural read — the engine keeps watching',
+    conviction:'structure and story agree — continuation carries conviction',
+    accum:'quiet accumulation — structure supports the story',
+    support:'price and filings agree — structurally supported'};
+  steps.push({title:s.t+' today: '+s.v, step:'TODAY', color:s.color,
+    body:'The verdict reads '+s.v+' — '+(MEAN[s.fam.id]||MEAN.neutral)+'.'+
+      (s.pv&&s.pv!==s.v?(' Yesterday it was '+s.pv+' — the engine re-classified it overnight.'):'')+
+      ' Click the body for its full dossier.',
+    chips:[fp(s.fvd)+' vs value','energy '+(s.wks==null?'—':Math.round(s.wks)),'exhaustion '+Math.round((s.exh||0)*100)+'%','confidence '+(s.conf==null?'—':s.conf)],
+    cam:{tx:s.x,ty:s.y,tz:s.z,dist:450,phi:.22}, focus:s.t, node:{x:s.x,y:s.y,z:s.z}});
+  return steps;
 }
 
 /* ── scene helpers ── */
@@ -1191,19 +1295,24 @@ function frame(now){
 
   drawFrame(now);
 
-  // trails — during replay only the path up to the scrubbed day is drawn
+  // trails — during replay only the path up to the scrubbed day is drawn;
+  // in story mode only the featured ticker's trail renders, brighter and
+  // with a node per session so the "road" is readable as discrete days.
   ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineWidth=1;
   for(var ti=0;ti<stocks.length;ti++){
     var s=stocks[ti];
+    if(storyS&&s!==storyS) continue;
+    var hot=(storyS===s);
     var n=s.trailPts.length-replayD;
     if(!visible(s)||n<2) continue;
+    ctx.lineWidth=hot?1.8:1;
     var prev=null;
     for(var j=0;j<n;j++){
       var tp=s.trailPts[j];
       if(!tp){ prev=null; continue; }
       var pr=project(tp);
       if(prev&&pr){
-        ctx.strokeStyle=hexA(s.color,.05+.30*(j/n));
+        ctx.strokeStyle=hexA(s.color,hot?(.20+.60*(j/n)):(.05+.30*(j/n)));
         ctx.beginPath(); ctx.moveTo(prev.x,prev.y); ctx.lineTo(pr.x,pr.y); ctx.stroke();
       }
       prev=pr;
@@ -1211,13 +1320,27 @@ function frame(now){
     if(!replayD){
       var lastPt=s.trailPts[n-1], cur=project({x:s.x,y:s.y,z:s.z});
       if(lastPt&&cur){ var pl=project(lastPt);
-        if(pl){ ctx.strokeStyle=hexA(s.color,.35); ctx.beginPath(); ctx.moveTo(pl.x,pl.y); ctx.lineTo(cur.x,cur.y); ctx.stroke(); } }
+        if(pl){ ctx.strokeStyle=hexA(s.color,hot?.8:.35); ctx.beginPath(); ctx.moveTo(pl.x,pl.y); ctx.lineTo(cur.x,cur.y); ctx.stroke(); } }
+    }
+    if(hot){
+      for(j=0;j<n;j++){
+        var np2=s.trailPts[j]; if(!np2) continue;
+        var pp2=project(np2); if(!pp2) continue;
+        ctx.fillStyle=hexA(s.color,.35+.55*(j/n));
+        ctx.beginPath(); ctx.arc(pp2.x,pp2.y,2.2,0,7); ctx.fill();
+      }
+      var st0=s.trailPts[0];
+      if(st0){
+        ctx.shadowColor='rgba(4,6,11,.9)'; ctx.shadowBlur=4;
+        text3D(st0,(n-1)+' sessions ago','rgba(255,255,255,.75)','600 11px '+UV_FONT,-10);
+        ctx.shadowBlur=0;
+      }
     }
   }
   ctx.restore();
 
   // sector constellation — filtered sector draws faint rays to its centroid
-  if(sectorFilter){
+  if(sectorFilter&&!storyS){
     var cn=0,ccx=0,ccy=0,ccz=0,cf=0,cfn=0;
     for(var ci=0;ci<stocks.length;ci++){
       var cs2=stocks[ci]; if(!visible(cs2)) continue;
@@ -1244,7 +1367,7 @@ function frame(now){
 
   // watchlist beacons — starred tickers get a pillar of light from the floor
   var wkeys=Object.keys(watch);
-  if(wkeys.length){
+  if(wkeys.length&&!storyS){
     ctx.save(); ctx.globalCompositeOperation='lighter';
     for(var wi=0;wi<wkeys.length;wi++){
       var ws=byTicker[wkeys[wi]]; if(!ws||!visible(ws)) continue;
@@ -1275,6 +1398,13 @@ function frame(now){
   for(var di=0;di<drawList.length;di++){
     var d=drawList[di], sb=d.s, pp=d.p;
     var sr=Math.max(1.5,sb.r*pp.k*.9);
+    // story mode: every other body recedes to a faint ghost so one trail owns
+    // the stage (also drops them from projCache — not pickable mid-story)
+    if(storyS&&sb!==storyS){
+      ctx.fillStyle=hexA(sb.color,.05);
+      ctx.beginPath(); ctx.arc(pp.x,pp.y,Math.max(1,sr*.5),0,7); ctx.fill();
+      continue;
+    }
     if(!visible(sb)){
       ctx.fillStyle=hexA(sb.color,.07);
       ctx.beginPath(); ctx.arc(pp.x,pp.y,Math.max(1,sr*.6),0,7); ctx.fill();
@@ -1338,6 +1468,23 @@ function frame(now){
     ctx.shadowColor='rgba(4,6,11,.9)'; ctx.shadowBlur=4;
     ctx.fillText(L.ls.t,L.lc.sx,L.lc.sy-L.lc.sr-7);
     ctx.shadowBlur=0;
+  }
+  // story/tour chapter marker — a pulsing ring on the trail node the current
+  // chapter is talking about, so the narration and the geometry stay linked
+  if(tourOpen&&TOUR[tourIdx]&&TOUR[tourIdx].node){
+    var nm=project(TOUR[tourIdx].node);
+    if(nm){
+      if(reduceMotion){
+        ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(nm.x,nm.y,8,0,7); ctx.stroke();
+      } else {
+        var pk2=(now%1600)/1600;
+        ctx.strokeStyle='rgba(255,255,255,'+(0.85-0.55*pk2)+')'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(nm.x,nm.y,5+pk2*14,0,7); ctx.stroke();
+      }
+      ctx.fillStyle='rgba(255,255,255,.9)';
+      ctx.beginPath(); ctx.arc(nm.x,nm.y,2.4,0,7); ctx.fill();
+    }
   }
   // tooltip
   var tip=$id('uv-tip');
