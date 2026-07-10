@@ -157,7 +157,7 @@
 
   <div class="uv-stage" id="uv-stage">
     <canvas id="uv-canvas"></canvas>
-    <div class="uv-hintbar"><b>Scroll</b> to fly in · <b>Drag</b> to orbit · <b>Click</b> a body for its dossier</div>
+    <div class="uv-hintbar"><b>Scroll</b> to fly in · <b>WASD</b> to walk (Q/E rise · Shift sprint) · <b>Drag</b> to orbit · <b>Click</b> a body for its dossier</div>
     <div id="uv-tip"></div>
 
     <aside class="uv-dossier" id="uv-dossier" aria-label="Stock dossier">
@@ -204,7 +204,8 @@
     energy · deep = exhausted story. The red slab marks the trap gate (≥150% above fair value). Trails show each
     narrative's 10-day path. Exhaustion is the engine's composite read (status classifier × confidence, verdict and
     decay-regime adjusted). <b>Scroll to fly in</b> — the lens widens, the dust streams past, and you move through
-    the field itself.</div>
+    the field itself. <b>WASD walks you through it</b> like a game (Q/E rise and sink, hold Shift to sprint —
+    sprint hard enough and the dust goes to warp).</div>
 </div>
 
 <script>
@@ -245,6 +246,8 @@ var stocks=[], byTicker={}, alwaysLabel={}, counts={total:0,trap:0,coordN:0,exha
 var cv=null, ctx=null, stage=null, W=0, H=0, DPR=1, backdrop=null, stars=[], dust=[], spriteCache={};
 var cam={theta:0.62, phi:0.30, dist:1250, tx:0, ty:0, tz:0};
 var tween=null, eye, Rv, Uv, Fw, FOC=900, imm=0;
+var warp=0, pex=null, pey=0, pez=0;        // smoothed camera speed → streak "warp rush"
+var keys={}, FLY_KEYS={w:1,a:1,s:1,d:1,q:1,e:1,shift:1};
 var dragging=false, moved=false, px0=0, py0=0, lastInteract=0, pinch0=0;
 var hovered=null, selected=null, projCache=[];
 var hiddenFams={}, sectorFilter='';
@@ -502,7 +505,13 @@ function wireInput(){
     if(e.key==='t'||e.key==='T') startTour();
     if(tourOpen&&e.key==='ArrowRight') tourGo(tourIdx+1);
     if(tourOpen&&e.key==='ArrowLeft')  tourGo(tourIdx-1);
+    var fk=e.key.toLowerCase();
+    if(FLY_KEYS[fk]){ keys[fk]=1; lastInteract=performance.now(); }
   });
+  // keyup/blur clear unconditionally — a key released after focus moved into an
+  // input (or off-tab) must never stay stuck down.
+  document.addEventListener('keyup',function(e){ delete keys[e.key.toLowerCase()]; });
+  addEventListener('blur',function(){ keys={}; });
   $id('uvd-x').onclick=closeDossier;
   $id('uv-tour').onclick=startTour;
   $id('uvt-next').onclick=function(){ tourGo(tourIdx+1); };
@@ -762,9 +771,28 @@ function frame(now){
   var dt=Math.min(50,now-lastT); lastT=now;
   if(needResize){ needResize=false; resize(); }   // the only path that touches layout
   if(!W||!H){ needResize=true; rafId=requestAnimationFrame(frame); return; }
+  // WASD free flight — walk the camera through the field along the current
+  // view basis (Fw/Rv from last frame). Speed scales with orbit distance, so
+  // up close it feels like footsteps and far out like flight. Q/E rise/sink,
+  // Shift sprints. Bounds = the dust box, so there is always world around you.
+  var mR=(keys.d?1:0)-(keys.a?1:0), mF=(keys.w?1:0)-(keys.s?1:0), mU=(keys.e?1:0)-(keys.q?1:0);
+  if((mR||mF||mU)&&Fw){
+    var sp=cam.dist*.0004*(keys.shift?2.6:1)*dt;   // footsteps up close, flight far out
+    cam.tx+=(Fw.x*mF+Rv.x*mR)*sp; cam.ty+=(Fw.y*mF+Rv.y*mR+mU)*sp; cam.tz+=(Fw.z*mF+Rv.z*mR)*sp;
+    // stay in the world — clamp to 1.5× the field so the data never leaves you
+    cam.tx=Math.max(-SX*1.5,Math.min(SX*1.5,cam.tx));
+    cam.ty=Math.max(-SY*1.5,Math.min(SY*1.5,cam.ty));
+    cam.tz=Math.max(-SZ*1.5,Math.min(SZ*1.5,cam.tz));
+    tween=null; lastInteract=now;
+  }
   stepTween(now);
   if(!reduceMotion&&!dragging&&!tween&&now-lastInteract>3500) cam.theta+=dt*.000045;
   updateCamera();
+  // warp = smoothed camera speed. Fast motion — sprinting, a ticker fly-to,
+  // a tour hop — brightens and stretches the dust streaks into a warp rush.
+  var spd=pex==null?0:Math.hypot(eye.x-pex,eye.y-pey,eye.z-pez)/Math.max(1,dt);
+  pex=eye.x; pey=eye.y; pez=eye.z;
+  warp+=((reduceMotion?0:Math.min(1,spd/1.2))-warp)*Math.min(1,dt*.008);
 
   ctx.clearRect(0,0,W,H);
   if(backdrop) ctx.drawImage(backdrop,0,0,W,H);
@@ -786,21 +814,22 @@ function frame(now){
     var du=dust[duI];
     if(driftT){
       du.x+=du.vx*driftT; du.y+=du.vy*driftT; du.z+=du.vz*driftT;
-      if(du.x> DUSTX)du.x-=2*DUSTX; else if(du.x<-DUSTX)du.x+=2*DUSTX;
-      if(du.y> DUSTY)du.y-=2*DUSTY; else if(du.y<-DUSTY)du.y+=2*DUSTY;
-      if(du.z> DUSTZ)du.z-=2*DUSTZ; else if(du.z<-DUSTZ)du.z+=2*DUSTZ;
+      // wrap teleports the mote — void px so it can't draw a screen-crossing streak
+      if(du.x> DUSTX){du.x-=2*DUSTX;du.px=null;} else if(du.x<-DUSTX){du.x+=2*DUSTX;du.px=null;}
+      if(du.y> DUSTY){du.y-=2*DUSTY;du.px=null;} else if(du.y<-DUSTY){du.y+=2*DUSTY;du.px=null;}
+      if(du.z> DUSTZ){du.z-=2*DUSTZ;du.px=null;} else if(du.z<-DUSTZ){du.z+=2*DUSTZ;du.px=null;}
     }
     var dp=project(du);
     if(!dp){ du.px=null; continue; }
     var dfog=fogOf(dp.vz);
     if(dfog<=0.02){ du.px=dp.x; du.py=dp.y; continue; }
     var dtw=reduceMotion?.7:(.55+.45*Math.sin(now*.0013+du.tw));
-    var da=dfog*dtw*(.10+.55*imm);            // near-invisible at rest, vivid on approach
+    var da=dfog*dtw*(.10+.55*imm)*(1+1.7*warp); if(da>.85)da=.85;   // faint at rest, vivid on approach, blazing at warp
     var dsz=du.s*(.7+1.6*dp.k); if(dsz>26)dsz=26;   // motes swell as they near the lens
     if(du.px!=null){
       var mdx=dp.x-du.px, mdy=dp.y-du.py, mlen=mdx*mdx+mdy*mdy;
-      if(mlen>9&&mlen<19600){                 // streak while moving; cap filters teleports/resume
-        ctx.strokeStyle='rgba('+du.c+','+Math.min(.6,da*1.5)+')';
+      if(mlen>9&&mlen<19600*(1+10*warp*warp)){ // streak while moving; warp stretches the cap
+        ctx.strokeStyle='rgba('+du.c+','+Math.min(.75,da*1.5)+')';
         ctx.lineWidth=Math.max(.6,dsz*.6);
         ctx.beginPath(); ctx.moveTo(du.px,du.py); ctx.lineTo(dp.x,dp.y); ctx.stroke();
         du.px=dp.x; du.py=dp.y; continue;
