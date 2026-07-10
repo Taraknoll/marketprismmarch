@@ -39,8 +39,12 @@
   #tab-universe .uv-fam .n{color:var(--uv-ink3);font-variant-numeric:tabular-nums;font-size:11px;}
 
   /* ── the field card (always-dark viz surface, both themes) ── */
+  /* Stage height tracks the viewport minus the dashboard chrome above it, so
+     the field AND an open dossier always fit above the fold; grows tall on big
+     monitors instead of stopping at 840px. dvh line wins where supported. */
   #tab-universe .uv-stage{position:relative;background:#080B11;border:1px solid var(--uv-border);border-radius:16px;
-    overflow:hidden;height:clamp(520px,66vh,840px);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+    overflow:hidden;height:clamp(500px,calc(100vh - 300px),1040px);height:clamp(500px,calc(100dvh - 300px),1040px);
+    filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
   #tab-universe .uv-stage::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
     background:linear-gradient(90deg,#00AEFF,#7B61FF);z-index:4;}
   #tab-universe #uv-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y pinch-zoom;}
@@ -541,6 +545,9 @@ function select(s){
   if(!s) return;
   selected=s;
   $id('uv-dossier').classList.add('open');
+  // The dossier lives inside the stage — if the stage bottom hangs below the
+  // fold, the dossier gets clipped. 'nearest' scrolls only when needed.
+  if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
   $id('uvd-tk').textContent=s.t; $id('uvd-tk').style.color=s.color;
   $id('uvd-px').textContent=s.price!=null?('$'+Number(s.price).toLocaleString()):'—';
   $id('uvd-sec').textContent=(s.sec||'')+(s.ind?' · '+s.ind:'');
