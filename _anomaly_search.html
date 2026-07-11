@@ -210,6 +210,13 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
 .sc-lbl{fill:var(--mp-text-tertiary);font-size:9.5px;}
 .sc-lbl.focus{fill:var(--mp-cyan);font-weight:700;font-size:11px;}
 </style>
+<!-- Embed mode (?embed=1): served inside the dashboard's AI Lab tab iframe —
+     the tab supplies its own header, so hide this page's hero head. -->
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.className+=' embedded';</script>
+<style>
+  html.embedded .head{display:none!important;}
+  html.embedded .shell{padding-top:16px;}
+</style>
 </head>
 <body>
 <div class="shell">

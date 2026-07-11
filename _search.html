@@ -598,6 +598,14 @@ body{font-family:var(--font-body);background:var(--mp-obsidian);color:var(--mp-t
 /* this page doesn't carry the .theme-toggle-btn styles _template.html does. */
 .theme-toggle-btn{display:none !important;}
 </style>
+<!-- Embed mode (?embed=1): served inside the dashboard's AI Lab tab iframe —
+     hide the page's own sidebar/topbar chrome, keep the tool full-width. -->
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.className+=' embedded';</script>
+<style>
+  html.embedded .side-nav{display:none!important;}
+  html.embedded .topbar{display:none!important;}
+  html.embedded .main{margin-left:0!important;}
+</style>
 </head>
 <body onload="document.body.style.opacity='1';">
 

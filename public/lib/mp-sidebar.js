@@ -76,14 +76,14 @@
     // sidebar with activeTab:'ticker'.
     { type:'item',    tab:'ticker',      href:'/ticker/AAPL', label:'Stock Forensics', icon:ICONS.ticker,
                       subtitle:'Deep-dive one ticker' },
-    { type:'item',    href:'/search',    label:'Narrative Lab',  icon:ICONS.sparkleFeature,
-                      subtitle:'Any ticker. Any claim.',
-                      tooltip:'Validate any narrative against 3.5M historical analogues — works on any US-listed ticker, not just our tracked universe.' },
-    { type:'item',    href:'/ask',       label:'AI Search',      icon:ICONS.sparkleFeature,
-                      subtitle:'Ask anything — one box',
-                      tooltip:'Conversational forensic search — dossiers, anomalies, what changed today, narrative validation, circular finance, and custom screens in one box.' },
     { type:'item',    tab:'signallab',   label:'Signal Lab',     icon:ICONS.signallab,
                       subtitle:'Forces & regime, one ticker' },
+    // AI Lab merges the old "Narrative Lab" (/search) and "AI Search" (/ask)
+    // rows into one dashboard tab (2026-07-11). Both standalone routes still
+    // work for bookmarks; the tab embeds them with ?embed=1.
+    { type:'item',    tab:'ailab',       label:'AI Lab',         icon:ICONS.sparkleFeature,
+                      subtitle:'Ask anything · validate claims',
+                      tooltip:'Two tools on one bench — conversational forensic search (dossiers, anomalies, what changed today, custom screens) and the Narrative Lab, which validates any claim against 3.5M historical analogues. Works on any US-listed ticker.' },
     { type:'item',    tab:'prism',       label:'Market Physics', icon:ICONS.prism,
                       subtitle:'Every tracked ticker, one map' },
     { type:'item',    tab:'universe',    label:'Narrative Universe', icon:ICONS.universe,
