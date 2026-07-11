@@ -6238,6 +6238,179 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
       </div>
     </div>
 
+    <!-- ═══ GFX LAYER — gamified card + leaderboard effects ═══
+         Additive polish for the Trading Cards gallery and Leaderboard boards:
+         tier auras, hover tilt + sheen, confidence/score bar fills, rank
+         medals, stat count-ups. Pure CSS where possible; the JS module only
+         observes existing DOM (no render-function coupling) so gallery and
+         board re-renders pick the effects up automatically. Every animation
+         sits behind prefers-reduced-motion. -->
+    <style id="gfx-styles">
+      /* ── Trading Cards: tier auras (static glow, both themes) ── */
+      .strat-scene.tier-platinum .strat-front{box-shadow:0 0 0 1px rgba(0,174,255,0.22),0 8px 28px rgba(0,174,255,0.10);}
+      .strat-scene.tier-platinum:hover .strat-front{box-shadow:0 0 0 1px rgba(0,174,255,0.45),0 12px 36px rgba(0,174,255,0.22);}
+      .strat-scene.tier-gold .strat-front{box-shadow:0 0 0 1px rgba(255,184,0,0.20),0 8px 28px rgba(255,184,0,0.08);}
+      .strat-scene.tier-gold:hover .strat-front{box-shadow:0 0 0 1px rgba(255,184,0,0.42),0 12px 36px rgba(255,184,0,0.18);}
+      .strat-scene.tier-surprise .strat-front{box-shadow:0 0 0 1px rgba(123,97,255,0.22),0 8px 28px rgba(123,97,255,0.10);}
+      .strat-scene.tier-surprise:hover .strat-front{box-shadow:0 0 0 1px rgba(123,97,255,0.45),0 12px 36px rgba(123,97,255,0.22);}
+      .strat-scene .gc-tier-badge{position:relative;overflow:hidden;}
+      /* Expiring-soon countdown */
+      .gfx-exp-soon{color:var(--mp-red,#FF4D4D)!important;font-weight:700;}
+      /* ── Leaderboard: rank medals (upgrade the faint lb-r1/2/3 tints) ── */
+      .lb-rank.lb-r1,.lb-rank.lb-r2,.lb-rank.lb-r3{width:22px;height:22px;line-height:22px;border-radius:50%;font-size:11px;}
+      .lb-td-rank.lb-r1,.lb-td-rank.lb-r2,.lb-td-rank.lb-r3{font-size:11px;}
+      .lb-r1{background:linear-gradient(135deg,#FFE24D,#C8890A);color:#231800!important;box-shadow:0 0 10px rgba(255,184,0,0.35);}
+      .lb-r2{background:linear-gradient(135deg,#E9EDF1,#98A2AC);color:#14181D!important;box-shadow:0 0 8px rgba(200,210,220,0.25);}
+      .lb-r3{background:linear-gradient(135deg,#E8A05C,#8C5A2B);color:#1D0F00!important;box-shadow:0 0 8px rgba(205,127,50,0.25);}
+      .lb-td-rank.lb-r1,.lb-td-rank.lb-r2,.lb-td-rank.lb-r3{background:none;box-shadow:none;}
+      .lb-td-rank.lb-r1{color:#FFB800!important;}.lb-td-rank.lb-r2{color:#A0A8B0!important;}.lb-td-rank.lb-r3{color:#CD7F32!important;}
+      /* #1 row spotlight */
+      .lb-rows .lb-row:first-child:not(.lb-row-skeleton){background:linear-gradient(90deg,rgba(255,184,0,0.055),transparent 62%);}
+      .lb-rows .lb-row:first-child:not(.lb-row-skeleton):hover{background:linear-gradient(90deg,rgba(255,184,0,0.10),rgba(255,255,255,0.03) 62%);}
+      .lb-row:not(.lb-row-skeleton){transition:background .15s,transform .18s ease;}
+      .lb-row:not(.lb-row-skeleton):hover{transform:translateX(3px);}
+      @media (prefers-reduced-motion: no-preference){
+        /* Springier card flip */
+        .strat-scene .strat-flipper{transition:transform .75s cubic-bezier(.3,1.25,.35,1);}
+        /* Holo aura bloom behind premium tiers */
+        .strat-scene.tier-platinum .strat-flipper::before,
+        .strat-scene.tier-surprise .strat-flipper::before{
+          content:'';position:absolute;inset:-3px;border-radius:15px;z-index:-1;pointer-events:none;
+          background:conic-gradient(#00AEFF,#7B61FF,#38C8B8,#00DE94,#00AEFF);
+          filter:blur(10px);opacity:.26;animation:gfx-holo 7s linear infinite;
+        }
+        .strat-scene.tier-surprise .strat-flipper::before{background:conic-gradient(#7B61FF,#FF4D9E,#FFB800,#7B61FF);}
+        .strat-scene.tier-platinum:hover .strat-flipper::before,
+        .strat-scene.tier-surprise:hover .strat-flipper::before{opacity:.45;}
+        /* Light sheen sweep across the face on hover */
+        .strat-front::after{content:'';position:absolute;top:-60%;bottom:-60%;width:36%;left:-70%;transform:rotate(18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,0.10),transparent);pointer-events:none;z-index:5;}
+        .strat-scene:hover .strat-front::after{animation:gfx-sheen .9s ease;}
+        /* Tier badge shine */
+        .strat-scene:hover .gc-tier-badge::after{content:'';position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.55),transparent);animation:gfx-badge-shine .8s ease;}
+        /* Confidence + score bars fill in from zero on every render */
+        .strat-scene .gc-conf-fill{transform-origin:left;animation:gfx-fill .8s cubic-bezier(.22,1,.36,1) .3s backwards;}
+        .lb-section:not(.lb-section-loading) .lb-bar{transform-origin:left;animation:gfx-fill .9s cubic-bezier(.22,1,.36,1) .15s backwards;}
+        .sl-conv-bar > i{transform-origin:left;animation:gfx-fill .9s cubic-bezier(.22,1,.36,1) .2s backwards;}
+        /* Expiring countdown pulse */
+        .gfx-exp-soon{animation:gfx-pulse 1.6s ease-in-out infinite;}
+        /* Medal glint on board hover */
+        .lb-section:hover .lb-rank.lb-r1{animation:gfx-medal 1.2s ease;}
+      }
+      @media (hover:hover) and (pointer:fine){
+        .strat-scene.gfx-tilt{transform:translateY(-2px) rotateX(var(--gfx-rx,0deg)) rotateY(var(--gfx-ry,0deg));transition:transform .12s ease-out;}
+      }
+      @keyframes gfx-holo{to{filter:blur(10px) hue-rotate(360deg);}}
+      @keyframes gfx-sheen{from{left:-70%;}to{left:140%;}}
+      @keyframes gfx-badge-shine{to{left:130%;}}
+      @keyframes gfx-fill{from{transform:scaleX(0);}}
+      @keyframes gfx-pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+      @keyframes gfx-medal{0%{transform:scale(1);}30%{transform:scale(1.25) rotate(-8deg);}60%{transform:scale(.95) rotate(4deg);}100%{transform:scale(1);}}
+    </style>
+    <script>
+    (function(){
+      'use strict';
+      var REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var FINE=window.matchMedia&&window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+      /* ── Cards: extend the deal-in stagger past 6 and tag expiring plays ── */
+      function enhanceCards(){
+        var grid=document.getElementById('tcg-grid');if(!grid)return;
+        grid.querySelectorAll('.strat-scene').forEach(function(s,i){
+          if(!REDUCED)s.style.animationDelay=Math.min(i*55,900)+'ms';
+          if(s.__gfxDone)return;s.__gfxDone=true;
+          var ed=s.querySelector('.gc-expires-days');
+          if(ed&&/\((?:0|1)d\)/.test(ed.textContent||''))ed.classList.add('gfx-exp-soon');
+        });
+      }
+
+      /* ── Cards: pointer tilt (delegated, rAF-throttled) ── */
+      var tiltRAF=null;
+      function onMove(e){
+        var scene=e.target.closest?e.target.closest('.strat-scene'):null;
+        if(!scene||scene.classList.contains('flipped'))return;
+        var cx=e.clientX,cy=e.clientY;
+        var apply=function(){
+          var r=scene.getBoundingClientRect();
+          if(!r.width||!r.height)return;
+          var px=(cx-r.left)/r.width-.5,py=(cy-r.top)/r.height-.5;
+          scene.classList.add('gfx-tilt');
+          scene.style.setProperty('--gfx-ry',(px*7).toFixed(2)+'deg');
+          scene.style.setProperty('--gfx-rx',(-py*7).toFixed(2)+'deg');
+        };
+        if(tiltRAF)cancelAnimationFrame(tiltRAF);
+        /* rAF freezes on hidden documents (embedded previews, background tabs) —
+           apply synchronously there so the handler still settles. */
+        if(document.hidden){apply();}else{tiltRAF=requestAnimationFrame(apply);}
+      }
+      function onOut(e){
+        var scene=e.target.closest?e.target.closest('.strat-scene'):null;
+        if(!scene)return;
+        if(e.relatedTarget&&scene.contains(e.relatedTarget))return;
+        scene.classList.remove('gfx-tilt');
+        scene.style.removeProperty('--gfx-rx');scene.style.removeProperty('--gfx-ry');
+      }
+      function wireCards(){
+        var grid=document.getElementById('tcg-grid');if(!grid)return;
+        try{new MutationObserver(enhanceCards).observe(grid,{childList:true});}catch(_){}
+        enhanceCards();
+        if(FINE&&!REDUCED){
+          grid.addEventListener('pointermove',onMove);
+          grid.addEventListener('pointerout',onOut);
+        }
+      }
+
+      /* ── Leaderboards: count-up on score values when they scroll into view ── */
+      var NUMRX=/-?\d[\d,]*(?:\.\d+)?/;
+      function countUp(el){
+        if(REDUCED)return;
+        var txt=el.textContent||'';var m=NUMRX.exec(txt);if(!m)return;
+        var target=parseFloat(m[0].replace(/,/g,''));
+        if(!isFinite(target)||Math.abs(target)<0.001)return;
+        var dec=(m[0].split('.')[1]||'').length;
+        var hasComma=m[0].indexOf(',')!==-1;
+        var pre=txt.slice(0,m.index),post=txt.slice(m.index+m[0].length);
+        var t0=null,DUR=700;
+        function fmt(v){
+          if(hasComma)return Number(v.toFixed(dec)).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+          return v.toFixed(dec);
+        }
+        function step(ts){
+          if(t0==null)t0=ts;
+          var p=Math.min(1,(ts-t0)/DUR);p=1-Math.pow(1-p,3);
+          el.textContent=pre+fmt(target*p)+post;
+          if(p<1)requestAnimationFrame(step);else el.textContent=txt;
+        }
+        requestAnimationFrame(step);
+      }
+      var statIO=null;
+      try{
+        statIO=new IntersectionObserver(function(entries){
+          entries.forEach(function(en){
+            if(!en.isIntersecting)return;
+            statIO.unobserve(en.target);
+            countUp(en.target);
+          });
+        },{threshold:0.4});
+      }catch(_){}
+      function watchStats(root){
+        if(!statIO||!root)return;
+        root.querySelectorAll('.lb-sval:not([data-gfx]),.sl-conv-val:not([data-gfx])').forEach(function(el){
+          el.setAttribute('data-gfx','1');statIO.observe(el);
+        });
+      }
+      function wireBoards(){
+        ['lb-grid','sl-grid'].forEach(function(id){
+          var g=document.getElementById(id);if(!g)return;
+          try{new MutationObserver(function(){watchStats(g);}).observe(g,{childList:true,subtree:true});}catch(_){}
+          watchStats(g);
+        });
+      }
+
+      function init(){wireCards();wireBoards();}
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+    })();
+    </script>
+
     <!-- ══════════════════════════════════════
          TAB: TRADING CALENDAR
     ═══════════════════════════════════════ -->
