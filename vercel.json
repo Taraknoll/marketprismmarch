@@ -21,6 +21,10 @@
       "destination": "/api/daily-brief"
     },
     {
+      "source": "/api/daily-answer",
+      "destination": "/api/daily-answer"
+    },
+    {
       "source": "/api/live-quote",
       "destination": "/api/live-quote"
     },

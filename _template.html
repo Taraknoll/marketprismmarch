@@ -4934,6 +4934,384 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
         <div id="daily-error-banner-detail" style="font-size:11px;color:rgba(255,139,139,0.7);margin-top:8px;font-family:var(--font-body);"></div>
       </div>
 
+      <!-- 0a) THE ANSWER — profile-personalized daily pick.
+           Quiz (risk / horizon / style) is stored per-device in localStorage;
+           the candidate pool + evidence comes from /api/daily-answer (one
+           CDN-cached payload for all users); ranking happens client-side so
+           a profile retake re-ranks instantly with zero refetches. -->
+      <style id="da-styles">
+        #da-pin{margin:0 0 12px;}
+        .da-pin-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid rgba(77,200,240,0.35);background:rgba(77,200,240,0.06);border-radius:12px;padding:12px 16px;cursor:pointer;transition:border-color .15s ease;}
+        .da-pin-row:hover{border-color:var(--mp-cyan,#4DC8F0);}
+        .da-pin-row.long{border-color:rgba(0,222,148,0.35);background:rgba(0,222,148,0.05);}
+        .da-pin-row.long:hover{border-color:var(--mp-green,#00DE94);}
+        .da-pin-row.short{border-color:rgba(255,77,77,0.35);background:rgba(255,77,77,0.05);}
+        .da-pin-row.short:hover{border-color:var(--mp-red,#FF4D4D);}
+        .da-pin-row.fade{border-color:rgba(255,184,0,0.35);background:rgba(255,184,0,0.05);}
+        .da-pin-row.fade:hover{border-color:var(--mp-amber,#FFB800);}
+        .da-pin-badge{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--mp-cyan,#4DC8F0);border:1px solid rgba(77,200,240,0.4);border-radius:6px;padding:3px 8px;white-space:nowrap;}
+        .da-pin-row.long .da-pin-badge{color:var(--mp-green,#00DE94);border-color:rgba(0,222,148,0.4);}
+        .da-pin-row.short .da-pin-badge{color:var(--mp-red,#FF4D4D);border-color:rgba(255,77,77,0.4);}
+        .da-pin-row.fade .da-pin-badge{color:var(--mp-amber,#FFB800);border-color:rgba(255,184,0,0.4);}
+        .da-pin-tkr{font-size:18px;font-weight:700;color:var(--mp-text-primary);}
+        .da-pin-tkr:hover{color:var(--mp-cyan,#4DC8F0);}
+        .da-pin-sum{font-size:13px;color:var(--mp-text-secondary);flex:1;min-width:180px;line-height:1.5;}
+        .da-pin-caret{font-size:11px;font-weight:600;color:var(--mp-text-tertiary);white-space:nowrap;}
+        .da-pin-panel{border:1px solid var(--mp-border);border-radius:12px;padding:18px;margin-top:8px;background:var(--mp-surface);}
+        .da-personalize{font-size:11px;font-weight:600;color:var(--mp-cyan,#4DC8F0);background:none;border:1px solid rgba(77,200,240,0.35);border-radius:999px;padding:4px 12px;cursor:pointer;font-family:inherit;}
+        .da-personalize:hover{background:rgba(77,200,240,0.10);}
+        .da-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--mp-cyan,#4DC8F0);margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+        .da-eyebrow .da-sess{color:var(--mp-text-tertiary);text-transform:none;letter-spacing:0;font-weight:500;}
+        .da-q{margin-bottom:18px;}
+        .da-q-label{font-size:13px;font-weight:600;color:var(--mp-text-primary);margin-bottom:8px;}
+        .da-q-sub{font-size:11px;color:var(--mp-text-tertiary);margin-top:-6px;margin-bottom:8px;}
+        .da-chips{display:flex;flex-wrap:wrap;gap:8px;}
+        .da-chip{border:1px solid var(--mp-border);background:transparent;color:var(--mp-text-secondary);border-radius:999px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s ease;font-family:inherit;}
+        .da-chip:hover{border-color:var(--mp-border-hover,rgba(255,255,255,0.14));color:var(--mp-text-primary);}
+        .da-chip.sel{border-color:var(--mp-cyan,#4DC8F0);color:var(--mp-cyan,#4DC8F0);background:rgba(77,200,240,0.10);font-weight:600;}
+        .da-cta{display:inline-block;border:none;border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;background:var(--mp-cyan,#4DC8F0);color:#06121B;font-family:inherit;transition:filter .15s ease;}
+        .da-cta:hover{filter:brightness(1.1);}
+        .da-cta:disabled{opacity:0.4;cursor:not-allowed;}
+        .da-profilebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+        .da-pchip{font-size:11px;font-weight:600;color:var(--mp-text-tertiary);border:1px solid var(--mp-border);border-radius:999px;padding:4px 12px;}
+        .da-retake{font-size:12px;color:var(--mp-cyan,#4DC8F0);background:none;border:none;cursor:pointer;padding:4px 6px;font-family:inherit;font-weight:600;}
+        .da-retake:hover{text-decoration:underline;}
+        .da-tag{font-size:10px;font-weight:600;color:var(--mp-amber,#FFB800);border:1px solid rgba(255,184,0,0.35);border-radius:6px;padding:3px 8px;letter-spacing:0.03em;}
+        .da-headline{font-size:15px;line-height:1.55;color:var(--mp-text-secondary);margin:6px 0 16px;max-width:760px;}
+        .da-plan{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;border-top:1px solid var(--mp-border);border-bottom:1px solid var(--mp-border);padding:14px 0;margin-bottom:16px;}
+        .da-plan-cell .k{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:4px;}
+        .da-plan-cell .v{font-size:18px;font-weight:700;color:var(--mp-text-primary);}
+        .da-plan-cell .v small{font-size:12px;font-weight:500;color:var(--mp-text-tertiary);}
+        .da-why{list-style:none;margin:0 0 14px;padding:0;}
+        .da-why li{font-size:13px;line-height:1.55;color:var(--mp-text-secondary);padding-left:18px;position:relative;margin-bottom:7px;}
+        .da-why li::before{content:'';position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:2px;background:var(--mp-cyan,#4DC8F0);}
+        .da-ev{font-size:12px;color:var(--mp-text-tertiary);line-height:1.6;border-top:1px dashed var(--mp-border);padding-top:12px;display:flex;gap:14px;flex-wrap:wrap;}
+        .da-subhead{font-size:14px;font-weight:700;color:var(--mp-text-primary);margin:22px 0 10px;}
+        .da-alt{display:flex;align-items:center;gap:12px;border:1px solid var(--mp-border);border-radius:12px;padding:12px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .15s ease;flex-wrap:wrap;}
+        .da-alt:hover{border-color:var(--mp-border-hover,rgba(255,255,255,0.14));}
+        .da-alt .t{font-size:16px;font-weight:700;color:var(--mp-text-primary);min-width:64px;}
+        .da-alt .d{font-size:11px;font-weight:700;}
+        .da-alt .d.long{color:var(--mp-green,#00DE94);} .da-alt .d.short{color:var(--mp-red,#FF4D4D);}
+        .da-alt .m{font-size:12px;color:var(--mp-text-tertiary);flex:1;min-width:200px;line-height:1.5;}
+        .da-fade-row{border:1px solid var(--mp-border);border-left:3px solid var(--mp-amber,#FFB800);border-radius:12px;padding:12px 16px;margin-bottom:8px;cursor:pointer;}
+        .da-fade-row:hover{border-color:var(--mp-border-hover,rgba(255,255,255,0.14));border-left-color:var(--mp-amber,#FFB800);}
+        .da-fade-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
+        .da-fade-top .t{font-size:16px;font-weight:700;color:var(--mp-text-primary);}
+        .da-fade-top .clock{font-size:11px;font-weight:600;color:var(--mp-amber,#FFB800);}
+        .da-fade-top .gap{font-size:11px;font-weight:600;color:var(--mp-red,#FF4D4D);}
+        .da-fade-story{font-size:13px;color:var(--mp-text-secondary);line-height:1.5;}
+        .da-avoid{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+        .da-avoid-chip{font-size:11px;font-weight:600;color:var(--mp-red,#FF4D4D);border:1px solid rgba(255,77,77,0.3);border-radius:999px;padding:4px 12px;cursor:help;}
+        .da-note{font-size:11px;color:var(--mp-text-muted);margin-top:14px;line-height:1.5;}
+        .da-empty{text-align:center;padding:28px 16px;}
+        .da-empty .h{font-size:18px;font-weight:700;color:var(--mp-text-primary);margin-bottom:6px;}
+        .da-empty .p{font-size:13px;color:var(--mp-text-tertiary);line-height:1.6;max-width:520px;margin:0 auto;}
+        @media (max-width:720px){.da-plan{grid-template-columns:repeat(2,1fr);}}
+      </style>
+      <script>
+      (function(){
+        'use strict';
+        var DA_KEY='mp_answer_profile_v1';
+        var DA_CTX=null;
+        var DA_SEL={risk:null,horizon:null,style:null};
+        var LANE_LABEL={DAY_TRADE:'Day Trade',SWING_TRADE:'Swing',MOMENTUM:'Momentum',WKS_MOMENTUM:'Keyword Momentum',CLASSIC:'Classic Strategy',EARNINGS_PLAY:'Earnings Play'};
+        var RISK_LABEL={careful:'Careful',balanced:'Balanced',aggressive:'Aggressive'};
+        var HORIZON_LABEL={today:'In & out (1–2d)',week:'This week (3–7d)',multiweek:'Multi-week (10–20d)'};
+        var STYLE_LABEL={momentum:'Ride momentum',value:'Buy mispricing',contrarian:'Fade the hype',auto:'Best available edge'};
+        var SIZE_HINT={careful:'Sizing: keep it small — no more than ~0.5% of trading capital at risk on one idea.',
+                       balanced:'Sizing: standard risk — around 1% of trading capital at risk on one idea.',
+                       aggressive:'Sizing: hot hand — up to ~2% at risk. If it has a stop, honor it.'};
+
+        function daEsc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+        function daTrack(n,p){try{if(typeof gtag==='function')gtag('event',n,p||{});}catch(e){}}
+        function daFmtDate(iso){try{var p=String(iso).split('-');var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));var w=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getUTCDay()];var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];return w+' '+m+' '+d.getUTCDate();}catch(e){return iso||'';}}
+        function daMoney(n){if(n==null||!isFinite(n))return'—';return '$'+(n>=1000?n.toLocaleString('en-US',{maximumFractionDigits:0}):n.toFixed(2));}
+        function daPct(n,signed){if(n==null||!isFinite(n))return'—';var s=(signed&&n>0?'+':'')+n.toFixed(Math.abs(n)>=10?1:2)+'%';return s;}
+        function daLoadProfile(){try{var raw=localStorage.getItem(DA_KEY);if(!raw)return null;var p=JSON.parse(raw);return(p&&p.risk&&p.horizon&&p.style)?p:null;}catch(e){return null;}}
+        function daSaveProfile(p){try{localStorage.setItem(DA_KEY,JSON.stringify(p));}catch(e){}}
+
+        function daFv(c){if(c.f&&c.f.fvd_pct!=null)return c.f.fvd_pct;if(c.card&&c.card.pct_above_fv!=null)return c.card.pct_above_fv;return null;}
+        function daHold(c){return c.hold_days!=null?c.hold_days:(c.horizon_days!=null?c.horizon_days:5);}
+        function daBucket(d){return d<=2?'today':(d<=8?'week':'multiweek');}
+
+        // Hard gates — a rejected candidate never reaches scoring.
+        function daGate(c,p){
+          if(!c.ticker||!c.direction)return 'bad';
+          if(c.lane==='VALUE_PICK')return 'fyi-lane';
+          if(c.src==='play'&&c.pred_pct!=null&&Math.abs(c.pred_pct)<0.05)return 'zombie';
+          var e=DA_CTX.lanes[c.lane+'|'+c.direction];
+          if(e&&e.status&&e.status!=='HEALTHY'&&e.status!=='NEUTRAL')return 'impaired-lane';
+          if(p.risk==='careful'){
+            if(c.direction!=='LONG'&&p.style!=='contrarian')return 'no-shorts';
+            if(c.avoid)return 'avoid-list';
+            if(c.earnings_dte!=null&&c.earnings_dte<=5)return 'earnings-soon';
+            var fv=daFv(c);if(c.direction==='LONG'&&fv!=null&&fv>=60)return 'overvalued';
+            if(c.atr_pct!=null&&c.atr_pct>0.06)return 'too-volatile';
+            if(c.pred_pct!=null&&Math.abs(c.pred_pct)>8)return 'too-hot';
+          }else if(p.risk==='balanced'){
+            if(c.avoid)return 'avoid-list';
+          }
+          return null;
+        }
+
+        function daScore(c,p){
+          var s=0,e=DA_CTX.lanes[c.lane+'|'+c.direction]||null;
+          if(e){
+            if(e.mu_post_pct!=null)s+=25*Math.max(0,Math.min(1.4,e.mu_post_pct));
+            if(e.p_positive!=null)s+=10*e.p_positive;
+            if(e.status==='NEUTRAL')s-=15;
+            if(e.win_rate!=null)s+=Math.max(-8,Math.min(14,(e.win_rate-40)/2));
+          }
+          if(c.src==='play'){
+            s+=c.rank===1?12:(c.rank===2?8:(c.rank===3?5:2));
+            var mag=Math.min(8,Math.abs(c.pred_pct||0));
+            s+=(p.risk==='careful')?Math.max(0,6-Math.abs(mag-3)):mag*1.1;
+          }else{
+            s+=20*(c.conviction||0);
+            if((c.reward_risk||0)>=2)s+=6;
+          }
+          if(c.f){
+            var h=daHold(c),pu=h<=2?c.f.prob_up_1d:(h<=7?c.f.prob_up_5d:c.f.prob_up_10d);
+            if(pu!=null){var a=(c.direction==='LONG'?(pu-0.5):(0.5-pu))*200;s+=Math.max(-8,Math.min(8,a));}
+            if(c.f.hit_rate_30!=null&&(c.f.hit_n_30||0)>=4)s+=Math.max(-9,Math.min(9,(c.f.hit_rate_30-0.5)*30));
+          }
+          var order={today:0,week:1,multiweek:2},dist=Math.abs(order[daBucket(daHold(c))]-order[p.horizon]);
+          s+=dist===0?15:(dist===1?4:-25);
+          if(p.style==='momentum'){if(c.lane==='MOMENTUM'||c.lane==='WKS_MOMENTUM')s+=15;else if(c.src==='strategy'&&/Breakout|Momentum/i.test(c.strategy_name||''))s+=10;}
+          if(p.style==='value'){var fv=daFv(c);if(c.direction==='LONG'&&fv!=null){if(fv<=-15)s+=15;else if(fv<0)s+=8;else if(fv>=40)s-=8;}if(c.src==='strategy'&&/Oversold|Reversal|Bar Strength/i.test(c.strategy_name||''))s+=8;}
+          if(p.style==='contrarian'){if(c.direction==='SHORT'){s+=14;var f2=daFv(c);if(f2!=null&&f2>=40)s+=6;}}
+          var fvv=daFv(c);
+          c._tags=[];
+          if(c.direction==='LONG'&&fvv!=null&&fvv>=40){c._tags.push('Overvalued · short-term play');s-=6;}
+          if(c.earnings_dte!=null){c._tags.push('Earnings in '+c.earnings_dte+'d');if(p.risk!=='aggressive')s-=6;}
+          if(c.avoid){c._tags.push('On avoid list');s-=10;}
+          return s;
+        }
+
+        function daRank(p){
+          var pool=(DA_CTX.candidates||[]).filter(function(c){return !daGate(c,p);});
+          pool.forEach(function(c){c._score=daScore(c,p);});
+          pool.sort(function(a,b){return b._score-a._score;});
+          var out=[],seen={};
+          pool.forEach(function(c){if(!seen[c.ticker]){seen[c.ticker]=1;out.push(c);}});
+          return out;
+        }
+
+        // ---------- evidence copy ----------
+        function daLaneEvidence(c){
+          var e=DA_CTX.lanes[c.lane+'|'+c.direction];
+          if(c.src==='strategy'){
+            var bits=['Classic setup: '+daEsc(c.strategy_name||'strategy')];
+            if(c.conviction!=null)bits.push('model conviction '+Math.round(c.conviction*100)+'%');
+            if(c.reward_risk!=null)bits.push('reward:risk '+c.reward_risk+':1');
+            return bits.join(' · ');
+          }
+          if(!e)return null;
+          var parts=[(LANE_LABEL[c.lane]||c.lane)+' '+(c.direction==='LONG'?'longs':'shorts')];
+          if(e.win_rate!=null&&e.closed_trades)parts.push(e.win_rate+'% hit rate across '+e.closed_trades.toLocaleString('en-US')+' tracked plays');
+          if(e.win_rate!=null&&e.win_rate<45&&(e.avg_return_pct||0)>0)parts.push('low hit rate, positive expectancy — winners outrun losers');
+          if(e.mu_post_pct!=null)parts.push('learned edge '+(e.status||'')+' ('+(e.mu_post_pct>0?'+':'')+e.mu_post_pct.toFixed(2)+'%/trade)');
+          return parts.join(' · ');
+        }
+        function daTickerEvidence(c){
+          if(!c.f)return null;
+          var bits=[];
+          if(c.f.hit_rate_30!=null&&(c.f.hit_n_30||0)>=4)bits.push(daEsc(c.ticker)+"'s recent model calls: "+Math.round(c.f.hit_rate_30*100)+'% hit ('+c.f.hit_n_30+' in 30d)');
+          var h=daHold(c),pu=h<=2?c.f.prob_up_1d:(h<=7?c.f.prob_up_5d:c.f.prob_up_10d);
+          if(pu!=null)bits.push('model odds '+Math.round((c.direction==='LONG'?pu:1-pu)*100)+'% in your direction over '+h+'d');
+          return bits.length?bits.join(' · '):null;
+        }
+        function daDriver(c){
+          if(c.card&&c.card.story)return daEsc(String(c.card.story).slice(0,180));
+          var r=c.reason||'';
+          if(/^WKS_FACTOR/.test(r)){var m=/wks=(\d+)/.exec(r);return 'Validated keyword-energy factor firing'+(m?' (WKS '+m[1]+')':'')+' — a long-only signal that only trades when its historical edge is intact.';}
+          if(/walsh=PERSISTENT/.test(r))return 'Narrative regime reads PERSISTENT — the story behind the move still has fuel.';
+          if(/^energy=/.test(r)){var m2=/energy=(\d+)/.exec(r);return 'High narrative energy'+(m2?' ('+m2[1]+')':'')+' — coverage is still building rather than fading.';}
+          if(/reclass/.test(r))return 'Move projected too large for a day trade — engine re-classed it as a swing.';
+          return r?daEsc(r):null;
+        }
+
+        function daPlanHTML(c){
+          var cells=[];
+          function cell(k,v){cells.push('<div class="da-plan-cell"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>');}
+          if(c.src==='strategy'){
+            cell('Entry',daMoney(c.entry));
+            cell('Target',daMoney(c.target)+(c.entry&&c.target?' <small>('+daPct((c.target/c.entry-1)*100,true)+')</small>':''));
+            cell('Stop',daMoney(c.stop));
+            cell('Horizon',(c.horizon_days||'—')+'<small> sessions</small>');
+          }else{
+            cell('Entry ref',daMoney(c.entry)+'<small> ('+daFmtDate(DA_CTX.session.data_date)+' close)</small>');
+            var proj=(c.entry!=null&&c.pred_pct!=null)?c.entry*(1+c.pred_pct/100):null;
+            cell('Projected move',daPct(c.pred_pct,true)+(proj?' <small>(~'+daMoney(proj)+')</small>':''));
+            var inval=(c.f&&c.f.invalidation!=null)?c.f.invalidation:null;
+            var invalSane=inval!=null&&inval>0&&c.entry!=null&&((c.direction==='LONG'&&inval<c.entry&&inval>c.entry*0.5)||(c.direction==='SHORT'&&inval>c.entry&&inval<c.entry*2));
+            if(invalSane){cell('Invalidation',daMoney(inval));}
+            else{cell('Hold',(c.hold_days||'—')+'<small> sessions</small>');}
+            cell('Exit by',c.exit_date?daFmtDate(c.exit_date):'—');
+          }
+          return '<div class="da-plan">'+cells.join('')+'</div>';
+        }
+
+        function daHeadline(c,p){
+          var laneName=(c.src==='strategy'?(c.strategy_name||'Classic strategy'):(LANE_LABEL[c.lane]||c.lane));
+          var dir=c.direction==='LONG'?'long':'short';
+          var move=c.pred_pct!=null?daPct(c.pred_pct,true):(c.entry&&c.target?daPct((c.target/c.entry-1)*100,true):null);
+          var hold=daHold(c);
+          return 'Best fit for your profile: <b>'+daEsc(c.ticker)+' '+dir+'</b> in the '+daEsc(laneName)+' lane'+(move?' — the engine projects <b>'+move+'</b> over ~'+hold+' session'+(hold===1?'':'s'):'')+'. It outranked '+(DA_CTX.candidates.length-1)+' other live setups on lane edge, track record and fit.';
+        }
+
+        function daTagsHTML(c){
+          if(!c._tags||!c._tags.length)return'';
+          return c._tags.map(function(t){return '<span class="da-tag">'+daEsc(t)+'</span>';}).join('');
+        }
+
+        function daAltHTML(c){
+          var e=DA_CTX.lanes[c.lane+'|'+c.direction]||{};
+          var why=(c.src==='strategy'?daEsc(c.strategy_name||'Classic'):(LANE_LABEL[c.lane]||c.lane))+' · '+(c.pred_pct!=null?daPct(c.pred_pct,true)+' over '+daHold(c)+'d':(c.target&&c.entry?daPct((c.target/c.entry-1)*100,true)+' target':''))+(e.win_rate!=null?' · lane hits '+e.win_rate+'%':'');
+          return '<div class="da-alt" onclick="window.location.href=\'/ticker/'+encodeURIComponent(c.ticker)+'\'">'+
+            '<span class="t">'+daEsc(c.ticker)+'</span>'+
+            '<span class="d '+(c.direction==='LONG'?'long':'short')+'">'+c.direction+'</span>'+
+            '<span class="m">'+why+'</span>'+daTagsHTML(c)+'</div>';
+        }
+
+        function daFadeHTML(f){
+          var clock=f.days_left!=null?('~'+Math.max(1,Math.round(f.days_left))+' days of story left'):'clock unknown';
+          var gap=f.fvd_pct!=null?daPct(f.fvd_pct,true)+' vs model FV':'';
+          return '<div class="da-fade-row" onclick="window.location.href=\'/ticker/'+encodeURIComponent(f.ticker)+'\'">'+
+            '<div class="da-fade-top"><span class="t">'+daEsc(f.ticker)+'</span><span class="clock">'+clock+'</span>'+(gap?'<span class="gap">'+gap+'</span>':'')+'</div>'+
+            '<div class="da-fade-story">'+daEsc(f.narrative)+'</div></div>';
+        }
+
+        function daContextStrip(){
+          var r=DA_CTX.regime,s=DA_CTX.session,bits=[];
+          if(r){bits.push('Market: '+daEsc(r.market_regime||'—'));if(r.vix!=null)bits.push('VIX '+r.vix+(r.vix_regime?' ('+daEsc(r.vix_regime)+')':''));if(r.rate_environment)bits.push('Rates '+daEsc(r.rate_environment).toLowerCase());}
+          if(s&&s.data_date)bits.push('Data: '+daFmtDate(s.data_date)+' close');
+          return bits.map(function(b){return '<span>'+b+'</span>';}).join('');
+        }
+
+        function daProfileBar(p){
+          return '<div class="da-profilebar">'+
+            '<span class="da-pchip">'+RISK_LABEL[p.risk]+'</span>'+
+            '<span class="da-pchip">'+HORIZON_LABEL[p.horizon]+'</span>'+
+            '<span class="da-pchip">'+STYLE_LABEL[p.style]+'</span>'+
+            '<button class="da-retake" onclick="daRetake()">Retake quiz</button></div>';
+        }
+
+        // ---------- renderers ----------
+        function daRenderCTA(){
+          document.getElementById('da-pin').innerHTML='<div class="da-pin-row" onclick="daRetake()">'+
+            '<span class="da-pin-badge">Your pick</span>'+
+            '<span class="da-pin-sum">Answer three quick questions and your personal pick gets pinned to the top of this slate every morning.</span>'+
+            '<span class="da-pin-caret">Set it up ›</span></div>';
+        }
+        function daRenderQuiz(pre){
+          DA_SEL={risk:pre?pre.risk:null,horizon:pre?pre.horizon:null,style:pre?pre.style:null};
+          function chips(q,opts){return '<div class="da-chips">'+opts.map(function(o){return '<button class="da-chip'+(DA_SEL[q]===o[0]?' sel':'')+'" data-q="'+q+'" data-v="'+o[0]+'" onclick="daPick(this)">'+o[1]+'</button>';}).join('')+'</div>';}
+          document.getElementById('da-pin').innerHTML='<div class="da-pin-panel">'+
+            '<div class="da-eyebrow">Personalize this slate <span class="da-sess">· three questions, once — change it any time</span></div>'+
+            '<div class="da-q"><div class="da-q-label">How much heat can you take?</div>'+chips('risk',[['careful','Careful — protect the downside'],['balanced','Balanced — standard risk, standard reward'],['aggressive','Aggressive — I can stomach swings']])+'</div>'+
+            '<div class="da-q"><div class="da-q-label">How long do you want to be in a trade?</div>'+chips('horizon',[['today','In & out — 1–2 days'],['week','A few days — 3–7'],['multiweek','Weeks — 10–20 days']])+'</div>'+
+            '<div class="da-q"><div class="da-q-label">What’s your edge style?</div>'+chips('style',[['momentum','Ride what’s moving'],['value','Buy what’s mispriced'],['contrarian','Fade the hype'],['auto','Just give me the best edge']])+'</div>'+
+            '<button class="da-cta" id="da-lock" disabled onclick="daLock()">Pin my pick</button>'+
+            '<div class="da-note">Your profile is stored on this device only. The pick is re-ranked from the same system evidence every user sees — signals from tracked model performance, not personalized financial advice.</div></div>';
+          daSyncLock();
+        }
+
+        window.daPick=function(btn){
+          var q=btn.getAttribute('data-q'),v=btn.getAttribute('data-v');
+          DA_SEL[q]=v;
+          var sibs=btn.parentElement.querySelectorAll('.da-chip');
+          for(var i=0;i<sibs.length;i++)sibs[i].classList.toggle('sel',sibs[i]===btn);
+          daSyncLock();
+        };
+        function daSyncLock(){var b=document.getElementById('da-lock');if(b)b.disabled=!(DA_SEL.risk&&DA_SEL.horizon&&DA_SEL.style);}
+        window.daLock=function(){
+          var p={risk:DA_SEL.risk,horizon:DA_SEL.horizon,style:DA_SEL.style,set_at:new Date().toISOString()};
+          daSaveProfile(p);daTrack('daily_answer_profile_set',{risk:p.risk,horizon:p.horizon,style:p.style});
+          daRenderAnswer(p);
+        };
+        window.daRetake=function(){daRenderQuiz(daLoadProfile());};
+
+        window.daToggleAnswer=function(){
+          var panel=document.getElementById('da-panel');if(!panel)return;
+          var open=panel.style.display!=='none';
+          panel.style.display=open?'none':'';
+          var c=document.getElementById('da-caret');if(c)c.textContent=open?'Why ›':'Hide ▴';
+          if(!open)daTrack('daily_answer_expand',{});
+        };
+        window.daGoTicker=function(ev,t){if(ev&&ev.stopPropagation)ev.stopPropagation();window.location.href='/ticker/'+encodeURIComponent(t);};
+
+        function daRenderAnswer(p){
+          var ranked=daRank(p),fades=DA_CTX.fades||[],sess=DA_CTX.session||{};
+          var useFadeHero=(p.style==='contrarian'&&fades.length&&fades[0].fvd_pct!=null&&fades[0].fvd_pct>=40);
+          var top=ranked[0]||null;
+          var rowCls='',badge='Your pick',tkr='',sum='',panel='';
+
+          if(useFadeHero){
+            var f=fades[0];
+            rowCls='fade';badge='Trade against';tkr=f.ticker;
+            sum='~'+Math.max(1,Math.round(f.days_left||0))+' days of story left · '+daPct(f.fvd_pct,true)+' vs model fair value · for '+daEsc(sess.trade_label||'next session');
+            panel+='<div class="da-headline">The story propping this name up is model-dated: <b>~'+Math.max(1,Math.round(f.days_left||0))+' days of narrative left</b>, with price sitting <b>'+daPct(f.fvd_pct,true)+'</b> above the model’s fair value ('+daMoney(f.fair_value)+' vs '+daMoney(f.price)+'). When the story runs out, so does the bid.</div>';
+            panel+='<ul class="da-why">'+
+              '<li>Verdict: '+daEsc(f.verdict||'Narrative Trap')+' — the claim driving the move failed forensic checks.</li>'+
+              '<li>Story is '+(f.days_elapsed!=null?f.days_elapsed+' days old':'aging')+' with roughly '+Math.max(1,Math.round(f.days_left||0))+' days of predicted life left — that’s your window, not a price target.</li>'+
+              '<li>How to use it: avoid chasing the long side; aggressive traders can work the short side into strength with defined risk.</li></ul>';
+            if(ranked.length)panel+='<div class="da-subhead">If you’d rather be long something</div>'+ranked.slice(0,2).map(daAltHTML).join('');
+            if(fades.length>1)panel+='<div class="da-subhead">More stories to trade against</div>'+fades.slice(1,4).map(daFadeHTML).join('');
+          }else if(top){
+            rowCls=top.direction==='LONG'?'long':'short';tkr=top.ticker;
+            var laneName=top.src==='strategy'?(top.strategy_name||'Classic'):(LANE_LABEL[top.lane]||top.lane);
+            var move=top.pred_pct!=null?daPct(top.pred_pct,true):(top.entry&&top.target?daPct((top.target/top.entry-1)*100,true):'');
+            sum=top.direction+' · '+daEsc(laneName)+(move?' · '+move+' over ~'+daHold(top)+' sessions':'')+(top.exit_date?' · exit by '+daFmtDate(top.exit_date):'')+' · for '+daEsc(sess.trade_label||'next session');
+            panel+='<div class="da-headline">'+daHeadline(top,p)+'</div>';
+            panel+=daPlanHTML(top);
+            var why=[daLaneEvidence(top),daTickerEvidence(top),daDriver(top)].filter(Boolean);
+            panel+='<ul class="da-why">'+why.map(function(w){return '<li>'+w+'</li>';}).join('')+'</ul>';
+            if(top._tags&&top._tags.length)panel+='<div style="margin:-4px 0 10px;display:flex;gap:6px;flex-wrap:wrap;">'+daTagsHTML(top)+'</div>';
+            panel+='<div class="da-note">'+SIZE_HINT[p.risk]+'</div>';
+            if(fades.length)panel+='<div class="da-subhead">Stories to trade against</div>'+fades.slice(0,3).map(daFadeHTML).join('');
+          }else{
+            badge='Sit out';
+            sum='No qualifying edge for your profile today — the system would rather hand you nothing than a coin flip.';
+            panel+='<div class="da-empty"><div class="h">Nothing passes your gates today.</div><div class="p">Every live setup either sits in a lane whose learned edge isn’t healthy right now, or fails your risk gates. Loosen the profile or check back after the next scan.</div></div>';
+            if(fades.length)panel+='<div class="da-subhead">Stories to trade against</div>'+fades.slice(0,3).map(daFadeHTML).join('');
+          }
+
+          var avoid=DA_CTX.avoid||[];
+          if(avoid.length)panel+='<div class="da-subhead">Do not touch today</div><div class="da-avoid">'+avoid.slice(0,8).map(function(a){return '<span class="da-avoid-chip" title="'+daEsc(a.note||'')+'">'+daEsc(a.ticker)+'</span>';}).join('')+'</div>';
+          panel+='<div class="da-ev">'+daContextStrip()+'</div>';
+          panel+='<div class="da-note">Built from the same evidence for every user — lane win rates, learned edge status and model calibration. Signals, not personalized financial advice.</div>';
+
+          document.getElementById('da-pin').innerHTML=
+            '<div class="da-pin-row '+rowCls+'" onclick="daToggleAnswer()">'+
+              '<span class="da-pin-badge">'+badge+'</span>'+
+              (tkr?'<span class="da-pin-tkr" onclick="daGoTicker(event,\''+daEsc(tkr)+'\')">'+daEsc(tkr)+'</span>':'')+
+              '<span class="da-pin-sum">'+sum+'</span>'+
+              '<span class="da-pin-caret" id="da-caret">Why ›</span></div>'+
+            '<div class="da-pin-panel" id="da-panel" style="display:none;">'+daProfileBar(p)+panel+'</div>';
+          daTrack('daily_answer_view',{style:p.style,has_pick:!!(top||useFadeHero)});
+        }
+
+        function daInit(){
+          fetch('/api/daily-answer',{credentials:'same-origin'}).then(function(r){if(!r.ok)throw new Error('daily-answer '+r.status);return r.json();}).then(function(data){
+            if(!data||!data.ok||!(data.candidates&&data.candidates.length)&&!(data.fades&&data.fades.length))return;
+            DA_CTX=data;
+            var pin=document.getElementById('da-pin');if(!pin)return;
+            pin.style.display='';
+            var pbtn=document.getElementById('da-personalize');if(pbtn)pbtn.style.display='';
+            // The pin lives inside the "What's the play?" frame, which stays hidden
+            // until the dashboard-data boot finishes. That boot has no timeout and
+            // can hang — don't let the answer be hostage to it: show the frame now,
+            // the slate rows fill in whenever the boot lands.
+            var tlc=document.getElementById('tl-container');if(tlc&&tlc.style.display==='none')tlc.style.display='';
+            var p=daLoadProfile();
+            if(p)daRenderAnswer(p);else daRenderCTA();
+          }).catch(function(){/* pin stays hidden — slate works as before */});
+        }
+        if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',daInit);else daInit();
+      })();
+      </script>
+
       <!-- 0b) WHAT'S THE PLAY — Trade Lanes -->
       <div class="tl-section" id="tl-container" style="display:none;">
         <div class="tl-header">
@@ -4958,8 +5336,10 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
             <span class="tls-livepill"><span class="tls-livedot"></span>Live · Today's slate</span>
             <span class="tls-head-title">Top picks · ranked by conviction</span>
             <span class="tls-head-meta" id="tls-meta"></span>
+            <button class="da-personalize" id="da-personalize" style="display:none;" onclick="daRetake()" title="Tune the pinned pick to your risk, horizon and style">Personalize</button>
           </div>
           <div class="tls-filters" id="tls-filters"></div>
+          <div id="da-pin" style="display:none;"></div>
           <div class="tls-list" id="tls-list"></div>
           <div class="tls-foot" id="tls-foot" style="display:none;"><button class="tls-more" id="tls-more" onclick="tlsShowMore()">Show more</button></div>
           <div class="tls-note">Picks are ranked by model conviction for each lane's horizon. Value Picks are FYI ideas, not tracked trades; Claude's AI picks live under their own tab. ✓/✗ marks when today's price action reaches the Prism estimate. Click any row for the full analysis.</div>
