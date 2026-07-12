@@ -69,6 +69,14 @@
       "destination": "/api/dashboard"
     },
     {
+      "source": "/dashboard-next",
+      "destination": "/api/dashboard-next"
+    },
+    {
+      "source": "/dashboard-next-data",
+      "destination": "/api/dashboard-next-data"
+    },
+    {
       "source": "/dashboard-black",
       "destination": "/api/dashboard-black"
     },
@@ -275,6 +283,9 @@
     },
     "api/dashboard-v2.js": {
       "includeFiles": "_dashboard_v2.html"
+    },
+    "api/dashboard-next.js": {
+      "includeFiles": "_dashboard_next.html"
     },
     "api/search.js": {
       "includeFiles": "_search.html"

@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>MarketPrism NEXT — Narrative Weather</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080B11; --deep:#0C0D14; --surface:#0C1018; --surface2:#181922;
+  --border:rgba(255,255,255,.06); --border2:rgba(255,255,255,.12);
+  --t1:#F5F7FA; --t2:#D1D5DB; --t3:#9CA3AF;
+  --blue:#00AEFF; --cyan:#4DC8F0; --teal:#00DE94; --violet:#7B61FF; --red:#FF4D4D; --amber:#FFB800;
+  --font:'Inter','DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t1);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--cyan);text-decoration:none}
+.wrap{max-width:1440px;margin:0 auto;padding:0 22px 80px}
+
+/* ── topbar ─────────────────────────────────────────────── */
+.topbar{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--border);position:sticky;top:0;background:linear-gradient(180deg,var(--bg) 82%,transparent);z-index:40}
+.brand{font-weight:900;font-size:18px;letter-spacing:-.02em}
+.brand .px{color:var(--blue)}
+.next-badge{background:rgba(0,174,255,.12);color:var(--blue);border:1px solid rgba(0,174,255,.3);border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800;letter-spacing:.1em}
+.tb-date{color:var(--t3);font-size:13px}
+.tb-links{margin-left:auto;display:flex;gap:16px;font-size:13px}
+.tb-links a{color:var(--t3)} .tb-links a:hover{color:var(--cyan)}
+
+/* ── hero strip ─────────────────────────────────────────── */
+.hero{padding:26px 0 8px}
+.hero h1{font-size:26px;font-weight:900;margin:0 0 4px;letter-spacing:-.02em}
+.hero .sub{color:var(--t3);font-size:14px;max-width:820px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:18px 0 6px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.stat .k{color:var(--t3);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.stat .v{font-size:24px;font-weight:800;margin-top:2px}
+.stat .n{color:var(--t3);font-size:12px}
+
+/* ── sections ───────────────────────────────────────────── */
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:30px 0 12px}
+.sec-h h2{font-size:16px;font-weight:800;margin:0;letter-spacing:-.01em}
+.sec-h .tag{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;letter-spacing:.06em}
+.tag.alpha{background:rgba(0,222,148,.12);color:var(--teal);border:1px solid rgba(0,222,148,.3)}
+.tag.meas{background:rgba(123,97,255,.12);color:var(--violet);border:1px solid rgba(123,97,255,.3)}
+.sec-h .note{color:var(--t3);font-size:12px}
+
+/* ── weather map ────────────────────────────────────────── */
+.wmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.wtile{border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:transform .12s,border-color .12s;background:var(--surface)}
+.wtile:hover{transform:translateY(-2px);border-color:var(--border2)}
+.wtile.active{border-color:var(--blue)}
+.wtile .name{font-weight:700;font-size:13px;margin-bottom:6px;color:var(--t2)}
+.wtile .front{font-size:22px;font-weight:900}
+.wtile .front .dir{font-size:14px;vertical-align:2px}
+.wtile .meta{display:flex;gap:10px;margin-top:8px;font-size:12px;color:var(--t3)}
+.wtile .meta b{color:var(--t2)}
+
+/* ── chips ──────────────────────────────────────────────── */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--surface2);cursor:pointer}
+.chip small{color:var(--t3);font-weight:500;margin-left:6px}
+.chip.ember{border-color:rgba(255,184,0,.35);background:rgba(255,184,0,.08)}
+.chip.trap{border-color:rgba(255,77,77,.35);background:rgba(255,77,77,.07)}
+.empty{color:var(--t3);font-size:13px;padding:8px 2px}
+
+/* ── ticker grid ────────────────────────────────────────── */
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.controls input,.controls select{background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--t1);padding:8px 12px;font-size:13px;font-family:var(--font);outline:none}
+.controls input:focus,.controls select:focus{border-color:var(--blue)}
+.controls .clear{color:var(--t3);font-size:12px;cursor:pointer}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:10px}
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:border-color .12s}
+.tcard:hover{border-color:var(--border2)}
+.tcard .r1{display:flex;align-items:center;gap:8px}
+.tcard .tk{font-weight:800;font-size:15px}
+.tcard .sect{color:var(--t3);font-size:11px;margin-left:auto;text-align:right}
+.tcard .r2{margin:7px 0 8px}
+.vchip{display:inline-block;font-size:11px;font-weight:700;border-radius:7px;padding:2px 8px}
+.tcard .r3{display:flex;gap:10px;font-size:12px;color:var(--t3)}
+.tcard .r3 b{color:var(--t2);font-weight:600}
+.dot-ember{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.ehz{font-size:10px;font-weight:800;color:var(--red);border:1px solid rgba(255,77,77,.4);border-radius:6px;padding:1px 5px}
+
+/* ── dossier drawer ─────────────────────────────────────── */
+.drawer{position:fixed;top:0;right:-460px;width:min(440px,94vw);height:100vh;background:var(--deep);border-left:1px solid var(--border2);z-index:60;transition:right .22s ease;overflow-y:auto;padding:26px 24px 40px}
+.drawer.open{right:0}
+.drawer .close{position:absolute;top:16px;right:18px;color:var(--t3);cursor:pointer;font-size:20px;background:none;border:none}
+.d-head{display:flex;align-items:baseline;gap:12px;margin-bottom:2px}
+.d-head .tk{font-size:30px;font-weight:900}
+.d-head .px2{color:var(--t2);font-size:16px}
+.d-sub{color:var(--t3);font-size:13px;margin-bottom:14px}
+.d-banner{border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;margin-bottom:14px}
+.pillars{margin:16px 0}
+.pillar{margin-bottom:11px}
+.pillar .pl{display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:4px}
+.pillar .pl b{color:var(--t2)}
+.bar{height:7px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px}
+.d-kv{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0}
+.d-kv .cell{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 11px}
+.d-kv .k{color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.07em}
+.d-kv .v{font-size:15px;font-weight:700;margin-top:1px}
+.d-note{color:var(--t3);font-size:12px;border-top:1px solid var(--border);padding-top:12px;margin-top:16px}
+.d-links{display:flex;gap:14px;margin-top:14px;font-size:13px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.show{opacity:1;pointer-events:auto}
+
+/* ── footer ─────────────────────────────────────────────── */
+.ledger{margin-top:44px;border-top:1px solid var(--border);padding-top:16px;color:var(--t3);font-size:12px;max-width:900px}
+.ledger b{color:var(--t2)}
+.loading{padding:60px 0;text-align:center;color:var(--t3)}
+@media (max-width:640px){ .hero h1{font-size:21px} .drawer{width:100vw} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">Market<span class="px">Prism</span></div>
+    <span class="next-badge">NEXT</span>
+    <span class="tb-date" id="tb-date"></span>
+    <div class="tb-links">
+      <a href="/dashboard">Classic dashboard</a>
+      <a href="/dashboard?tab=universe">3D Universe</a>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1>Narrative Weather</h1>
+    <div class="sub" id="hero-line">Reading the narrative field…</div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div id="app" class="loading">Loading the narrative field…</div>
+
+  <div class="ledger">
+    <b>The honesty ledger.</b> Alpha claims on this page are confined to the validated
+    registry lanes (WKS sector rotation · EXHAUST_HIGHCONF · LOW_MASS). Everything else —
+    verdicts, traps, coordination, drift — is <b>forensic measurement of narrative
+    structure</b>, validated against structure outcomes, never returns. Surfaces are
+    labeled accordingly.
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<script>
+'use strict';
+const VERDICT_COLORS = {
+  'Structurally Supported':'#00DE94','High Conviction Continuation':'#00DE94',
+  'Accumulate':'#7BE89A','Low Risk':'#7BE89A','Monitoring':'#A0A8B0',
+  'Elevated Risk':'#FFB800','Regime Uncertainty':'#A0A8B0','Overvalued Stable':'#FFB800',
+  'Exhausted Narrative':'#4DC8F0','Near-Trap Watch':'#FFB800','Coordinated Watch':'#FFB800',
+  'Narrative Risk':'#FF8C00','Narrative Trap':'#FF4D4D','Air Pocket Short':'#FF4D4D',
+  'Drift Compression Short':'#FF4D4D','Omission Cascade':'#FF8C00',
+};
+const vcol = v => VERDICT_COLORS[v] || '#A0A8B0';
+let DATA = null, secFilter = null, sortKey = 'wks', query = '';
+
+const fmt = (v,d=1) => (v===null||v===undefined||Number.isNaN(v)) ? '—' : Number(v).toFixed(d);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function boot(){
+  try{
+    const r = await fetch('/dashboard-next-data');
+    if(r.status===401){ location.reload(); return; }
+    DATA = await r.json();
+    if(DATA.error) throw new Error(DATA.error);
+    render();
+  }catch(e){
+    document.getElementById('app').innerHTML =
+      '<div class="loading">Could not load data: '+esc(e.message)+'</div>';
+  }
+}
+
+function heroStats(){
+  const T = DATA.tickers;
+  const embers = T.filter(x=>x.ember);
+  const exhausting = T.filter(x=>x.regime==='EXHAUSTING');
+  const traps = T.filter(x=>x.v==='Narrative Trap');
+  const risks = T.filter(x=>x.v==='Narrative Risk');
+  const wksPos = T.filter(x=>x.wks!==null&&x.wks>0).length;
+  const wksN = T.filter(x=>x.wks!==null).length;
+  const breadth = wksN? Math.round(100*wksPos/wksN) : 0;
+  const horizon = T.filter(x=>x.d2e!==null&&x.d2e>=0&&x.d2e<=3).length;
+
+  document.getElementById('tb-date').textContent = DATA.date;
+  const topSec = DATA.sectors[0], botSec = DATA.sectors[DATA.sectors.length-1];
+  document.getElementById('hero-line').innerHTML =
+    'Energy is flowing into <b>'+esc(topSec?.name)+'</b> and out of <b>'+esc(botSec?.name)+'</b>. '
+    + exhausting.length+' narrative'+(exhausting.length===1?' is':'s are')+' in the exhaustion regime — <b>'+embers.length
+    +' burning at high confidence</b> (the validated cohort). '+traps.length+' Narrative Trap'
+    +(traps.length===1?'':'s')+' and '+risks.length+' Narrative Risk flag'+(risks.length===1?'':'s')+' on the tape. '
+    + horizon+' names inside the event horizon (≤3 days to earnings).';
+
+  document.getElementById('stats').innerHTML = [
+    ['Universe', DATA.count, 'scored today'],
+    ['WKS breadth', breadth+'%', 'names with positive energy'],
+    ['Ember cohort', embers.length, 'EXHAUST_HIGHCONF (validated)'],
+    ['Traps + Risks', traps.length+risks.length, 'forensic measurement'],
+    ['Event horizon', horizon, '≤3 days to earnings'],
+  ].map(s=>'<div class="stat"><div class="k">'+s[0]+'</div><div class="v">'+s[1]+'</div><div class="n">'+s[2]+'</div></div>').join('');
+}
+
+function tileBg(wks){
+  if(wks===null) return 'var(--surface)';
+  const a = Math.min(Math.abs(wks)/40, .55);
+  return wks>=0 ? 'linear-gradient(160deg, rgba(0,222,148,'+(a*.5)+'), rgba(0,222,148,'+(a*.16)+'))'
+                : 'linear-gradient(160deg, rgba(255,77,77,'+(a*.5)+'), rgba(255,77,77,'+(a*.16)+'))';
+}
+
+function weatherMap(){
+  return '<div class="sec-h"><h2>Sector Weather Map</h2><span class="tag alpha">WKS SECTOR ROTATION — VALIDATED</span>'
+    +'<span class="note">fronts = mean WKS energy per sector · click to filter</span></div>'
+    +'<div class="wmap">'+DATA.sectors.map(s=>{
+      const dir = s.wks===null?'':(s.wks>=0?'<span class="dir" style="color:var(--teal)">▲</span>':'<span class="dir" style="color:var(--red)">▼</span>');
+      return '<div class="wtile'+(secFilter===s.name?' active':'')+'" style="background:'+tileBg(s.wks)+'" onclick="toggleSec(\''+esc(s.name).replace(/'/g,"\\'")+'\')">'
+        +'<div class="name">'+esc(s.name)+'</div>'
+        +'<div class="front">'+fmt(s.wks)+' '+dir+'</div>'
+        +'<div class="meta"><span><b>'+s.n+'</b> names</span>'
+        +(s.embers?'<span>🔥 <b>'+s.embers+'</b></span>':'')
+        +((s.traps+s.risks)?'<span>⚠ <b>'+(s.traps+s.risks)+'</b></span>':'')
+        +'</div></div>';
+    }).join('')+'</div>';
+}
+
+function emberRow(){
+  const embers = DATA.tickers.filter(x=>x.ember).sort((a,b)=>(b.conf??0)-(a.conf??0));
+  return '<div class="sec-h"><h2>Ember Storm Cells</h2><span class="tag alpha">EXHAUST_HIGHCONF — VALIDATED LONG LANE</span>'
+    +'<span class="note">exhaustion regime × confidence ≥ 55 · magnitude edge, holds build to 10–14d</span></div>'
+    +'<div class="chips">'+(embers.length? embers.map(x=>
+      '<div class="chip ember" onclick="openDossier(\''+x.t+'\')">🔥 '+x.t+'<small>conf '+fmt(x.conf,0)+' · wks '+fmt(x.wks)+'</small></div>'
+    ).join(''):'<div class="empty">No high-confidence exhaustion cells today.</div>')+'</div>';
+}
+
+function trapRow(){
+  const traps = DATA.tickers.filter(x=>x.v==='Narrative Trap'||x.v==='Narrative Risk')
+    .sort((a,b)=>(a.v==='Narrative Trap'?0:1)-(b.v==='Narrative Trap'?0:1));
+  return '<div class="sec-h"><h2>Trap Watch</h2><span class="tag meas">FORENSIC MEASUREMENT</span>'
+    +'<span class="note">valuation-anchored structure flags — not falsity labels, not trade signals</span></div>'
+    +'<div class="chips">'+(traps.length? traps.map(x=>
+      '<div class="chip trap" onclick="openDossier(\''+x.t+'\')">'+(x.v==='Narrative Trap'?'⛔':'⚠')+' '+x.t
+      +'<small>'+esc(x.v)+' · FVD '+fmt(x.fvd,0)+'%</small></div>'
+    ).join(''):'<div class="empty">No trap or risk verdicts today.</div>')+'</div>';
+}
+
+function tickerGrid(){
+  let T = DATA.tickers.slice();
+  if(secFilter) T = T.filter(x=>x.sec===secFilter);
+  if(query) T = T.filter(x=>x.t.toUpperCase().includes(query));
+  const key = sortKey;
+  T.sort((a,b)=>((b[key]??-1e9))-((a[key]??-1e9)));
+  return '<div class="sec-h"><h2>The Field</h2><span class="note">'+T.length+' names'
+    +(secFilter?' · '+esc(secFilter)+' <span class="clear" onclick="toggleSec(null)">✕ clear</span>':'')+'</span></div>'
+    +'<div class="controls">'
+    +'<input placeholder="Search ticker…" value="'+esc(query)+'" oninput="setQuery(this.value)">'
+    +'<select onchange="setSort(this.value)">'
+    +['wks:WKS energy','conf:Confidence','drift:Drift','fvd:FVD','mass:Narrative mass','nrs:Risk (NRS)']
+      .map(o=>{const[k,l]=o.split(':');return '<option value="'+k+'"'+(sortKey===k?' selected':'')+'>'+l+'</option>';}).join('')
+    +'</select></div>'
+    +'<div class="tgrid">'+T.map(x=>{
+      const c = vcol(x.v);
+      return '<div class="tcard" onclick="openDossier(\''+x.t+'\')">'
+        +'<div class="r1"><span class="tk">'+x.t+'</span>'
+        +(x.ember?'<span class="dot-ember" title="EXHAUST_HIGHCONF cohort"></span>':'')
+        +((x.d2e!==null&&x.d2e>=0&&x.d2e<=3)?'<span class="ehz">E-'+x.d2e+'</span>':'')
+        +'<span class="sect">'+esc(x.sec)+'</span></div>'
+        +'<div class="r2"><span class="vchip" style="color:'+c+';background:'+c+'1f;border:1px solid '+c+'55">'+esc(x.v||'—')+'</span></div>'
+        +'<div class="r3"><span>wks <b>'+fmt(x.wks)+'</b></span><span>conf <b>'+fmt(x.conf,0)+'</b></span><span>fvd <b>'+fmt(x.fvd,0)+'%</b></span></div>'
+        +'</div>';
+    }).join('')+'</div>';
+}
+
+function render(){
+  heroStats();
+  document.getElementById('app').classList.remove('loading');
+  document.getElementById('app').innerHTML = weatherMap()+emberRow()+trapRow()+tickerGrid();
+}
+function toggleSec(name){ secFilter = (secFilter===name||name===null)?null:name; render(); }
+function setSort(k){ sortKey = k; render(); }
+function setQuery(v){ query = v.toUpperCase(); render(); }
+
+function pillar(label, val, max, invert, note){
+  if(val===null||val===undefined) return '';
+  const pct = Math.max(0,Math.min(100, 100*val/max));
+  const good = invert ? pct<40 : pct>60;
+  const col = good?'var(--teal)':(invert?(pct>70?'var(--red)':'var(--amber)'):(pct<35?'var(--red)':'var(--amber)'));
+  return '<div class="pillar"><div class="pl"><span>'+label+(note?' <span style="opacity:.6">· '+note+'</span>':'')+'</span><b>'+fmt(val,0)+'</b></div>'
+    +'<div class="bar"><i style="width:'+pct+'%;background:'+col+'"></i></div></div>';
+}
+
+function openDossier(t){
+  const x = DATA.tickers.find(z=>z.t===t); if(!x) return;
+  const c = vcol(x.v);
+  const eh = (x.d2e!==null&&x.d2e>=0&&x.d2e<=3);
+  document.getElementById('drawer').innerHTML =
+    '<button class="close" onclick="closeDrawer()">✕</button>'
+    +'<div class="d-head"><span class="tk">'+x.t+'</span><span class="px2">'+(x.price!==null?'$'+fmt(x.price,2):'')+'</span></div>'
+    +'<div class="d-sub">'+esc(x.sec)+' · regime '+esc(x.regime||'—')+' · tone '+esc(x.tone||'—')+'</div>'
+    +'<span class="vchip" style="font-size:13px;padding:4px 12px;color:'+c+';background:'+c+'1f;border:1px solid '+c+'55">'+esc(x.v||'—')+'</span>'
+    +(eh?'<div class="d-banner" style="background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.35);color:var(--red);margin-top:12px">⚠ EVENT HORIZON — earnings in '+x.d2e+' day'+(x.d2e===1?'':'s')+'. Long lanes blackout 1d; physics verdict EVENT_HORIZON_ACTIVE inside 3d.</div>':'')
+    +(x.ember?'<div class="d-banner" style="background:rgba(255,184,0,.09);border:1px solid rgba(255,184,0,.3);color:var(--amber);margin-top:10px">🔥 EXHAUST_HIGHCONF cohort — validated long lane (day-clustered t≈4.0, magnitude edge; returns build to 10–14d).</div>':'')
+    +'<div class="pillars">'
+    + pillar('Verification (VMS)', x.vms, 100, false, 'SEC filing alignment')
+    + pillar('Source authority (SRS)', x.srs, 100, false, 'carrier credibility')
+    + pillar('Confidence', x.conf, 100, false, 'capped at 55 outside crash physics')
+    + pillar('Drift', x.drift, 100, true, 'framing vs filings — read explanation before trusting')
+    + pillar('Coordination', x.coord, 100, true, 'cross-source timing/phrasing')
+    + pillar('Risk (NRS)', x.nrs, 100, true, '')
+    +'</div>'
+    +'<div class="d-kv">'
+    +'<div class="cell"><div class="k">FVD</div><div class="v">'+fmt(x.fvd,0)+'%</div></div>'
+    +'<div class="cell"><div class="k">Narrative mass</div><div class="v">'+fmt(x.mass)+'</div></div>'
+    +'<div class="cell"><div class="k">WKS energy</div><div class="v">'+fmt(x.wks)+'</div></div>'
+    +'<div class="cell"><div class="k">Days to earnings</div><div class="v">'+(x.d2e===null?'—':x.d2e)+'</div></div>'
+    +'<div class="cell"><div class="k">Coordination class</div><div class="v" style="font-size:12px">'+esc(x.coordCls||'—')+'</div></div>'
+    +'<div class="cell"><div class="k">Suspicion class</div><div class="v" style="font-size:12px">'+esc(x.suspCls||'—')+'</div></div>'
+    +'</div>'
+    +'<div class="d-note">Suspicion is a trading-footprint read, not a narrative verdict — NORMAL here does not mean "nothing manipulative." The forensic layer measures narrative structure; trade signals live only in the registry lanes.</div>'
+    +'<div class="d-links"><a href="/dashboard?tab=universe">Open in 3D Universe →</a><a href="/ticker/'+x.t+'">Full ticker page →</a></div>';
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+boot();
+</script>
+</body>
+</html>
