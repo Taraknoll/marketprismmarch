@@ -6452,14 +6452,71 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
       <script>
       (function(){
         'use strict';
+        // Each pane loads a same-origin route (/ask, /search) in an iframe. The
+        // overlay is cleared by the iframe 'load' event — but that event never
+        // fires if the request hangs (e.g. a slow/stalled auth verify under DB
+        // load), net-errors, or the route isn't served in this environment. So
+        // the loader is defensive: a watchdog + error handler turn an otherwise
+        // infinite spinner into an actionable Retry / open-in-new-tab fallback.
+        var LABELS={ask:'anomaly agent',lab:'Narrative Lab'};
+        var ROUTE={ask:'/ask',lab:'/search'};
+        var LOAD_TIMEOUT_MS=15000;
+        var timers={},state={};   // state[which]: 'loading' | 'loaded' | 'error'
+        function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+        function setSpinner(which){
+          var l=document.getElementById('al-load-'+which);
+          if(l){l.style.display='';l.textContent='Loading the '+(LABELS[which]||'view')+'…';}
+        }
+        function showFallback(which){
+          var l=document.getElementById('al-load-'+which);if(!l)return;
+          var label=LABELS[which]||'view',href=ROUTE[which]||'/';
+          l.style.display='';
+          l.innerHTML='<div style="max-width:440px;margin:0 auto;line-height:1.6;">'
+            +'<div style="font-size:14px;color:var(--mp-text-secondary);margin-bottom:6px;">The '+esc(label)+' is taking longer than usual to load.</div>'
+            +'<div style="font-size:13px;color:var(--mp-text-tertiary);margin-bottom:18px;">This can happen when the service is under heavy load. Try again, or open it in its own tab.</div>'
+            +'<button type="button" class="al-retry" style="font-family:inherit;font-size:13px;font-weight:600;padding:9px 22px;border-radius:10px;border:1px solid var(--mp-cyan,#4DC8F0);background:rgba(77,200,240,0.08);color:var(--mp-cyan,#4DC8F0);cursor:pointer;margin-right:12px;">Retry</button>'
+            +'<a href="'+esc(href)+'" target="_blank" rel="noopener" style="font-size:13px;color:var(--mp-text-tertiary);text-decoration:underline;">Open in a new tab &#8599;</a>'
+            +'</div>';
+          var btn=l.querySelector('.al-retry');
+          if(btn)btn.addEventListener('click',function(){ start(which); });
+        }
+        function settle(which,ok){
+          if(state[which]==='loaded')return;      // already good — ignore a late error
+          if(timers[which]){clearTimeout(timers[which]);timers[which]=null;}
+          var f=document.getElementById('al-frame-'+which),l=document.getElementById('al-load-'+which);
+          if(ok){
+            state[which]='loaded';
+            if(l)l.style.display='none';
+            if(f)f.style.display='';
+          }else{
+            state[which]='error';
+            if(f)f.style.display='none';
+            showFallback(which);
+          }
+        }
+        function start(which){
+          var f=document.getElementById('al-frame-'+which);if(!f)return;
+          state[which]='loading';
+          setSpinner(which);
+          f.style.display='none';
+          if(!f._alWired){
+            f._alWired=true;
+            f.addEventListener('load',function(){
+              if(!f.getAttribute('src'))return;    // skip the initial about:blank load
+              settle(which,true);
+            });
+            f.addEventListener('error',function(){ settle(which,false); });
+          }
+          if(timers[which])clearTimeout(timers[which]);
+          timers[which]=setTimeout(function(){ if(state[which]!=='loaded')settle(which,false); },LOAD_TIMEOUT_MS);
+          var base=f.getAttribute('data-src')||ROUTE[which]||'/';
+          // Cache-bust so Retry always forces a fresh navigation (responses are no-store anyway).
+          try{f.removeAttribute('src');}catch(e){}
+          f.src=base+(base.indexOf('?')<0?'?':'&')+'_r='+Date.now();
+        }
         function load(which){
-          var f=document.getElementById('al-frame-'+which);
-          if(!f||f.src)return;
-          f.addEventListener('load',function(){
-            var l=document.getElementById('al-load-'+which);if(l)l.style.display='none';
-            f.style.display='';
-          });
-          f.src=f.getAttribute('data-src');
+          if(state[which]==='loading'||state[which]==='loaded')return;  // already up / in flight
+          start(which);
         }
         window.alMode=function(which){
           ['ask','lab'].forEach(function(k){
@@ -6471,7 +6528,9 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
           try{localStorage.setItem('mp_ailab_mode',which);}catch(e){}
         };
         function wire(){
-          if(typeof onTabSwitch!=='function')return;
+          // onTabSwitch is defined by the main dashboard script; if it hasn't run
+          // yet, retry rather than silently never registering the hook.
+          if(typeof onTabSwitch!=='function'){ setTimeout(wire,200); return; }
           onTabSwitch(function(id){
             if(id!=='ailab')return;
             var pref='ask';try{pref=localStorage.getItem('mp_ailab_mode')||'ask';}catch(e){}
