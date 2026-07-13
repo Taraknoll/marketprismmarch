@@ -276,7 +276,7 @@
   }
   /* Floating "on this day" info card (Forensics-style, follows cursor) */
   .sl-day-card {
-    position: absolute; top: 0; left: 0; z-index: 12; width: 220px; pointer-events: none; opacity: 0;
+    position: absolute; top: 0; left: 0; z-index: 12; width: 300px; pointer-events: none; opacity: 0;
     transition: opacity 0.12s; background: var(--mp-surface2, #111927); border: 1px solid var(--mp-border-hover, rgba(255,255,255,0.14));
     border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 12px 13px; font-family: var(--font-body);
   }
@@ -293,9 +293,9 @@
   .sl-dc-px small { font-size: 12px; color: var(--mp-text-tertiary); font-weight: 500; margin-left: 7px; }
   .sl-dc-themes-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mp-text-tertiary); margin-bottom: 7px; }
   .sl-dc-narr { margin-bottom: 12px; }
-  .sl-dc-story { display: flex; gap: 7px; align-items: flex-start; font-size: 12px; line-height: 1.45; color: var(--mp-text-secondary); }
+  .sl-dc-story { display: flex; gap: 7px; align-items: flex-start; font-size: 13px; line-height: 1.45; color: var(--mp-text-secondary); }
   .sl-dc-storydot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
-  .sl-rail-storytext { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .sl-rail-storytext { display: -webkit-box; -webkit-line-clamp: 6; line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
   .sl-dc-themes { display: flex; flex-direction: column; gap: 6px; }
   .sl-rail-nrow { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--mp-text-primary); }
   .sl-rail-ndot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
@@ -320,7 +320,7 @@
     .sl-cluster-wrap { padding: 4px 8px 6px; }
     .sl-cluster-head { padding: 8px 8px 2px; }
     .sl-cluster-title { font-size: 14px; }
-    .sl-day-card { width: 196px; }
+    .sl-day-card { width: 260px; }
     .sl-toggles { gap: 5px; }
     .sl-tog { padding: 4px 9px; font-size: 11px; }
   }
