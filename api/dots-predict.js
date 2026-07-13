@@ -165,11 +165,42 @@ function aggregate(neighbors) {
     }
     return wSum > 0 ? sum / wSum : null;
   }
+  // Weighted p25/p75 band per horizon — mirrors dot_predictor.weighted_quantile
+  // (step function, passed-in weights as the denominator so sparse-coverage
+  // horizons still cross the 0.75 threshold). Feeds the aggregator's
+  // in_iqr_rate calibration, which was NULL only because this band was never
+  // written into response_payload.
+  function wQuantile(col, q) {
+    const pairs = [];
+    for (let i = 0; i < resolved.length; i++) {
+      const v = resolved[i][col];
+      if (v == null || isNaN(Number(v))) continue;
+      pairs.push([Number(v), weights[i]]);
+    }
+    if (!pairs.length) return null;
+    const localTotal = pairs.reduce(function (a, p) { return a + p[1]; }, 0) || 1;
+    pairs.sort(function (a, b) { return a[0] - b[0]; });
+    let cum = 0;
+    for (let i = 0; i < pairs.length; i++) {
+      cum += pairs[i][1] / localTotal;
+      if (cum >= q) return pairs[i][0];
+    }
+    return pairs[pairs.length - 1][0];
+  }
+  function band(col) {
+    const lo = wQuantile(col, 0.25);
+    const hi = wQuantile(col, 0.75);
+    if (lo == null || hi == null) return null;
+    return [Math.round(lo * 10000) / 10000, Math.round(hi * 10000) / 10000];
+  }
   return {
     bullshit: wMean('bullshit_probability'),
     p5:  wMean('return_5d'),
     p10: wMean('return_10d'),
     p20: wMean('return_20d'),
+    p5_band:  band('return_5d'),
+    p10_band: band('return_10d'),
+    p20_band: band('return_20d'),
     weights: weights,
     resolved: resolved
   };
@@ -385,6 +416,9 @@ module.exports = async function (req, res) {
       predicted_5d_return:  round2(agg.p5),
       predicted_10d_return: round2(agg.p10),
       predicted_20d_return: round2(agg.p20),
+      predicted_5d_return_p25_p75:  agg.p5_band,
+      predicted_10d_return_p25_p75: agg.p10_band,
+      predicted_20d_return_p25_p75: agg.p20_band,
       neighbor_examples: (function () {
         // Dedupe by (ticker, speaker, observed_at, narrative_text) so the
         // same source post indexed twice in narrative_dots doesn't render
