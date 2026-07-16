@@ -17072,6 +17072,16 @@ var _liveQuotesInFlight=false;
 var _liveQuotesObserver=null;
 var _liveQuotesKickPending=false;
 var _liveQuotesFastRetryTimer=null;
+// Tickers a healthy response came back unable to price (thinly-traded ADRs like
+// VEOEY sit outside the snapshot feed, or arrive with a null changePct). Their
+// spans stay blank permanently, so they must not count as "still loading" — one
+// of them is enough to keep the fast-retry below rescheduling forever.
+var _liveQuotesUnpriced=Object.create(null);
+// Fast-retry is a bounded catch-up for rows that render late or a cold-start
+// miss — NOT a polling cadence. Intraday auto-refresh is deliberately off (see
+// the initial kick below), and each retry repaints every price on the page, so
+// an uncapped budget shows up as numbers visibly churning every few seconds.
+var _liveQuotesRetriesLeft=3;
 
 function _fmtLivePrice(p){
   if(p==null)return'';
@@ -17108,6 +17118,16 @@ async function liveQuotesRefreshDaily(){
     // Stash quotes so other renderers (sector sentiment override) can reuse
     // this single fetch without re-calling the batch endpoint.
     window.__LIVE_QUOTES_CACHE=quotes;
+    // A ticker the endpoint answered for but couldn't price won't price on a
+    // retry either — remember it so the blank-row check below ignores it. Only
+    // trusted when the response itself was healthy, so a transient empty reply
+    // can't strand a good ticker.
+    if(ok){
+      list.forEach(function(t){
+        var q=quotes[t];
+        if(!q||q.changePct==null)_liveQuotesUnpriced[t]=1;
+      });
+    }
     document.querySelectorAll('[data-live-price]').forEach(function(el){
       var t=el.getAttribute('data-live-price');
       var q=quotes[t];
@@ -17201,17 +17221,22 @@ async function liveQuotesRefreshDaily(){
   }finally{
     _liveQuotesInFlight=false;
   }
-  // If the fetch failed OR some rows are still empty, schedule a fast retry
-  // instead of waiting for the next 30s scheduled tick.
+  // If the fetch failed OR some rows are still empty, schedule a fast retry —
+  // capped, because there is no scheduled tick behind it to fall back to.
   if(!ok){_liveQuotesFastRetry(2000);return;}
   var anyEmpty=false;
   document.querySelectorAll('[data-live-change]').forEach(function(el){
-    if(!el.textContent)anyEmpty=true;
+    if(el.textContent)return;
+    var t=el.getAttribute('data-live-change');
+    if(t&&_liveQuotesUnpriced[t])return;
+    anyEmpty=true;
   });
   if(anyEmpty)_liveQuotesFastRetry(3000);
 }
 
 function _liveQuotesFastRetry(ms){
+  if(_liveQuotesRetriesLeft<=0)return;
+  _liveQuotesRetriesLeft--;
   if(_liveQuotesFastRetryTimer){clearTimeout(_liveQuotesFastRetryTimer);}
   _liveQuotesFastRetryTimer=setTimeout(function(){
     _liveQuotesFastRetryTimer=null;
@@ -17224,6 +17249,10 @@ function _liveQuotesFastRetry(ms){
 function _liveQuotesKick(){
   if(_liveQuotesKickPending)return;
   _liveQuotesKickPending=true;
+  // Fresh rows are a new reason to catch up, so restore the retry budget. Safe
+  // to do here rather than on every refresh: kicks are driven by actual DOM
+  // renders (hydration, Show more, lane refresh), which are finite.
+  _liveQuotesRetriesLeft=3;
   setTimeout(function(){
     _liveQuotesKickPending=false;
     liveQuotesRefreshDaily();
