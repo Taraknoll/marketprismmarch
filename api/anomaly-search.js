@@ -9,23 +9,19 @@ const requireAuth = require('./_require-auth');
 // rest of the dashboard (see lib/mp-core.js MP.rest). No server SQL, no LLM, no
 // new dependency or env: SUPABASE_URL / SUPABASE_ANON already exist in prod.
 //
-// PRIVATE BETA: requires the beta-code cookie (mp_beta), not just any login.
-// Non-beta visitors are bounced to /login to enter a code (validated vs BETA_CODES).
-// Linked in the app sidebar as "AI Search" (/ask). noindex.
+// Fronted by server-side requireAuth (login + the ENFORCE_SUBSCRIPTION kill
+// switch), same as /signal-lab and /narrative-heatmap since the beta-code
+// retirement. It must NOT additionally require the mp_beta cookie: the code
+// redemption UI is gone, so a logged-in user without the cookie would be
+// bounced to /login, which sees the valid session and bounces straight back —
+// an infinite /ask↔/login loop inside the AI Lab iframe whose every /login
+// pass fires a SIGNED_IN broadcast into all open tabs.
+// Linked in the app sidebar as "AI Lab" (/ask). noindex.
 // ──────────────────────────────────────────────────────────────────────────
 
 module.exports = async (req, res) => {
   const auth = await requireAuth(req, res);
   if (!auth) return;
-  // Private beta: must hold a valid beta code (mp_beta). Logged-in users without
-  // a code are sent to /login to enter one.
-  if (!auth.hasBeta) {
-    res.statusCode = 302;
-    res.setHeader('Location', '/login?next=%2Fask');
-    res.setHeader('Cache-Control', 'no-store');
-    res.end();
-    return;
-  }
   try {
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseAnon = process.env.SUPABASE_ANON || '';

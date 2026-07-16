@@ -1159,13 +1159,12 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Gated: PRIVATE BETA — require the beta-code cookie (mp_beta), not just any login.
+  // Gated by requireAuth (login + the ENFORCE_SUBSCRIPTION kill switch) — the
+  // extra mp_beta requirement is retired along with the beta-code program, and
+  // must match the /ask page gate: the page serving while this API 403'd would
+  // strand every logged-in user at an unusable agent.
   const auth = await requireAuth(req, res, { jsonOnly: true });
   if (!auth) return;
-  if (!auth.hasBeta) {
-    res.status(403).json({ ok: false, answer: '', cards: [], debug: { ...debug, ms: Date.now() - started }, error: 'beta_required' });
-    return;
-  }
 
   let messages;
   try {
