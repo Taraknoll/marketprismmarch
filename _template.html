@@ -9194,7 +9194,7 @@ var TLS_ROWS=[],TLS_FILTER='top',TLS_CAP=8;
 // Teaser-blur state for non-paying users. FAIL-OPEN: both stay false (no blur) until a
 // subscription has positively resolved as "no access". Paying subscribers, beta users
 // and the admin email all pass BILLING.hasAccess() → never locked. See mpRecomputeTeaser().
-var MP_TEASER_LOCKED=false, MP_SUB_RESOLVED=false;
+var MP_TEASER_LOCKED=false, MP_SUB_RESOLVED=false, _MP_TEASER_APPLIED=null;
 // Conviction: direction-aligned model probability for the lane's horizon.
 // Used for RANKING only — deliberately not displayed (a ~55 probability
 // reads as a weak score and confused users).
@@ -9345,6 +9345,17 @@ function mpRecomputeTeaser(subscription){
   // Lab, Market Physics) + their .mp-tcta banners. CSS keys off this class so
   // re-rendered lists re-lock without per-renderer hooks.
   document.body.classList.toggle('mp-teaser-locked', locked);
+  // The slate's only dependency on the subscription is `locked`, so rebuilding it when that
+  // hasn't changed replaces every row's innerHTML for nothing — which blanks the live change %,
+  // reverts the price to the stale snapshot and drops the ✓/✗ hit marks until the quote observer
+  // repaints ~300ms later. That round trip is visible as a flash. loadSubscriptionStatus() calls
+  // this twice per invocation (reset-to-null, then the resolved sub), and live — unlike the beta
+  // bypass, which resolves getSubscription() with no network — the second call lands after
+  // loadData() has already painted the rows. Data renders are unaffected: tlsSetRows() calls
+  // tlsRenderSlate() directly, and every tlsRenderSlate() ends in tlsApplyTeaser(), so the lock
+  // re-applies itself without this hook.
+  if(_MP_TEASER_APPLIED===locked) return;
+  _MP_TEASER_APPLIED=locked;
   if(typeof tlsRenderSlate==='function') tlsRenderSlate();
 }
 window.tlsShowMore=function(){TLS_CAP+=8;tlsRenderSlate();};
