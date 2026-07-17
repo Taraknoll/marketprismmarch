@@ -6,7 +6,7 @@ const resolveTemplate = require('./_resolve-template');
 const { buildTickerMeta, buildWebPageSchema } = require('../lib/seoHead');
 const { isHidden: isHiddenTicker } = require('./_hidden-tickers');
 
-const SITE = 'https://marketprism.co';
+const SITE = 'https://www.marketprism.co';
 
 module.exports = async (req, res) => {
   try {

@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const pageUrl = `https://marketprism.co/author/${slug.toLowerCase()}`;
+    const pageUrl = `https://www.marketprism.co/author/${slug.toLowerCase()}`;
     const seoTitle = `${author.name} — ${author.role} | Market Prism`;
     const seoDesc = author.bio.substring(0, 160);
 
@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
       `<meta name="description" content="${escAttr(seoDesc)}">`
     );
     html = html.replace(
-      '<link rel="canonical" id="canonical-url" href="https://marketprism.co">',
+      '<link rel="canonical" id="canonical-url" href="https://www.marketprism.co">',
       `<link rel="canonical" href="${escAttr(pageUrl)}">`
     );
     html = html.replace('content="" id="og-title"', `content="${escAttr(seoTitle)}" id="og-title"`);
@@ -91,7 +91,7 @@ module.exports = async (req, res) => {
       'worksFor': {
         '@type': 'Organization',
         'name': 'Market Prism',
-        'url': 'https://marketprism.co',
+        'url': 'https://www.marketprism.co',
       },
     };
     const profileSchema = {

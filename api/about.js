@@ -5,7 +5,7 @@ module.exports = (req, res) => {
     let html = resolveTemplate('_about.html');
 
     // ── SEO injection ──────────────────────
-    const pageUrl = 'https://marketprism.co/about';
+    const pageUrl = 'https://www.marketprism.co/about';
     const title = 'Built Out of Rage — Market Prism';
     const description = 'Why Market Prism exists: a forensic narrative engine for retail traders who got tired of being the exit liquidity. Built for the WSB-burned generation — and against the era of AI-generated market noise.';
 
@@ -29,7 +29,7 @@ module.exports = (req, res) => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://marketprism.co" },
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.marketprism.co" },
         { "@type": "ListItem", "position": 2, "name": "About", "item": pageUrl }
       ]
     };
@@ -44,7 +44,7 @@ module.exports = (req, res) => {
       "isPartOf": {
         "@type": "WebSite",
         "name": "Market Prism",
-        "url": "https://marketprism.co"
+        "url": "https://www.marketprism.co"
       }
     };
 

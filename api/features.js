@@ -4,7 +4,7 @@ module.exports = (req, res) => {
   try {
     let html = resolveTemplate('_features.html');
 
-    const pageUrl = 'https://marketprism.co/features';
+    const pageUrl = 'https://www.marketprism.co/features';
     const title = 'Features & Benefits — Market Prism';
     const description = 'Real, live screens from the Market Prism dashboard — and how the forensic narrative engine stacks up against Bloomberg, Yahoo, Seeking Alpha, FinChat and ChatGPT-style stock-tip wrappers. Not an LLM wrapper.';
 
@@ -23,7 +23,7 @@ module.exports = (req, res) => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://marketprism.co" },
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.marketprism.co" },
         { "@type": "ListItem", "position": 2, "name": "Features", "item": pageUrl }
       ]
     };
@@ -38,7 +38,7 @@ module.exports = (req, res) => {
       "isPartOf": {
         "@type": "WebSite",
         "name": "Market Prism",
-        "url": "https://marketprism.co"
+        "url": "https://www.marketprism.co"
       }
     };
 

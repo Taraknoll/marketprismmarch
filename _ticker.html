@@ -19,13 +19,13 @@
 <meta property="og:site_name" content="Market Prism™">
 <meta property="og:title" content="AI Stock Analysis — Market Prism™">
 <meta property="og:description" content="Deep AI-powered stock analysis with narrative scoring, sentiment signals, and institutional-grade equity intelligence.">
-<meta property="og:url" content="https://marketprism.co">
-<meta property="og:image" content="https://marketprism.co/og-default.png">
+<meta property="og:url" content="https://www.marketprism.co">
+<meta property="og:image" content="https://www.marketprism.co/og-default.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@marketprism">
 <meta name="twitter:title" content="AI Stock Analysis — Market Prism™">
 <meta name="twitter:description" content="Decode what's really driving the price with narrative intelligence.">
-<meta name="twitter:image" content="https://marketprism.co/og-default.png">
+<meta name="twitter:image" content="https://www.marketprism.co/og-default.png">
 <link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
 <meta http-equiv="x-dns-prefetch-control" content="on">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12482,7 +12482,7 @@ async function refreshAll() {
     var ogDesc = co + ' ' + price + ' — AI-powered narrative analysis, trap detection, and forensic signals.';
     var metas = [
       {p:'og:title', c:ogTitle}, {p:'og:description', c:ogDesc},
-      {p:'og:url', c:'https://marketprism.co/ticker/'+encodeURIComponent(t)},
+      {p:'og:url', c:'https://www.marketprism.co/ticker/'+encodeURIComponent(t)},
       {n:'twitter:title', c:ogTitle}, {n:'twitter:description', c:ogDesc}
     ];
     metas.forEach(function(m){
@@ -13847,7 +13847,7 @@ window.MP_DOMAINS   = MP_DOMAINS;
       var xLink = document.getElementById('mp-share-x-link');
       var liLink = document.getElementById('mp-share-li-link');
       if (xLink) xLink.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(xText);
-      if (liLink) liLink.href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent('https://marketprism.co/ticker/' + TICKER);
+      if (liLink) liLink.href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent('https://www.marketprism.co/ticker/' + TICKER);
     } catch (e) {
       xField.value = 'Could not load share text. Generate the card first, then try Share again.';
       liField.value = '';

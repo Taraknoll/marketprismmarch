@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
   try {
     let html = resolveTemplate('_casestudies.html');
 
-    const pageUrl = 'https://marketprism.co/casestudies';
+    const pageUrl = 'https://www.marketprism.co/casestudies';
     const title = 'Case Studies — Forensic Narrative Intelligence | Market Prism';
     const description = 'Real-world proof of how Market Prism\'s narrative intelligence detects market-moving signals before price catches up. NKE crash detection, CCJ narrative trap analysis, and more.';
 

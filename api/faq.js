@@ -4,7 +4,7 @@ module.exports = (req, res) => {
   try {
     let html = resolveTemplate('_faq.html');
 
-    const pageUrl = 'https://marketprism.co/faq';
+    const pageUrl = 'https://www.marketprism.co/faq';
     const title = 'FAQ — Frequently Asked Questions | Market Prism';
     const description = 'Answers to common questions about Market Prism AI stock analysis, narrative intelligence, trading signals, pricing, methodology, and data security.';
 
@@ -50,7 +50,7 @@ module.exports = (req, res) => {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://marketprism.co' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.marketprism.co' },
         { '@type': 'ListItem', position: 2, name: 'FAQ', item: pageUrl }
       ]
     };
@@ -77,7 +77,7 @@ module.exports = (req, res) => {
   <meta name="twitter:site" content="@marketprism">
   <meta name="twitter:title" content="${escAttr(title)}">
   <meta name="twitter:description" content="${escAttr(description)}">
-  <link rel="alternate" type="application/rss+xml" title="Market Prism Blog" href="https://marketprism.co/feed.xml">
+  <link rel="alternate" type="application/rss+xml" title="Market Prism Blog" href="https://www.marketprism.co/feed.xml">
   <script type="application/ld+json">${JSON.stringify(faqSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(speakableSchema)}</script>`;

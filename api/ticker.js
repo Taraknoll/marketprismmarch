@@ -133,12 +133,12 @@ module.exports = async (req, res) => {
           ticker: safeTicker,
           title: `${safeTicker} Analysis \u2014 Narrative Intelligence | Market Prism`,
           description: narr.metaDescription,
-          url: `https://marketprism.co/ticker/${safeTicker}`,
+          url: `https://www.marketprism.co/ticker/${safeTicker}`,
         });
         const webPageSchema = `<script type="application/ld+json">${buildWebPageSchema({
           title: `${safeTicker} Analysis`,
           description: narr.metaDescription,
-          url: `https://marketprism.co/ticker/${safeTicker}`,
+          url: `https://www.marketprism.co/ticker/${safeTicker}`,
         })}</script>`;
 
         // Breadcrumb schema
@@ -146,14 +146,14 @@ module.exports = async (req, res) => {
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://marketprism.co" },
-            { "@type": "ListItem", "position": 2, "name": "Dashboard", "item": "https://marketprism.co/dashboard" },
-            { "@type": "ListItem", "position": 3, "name": safeTicker, "item": `https://marketprism.co/ticker/${safeTicker}` }
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.marketprism.co" },
+            { "@type": "ListItem", "position": 2, "name": "Dashboard", "item": "https://www.marketprism.co/dashboard" },
+            { "@type": "ListItem", "position": 3, "name": safeTicker, "item": `https://www.marketprism.co/ticker/${safeTicker}` }
           ]
         })}</script>`;
 
         // RSS autodiscovery
-        const feedLinks = `<link rel="alternate" type="application/rss+xml" title="Market Prism Intelligence Journal" href="https://marketprism.co/feed.xml">\n<link rel="alternate" type="application/atom+xml" title="Market Prism Intelligence Journal (Atom)" href="https://marketprism.co/atom.xml">`;
+        const feedLinks = `<link rel="alternate" type="application/rss+xml" title="Market Prism Intelligence Journal" href="https://www.marketprism.co/feed.xml">\n<link rel="alternate" type="application/atom+xml" title="Market Prism Intelligence Journal (Atom)" href="https://www.marketprism.co/atom.xml">`;
 
         // Inject meta tags before </head>
         html = html.replace(

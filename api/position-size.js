@@ -4,7 +4,7 @@ module.exports = (req, res) => {
   try {
     let html = resolveTemplate('_position_size.html');
 
-    const pageUrl = 'https://marketprism.co/position-size-calculator';
+    const pageUrl = 'https://www.marketprism.co/position-size-calculator';
     const title = 'Position Size Calculator — Size Any Trade by Risk | Market Prism';
     const description = 'Free position size and risk calculator. Enter your account size, risk per trade, entry, and stop-loss to get the exact share count, capital at risk, and reward-to-risk ratio.';
 
@@ -22,15 +22,15 @@ module.exports = (req, res) => {
       operatingSystem: 'Web',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       description: description,
-      publisher: { '@type': 'Organization', name: 'Market Prism', url: 'https://marketprism.co' }
+      publisher: { '@type': 'Organization', name: 'Market Prism', url: 'https://www.marketprism.co' }
     };
 
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://marketprism.co' },
-        { '@type': 'ListItem', position: 2, name: 'Free Tools', item: 'https://marketprism.co/calculators' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.marketprism.co' },
+        { '@type': 'ListItem', position: 2, name: 'Free Tools', item: 'https://www.marketprism.co/calculators' },
         { '@type': 'ListItem', position: 3, name: 'Position Size Calculator', item: pageUrl }
       ]
     };

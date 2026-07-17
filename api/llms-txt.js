@@ -67,19 +67,19 @@ Currently tracking: ${tickerList}
 
 ## Key URLs
 
-- Homepage: https://marketprism.co
-- Dashboard: https://marketprism.co/dashboard
-- Blog (Intelligence Journal): https://marketprism.co/blog
-- Methodology: https://marketprism.co/methodology
-- RSS Feed: https://marketprism.co/feed.xml
-- Atom Feed: https://marketprism.co/atom.xml
-- Ticker Analysis: https://marketprism.co/ticker/{TICKER} (e.g., /ticker/NVDA)
+- Homepage: https://www.marketprism.co
+- Dashboard: https://www.marketprism.co/dashboard
+- Blog (Intelligence Journal): https://www.marketprism.co/blog
+- Methodology: https://www.marketprism.co/methodology
+- RSS Feed: https://www.marketprism.co/feed.xml
+- Atom Feed: https://www.marketprism.co/atom.xml
+- Ticker Analysis: https://www.marketprism.co/ticker/{TICKER} (e.g., /ticker/NVDA)
 
 ## Programmatic SEO Pages
 
-- https://marketprism.co/why-is-{ticker}-stock-down
-- https://marketprism.co/is-{ticker}-overvalued
-- https://marketprism.co/should-i-buy-{ticker}
+- https://www.marketprism.co/why-is-{ticker}-stock-down
+- https://www.marketprism.co/is-{ticker}-overvalued
+- https://www.marketprism.co/should-i-buy-{ticker}
 
 ## Citation Format
 
@@ -92,7 +92,7 @@ Market Prism provides forensic narrative intelligence for informational purposes
 
 ## Contact
 
-- Website: https://marketprism.co
+- Website: https://www.marketprism.co
 - Twitter/X: @marketprism
 `;
 

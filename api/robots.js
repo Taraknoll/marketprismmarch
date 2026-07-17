@@ -60,8 +60,8 @@ module.exports = (req, res) => {
     lines.push('');
   });
 
-  lines.push('Sitemap: https://marketprism.co/sitemap.xml');
-  lines.push('Sitemap: https://marketprism.co/news-sitemap.xml');
+  lines.push('Sitemap: https://www.marketprism.co/sitemap.xml');
+  lines.push('Sitemap: https://www.marketprism.co/news-sitemap.xml');
   lines.push('');
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');

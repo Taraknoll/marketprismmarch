@@ -42,15 +42,15 @@ module.exports = async (req, res) => {
             const title = post.title || '';
             const excerpt = post.excerpt || '';
             const desc160 = (post.body || excerpt || '').replace(/[#*|\n]+/g, ' ').trim().substring(0, 160);
-            const pageUrl = `https://marketprism.co/blog/${post.slug}`;
+            const pageUrl = `https://www.marketprism.co/blog/${post.slug}`;
             // Per-article OG card generated dynamically by /api/og-image at the
             // edge — gives every post a real branded 1200×630 PNG without
             // requiring DALL-E or storing assets. post.image_url overrides if
             // an explicit image was set on the row.
-            const imageUrl = post.image_url || `https://marketprism.co/og-image/${encodeURIComponent(post.slug)}`;
+            const imageUrl = post.image_url || `https://www.marketprism.co/og-image/${encodeURIComponent(post.slug)}`;
             const author = post.author || 'Ellis Marrow';
             const authorSlug = slugForAuthor(author);
-            const authorUrl = authorSlug ? `https://marketprism.co/author/${authorSlug}` : 'https://marketprism.co';
+            const authorUrl = authorSlug ? `https://www.marketprism.co/author/${authorSlug}` : 'https://www.marketprism.co';
             const publishedAt = post.published_at || '';
             const updatedAt = post.updated_at || publishedAt;
             const tag = post.tag || 'Research';
@@ -81,7 +81,7 @@ module.exports = async (req, res) => {
 
             // Replace canonical
             html = html.replace(
-              '<link rel="canonical" id="canonical-url" href="https://marketprism.co/blog">',
+              '<link rel="canonical" id="canonical-url" href="https://www.marketprism.co/blog">',
               `<link rel="canonical" id="canonical-url" href="${escAttr(pageUrl)}">`
             );
 
@@ -127,8 +127,8 @@ module.exports = async (req, res) => {
 
             // ── RSS/Atom autodiscovery ──
             const feedLinks = [
-              `<link rel="alternate" type="application/rss+xml" title="Market Prism Intelligence Journal" href="https://marketprism.co/feed.xml">`,
-              `<link rel="alternate" type="application/atom+xml" title="Market Prism Intelligence Journal (Atom)" href="https://marketprism.co/atom.xml">`,
+              `<link rel="alternate" type="application/rss+xml" title="Market Prism Intelligence Journal" href="https://www.marketprism.co/feed.xml">`,
+              `<link rel="alternate" type="application/atom+xml" title="Market Prism Intelligence Journal (Atom)" href="https://www.marketprism.co/atom.xml">`,
             ];
 
             // ── NewsArticle schema (Google News compatible) ──
@@ -147,10 +147,10 @@ module.exports = async (req, res) => {
               "publisher": {
                 "@type": "Organization",
                 "name": "Market Prism",
-                "url": "https://marketprism.co",
+                "url": "https://www.marketprism.co",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://marketprism.co/assets/Market-Prism-Logo-Light.png"
+                  "url": "https://www.marketprism.co/assets/Market-Prism-Logo-Light.png"
                 }
               },
               "url": pageUrl,
@@ -193,13 +193,13 @@ module.exports = async (req, res) => {
                   "@type": "ListItem",
                   "position": 1,
                   "name": "Home",
-                  "item": "https://marketprism.co"
+                  "item": "https://www.marketprism.co"
                 },
                 {
                   "@type": "ListItem",
                   "position": 2,
                   "name": "Intelligence Journal",
-                  "item": "https://marketprism.co/blog"
+                  "item": "https://www.marketprism.co/blog"
                 },
                 {
                   "@type": "ListItem",

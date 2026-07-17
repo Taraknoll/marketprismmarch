@@ -4,7 +4,7 @@ module.exports = (req, res) => {
   try {
     let html = resolveTemplate('_calculators.html');
 
-    const pageUrl = 'https://marketprism.co/calculators';
+    const pageUrl = 'https://www.marketprism.co/calculators';
     const title = 'Free Stock Market Calculators & Tools | Market Prism';
     const description = 'Free stock market calculators from Market Prism: investment growth, position sizing, and more. No login required.';
 
@@ -18,8 +18,8 @@ module.exports = (req, res) => {
       '@type': 'ItemList',
       name: 'Free Stock Market Calculators',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Growth of $10K Calculator', url: 'https://marketprism.co/growth-calculator' },
-        { '@type': 'ListItem', position: 2, name: 'Position Size Calculator', url: 'https://marketprism.co/position-size-calculator' }
+        { '@type': 'ListItem', position: 1, name: 'Growth of $10K Calculator', url: 'https://www.marketprism.co/growth-calculator' },
+        { '@type': 'ListItem', position: 2, name: 'Position Size Calculator', url: 'https://www.marketprism.co/position-size-calculator' }
       ]
     };
 
@@ -27,7 +27,7 @@ module.exports = (req, res) => {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://marketprism.co' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.marketprism.co' },
         { '@type': 'ListItem', position: 2, name: 'Free Tools', item: pageUrl }
       ]
     };

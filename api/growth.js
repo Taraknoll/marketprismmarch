@@ -4,7 +4,7 @@ module.exports = (req, res) => {
   try {
     let html = resolveTemplate('_growth.html');
 
-    const pageUrl = 'https://marketprism.co/growth-calculator';
+    const pageUrl = 'https://www.marketprism.co/growth-calculator';
     const title = 'Stock Investment Growth Calculator — See What Any Stock Would Be Worth Today | Market Prism';
     const description = 'Free stock investment calculator. Enter any ticker, amount, and start date to see what your investment would be worth today, with split-adjusted prices and a live S&P 500 comparison.';
 
@@ -22,14 +22,14 @@ module.exports = (req, res) => {
       operatingSystem: 'Web',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       description: description,
-      publisher: { '@type': 'Organization', name: 'Market Prism', url: 'https://marketprism.co' }
+      publisher: { '@type': 'Organization', name: 'Market Prism', url: 'https://www.marketprism.co' }
     };
 
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://marketprism.co' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.marketprism.co' },
         { '@type': 'ListItem', position: 2, name: 'Stock Investment Growth Calculator', item: pageUrl }
       ]
     };
@@ -44,7 +44,7 @@ module.exports = (req, res) => {
   <meta name="twitter:site" content="@marketprism">
   <meta name="twitter:title" content="${escAttr(title)}">
   <meta name="twitter:description" content="${escAttr(description)}">
-  <link rel="alternate" type="application/rss+xml" title="Market Prism Blog" href="https://marketprism.co/feed.xml">
+  <link rel="alternate" type="application/rss+xml" title="Market Prism Blog" href="https://www.marketprism.co/feed.xml">
   <script type="application/ld+json">${JSON.stringify(appSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>`;
 

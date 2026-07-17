@@ -5,7 +5,7 @@ module.exports = (req, res) => {
     let html = resolveTemplate('_privacy.html');
 
     // ── SEO injection (non-destructive, head-only) ──────────────────────
-    const pageUrl = 'https://marketprism.co/privacy';
+    const pageUrl = 'https://www.marketprism.co/privacy';
     const title = 'Privacy Policy — Market Prism';
     const description = 'Market Prism Privacy Policy. Learn how we collect, use, and protect your data on our financial narrative intelligence platform.';
 
@@ -34,7 +34,7 @@ module.exports = (req, res) => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://marketprism.co" },
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.marketprism.co" },
         { "@type": "ListItem", "position": 2, "name": "Privacy Policy", "item": pageUrl }
       ]
     };
@@ -50,7 +50,7 @@ module.exports = (req, res) => {
       "isPartOf": {
         "@type": "WebSite",
         "name": "Market Prism",
-        "url": "https://marketprism.co"
+        "url": "https://www.marketprism.co"
       },
       "datePublished": "2026-04-02",
       "dateModified": "2026-04-02"

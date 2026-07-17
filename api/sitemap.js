@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
   try {
     const supabaseUrl  = process.env.SUPABASE_URL  || '';
     const supabaseAnon = process.env.SUPABASE_ANON || '';
-    const siteUrl = 'https://marketprism.co';
+    const siteUrl = 'https://www.marketprism.co';
 
     // Static pages — PUBLIC only (no dashboard, ticker, daily, heatmap)
     const staticPages = [

@@ -261,7 +261,7 @@
       "destination": "/api/forensic"
     },
     {
-      "source": "/((?!assets/|favicon\\.ico).*)",
+      "source": "/((?!assets/|favicon\\.ico|og-default\\.png).*)",
       "destination": "/api/index"
     }
   ],

@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
 
     let html = resolveTemplate('_signalstudies.html');
 
-    const pageUrl = 'https://marketprism.co/signalstudies';
+    const pageUrl = 'https://www.marketprism.co/signalstudies';
     const title = 'Signal Studies — How to Read Narrative Energy Charts | Market Prism';
     const description = 'Learn how to read Market Prism Signal Lab charts. Six real case studies showing Temporal Energy predicted price reversals on MP, NKE, SNAP, NVDA, DJT, and TSLA.';
 

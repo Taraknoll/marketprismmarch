@@ -15,7 +15,7 @@
 <title>Market Prism™ AI — Intelligence Journal</title>
 <meta name="description" content="">
 <meta name="robots" content="index, follow">
-<link rel="canonical" id="canonical-url" href="https://marketprism.co/blog">
+<link rel="canonical" id="canonical-url" href="https://www.marketprism.co/blog">
 <!-- Open Graph -->
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Market Prism™">
@@ -669,7 +669,7 @@ async function loadArticle() {
     }
 
     // Inject SEO meta
-    var pageUrl = 'https://marketprism.co/blog/' + post.slug;
+    var pageUrl = 'https://www.marketprism.co/blog/' + post.slug;
     var setMeta = function(sel, val) { var el = document.querySelector(sel); if(el && val) el.setAttribute('content', val); };
     var desc160 = (post.body || post.excerpt || '').replace(/[#*|\n]+/g, ' ').trim().substring(0, 160);
     setMeta('meta[name="description"]', desc160);
@@ -689,7 +689,7 @@ async function loadArticle() {
       "description": post.excerpt || '',
       "datePublished": post.published_at,
       "author": {"@type": "Organization", "name": post.author || 'Market Prism Research'},
-      "publisher": {"@type": "Organization", "name": "Market Prism", "url": "https://marketprism.co"},
+      "publisher": {"@type": "Organization", "name": "Market Prism", "url": "https://www.marketprism.co"},
       "url": pageUrl,
       "mainEntityOfPage": pageUrl
     };
@@ -704,7 +704,7 @@ async function loadArticle() {
       if (heroWrap) { heroWrap.src = post.image_url; heroWrap.style.display = 'block'; }
     }
     // Wire up share buttons
-    var pageUrl = 'https://marketprism.co/blog/' + post.slug;
+    var pageUrl = 'https://www.marketprism.co/blog/' + post.slug;
     var shareTitle = encodeURIComponent(post.title || '');
     var shareUrl = encodeURIComponent(pageUrl);
     var xEl = document.getElementById('share-x');

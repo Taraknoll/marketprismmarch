@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
       html = resolveTemplate(study.file);
     }
 
-    const pageUrl = `https://marketprism.co/casestudy/${slug}`;
+    const pageUrl = `https://www.marketprism.co/casestudy/${slug}`;
 
     const metaTags = `
   <meta name="description" content="${escAttr(study.description)}">

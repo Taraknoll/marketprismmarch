@@ -5,7 +5,7 @@ module.exports = (req, res) => {
     let html = resolveTemplate('_terms.html');
 
     // ── SEO injection ──────────────────────
-    const pageUrl = 'https://marketprism.co/terms';
+    const pageUrl = 'https://www.marketprism.co/terms';
     const title = 'Terms of Service — Market Prism';
     const description = 'Terms of Service for Market Prism, a financial narrative intelligence platform. Read our terms covering service usage, intellectual property, liability limitations, and important disclaimers.';
 
@@ -34,7 +34,7 @@ module.exports = (req, res) => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://marketprism.co" },
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.marketprism.co" },
         { "@type": "ListItem", "position": 2, "name": "Terms of Service", "item": pageUrl }
       ]
     };
@@ -50,7 +50,7 @@ module.exports = (req, res) => {
       "isPartOf": {
         "@type": "WebSite",
         "name": "Market Prism",
-        "url": "https://marketprism.co"
+        "url": "https://www.marketprism.co"
       },
       "datePublished": "2026-04-02",
       "dateModified": "2026-04-02"

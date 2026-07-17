@@ -5,7 +5,7 @@ module.exports = async (req, res) => {
     let html = resolveTemplate('_methodology.html');
 
     // ── SEO injection (non-destructive, head-only) ──────────────────────
-    const pageUrl = 'https://marketprism.co/methodology';
+    const pageUrl = 'https://www.marketprism.co/methodology';
     const title = 'Methodology \u2014 Seven Forensic Layers | Market Prism';
     const description = 'How Market Prism analyzes equity markets: 7 forensic layers including narrative classification, decay physics, SEC filing forensics, coordination detection, Bayesian reliability, fair value stress testing, and contagion mapping.';
 
@@ -28,8 +28,8 @@ module.exports = async (req, res) => {
   <meta name="twitter:site" content="@marketprism">
   <meta name="twitter:title" content="${escAttr(title)}">
   <meta name="twitter:description" content="${escAttr(description)}">
-  <link rel="alternate" type="application/rss+xml" title="Market Prism Intelligence Journal" href="https://marketprism.co/feed.xml">
-  <link rel="alternate" type="application/atom+xml" title="Market Prism Intelligence Journal (Atom)" href="https://marketprism.co/atom.xml">`;
+  <link rel="alternate" type="application/rss+xml" title="Market Prism Intelligence Journal" href="https://www.marketprism.co/feed.xml">
+  <link rel="alternate" type="application/atom+xml" title="Market Prism Intelligence Journal (Atom)" href="https://www.marketprism.co/atom.xml">`;
 
     // HowTo schema — describes the 7-layer analysis process
     const howToSchema = {
@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://marketprism.co" },
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.marketprism.co" },
         { "@type": "ListItem", "position": 2, "name": "Methodology", "item": pageUrl }
       ]
     };
