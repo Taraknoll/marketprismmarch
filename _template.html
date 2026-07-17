@@ -980,7 +980,7 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
 }
 .mp-dl-btn:hover{border-color:var(--mp-border-hover);color:var(--mp-text-primary);background:rgba(255,255,255,0.04);}
 .mp-dl-btn svg{width:13px;height:13px;}
-.mp-dl-btn.mp-dl-busy{opacity:.5;cursor:wait;}
+.mp-dl-busy{opacity:.5;cursor:wait;}
 /* Smaller variant for the trade-lane meta row (matches tl-lane-refresh footprint) */
 .tl-lane-meta .mp-dl-btn{width:auto;height:auto;padding:3px 8px;}
 .tl-lane-meta .mp-dl-btn svg{width:10px;height:10px;}
@@ -4921,10 +4921,16 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
       </div>
       <div class="lb-toolbar">
         <span class="lb-toolbar-date" id="daily-date-tag"></span>
-        <button class="lb-refresh-btn mp-export-hide" id="daily-refresh-btn" onclick="refreshDailyBrief()" title="Refresh daily plays">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          <span>Refresh</span>
-        </button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="lb-refresh-btn mp-export-hide" id="daily-refresh-btn" onclick="refreshDailyBrief()" title="Refresh daily plays">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <span>Refresh</span>
+          </button>
+          <button class="lb-refresh-btn mp-export-hide" id="daily-download-btn" onclick="mpDownloadDailyPage(this)" title="Download the full Daily Plays view as one shareable PNG">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m6 12 6 6 6-6"/><path d="M5 20h14"/></svg>
+            <span>Save PNG</span>
+          </button>
+        </div>
       </div>
 
       <!-- Dashboard data error banner (shown when loadData() throws — e.g. dashboard-data 500, RLS blocks, missing keys) -->
@@ -5463,6 +5469,13 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
       </div><!-- /daily-block calendar -->
 
     </div><!-- /hidden old sections -->
+
+    <!-- Export-only attribution footer — invisible on screen; mpDownloadDailyPage()
+         reveals it during PNG capture so shared images credit the source. -->
+    <div id="daily-export-footer" style="display:none;align-items:center;justify-content:space-between;gap:12px;margin-top:26px;padding:16px 4px 4px;border-top:1px solid rgba(255,255,255,0.08);">
+      <span style="font-family:'Inter','DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;letter-spacing:-0.02em;color:#FFFFFF;">Market Prism</span>
+      <span style="font-family:'Inter','DM Sans',system-ui,sans-serif;font-size:12px;color:#A0A8B0;">marketprism.co &middot; not financial advice</span>
+    </div>
     </div><!-- /daily-content -->
 
     <!-- ── RIGHT RAIL ── -->
@@ -10150,10 +10163,10 @@ async function mpDownloadCardImage(triggerEl,opts){
     var root=opts.root||(opts.selector&&btn?btn.closest(opts.selector):null);
     if(!root)throw new Error('Card root not found');
     Array.prototype.forEach.call(root.querySelectorAll('.mp-export-hide'),hide);
-    var canvas=await html2canvas(root,{backgroundColor:opts.background||'#080B11',scale:2,logging:false,useCORS:true,windowWidth:root.scrollWidth});
-    await new Promise(function(resolve){
+    var canvas=await html2canvas(root,{backgroundColor:opts.background||'#080B11',scale:opts.scale||2,logging:false,useCORS:true,windowWidth:root.scrollWidth});
+    await new Promise(function(resolve,reject){
       canvas.toBlob(function(blob){
-        if(!blob){resolve();return;}
+        if(!blob){reject(new Error('Image too large to render — try again or zoom the page out'));return;}
         var url=URL.createObjectURL(blob);
         var a=document.createElement('a');
         var stamp=new Date().toISOString().split('T')[0];
@@ -10176,11 +10189,32 @@ window.mpDownloadCardImage=mpDownloadCardImage;
 
 // ── Full Daily Plays page snapshot ────────────────────────────────────────
 // Captures the entire #tab-daily panel as a single tall PNG that matches
-// what's on screen. Hides all .mp-export-hide controls during capture.
+// what's on screen. Hides all .mp-export-hide controls during capture and
+// reveals the attribution footer. Locked (free) users are routed to the
+// upgrade CTA instead — html2canvas doesn't render the teaser's CSS blur,
+// so exporting while locked would leak gated content sharp.
 async function mpDownloadDailyPage(triggerEl){
+  if(typeof MP_TEASER_LOCKED!=='undefined'&&MP_TEASER_LOCKED){
+    if(typeof mpTeaserUpgrade==='function')mpTeaserUpgrade();
+    return;
+  }
   var root=document.getElementById('tab-daily');
   if(!root){alert('Daily Plays panel not found');return;}
-  return mpDownloadCardImage(triggerEl,{root:root,slug:'daily-plays',background:'#080B11'});
+  var foot=document.getElementById('daily-export-footer');
+  var label=triggerEl?triggerEl.querySelector('span'):null;
+  var prevLabel=label?label.textContent:null;
+  if(foot)foot.style.display='flex';
+  if(label)label.textContent='Rendering…';
+  try{
+    // 2× for crispness, backing off on very tall pages so canvas height stays
+    // under the ~32,767px browser cap (a blank/failed PNG otherwise).
+    var h=Math.max(root.scrollHeight||0,1);
+    var scale=Math.max(0.5,Math.min(2,32000/h));
+    return await mpDownloadCardImage(triggerEl,{root:root,slug:'daily-plays',background:'#080B11',scale:scale});
+  }finally{
+    if(foot)foot.style.display='none';
+    if(label&&prevLabel!=null)label.textContent=prevLabel;
+  }
 }
 window.mpDownloadDailyPage=mpDownloadDailyPage;
 
