@@ -10163,7 +10163,7 @@ async function mpDownloadCardImage(triggerEl,opts){
     var root=opts.root||(opts.selector&&btn?btn.closest(opts.selector):null);
     if(!root)throw new Error('Card root not found');
     Array.prototype.forEach.call(root.querySelectorAll('.mp-export-hide'),hide);
-    var canvas=await html2canvas(root,{backgroundColor:opts.background||'#080B11',scale:opts.scale||2,logging:false,useCORS:true,windowWidth:root.scrollWidth});
+    var canvas=await html2canvas(root,{backgroundColor:opts.background||'#080B11',scale:opts.scale||2,logging:false,useCORS:true,windowWidth:root.scrollWidth,onclone:opts.onclone||null});
     await new Promise(function(resolve,reject){
       canvas.toBlob(function(blob){
         if(!blob){reject(new Error('Image too large to render — try again or zoom the page out'));return;}
@@ -10203,15 +10203,39 @@ async function mpDownloadDailyPage(triggerEl){
   var foot=document.getElementById('daily-export-footer');
   var label=triggerEl?triggerEl.querySelector('span'):null;
   var prevLabel=label?label.textContent:null;
+  var prevPad=root.style.padding;
   if(foot)foot.style.display='flex';
   if(label)label.textContent='Rendering…';
+  // Breathing room so the hero title isn't flush against the canvas edge.
+  // Must be set on the live root (not onclone) — html2canvas sizes the canvas
+  // from the element's pre-clone bounds, so clone-only padding clips the bottom.
+  root.style.padding='28px 26px 12px';
+  // html2canvas can't render backdrop-filter, blurred box-shadows, or
+  // background-clip:text — the glass cards come out ringed in hard grey and
+  // gradient headlines become filled bars. Swap those for their solid
+  // design-system equivalents in the CLONE only; the live page is untouched.
+  var EXPORT_CSS=
+    '#tab-daily *{box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}'
+    +'#tab-daily .daily-hero-banner,#tab-daily .daily-narr-card,#tab-daily .nc-card,#tab-daily .disc-stat-tile,'
+    +'#tab-daily .disc-nc,#tab-daily .disc-lookup,#tab-daily .stat-card,#tab-daily .mw-stat,#tab-daily .mw-card,'
+    +'#tab-daily .dr-stat,#tab-daily .dr-regime,#tab-daily .dr-earn-row,#tab-daily .snap-card,#tab-daily .trap-card,'
+    +'#tab-daily .sector-card,#tab-daily .lb-card{background:#0C1018 !important;border:1px solid rgba(255,255,255,0.09) !important;}'
+    +'#tab-daily .ph-italic,#tab-daily .daily-title-italic,#tab-daily .dhb-h em,#tab-daily .disc-hero-h em{'
+    +'background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;'
+    +'-webkit-text-fill-color:#4DC8F0 !important;color:#4DC8F0 !important;}';
   try{
     // 2× for crispness, backing off on very tall pages so canvas height stays
     // under the ~32,767px browser cap (a blank/failed PNG otherwise).
     var h=Math.max(root.scrollHeight||0,1);
     var scale=Math.max(0.5,Math.min(2,32000/h));
-    return await mpDownloadCardImage(triggerEl,{root:root,slug:'daily-plays',background:'#080B11',scale:scale});
+    return await mpDownloadCardImage(triggerEl,{root:root,slug:'daily-plays',background:'#080B11',scale:scale,
+      onclone:function(doc){
+        var st=doc.createElement('style');
+        st.textContent=EXPORT_CSS;
+        doc.head.appendChild(st);
+      }});
   }finally{
+    root.style.padding=prevPad;
     if(foot)foot.style.display='none';
     if(label&&prevLabel!=null)label.textContent=prevLabel;
   }
