@@ -47,6 +47,27 @@
 --
 -- Result: ~25ms vs. >8s, well inside the API timeout.
 -- ============================================================================
+-- MIS-TAG FILTER (2026-07-18)
+-- ============================================================================
+-- ~21.5% of the searchable corpus (4,001 of 18,572 chain-tip dots at last
+-- count) traces to an article whose Gemini relabel says it is NOT about the
+-- tagged ticker (articles.is_about_ticker_gemini = FALSE) — the scraper's
+-- substring-match tagging bug. Those dots carry the WRONG ticker's forward
+-- returns, so they polluted both the analogue cards and the aggregated
+-- hit-rate/predicted-return numbers (e.g. a Tesla valuation story indexed
+-- under UPS, "resolved" with UPS's -9.5% 10d return).
+--
+-- Fix: anti-join articles inside the RPC. Shape matters for the plan — the
+-- inner KNN subquery is byte-identical to the previous proven-fast query
+-- (constant vector -> partial HNSW index) and its LIMIT makes it a fence the
+-- planner can't flatten, so the index plan is preserved; the anti-join then
+-- runs as cheap articles-PK lookups over at most k*2 ordered candidates.
+-- Verified by EXPLAIN ANALYZE: HNSW index scan, 270 candidates fetched to
+-- fill k=200, ~215ms cold.
+--
+-- Only is_about_ticker_gemini IS FALSE is excluded: unlabeled articles
+-- (label lands ~13h after scrape) and dots without a source article pass.
+-- ============================================================================
 
 -- 1. Partial HNSW index over the searchable subset. Build CONCURRENTLY so it
 --    doesn't block the ingestion writers. IF NOT EXISTS makes re-runs safe.
@@ -100,34 +121,69 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    d.dot_hash,
-    d.ticker,
-    d.narrative_text,
-    d.observed_at,
-    d.speaker_id,
-    d.speaker_authority,
-    d.sector,
-    d.cycle_phase,
-    d.market_regime,
-    d.narrative_direction,
-    d.embedding_cluster_id,
-    d.return_5d,
-    d.return_10d,
-    d.return_20d,
-    d.return_5d_narrative,
-    d.bullshit_probability,
-    d.ground_truth_label,
+    c.dot_hash,
+    c.ticker,
+    c.narrative_text,
+    c.observed_at,
+    c.speaker_id,
+    c.speaker_authority,
+    c.sector,
+    c.cycle_phase,
+    c.market_regime,
+    c.narrative_direction,
+    c.embedding_cluster_id,
+    c.return_5d,
+    c.return_10d,
+    c.return_20d,
+    c.return_5d_narrative,
+    c.bullshit_probability,
+    c.ground_truth_label,
     -- <=> returns double precision; the result column is numeric.
-    (1 - (d.embedding <=> query_vector))::numeric AS similarity
-  FROM public.narrative_dots d
-  WHERE d.is_chain_tip = TRUE
-    AND d.embedding IS NOT NULL
-    AND (filter_sector IS NULL OR d.sector = filter_sector)
-    AND (filter_cycle_phase IS NULL OR d.cycle_phase = filter_cycle_phase)
-    AND (filter_cluster_id IS NULL OR d.embedding_cluster_id = filter_cluster_id)
-    AND d.observed_at >= NOW() - (filter_max_age_days || ' days')::interval
-    AND d.observed_at <= filter_observed_before
-  ORDER BY d.embedding <=> query_vector
+    (1 - c.dist)::numeric AS similarity
+  FROM (
+    -- Inner KNN: identical to the pre-2026-07-18 query (see perf notes above)
+    -- except it overfetches k*2 so the mis-tag anti-join below can drop up to
+    -- half the neighborhood and still fill k. The LIMIT keeps it a planner
+    -- fence, so the partial-HNSW plan is unchanged.
+    SELECT
+      d.dot_hash,
+      d.ticker,
+      d.narrative_text,
+      d.observed_at,
+      d.speaker_id,
+      d.speaker_authority,
+      d.sector,
+      d.cycle_phase,
+      d.market_regime,
+      d.narrative_direction,
+      d.embedding_cluster_id,
+      d.return_5d,
+      d.return_10d,
+      d.return_20d,
+      d.return_5d_narrative,
+      d.bullshit_probability,
+      d.ground_truth_label,
+      d.source_article_id,
+      d.embedding <=> query_vector AS dist
+    FROM public.narrative_dots d
+    WHERE d.is_chain_tip = TRUE
+      AND d.embedding IS NOT NULL
+      AND (filter_sector IS NULL OR d.sector = filter_sector)
+      AND (filter_cycle_phase IS NULL OR d.cycle_phase = filter_cycle_phase)
+      AND (filter_cluster_id IS NULL OR d.embedding_cluster_id = filter_cluster_id)
+      AND d.observed_at >= NOW() - (filter_max_age_days || ' days')::interval
+      AND d.observed_at <= filter_observed_before
+    ORDER BY d.embedding <=> query_vector
+    LIMIT k * 2
+  ) c
+  -- Mis-tag filter: exclude dots whose source article is Gemini-labeled as
+  -- not actually about the tagged ticker (wrong ticker -> wrong returns).
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.articles a
+    WHERE a.id = c.source_article_id
+      AND a.is_about_ticker_gemini IS FALSE
+  )
+  ORDER BY c.dist
   LIMIT k;
 END;
 $$;

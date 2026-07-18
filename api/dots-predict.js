@@ -420,15 +420,19 @@ module.exports = async function (req, res) {
       predicted_10d_return_p25_p75: agg.p10_band,
       predicted_20d_return_p25_p75: agg.p20_band,
       neighbor_examples: (function () {
-        // Dedupe by (ticker, speaker, observed_at, narrative_text) so the
-        // same source post indexed twice in narrative_dots doesn't render
-        // back-to-back identical cards. Aggregation above is untouched.
+        // Dedupe by (ticker, headline). The corpus indexes the same story once
+        // per syndicating publication ("Title - Motley Fool" / "Title - Globe
+        // and Mail"), and the old (ticker, speaker, observed_at, text) key let
+        // three near-identical cards through. The headline is the text before
+        // the " - Publication" separator; syndicated copies collapse to the
+        // most-similar one. Aggregation above is untouched.
         const seen = new Set();
         const out = [];
         for (let i = 0; i < neighbors.length && out.length < 3; i++) {
           const n = neighbors[i];
           const txt = n.narrative_text ? n.narrative_text.slice(0, 200) : '';
-          const key = [n.ticker || '', n.speaker_id || '', n.observed_at || '', txt].join('|');
+          const headline = txt.split(' - ')[0].trim().toLowerCase();
+          const key = (n.ticker || '') + '|' + (headline || txt);
           if (seen.has(key)) continue;
           seen.add(key);
           out.push({
