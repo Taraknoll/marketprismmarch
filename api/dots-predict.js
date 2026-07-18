@@ -424,14 +424,17 @@ module.exports = async function (req, res) {
         // per syndicating publication ("Title - Motley Fool" / "Title - Globe
         // and Mail"), and the old (ticker, speaker, observed_at, text) key let
         // three near-identical cards through. The headline is the text before
-        // the " - Publication" separator; syndicated copies collapse to the
-        // most-similar one. Aggregation above is untouched.
+        // the " — " summary separator and the " - Publication" segment (some
+        // syndications carry no publication segment at all), punctuation-
+        // normalized so dash-style drift doesn't split the key; syndicated
+        // copies collapse to the most-similar one. Aggregation is untouched.
         const seen = new Set();
         const out = [];
         for (let i = 0; i < neighbors.length && out.length < 3; i++) {
           const n = neighbors[i];
           const txt = n.narrative_text ? n.narrative_text.slice(0, 200) : '';
-          const headline = txt.split(' - ')[0].trim().toLowerCase();
+          const headline = txt.split(' — ')[0].split(' - ')[0]
+            .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
           const key = (n.ticker || '') + '|' + (headline || txt);
           if (seen.has(key)) continue;
           seen.add(key);
