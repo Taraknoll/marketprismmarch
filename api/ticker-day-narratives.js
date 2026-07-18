@@ -7,8 +7,9 @@
 // voice (most authoritative) and note "1 of N" — we do NOT imply one verdict for
 // the whole day.
 //
-// narrative_dots is RLS-enabled with NO anon policies, so this MUST run
-// server-side with the service-role key.
+// Reads narrative_dots_clean, a security_invoker view over narrative_dots
+// (RLS-enabled, NO anon policies), so this MUST run server-side with the
+// service-role key.
 //
 // Selection per day: speaker_authority DESC (nulls last) → prefer is_chain_tip,
 // then dot_kind='genesis' on ties → most recent observed_at.
@@ -21,16 +22,12 @@
 // Query params: ticker (required), days (default 400)
 
 const rateLimit = require('./_rate-limit');
-const { fetchMistaggedArticleIds, dropMistagged } = require('./_mistag-filter');
 
 const MAX_ROWS = 2000;
-// source_article_id is fetched only for the mis-tag filter; it never reaches
-// the response (byDate is built field-by-field below).
 const COLS = [
   'observed_at', 'narrative_text', 'speaker_type', 'speaker_authority',
   'narrative_direction', 'bullshit_probability', 'return_5d',
-  'ground_truth_label', 'resolved_at', 'is_chain_tip', 'dot_kind',
-  'source_article_id'
+  'ground_truth_label', 'resolved_at', 'is_chain_tip', 'dot_kind'
 ].join(',');
 
 function sendJson(res, status, obj) {
@@ -68,31 +65,24 @@ module.exports = async (req, res) => {
       Authorization: 'Bearer ' + supabaseKey,
       Accept: 'application/json'
     };
+    // narrative_dots_clean = narrative_dots minus mis-tagged dots (see
+    // sql/narrative_dots_clean.sql), so a mis-tagged high-authority voice can
+    // never hijack a day's card.
     const rowsUrl =
-      `${supabaseUrl}/rest/v1/narrative_dots` +
+      `${supabaseUrl}/rest/v1/narrative_dots_clean` +
       `?select=${COLS}` +
       `&ticker=eq.${encodeURIComponent(ticker)}` +
       `&observed_at=gte.${encodeURIComponent(cutoffIso)}` +
       `&order=observed_at.desc&limit=${MAX_ROWS}`;
 
-    // Mis-tagged article ids for this ticker/window, fetched in parallel with
-    // the dots (see _mistag-filter.js; 3-day cushion because article publish
-    // can precede dot observation by ~48h).
-    const mistagSinceIso = new Date(Date.parse(cutoffIso) - 3 * 86400000).toISOString();
-    const [resp, badIds] = await Promise.all([
-      fetch(rowsUrl, { headers }),
-      fetchMistaggedArticleIds(supabaseUrl, supabaseKey, ticker, mistagSinceIso)
-    ]);
+    const resp = await fetch(rowsUrl, { headers });
     if (!resp.ok) {
       const detail = await resp.text().catch(() => '');
       return sendJson(res, 502, {
         error: 'narrative_dots query failed', status: resp.status, detail: detail.slice(0, 300)
       });
     }
-    // Drop dots sourced from an article Gemini says is NOT about this ticker
-    // (wrong ticker -> wrong returns) BEFORE picking each day's winner —
-    // otherwise a mis-tagged high-authority voice hijacks the day's card.
-    const rows = dropMistagged(await resp.json().catch(() => []), badIds);
+    const rows = await resp.json().catch(() => []);
 
     // Rank within a day: authority desc (nulls last) → chain tip → genesis → recency.
     const authOf = (r) => (r.speaker_authority == null ? -1 : Number(r.speaker_authority));

@@ -1,8 +1,10 @@
 // api/constellation.js
 // Forensic Timeline — per-ticker narrative scatter for the ticker pages.
-// Reads narrative_dots (RLS-enabled, NO anon policies) so this MUST run
-// server-side with the service-role key. The browser hits this endpoint, never
-// the table directly.
+// Reads narrative_dots_clean — the mis-tag-filtered view over narrative_dots
+// (drops dots whose source article is Gemini-labeled as not about the tagged
+// ticker; see sql/narrative_dots_clean.sql). security_invoker view over an
+// RLS-enabled table with NO anon policies, so this MUST run server-side with
+// the service-role key. The browser hits this endpoint, never the table.
 //
 // Env:
 //   SUPABASE_URL
@@ -22,16 +24,12 @@
 //   - bullshit_probability is SPARSE, not date-bounded — gate on NULL, not date.
 
 const rateLimit = require('./_rate-limit');
-const { fetchMistaggedArticleIds, dropMistagged } = require('./_mistag-filter');
 
 const MAX_ROWS = 1500;
-// source_article_id is fetched only for the mis-tag filter and stripped
-// before the response is sent.
 const COLS = [
   'dot_hash', 'observed_at', 'narrative_text', 'speaker_type',
   'speaker_authority', 'narrative_direction', 'bullshit_probability',
-  'return_5d', 'ground_truth_label', 'chain_root_hash', 'price_at_observation',
-  'source_article_id'
+  'return_5d', 'ground_truth_label', 'chain_root_hash', 'price_at_observation'
 ].join(',');
 
 function sendJson(res, status, obj) {
@@ -88,7 +86,9 @@ module.exports = async (req, res) => {
       Accept: 'application/json'
     };
 
-    const base = supabaseUrl + '/rest/v1/narrative_dots';
+    // narrative_dots_clean = narrative_dots minus mis-tagged dots, so display
+    // rows AND the summary counts below are both mis-tag-free.
+    const base = supabaseUrl + '/rest/v1/narrative_dots_clean';
     const windowFilter =
       `ticker=eq.${encodeURIComponent(ticker)}` +
       `&dot_kind=eq.genesis` +
@@ -113,18 +113,12 @@ module.exports = async (req, res) => {
       `?select=price_close,snapshot_date&ticker=eq.${encodeURIComponent(ticker)}` +
       `&price_close=not.is.null&order=snapshot_date.desc&limit=1`;
 
-    // Mis-tagged article ids for this ticker/window (see _mistag-filter.js) —
-    // fetched in parallel; article publish can precede dot observation by ~48h,
-    // hence the 3-day cushion on the cutoff.
-    const mistagSinceIso = new Date(Date.parse(cutoffIso) - 3 * 86400000).toISOString();
-
-    const [totalResp, bsResp, falseResp, rowsResp, priceResp, badIds] = await Promise.all([
+    const [totalResp, bsResp, falseResp, rowsResp, priceResp] = await Promise.all([
       countReq(''),
       countReq('&bullshit_probability=gt.0.7'),
       countReq('&ground_truth_label=is.false'),
       fetch(rowsUrl, { headers: Object.assign({ Prefer: 'count=exact' }, headers) }),
-      fetch(priceUrl, { headers }),
-      fetchMistaggedArticleIds(supabaseUrl, supabaseKey, ticker, mistagSinceIso)
+      fetch(priceUrl, { headers })
     ]);
 
     if (!rowsResp.ok) {
@@ -136,13 +130,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Drop dots sourced from an article Gemini says is NOT about this ticker
-    // (wrong ticker -> wrong returns). Display rows only — the summary counts
-    // below are PostgREST window counts and still include mis-tagged dots
-    // (filtering them needs a join PostgREST can't do; a clean view would fix
-    // it properly).
-    const rows = dropMistagged(await rowsResp.json().catch(() => []), badIds);
-    const matched = totalFromRange(rowsResp); // total matching display filter (pre-mis-tag-filter)
+    const rows = await rowsResp.json().catch(() => []);
+    const matched = totalFromRange(rowsResp); // total matching display filter
 
     // Provisional "return since the claim" for dots missing a final 5-day move.
     let currentPrice = null;
@@ -188,9 +177,7 @@ module.exports = async (req, res) => {
     }
     // Most-recent-first, then overall cap, then oldest-first for the timeline.
     kept.sort((a, b) => (b.observed_at < a.observed_at ? -1 : b.observed_at > a.observed_at ? 1 : 0));
-    let selected = (kept.length > top ? kept.slice(0, top) : kept).slice().reverse()
-      // source_article_id was only fetched for the mis-tag filter.
-      .map((r) => { const { source_article_id, ...rest } = r; return rest; });
+    let selected = (kept.length > top ? kept.slice(0, top) : kept).slice().reverse();
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=900');
     return sendJson(res, 200, {
