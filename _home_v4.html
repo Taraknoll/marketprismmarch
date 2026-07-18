@@ -493,11 +493,7 @@ nav.topnav.scrolled{
   box-shadow:0 24px 60px rgba(0,0,0,0.5);
 }
 .pt-bar{ display:flex;align-items:center;gap:7px;padding:12px 16px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.07); }
-.pt-bar>span{ width:11px;height:11px;border-radius:50%; }
-.pt-bar>span:nth-child(1){ background:#FF5F57; }
-.pt-bar>span:nth-child(2){ background:#FEBC2E; }
-.pt-bar>span:nth-child(3){ background:#28C840; }
-.pt-bar em{ margin-left:8px;font-style:normal;font-size:12px;color:rgba(255,255,255,0.45);letter-spacing:.02em; }
+.pt-bar em{ font-style:normal;font-size:12px;color:rgba(255,255,255,0.45);letter-spacing:.02em; }
 .pt-live{ margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:#00DE94; }
 .pt-live i{ width:6px;height:6px;border-radius:99px;background:#00DE94;box-shadow:0 0 8px rgba(0,222,148,0.9);animation:pt-pulse 1.6s ease-in-out infinite; }
 @keyframes pt-pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
@@ -1463,9 +1459,7 @@ footer{
 .engine-li-ico{ flex-shrink:0; width:20px; height:20px; border-radius:6px; background:rgba(0,222,148,0.16); color:#00DE94; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; margin-top:1px; }
 .engine-code{ border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.10); background:#070C16; box-shadow:0 24px 60px rgba(0,0,0,0.5); }
 .engine-code-bar{ display:flex; align-items:center; gap:7px; padding:12px 16px; background:rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.07); }
-.engine-code-bar span{ width:11px; height:11px; border-radius:50%; background:rgba(255,255,255,0.18); }
-.engine-code-bar span:nth-child(1){ background:#FF5F57; } .engine-code-bar span:nth-child(2){ background:#FEBC2E; } .engine-code-bar span:nth-child(3){ background:#28C840; }
-.engine-code-bar em{ margin-left:8px; font-style:normal; font-size:12px; color:rgba(255,255,255,0.45); letter-spacing:.02em; }
+.engine-code-bar em{ font-style:normal; font-size:12px; color:rgba(255,255,255,0.45); letter-spacing:.02em; }
 .engine-code-body{ margin:0; padding:18px 20px; overflow-x:auto; }
 .engine-code-body code{ font-family:var(--font-body); font-size:13px; line-height:1.75; color:rgba(255,255,255,0.82); white-space:pre; }
 .engine-code-body .k{ color:#4DC8F0; } .engine-code-body .s{ color:#00DE94; } .engine-code-body .n{ color:#FFB800; } .engine-code-body .b{ color:#9B86FF; }
@@ -1628,7 +1622,6 @@ footer{
 
     <div class="pt-panel">
       <div class="pt-bar">
-        <span></span><span></span><span></span>
         <em>narrative_engine.live</em>
         <div class="pt-live"><i></i>Live</div>
       </div>
@@ -1688,7 +1681,7 @@ footer{
         </ul>
       </div>
       <div class="engine-code mp-anim" role="img" aria-label="Animated diagram of the Market Prism scoring pipeline: source narratives flow through SEC grounding, narrative audit and coordination detection into the physics engine, then split into forensic verdicts and a trade-signal rail.">
-        <div class="engine-code-bar"><span></span><span></span><span></span><em>narrative_pipeline.live</em><button type="button" class="mp-toggle" id="mpx-play" aria-label="Pause animation">Pause</button></div>
+        <div class="engine-code-bar"><em>narrative_pipeline.live</em><button type="button" class="mp-toggle" id="mpx-play" aria-label="Pause animation">Pause</button></div>
         <div class="mp-stage"><canvas id="mpx-canvas"></canvas></div>
         <div class="mp-legend">
           <span><i style="background:rgba(255,255,255,0.34)"></i>Unscored</span>
