@@ -1,0 +1,74 @@
+<!--
+  RETIRED 2026-07-18 — "Validate any stock story in seconds" live demo section
+  from _home_v4.html, pulled because /api/dots-predict was showing false results.
+
+  This file is NOT served (root-level .html files outside public/ are inert);
+  it exists only so the section can be restored verbatim.
+
+  TO RESTORE:
+  1. BLOCK 1 below → paste back into _home_v4.html between the closing
+     </section> of the hero (id="hero") and the
+     "CREDIBILITY / SOURCE BAND" comment, replacing the
+     "DEMO section removed" marker comment left there.
+  2. BLOCK 2 → re-add as the second anchor inside the hero's
+     <div class="hero-cta-row"> (after the "Start free" link).
+  3. BLOCK 3 → re-add as the second anchor inside the final CTA band's
+     <div class="ent-cta-actions">, and restore the band's original <p> copy
+     (also below).
+  4. In the page JS, the demo wiring was left in place but wrapped in
+     `if (btn && inpTk && inpNarr) { ... }` (search for "search-btn"). No JS
+     changes are needed to restore — the guard passes once the markup is back.
+-->
+
+<!-- ═══════════ BLOCK 1 — the demo section ═══════════ -->
+
+<!-- ── DEMO (moved out of the hero into its own clean section) ── -->
+<section class="below ent-light demo-section" id="try-it">
+  <div class="container-narrow">
+    <div class="demo-intro" style="text-align:center;">
+      <div class="section-eyebrow" style="display:inline-flex;">Free narrative check · no login</div>
+      <h2 class="section-title">Validate any stock story <em>in seconds.</em></h2>
+      <p class="section-sub" style="margin:0 auto;">Paste a headline, a tweet, or a thesis. We pattern-match it against 3.5M documented narratives and show you how similar stories actually resolved.</p>
+    </div>
+    <div class="search-panel">
+      <form class="search-form" id="search-form" onsubmit="return false;">
+        <div class="search-row">
+          <div class="search-field">
+            <label class="search-field-label" for="f-ticker">Ticker</label>
+            <input id="f-ticker" class="search-field-ticker" type="text" autocomplete="off" spellcheck="false" placeholder="NVDA" maxlength="10" aria-label="Ticker symbol">
+          </div>
+          <div class="search-field">
+            <label class="search-field-label" for="f-narrative">Narrative</label>
+            <textarea id="f-narrative" class="search-field-narrative" rows="2" spellcheck="true" placeholder="e.g. NVDA's data-center growth is peaking as hyperscaler capex normalizes."></textarea>
+          </div>
+        </div>
+        <button class="search-btn" id="search-btn" type="button">
+          <span class="search-spinner"></span>
+          <span id="search-btn-label">Generate report</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="search-chips">
+      <span style="font-size:11px;color:var(--mp-text-muted);align-self:center;">Try one:</span>
+      <button class="search-chip" data-tk="TSLA" data-narr="Tesla stock is considered outrageously cheap with potential for 100% upside."><strong>TSLA</strong> outrageously cheap</button>
+      <button class="search-chip" data-tk="INTC" data-narr="Intel's stock is experiencing a speculative bubble, showing valuation extremes more severe than Cisco during the dot-com peak, indicating a potential significant correction."><strong>INTC</strong> dot-com redux</button>
+      <button class="search-chip" data-tk="MP" data-narr="Pentagon backing and attention from Jim Cramer could alter the strategic narrative and future trajectory of MP Materials."><strong>MP</strong> Pentagon halo</button>    </div>
+
+    <div class="search-error" id="search-error"></div>
+
+    <div class="results" id="results"></div>
+  </div>
+</section>
+
+<!-- ═══════════ BLOCK 2 — hero secondary CTA (inside .hero-cta-row) ═══════════ -->
+
+        <a href="#try-it" class="hero-cta-secondary" data-track="hero_try_demo">Try the live demo <span aria-hidden="true">→</span></a>
+
+<!-- ═══════════ BLOCK 3 — final CTA band button (inside .ent-cta-actions) ═══════════ -->
+
+        <a href="#try-it" class="hero-cta-secondary" data-track="entcta_try_demo">Try the demo</a>
+
+<!-- Original final-CTA-band <p> copy (was reworded when the demo was pulled):
+        <p>Validate any narrative against 3.5M documented outcomes — free, no login. Then create a free account to explore the live dashboard.</p>
+-->

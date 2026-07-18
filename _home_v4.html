@@ -1741,50 +1741,12 @@ footer{
       <p class="hero-lead">Markets move on stories — and most don't survive the filings. We score the narrative behind any ticker against <strong>3.5M documented outcomes</strong>, so you can tell a real signal from a trap.</p>
       <div class="hero-cta-row">
         <a href="/login#register" class="hero-cta-primary" data-track="hero_signup_free">Start free <span aria-hidden="true">→</span></a>
-        <a href="#try-it" class="hero-cta-secondary" data-track="hero_try_demo">Try the live demo <span aria-hidden="true">→</span></a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── DEMO (moved out of the hero into its own clean section) ── -->
-<section class="below ent-light demo-section" id="try-it">
-  <div class="container-narrow">
-    <div class="demo-intro" style="text-align:center;">
-      <div class="section-eyebrow" style="display:inline-flex;">Free narrative check · no login</div>
-      <h2 class="section-title">Validate any stock story <em>in seconds.</em></h2>
-      <p class="section-sub" style="margin:0 auto;">Paste a headline, a tweet, or a thesis. We pattern-match it against 3.5M documented narratives and show you how similar stories actually resolved.</p>
-    </div>
-    <div class="search-panel">
-      <form class="search-form" id="search-form" onsubmit="return false;">
-        <div class="search-row">
-          <div class="search-field">
-            <label class="search-field-label" for="f-ticker">Ticker</label>
-            <input id="f-ticker" class="search-field-ticker" type="text" autocomplete="off" spellcheck="false" placeholder="NVDA" maxlength="10" aria-label="Ticker symbol">
-          </div>
-          <div class="search-field">
-            <label class="search-field-label" for="f-narrative">Narrative</label>
-            <textarea id="f-narrative" class="search-field-narrative" rows="2" spellcheck="true" placeholder="e.g. NVDA's data-center growth is peaking as hyperscaler capex normalizes."></textarea>
-          </div>
-        </div>
-        <button class="search-btn" id="search-btn" type="button">
-          <span class="search-spinner"></span>
-          <span id="search-btn-label">Generate report</span>
-        </button>
-      </form>
-    </div>
-
-    <div class="search-chips">
-      <span style="font-size:11px;color:var(--mp-text-muted);align-self:center;">Try one:</span>
-      <button class="search-chip" data-tk="TSLA" data-narr="Tesla stock is considered outrageously cheap with potential for 100% upside."><strong>TSLA</strong> outrageously cheap</button>
-      <button class="search-chip" data-tk="INTC" data-narr="Intel's stock is experiencing a speculative bubble, showing valuation extremes more severe than Cisco during the dot-com peak, indicating a potential significant correction."><strong>INTC</strong> dot-com redux</button>
-      <button class="search-chip" data-tk="MP" data-narr="Pentagon backing and attention from Jim Cramer could alter the strategic narrative and future trajectory of MP Materials."><strong>MP</strong> Pentagon halo</button>    </div>
-
-    <div class="search-error" id="search-error"></div>
-
-    <div class="results" id="results"></div>
-  </div>
-</section>
+<!-- DEMO "Validate any stock story" section removed 2026-07-18 (dots-predict showing false results) — restore verbatim from _retired_home_v4_demo.html -->
 
 <!-- ── CREDIBILITY / SOURCE BAND (enterprise) ── -->
 <section class="below ent-light ent-cred">
@@ -1977,7 +1939,7 @@ footer{
         <div class="screen-copy">
           <div class="meta">/ticker/:symbol</div>
           <h3>Per-ticker, <em>filing-anchored</em>, non-negotiable.</h3>
-          <p>Open any ticker and the forensic read shows up first: hype score, fundamental disconnect, narrative bias, conviction tier. Toggle the horizon to see <strong>1D, 5D, 30D and 90D</strong> projections side by side — every claim mapped back to the 10-K.</p>
+          <p>Open any ticker and the forensic read shows up first: hype score, fundamental disconnect, narrative bias, conviction tier. Toggle the horizon to see <strong>1D, 5D, 10D and 20D</strong> projections side by side — every claim mapped back to the 10-K.</p>
         </div>
       </div>
 
@@ -2157,11 +2119,10 @@ footer{
     <div class="ent-cta-inner">
       <div>
         <h2>Stop being the exit liquidity.</h2>
-        <p>Validate any narrative against 3.5M documented outcomes — free, no login. Then create a free account to explore the live dashboard.</p>
+        <p>Create a free account to explore the live dashboard — every verdict scored against 3.5M documented outcomes.</p>
       </div>
       <div class="ent-cta-actions">
         <a href="/login#register" class="hero-cta-primary" data-track="entcta_start_free">Start free <span aria-hidden="true">→</span></a>
-        <a href="#try-it" class="hero-cta-secondary" data-track="entcta_try_demo">Try the demo</a>
       </div>
     </div>
   </div>
@@ -2329,6 +2290,9 @@ footer{
     track(el.getAttribute('data-track'), { link_url: el.getAttribute('href') || '' });
   });
 
+  // Demo section is currently removed from the page (see _retired_home_v4_demo.html);
+  // guard the wiring so the rest of this script keeps running without it.
+  if (btn && inpTk && inpNarr) {
   inpTk.addEventListener('input', function(){
     inpTk.value = inpTk.value.toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
   });
@@ -2339,6 +2303,7 @@ footer{
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); }
   });
   btn.addEventListener('click', submit);
+  }
 
   Array.prototype.forEach.call(document.querySelectorAll('.search-chip'), function(chip){
     chip.addEventListener('click', function(){
