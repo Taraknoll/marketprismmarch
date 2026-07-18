@@ -33,11 +33,21 @@ AS $$
   )
   FROM (
     SELECT *
-    FROM public.narrative_dots
-    WHERE ticker = UPPER(ticker_in)
-      AND is_chain_tip = TRUE
-      AND narrative_text IS NOT NULL
-    ORDER BY observed_at DESC
+    FROM public.narrative_dots d
+    WHERE d.ticker = UPPER(ticker_in)
+      AND d.is_chain_tip = TRUE
+      AND d.narrative_text IS NOT NULL
+      -- Mis-tag filter (2026-07-18): skip dots whose source article is
+      -- Gemini-labeled as not actually about this ticker — the scraper's
+      -- substring-match tagging bug otherwise surfaces e.g. a Tesla story as
+      -- a "recent UPS narrative" with UPS's returns. Mirrors
+      -- search_dots_by_embedding v4.
+      AND NOT EXISTS (
+        SELECT 1 FROM public.articles a
+        WHERE a.id = d.source_article_id
+          AND a.is_about_ticker_gemini IS FALSE
+      )
+    ORDER BY d.observed_at DESC
     LIMIT GREATEST(LEAST(n, 30), 1)
   ) d;
 $$;

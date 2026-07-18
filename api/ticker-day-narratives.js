@@ -21,12 +21,16 @@
 // Query params: ticker (required), days (default 400)
 
 const rateLimit = require('./_rate-limit');
+const { fetchMistaggedArticleIds, dropMistagged } = require('./_mistag-filter');
 
 const MAX_ROWS = 2000;
+// source_article_id is fetched only for the mis-tag filter; it never reaches
+// the response (byDate is built field-by-field below).
 const COLS = [
   'observed_at', 'narrative_text', 'speaker_type', 'speaker_authority',
   'narrative_direction', 'bullshit_probability', 'return_5d',
-  'ground_truth_label', 'resolved_at', 'is_chain_tip', 'dot_kind'
+  'ground_truth_label', 'resolved_at', 'is_chain_tip', 'dot_kind',
+  'source_article_id'
 ].join(',');
 
 function sendJson(res, status, obj) {
@@ -71,14 +75,24 @@ module.exports = async (req, res) => {
       `&observed_at=gte.${encodeURIComponent(cutoffIso)}` +
       `&order=observed_at.desc&limit=${MAX_ROWS}`;
 
-    const resp = await fetch(rowsUrl, { headers });
+    // Mis-tagged article ids for this ticker/window, fetched in parallel with
+    // the dots (see _mistag-filter.js; 3-day cushion because article publish
+    // can precede dot observation by ~48h).
+    const mistagSinceIso = new Date(Date.parse(cutoffIso) - 3 * 86400000).toISOString();
+    const [resp, badIds] = await Promise.all([
+      fetch(rowsUrl, { headers }),
+      fetchMistaggedArticleIds(supabaseUrl, supabaseKey, ticker, mistagSinceIso)
+    ]);
     if (!resp.ok) {
       const detail = await resp.text().catch(() => '');
       return sendJson(res, 502, {
         error: 'narrative_dots query failed', status: resp.status, detail: detail.slice(0, 300)
       });
     }
-    const rows = await resp.json().catch(() => []);
+    // Drop dots sourced from an article Gemini says is NOT about this ticker
+    // (wrong ticker -> wrong returns) BEFORE picking each day's winner —
+    // otherwise a mis-tagged high-authority voice hijacks the day's card.
+    const rows = dropMistagged(await resp.json().catch(() => []), badIds);
 
     // Rank within a day: authority desc (nulls last) → chain tip → genesis → recency.
     const authOf = (r) => (r.speaker_authority == null ? -1 : Number(r.speaker_authority));
