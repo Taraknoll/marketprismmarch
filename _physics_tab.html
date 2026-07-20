@@ -252,7 +252,7 @@ var FAMS = [
   {id:'support',   name:'Structurally Supported', color:'#00DE94', verdicts:['Structurally Supported']}
 ];
 function famOf(v){ for(var i=0;i<FAMS.length;i++){ if(FAMS[i].verdicts.indexOf(v)>=0) return FAMS[i]; } return FAMS[5]; }
-var SX=340, SY=230, SZ=250, EDAY_MAX=95;
+var SX_BASE=340, SX=SX_BASE, SY=230, SZ=250, EDAY_MAX=95;
 var MIN_DIST=70, MAX_DIST=3200;
 var DUSTX=1700, DUSTY=1200, DUSTZ=1700;
 var FOG_NEAR=900, FOG_FAR=3400;
@@ -567,11 +567,26 @@ function snapshot(){
 }
 
 /* ── camera / projection ── */
+// Wide stages get a wide field: SX stretches with the stage aspect so the
+// scene fills the horizontal room instead of rendering as a centered cube.
+// World X positions are cached per stock, so a change must re-derive them.
+function rescaleX(){
+  stocks.forEach(function(s){
+    s.x=xOfDays(s.edays);
+    var n=s.trailPts?s.trailPts.length:0;
+    for(var i=0;i<n;i++){
+      var p=s.trailPts[i];
+      if(p) p.x=xOfDays(s.edays==null?null:s.edays+(n-1-i));
+    }
+  });
+}
 function resize(){
   if(!stage||!cv) return;
   DPR=Math.min(2, window.devicePixelRatio||1);
   W=stage.clientWidth; H=stage.clientHeight;
   if(!W||!H) return;
+  var nsx=Math.round(SX_BASE*Math.max(1,Math.min(2.1,(W/H)/1.5)));
+  if(nsx!==SX){ SX=nsx; rescaleX(); }
   cv.width=W*DPR; cv.height=H*DPR;
   ctx.setTransform(DPR,0,0,DPR,0,0);
   buildBackdrop();
@@ -598,7 +613,7 @@ function updateCamera(){
   Rv=nrm(crs(Fw,{x:0,y:1,z:0}));
   Uv=crs(Rv,Fw);
   imm=Math.max(0,Math.min(1,(1250-cam.dist)/(1250-MIN_DIST)));
-  FOC=Math.min(W,H)*(0.70+0.45*(1-imm));
+  FOC=Math.min(W,H*1.3)*(0.70+0.45*(1-imm));
 }
 function project(p){
   var rx=p.x-eye.x, ry=p.y-eye.y, rz=p.z-eye.z;
