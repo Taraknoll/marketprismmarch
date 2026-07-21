@@ -4631,6 +4631,10 @@ body.mp-processing .mp-proc-banner{display:block;}
 #tab-strategy .bk-header{border-bottom-color:rgba(148,163,184,.14);}
 #tab-strategy .insight-footer{background:transparent;border-top-color:rgba(148,163,184,.14);}
 #tab-strategy .kpi-note{border-top-color:rgba(148,163,184,.14);}
+/* Claim Integrity renders below the tab panels — Overview-only: any other
+   active tab adds mp-tab-other on <body> and this wins over the loader's
+   inline display. */
+body.mp-tab-other #claim-integrity-section{display:none !important;}
 body.mp-processing .narr-section,
 body.mp-processing #tk-feed-card,
 body.mp-processing #tab-timeline,
@@ -11375,6 +11379,8 @@ async function createImage() {
       tab.classList.add('active');
       const panel = document.getElementById('tab-' + tab.dataset.tab);
       if (panel) panel.classList.add('active');
+      // Claim Integrity lives below the tab panels — show it on Overview only.
+      document.body.classList.toggle('mp-tab-other', tab.dataset.tab !== 'overview');
       // Re-render chart when switching tabs (chart now in overview)
       if (tab.dataset.tab === 'overview' && ALL_SNAPS.length) {
         setTimeout(() => renderChart(), 50);
