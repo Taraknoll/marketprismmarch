@@ -4596,6 +4596,26 @@ body.mp-teaser-locked .mp-tcta{display:flex;}
 .mp-tcta-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
 body.mp-teaser-locked #verdict-banner>*{filter:blur(8px);pointer-events:none;user-select:none;-webkit-user-select:none;}
 body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-events:none;user-select:none;-webkit-user-select:none;}
+
+/* ── "Coverage in progress" state. body.mp-processing is set server-side by
+   api/ticker.js when the ticker is in api/_processing-tickers.js (tracked but
+   the article scraper has zero `articles` rows). The article-derived sections
+   have nothing to render, so they're hidden and replaced by the banner below.
+   Price/valuation/forecast/earnings/fundamentals stay — they're scorecard-
+   derived and render fine. Inter only, no serif. ── */
+.mp-proc-banner{display:none;position:relative;margin:0 0 20px;padding:18px 20px 18px 22px;background:var(--mp-surface,#0C1018);border:1px solid rgba(0,174,255,0.28);border-radius:16px;overflow:hidden;}
+body.mp-processing .mp-proc-banner{display:block;}
+.mp-proc-banner::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#00AEFF,#00DE94);}
+.mp-proc-row{display:flex;align-items:flex-start;gap:14px;}
+.mp-proc-icon{font-size:20px;line-height:1.3;flex-shrink:0;}
+.mp-proc-title{font-family:'Inter',system-ui,sans-serif;font-size:16px;font-weight:600;letter-spacing:-0.01em;color:#4DC8F0;margin-bottom:4px;}
+.mp-proc-body{font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.55;color:var(--mp-text-secondary,rgba(255,255,255,0.7));}
+body.mp-processing .narr-section,
+body.mp-processing #tk-feed-card,
+body.mp-processing #tab-timeline,
+body.mp-processing .tk-tab[data-tab="timeline"],
+body.mp-processing #claim-integrity-section,
+body.mp-processing #scholarly-section{display:none !important;}
 </style>
 <div class="app-layout">
   <!-- ── SIDE NAV ── (rendered by lib/mp-sidebar.js — single source of truth across pages) -->
@@ -4660,6 +4680,19 @@ body.mp-teaser-locked #tab-strategy>*:not(.mp-tcta){filter:blur(8px);pointer-eve
   <!-- Ask Market Scholar AI bar removed — replaced by the sidebar AI section. -->
   <!-- Attached script at the bottom of the file is guarded with a null check. -->
 
+
+  <!-- Coverage-in-progress banner — shown only when body.mp-processing is set
+       server-side (ticker tracked but article scraper has no coverage yet). -->
+  <div class="mp-proc-banner" role="status" aria-live="polite">
+    <div class="mp-proc-row">
+      <span class="mp-proc-icon" aria-hidden="true">&#9203;</span>
+      <div>
+        <div class="mp-proc-title">New coverage in progress</div>
+        <div class="mp-proc-body">We're still gathering news and building the full narrative analysis for <span id="mp-proc-tkr">this ticker</span>. Live price, valuation and market data are available below — trending narratives, the story feed and the forensic timeline will appear here as soon as coverage is ready.</div>
+      </div>
+    </div>
+  </div>
+  <script>(function(){var t=(window.__env&&window.__env.TICKER)||'';var e=document.getElementById('mp-proc-tkr');if(e&&t)e.textContent=t;})();</script>
 
   <!-- ═══ TAB BAR ═══ -->
   <div class="tk-tab-bar">

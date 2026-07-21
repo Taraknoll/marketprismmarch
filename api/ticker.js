@@ -1,6 +1,7 @@
 const resolveTemplate = require('./_resolve-template');
 const requireAuth = require('./_require-auth');
 const { isHidden: isHiddenTicker } = require('./_hidden-tickers');
+const { isProcessing: isProcessingTicker } = require('./_processing-tickers');
 
 module.exports = async (req, res) => {
   try {
@@ -63,6 +64,14 @@ module.exports = async (req, res) => {
       "window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', TICKER: '' };",
       `window.__env = { SUPABASE_URL: '${supabaseUrl}', SUPABASE_ANON: '${supabaseAnon}', TICKER: '${safeTicker}' };`
     );
+
+    // Tracked ticker with no article-scraper coverage yet → swap the empty
+    // article-derived sections (narratives, story feed, forensic timeline,
+    // claim integrity, scholarly) for a "coverage in progress" banner. The CSS
+    // + banner markup live in _ticker.html, gated on body.mp-processing.
+    if (isProcessingTicker(safeTicker)) {
+      html = html.replace('<body>', '<body class="mp-processing">');
+    }
 
     // ── SEO + AEO injection (server-side, non-destructive) ──────────────
     if (safeTicker && supabaseUrl && supabaseAnon) {
