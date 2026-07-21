@@ -1419,14 +1419,17 @@
   .narr-fuel-score-line {
     font-family: var(--font-body);
     font-size: 11px;
-    color: rgba(255,255,255,0.55);
-    letter-spacing: 0.02em;
-    margin: -4px 0 14px 0;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.42);
+    margin: -2px 0 14px 0;
     padding: 0 2px;
   }
   .narr-fuel-score-line strong {
-    color: rgba(255,255,255,0.85);
-    font-weight: 500;
+    color: var(--mp-text-primary);
+    font-weight: 600;
+    font-size: 12px;
   }
 
   /* ── Fuel contribution bar (inside narr-header-mid) ── */
@@ -1492,76 +1495,138 @@
     font-weight: 500;
   }
 
-  /* ── Fast-scan narrative card (forensics refactor) ── */
+  /* ── Fast-scan narrative card (forensics refactor — enterprise restyle) ──
+     Neutral chrome; the energy regime carries color ONLY via the 2px top
+     accent strip and the status badge. Metadata is a structured label/value
+     grid, and evidence checks are quiet chips where just the glyph (and a
+     failed check's chip) carries state color. ◄ keeps the list scannable
+     without the rainbow-rail look. */
   .nf-card {
     position: relative;
+    overflow: hidden;
     background: #11151f;
-    border: 0.5px solid rgba(255,255,255,0.08);
-    border-left: 3px solid var(--nf-accent, #00AEFF);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .nf-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .nf-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--nf-accent, #00AEFF);
+    opacity: 0.65;
+  }
+  .nf-card:hover { border-color: rgba(255,255,255,0.14); box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
   .nf-card:last-child { margin-bottom: 0; }
-  .nf-top { display: flex; align-items: flex-start; gap: 10px; }
+  .nf-top { display: flex; align-items: flex-start; gap: 12px; }
   .nf-rank {
-    font-size: 18px; font-weight: 700; font-family: var(--font-body);
-    color: var(--nf-accent, #00AEFF); flex-shrink: 0; width: 20px;
-    text-align: center; line-height: 1.45;
+    flex-shrink: 0; width: 26px; height: 26px; margin-top: 1px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; font-family: var(--font-body);
+    font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+    color: var(--mp-text-tertiary);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
   }
   .nf-headline {
-    flex: 1; min-width: 0; font-size: 18px; font-weight: 600;
-    line-height: 1.4; letter-spacing: -0.01em; color: var(--mp-text-primary);
-  }
-  /* Decorative opening quote — cues that the headline is a narrative/claim.
-     Pure CSS so it never enters the selectable/copied text. Inter, no serif. */
-  .nf-headline::before {
-    content: "\201C";
-    color: var(--nf-accent, #00AEFF);
-    font-weight: 700; font-size: 1.3em; line-height: 0;
-    margin-right: 2px; vertical-align: -0.22em;
+    flex: 1; min-width: 0; font-size: 16px; font-weight: 600;
+    line-height: 1.5; letter-spacing: -0.01em; color: var(--mp-text-primary);
+    padding-top: 3px;
   }
   .nf-badge {
-    flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-    text-transform: uppercase; padding: 3px 9px; border-radius: 99px;
-    border: 1px solid; white-space: nowrap; margin-top: 4px;
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 4px 10px; border-radius: 6px;
+    border: 1px solid; white-space: nowrap; margin-top: 3px;
   }
-  /* Compact small-text data line under the headline (no boxes) */
-  .nf-data {
-    margin-top: 9px;
-    font-size: 12px; line-height: 1.7; color: var(--mp-text-secondary);
+  .nf-badge::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0;
   }
-  .nf-data-item { white-space: nowrap; }
-  .nf-data b { color: var(--mp-text-primary); font-weight: 600; }
-  .nf-data-sep { color: rgba(255,255,255,0.22); }
+  /* Content column — meta + claim sit in the headline's text column */
+  .nf-body { padding-left: 38px; }
+  .nf-meta {
+    display: flex; flex-wrap: wrap; gap: 10px 28px;
+    margin-top: 13px;
+  }
+  .nf-meta-item { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .nf-meta-k {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: rgba(255,255,255,0.42);
+    white-space: nowrap;
+  }
+  .nf-meta-v {
+    font-size: 14px; font-weight: 600; color: var(--mp-text-primary);
+    font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
   .nf-claim {
-    margin-top: 12px; padding-top: 10px;
+    margin-top: 14px; padding-top: 13px;
     border-top: 1px solid rgba(255,255,255,0.06);
   }
   .nf-claim-text {
     font-size: 13px; color: var(--mp-text-secondary);
-    line-height: 1.45; margin-bottom: 7px;
+    line-height: 1.55; margin-bottom: 9px;
   }
-  .nf-claim-text strong { color: var(--mp-text-primary); font-weight: 600; }
+  .nf-claim-k {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: rgba(255,255,255,0.42);
+    margin-right: 7px;
+  }
   .nf-claim-recency { color: var(--mp-text-muted); }
   .nf-pills { display: flex; flex-wrap: wrap; gap: 6px; }
   .nf-pill {
-    display: inline-flex; align-items: center; gap: 4px;
+    display: inline-flex; align-items: center; gap: 6px;
     font-size: 11px; font-weight: 500; font-family: var(--font-body);
-    padding: 2px 8px; border-radius: 99px; border: 1px solid; white-space: nowrap;
+    padding: 3px 10px 3px 8px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: var(--mp-text-secondary); white-space: nowrap;
   }
-  .nf-pill .nf-ico { font-size: 11px; line-height: 1; }
-  .nf-pill.pass    { background: rgba(0,222,148,0.08);  color: #34d99b; border-color: rgba(0,222,148,0.22); }
-  .nf-pill.fail    { background: rgba(255,77,77,0.08);   color: #ff6b6b; border-color: rgba(255,77,77,0.22); }
-  .nf-pill.partial { background: rgba(255,184,0,0.08);   color: #FFB800; border-color: rgba(255,184,0,0.22); }
+  .nf-pill .nf-ico { font-size: 10px; font-weight: 700; line-height: 1; }
+  .nf-pill.pass .nf-ico    { color: #34d99b; }
+  .nf-pill.partial .nf-ico { color: #FFB800; }
+  .nf-pill.fail .nf-ico    { color: #ff6b6b; }
+  /* Failed checks are the forensic signal — only those tint the whole chip */
+  .nf-pill.fail {
+    border-color: rgba(255,77,77,0.22);
+    background: rgba(255,77,77,0.05);
+    color: rgba(255,255,255,0.78);
+  }
+  @media (max-width: 640px) {
+    .nf-body { padding-left: 0; }
+  }
+  /* Light-theme mapping for the forensic cards (text vars self-heal;
+     these swap the hardcoded dark chrome + white-alpha accents) */
+  [data-theme="light"] .nf-card { background: #FFFFFF; border-color: rgba(0,0,0,0.08); }
+  [data-theme="light"] .nf-card:hover { border-color: rgba(0,0,0,0.16); box-shadow: 0 4px 14px rgba(17,24,39,0.08); }
+  [data-theme="light"] .nf-rank {
+    background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.10);
+  }
+  [data-theme="light"] .nf-meta-k,
+  [data-theme="light"] .nf-claim-k,
+  [data-theme="light"] .narr-fuel-score-line { color: rgba(17,24,39,0.48); }
+  [data-theme="light"] .nf-claim { border-top-color: rgba(0,0,0,0.08); }
+  [data-theme="light"] .nf-pill {
+    border-color: rgba(0,0,0,0.10); background: rgba(0,0,0,0.03);
+  }
+  [data-theme="light"] .nf-pill.pass .nf-ico    { color: #0BA678; }
+  [data-theme="light"] .nf-pill.partial .nf-ico { color: #B98400; }
+  [data-theme="light"] .nf-pill.fail .nf-ico    { color: #E03131; }
+  [data-theme="light"] .nf-pill.fail {
+    border-color: rgba(224,49,49,0.25); background: rgba(224,49,49,0.05);
+    color: rgba(17,24,39,0.8);
+  }
+  /* Accent-colored badge text (amber/cyan) needs darkening on white */
+  [data-theme="light"] .nf-badge { filter: brightness(0.8) saturate(1.15); }
   /* Above-the-fold verdict line — the one-line hook above the narrative cards */
   .nf-verdict {
-    margin: 0 0 14px; padding: 12px 15px;
+    margin: 0 0 14px; padding: 13px 16px;
     background: rgba(0,174,255,0.06);
     border: 1px solid rgba(0,174,255,0.18);
-    border-left: 3px solid #00AEFF; border-radius: 10px;
+    border-left: 3px solid #00AEFF; border-radius: 12px;
     font-size: 15px; line-height: 1.5; font-weight: 500;
     color: var(--mp-text-secondary);
   }
@@ -9993,17 +10058,19 @@ async function loadNarratives() {
         : 0;
       const spanShort = spanDays >= 1 ? `${spanDays}d` : '<1d';
 
-      // ── Compact data line: small white text below the headline (no boxes) ──
-      const dataBits = [];
-      if (sq) dataBits.push(`Source <b>${sq.tier}-tier · ${sq.score.toFixed(1)}</b>`);
-      if (analystName) dataBits.push(`Analyst <b>${esc(analystName)}</b>`);
+      // ── Structured meta row: uppercase label over value, one column per stat ──
+      const metaBits = [];
+      if (sq) metaBits.push({ k: 'Source', v: `${sq.tier}-tier · ${sq.score.toFixed(1)}` });
+      if (analystName) metaBits.push({ k: 'Analyst', v: esc(analystName) });
       if (blendedMove != null)
-        dataBits.push(`Impact <b style="color:${piColor}">${blendedMove > 0 ? '+' : ''}${blendedMove.toFixed(1)}%</b>`);
-      if (n.propagation_pressure != null || n.half_life != null) dataBits.push(`Pushed <b>${spanShort}</b>`);
-      if (n.half_life != null) dataBits.push(`half-life <b>${Math.round(Number(n.half_life))}d</b>`);
-      if (n.propagation_pressure != null) dataBits.push(`<b>${fuelPct}%</b> fuel`);
-      const dataHtml = dataBits.length
-        ? `<div class="nf-data">${dataBits.map(b => `<span class="nf-data-item">${b}</span>`).join(' <span class="nf-data-sep">·</span> ')}</div>`
+        metaBits.push({ k: 'Impact', v: `${blendedMove > 0 ? '+' : ''}${blendedMove.toFixed(1)}%`, c: piColor });
+      if (n.propagation_pressure != null || n.half_life != null) metaBits.push({ k: 'Pushed', v: spanShort });
+      if (n.half_life != null) metaBits.push({ k: 'Half-life', v: `${Math.round(Number(n.half_life))}d` });
+      if (n.propagation_pressure != null) metaBits.push({ k: 'Fuel', v: `${fuelPct}%` });
+      const dataHtml = metaBits.length
+        ? `<div class="nf-meta">${metaBits.map(m =>
+            `<div class="nf-meta-item"><span class="nf-meta-k">${m.k}</span><span class="nf-meta-v"${m.c ? ` style="color:${m.c}"` : ''}>${m.v}</span></div>`
+          ).join('')}</div>`
         : '';
 
       // ── Claim vs evidence — only when claim flags exist on the row ──
@@ -10033,23 +10100,25 @@ async function loadNarratives() {
         const recency = relDaysAgo(citeDates[citeDates.length - 1]);
         claimHtml = `
           <div class="nf-claim">
-            <div class="nf-claim-text"><strong>Claim:</strong> ${claimSummary}${recency ? ` <span class="nf-claim-recency">(${recency})</span>` : ''}</div>
+            <div class="nf-claim-text"><span class="nf-claim-k">Claim</span>${claimSummary}${recency ? ` <span class="nf-claim-recency">(${recency})</span>` : ''}</div>
             <div class="nf-pills">${pillsHtml}</div>
           </div>`;
       }
 
       const badgeHtml = strength.lbl
-        ? `<div class="nf-badge" style="color:${accent};border-color:${accent}55;background:${accent}14;">${strength.lbl}</div>`
+        ? `<div class="nf-badge" style="color:${accent};border-color:${accent}33;background:${accent}0D;">${strength.lbl}</div>`
         : '';
 
+      const bodyHtml = (dataHtml || claimHtml)
+        ? `<div class="nf-body">${dataHtml}${claimHtml}</div>`
+        : '';
       return `<div class="nf-card" style="--nf-accent:${accent};">
         <div class="nf-top">
-          <div class="nf-rank">${idx + 1}</div>
+          <div class="nf-rank">${String(idx + 1).padStart(2, '0')}</div>
           <div class="nf-headline">${esc(n.narrative_text)}</div>
           ${badgeHtml}
         </div>
-        ${dataHtml}
-        ${claimHtml}
+        ${bodyHtml}
       </div>`;
     }).join('');
 
