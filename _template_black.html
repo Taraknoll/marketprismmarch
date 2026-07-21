@@ -5944,7 +5944,10 @@ function switchTab(id, btn){
     var softOverlay = tabEl.querySelector('.soft-gate-overlay');
     if(softOverlay) softOverlay.remove();
     var isAuthed = localStorage.getItem('mp-beta-access') === 'true' || !!CURRENT_USER || (typeof BILLING !== 'undefined' && BILLING.hasAccess && BILLING.hasAccess(CURRENT_SUBSCRIPTION, 'standard'));
-    if(!isAuthed && SOFT_GATED.indexOf(id) !== -1 && !sessionStorage.getItem('mp-softgate-'+id)){
+    // Only gate once auth has POSITIVELY settled — before that, CURRENT_USER is
+    // still null for every signed-in (even paying) user, and the overlay would
+    // flash a "create a free account" nudge at them.
+    if(!isAuthed && window.__mpAuthSettled && SOFT_GATED.indexOf(id) !== -1 && !sessionStorage.getItem('mp-softgate-'+id)){
       tabEl.style.position = 'relative';
       tabEl.style.minHeight = '60vh';
       var sg = document.createElement('div');
@@ -6432,6 +6435,13 @@ function applyAuthenticatedUser(user){
   }
   if(user){
     document.body.style.opacity = '1';
+    // Auth has positively settled with a signed-in user (paid, free, or beta).
+    // Gates keyed off this flag (soft-gate, sticky CTA) must never show now.
+    window.__mpAuthSettled = true;
+    // Kill the anonymous "Start Free" sticky CTA even if its 5s timer already
+    // fired before auth resolved — a signed-in user must never see it.
+    var stickyCta = document.getElementById('dash-sticky-cta');
+    if(stickyCta){ stickyCta.style.display = 'none'; }
     // Soft-gate overlays (the "create a free account" nudge on Leaderboard,
     // narrative, scorer) are populated synchronously by switchTab before this
     // async auth check resolves. Once we know there IS a logged-in user, tear
@@ -18476,8 +18486,20 @@ onTabSwitch(function(id){
 </div>
 <script>
 (function(){
-  if(localStorage.getItem('mp-beta-access')!=='true' && !window.CURRENT_USER && !sessionStorage.getItem('mp-dash-sticky-dismissed')){
-    setTimeout(function(){ document.getElementById('dash-sticky-cta').style.display='block'; }, 5000);
+  // Anonymous-visitor CTA only. This script runs at parse time, BEFORE the
+  // async auth check resolves — re-check at fire time so a signed-in (even
+  // paying) user never sees a "Start Free" sign-up banner.
+  function mpStickyEligible(){
+    return localStorage.getItem('mp-beta-access')!=='true'
+      && !window.CURRENT_USER
+      && !window.__mpAuthSettled
+      && !sessionStorage.getItem('mp-dash-sticky-dismissed');
+  }
+  if(mpStickyEligible()){
+    setTimeout(function(){
+      if(!mpStickyEligible()) return;
+      document.getElementById('dash-sticky-cta').style.display='block';
+    }, 5000);
   }
 })();
 </script>

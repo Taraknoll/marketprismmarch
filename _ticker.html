@@ -6165,11 +6165,6 @@ body.mp-processing #scholarly-section{display:none !important;}
   </main>
 </div>
 <script>
-// Ticker pages rely on existing plan-based gating (line ~6764)
-// No hard redirect — page loads for all users, premium features gated inline
-})();
-</script>
-<script>
 // ── Mobile sidebar toggle ────────────────────────────────────────────────────
 // Sidebar element is rendered by lib/mp-sidebar.js into #side-nav. Old
 // #sidebar element no longer exists post 2026-05-01.
@@ -12885,8 +12880,11 @@ async function refreshAll() {
   renderWarranted(pulse);
   renderSidebar(pulse, heroData);
 
-  // Show signup CTA for non-authenticated users
-  if(localStorage.getItem('mp-beta-access') !== 'true'){
+  // Signup CTA is for unauthenticated visitors only. Every authed viewer —
+  // paying, free, beta, or admin — already has an account, so never pitch
+  // "Start Free" at them. __mpTickerAuthed is set by the access-gating boot
+  // IIFE before it calls refreshAll(), so it's authoritative here.
+  if(!window.__mpTickerAuthed && localStorage.getItem('mp-beta-access') !== 'true'){
     var ctaEl = document.getElementById('ticker-signup-cta');
     if(ctaEl) ctaEl.style.display = 'block';
   }
@@ -12939,8 +12937,10 @@ async function refreshAll() {
 // ── Ticker access gating — require beta code or paid subscription ──────────────
 (async function(){
   var BILLING = window.MP_BILLING;
-  // Skip gating if billing config not loaded or override is on
-  if(!BILLING || BILLING.dashboardAccessOverride){ refreshAll(); return; }
+  // Skip gating if billing config not loaded or override is on. Mark the viewer
+  // authed anyway — unknown state must never surface the anonymous signup CTA
+  // (fail-safe toward paying users; the page is server-gated regardless).
+  if(!BILLING || BILLING.dashboardAccessOverride){ window.__mpTickerAuthed = true; refreshAll(); return; }
 
   // Determine subscription — check beta first, then Supabase auth
   var sub = null;
@@ -12996,6 +12996,10 @@ async function refreshAll() {
     window.location.href = '/login';
     return;
   }
+  // Resolved before refreshAll() runs, so renderers can trust it: every viewer
+  // from here on has an account (session, beta, or admin) — the anonymous
+  // signup CTA keys off this flag and must never show to them.
+  window.__mpTickerAuthed = true;
 
   // Pro teaser (free preview): blur the verdict/forecast banner + Trading
   // Strategy tab via body.mp-teaser-locked. FAIL-OPEN — locks only when we

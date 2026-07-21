@@ -305,6 +305,19 @@ body::before{
       </div>
       <button class="btn-submit" type="submit" id="btn-reset">Send Reset Link</button>
     </form>
+
+    <!-- Set New Password Form (shown when arriving via a recovery link) -->
+    <form class="auth-form" id="form-newpass" onsubmit="handleNewPassword(event)">
+      <div class="form-group">
+        <label class="form-label" for="newpass-password">New Password</label>
+        <input class="form-input" id="newpass-password" type="password" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="newpass-confirm">Confirm New Password</label>
+        <input class="form-input" id="newpass-confirm" type="password" placeholder="Repeat password" required minlength="6" autocomplete="new-password">
+      </div>
+      <button class="btn-submit" type="submit" id="btn-newpass">Set New Password</button>
+    </form>
   </div>
 
   <div class="login-footer">
@@ -328,6 +341,17 @@ body::before{
     showMsg('error','Authentication service is temporarily unavailable. Please try again shortly.');
     return;
   }
+
+  // ── Password-recovery mode ──
+  // A Supabase recovery link lands here with #access_token=…&type=recovery
+  // (directly, or forwarded by the gated /dashboard). Capture the flag BEFORE
+  // createClient() — detectSessionInUrl consumes and strips that hash. While in
+  // recovery mode the already-logged-in auto-redirect is suppressed so the user
+  // actually gets to set a new password before being sent to the dashboard.
+  var isRecovery = /type=recovery/.test(window.location.hash || '');
+  // Expired/invalid recovery links come back as #error_description=… — surface
+  // that instead of silently showing a normal sign-in form.
+  var hashErrMatch = (window.location.hash || '').match(/error_description=([^&]+)/);
 
   var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -396,6 +420,9 @@ body::before{
       new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('timeout')); }, 5000); })
     ]).then(function(result){
       if(result && result.data && result.data.session){
+        // Recovery mode: the session here IS the recovery-link session — hold
+        // the user on this page until they've set a new password.
+        if(isRecovery) return;
         // Self-heal: mint the cookie for legacy localStorage-only sessions, then continue.
         // Also set mp_auth so the legacy pw-gate overlay on dev pages dismisses for
         // returning paid users.
@@ -409,13 +436,68 @@ body::before{
 
   // ── Tab switching ──
   window.switchAuthTab = function(tab){
-    ['signin','register','reset'].forEach(function(t){
+    ['signin','register','reset','newpass'].forEach(function(t){
       var form = document.getElementById('form-'+t);
       var btn = document.querySelector('.auth-tab[onclick*="\''+t+'\'"]');
       if(form) form.classList.toggle('active', t===tab);
       if(btn)  btn.classList.toggle('active', t===tab);
     });
     clearMsg();
+  };
+
+  // ── Recovery mode UI ──
+  function enterRecoveryMode(){
+    isRecovery = true;
+    document.querySelectorAll('.auth-tab').forEach(function(t){ t.style.display = 'none'; });
+    switchAuthTab('newpass');
+    showMsg('info','Choose a new password for your account.');
+  }
+  if(isRecovery) enterRecoveryMode();
+  if(hashErrMatch){
+    try {
+      showMsg('error', decodeURIComponent(hashErrMatch[1].replace(/\+/g,' ')) + ' — request a new link from the Reset tab.');
+      switchAuthTab('reset');
+    } catch(_e){}
+  }
+  // Belt-and-suspenders: supabase-js fires PASSWORD_RECOVERY when it processes
+  // a recovery hash, even if the pre-client capture above ever misses it.
+  try {
+    supabase.auth.onAuthStateChange(function(event){
+      if(event === 'PASSWORD_RECOVERY' && !isRecovery) enterRecoveryMode();
+    });
+  } catch(_e){}
+
+  // ── Set New Password (recovery-link flow) ──
+  window.handleNewPassword = async function(e){
+    e.preventDefault();
+    clearMsg();
+    var password = document.getElementById('newpass-password').value;
+    var confirm = document.getElementById('newpass-confirm').value;
+    if(!password || !confirm){ showMsg('error','Please fill in all fields.'); return; }
+    if(password !== confirm){ showMsg('error','Passwords do not match.'); return; }
+    if(password.length < 6){ showMsg('error','Password must be at least 6 characters.'); return; }
+
+    setLoading('btn-newpass', true);
+    try {
+      var result = await supabase.auth.updateUser({ password: password });
+      if(result.error) throw result.error;
+      showMsg('success','Password updated. Redirecting…');
+      document.getElementById('btn-newpass').classList.add('success');
+      var sess = await supabase.auth.getSession();
+      var token = sess && sess.data && sess.data.session ? sess.data.session.access_token : null;
+      await mintSessionCookie(token);
+      try { localStorage.setItem('mp_auth', JSON.stringify({t: Date.now()})); } catch(_){}
+      isRecovery = false;
+      setTimeout(function(){ window.location.href = nextDestination(); }, 800);
+    } catch(err){
+      if(isOutageError(err)){
+        showBanner();
+        showMsg('error','Password update is temporarily unavailable due to a provider outage. Please try again in a few minutes.');
+      } else {
+        showMsg('error', (err && err.message ? err.message : 'Could not update password.') + ' If your link expired, request a new one from the Reset tab.');
+      }
+      setLoading('btn-newpass', false);
+    }
   };
 
   // Auto-switch tab from URL hash (e.g. /login#register)

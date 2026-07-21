@@ -6972,7 +6972,11 @@ function switchTab(id, btn){
     var softOverlay = tabEl.querySelector('.soft-gate-overlay');
     if(softOverlay) softOverlay.remove();
     var isAuthed = localStorage.getItem('mp-beta-access') === 'true' || !!CURRENT_USER || (typeof BILLING !== 'undefined' && BILLING.hasAccess && BILLING.hasAccess(CURRENT_SUBSCRIPTION, 'standard'));
-    if(!isAuthed && SOFT_GATED.indexOf(id) !== -1 && !sessionStorage.getItem('mp-softgate-'+id)){
+    // Only gate once auth has POSITIVELY settled — before that, CURRENT_USER is
+    // still null for every signed-in (even paying) user, and the overlay would
+    // flash a "create a free account" nudge at them. The dashboard is
+    // server-gated, so an unresolved state always ends in a user or a redirect.
+    if(!isAuthed && window.__mpAuthSettled && SOFT_GATED.indexOf(id) !== -1 && !sessionStorage.getItem('mp-softgate-'+id)){
       tabEl.style.position = 'relative';
       tabEl.style.minHeight = '60vh';
       var sg = document.createElement('div');
@@ -7030,7 +7034,13 @@ var SUPABASE_ANON = (window.__env||{}).SUPABASE_ANON || '';
 // DJT: ticker page is rendering Tesla narratives, so don't surface DJT anywhere
 // the dashboard could deep-link into it. Per-ticker page is still reachable directly.
 var MP_EXCLUDED_TICKERS = 'not.in.(SONY,HMC,TM,TSM,DJT)';
-var SUPA = (window.supabase && SUPABASE_URL && SUPABASE_ANON)
+// Supabase password-recovery links can land here (#access_token=…&type=recovery,
+// forwarded by the reset email's /dashboard redirect). The set-new-password form
+// lives on /login, and the one-time token must reach it unconsumed — so bounce
+// BEFORE creating the client, whose detectSessionInUrl would otherwise eat it.
+var MP_RECOVERY_HASH = /type=recovery/.test(window.location.hash || '');
+if (MP_RECOVERY_HASH) { window.location.replace('/login' + window.location.hash); }
+var SUPA = (!MP_RECOVERY_HASH && window.supabase && SUPABASE_URL && SUPABASE_ANON)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
   : null;
 var CURRENT_USER = null;
@@ -7039,6 +7049,19 @@ var BILLING = window.MP_BILLING || {lockedTabs:{},getPlanName:function(){return 
 var BILLING_UI = window.MP_BILLING_UI || {};
 var CURRENT_SUBSCRIPTION = null;
 var BILLING_PORTAL_BUSY = false;
+// Returning from Stripe Checkout (?success=true): flag the pending success so
+// renderSubscriptionOverview() shows the "Subscription activated" flash, and
+// strip the param so a refresh doesn't re-fire it. The webhook race (row not
+// written yet) is handled in loadSubscriptionStatus() via repair-subscription.
+try {
+  var _mpQs = new URLSearchParams(window.location.search);
+  if(_mpQs.get('success') === 'true'){
+    window.__billingPendingSuccess = true;
+    _mpQs.delete('success');
+    var _mpQsStr = _mpQs.toString();
+    history.replaceState(null, '', window.location.pathname + (_mpQsStr ? '?' + _mpQsStr : '') + window.location.hash);
+  }
+} catch(_e){}
 
 // ── Score Any Stock (Testing) ────────────────────────────────────────────────
 var SCORER_EDGE_URL = 'https://kugfvlagaetiqtdwdfmk.supabase.co/functions/v1/score-stock';
@@ -7461,6 +7484,13 @@ function applyAuthenticatedUser(user){
   }
   if(user){
     document.body.style.opacity = '1';
+    // Auth has positively settled with a signed-in user (paid, free, or beta).
+    // Gates keyed off this flag (soft-gate, sticky CTA) must never show now.
+    window.__mpAuthSettled = true;
+    // Kill the anonymous "Start Free" sticky CTA even if its 5s timer already
+    // fired before auth resolved — a signed-in user must never see it.
+    var stickyCta = document.getElementById('dash-sticky-cta');
+    if(stickyCta){ stickyCta.style.display = 'none'; document.body.style.paddingBottom = ''; }
     // Soft-gate overlays (the "create a free account" nudge on Leaderboard,
     // narrative, scorer) are populated synchronously by switchTab before this
     // async auth check resolves. Once we know there IS a logged-in user, tear
@@ -7482,7 +7512,10 @@ function applyAuthenticatedUser(user){
 
 function redirectToLogin(){
   if(window.location.pathname !== '/login'){
-    window.location.href = '/login';
+    // Preserve a Supabase password-recovery hash so /login can show the
+    // set-new-password form instead of dropping the one-time token.
+    var h = /type=recovery/.test(window.location.hash || '') ? window.location.hash : '';
+    window.location.href = '/login' + h;
   }
 }
 
@@ -7727,10 +7760,33 @@ async function getSubscription(){
   return fallbackResult.data && fallbackResult.data[0] ? fallbackResult.data[0] : null;
 }
 
+function mpSubIsActive(sub){
+  var s = normalizeSubscriptionStatus(sub && sub.status);
+  return s === 'active' || s === 'trialing';
+}
+
 async function loadSubscriptionStatus(){
   try {
     renderSubscriptionOverview(null);
     var subscription = await getSubscription();
+    // Fresh back from Stripe Checkout but no active row yet → the webhook
+    // hasn't landed. Ask repair-subscription to pull the sub straight from
+    // Stripe (the same self-heal the server gate uses), then re-read — else
+    // the just-paid user boots into the free-tier teaser banners.
+    if(window.__billingPendingSuccess && SUPA && !mpSubIsActive(subscription)){
+      try {
+        var _rs = await SUPA.auth.getSession();
+        var _rt = _rs && _rs.data && _rs.data.session ? _rs.data.session.access_token : null;
+        if(_rt){
+          await fetch(SUPABASE_URL + '/functions/v1/repair-subscription', {
+            method: 'POST',
+            headers: getEdgeFunctionHeaders(_rt),
+            body: '{}'
+          });
+          subscription = await getSubscription();
+        }
+      } catch(_e){}
+    }
     MP_SUB_RESOLVED = true; // subscription positively resolved (null = free user, still valid)
     renderSubscriptionOverview(subscription);
   } catch(err){
@@ -20517,8 +20573,23 @@ onTabSwitch(function(id){
 </div>
 <script>
 (function(){
-  if(localStorage.getItem('mp-beta-access')!=='true' && !window.CURRENT_USER && !sessionStorage.getItem('mp-dash-sticky-dismissed')){
-    setTimeout(function(){ document.getElementById('dash-sticky-cta').style.display='block'; document.body.style.paddingBottom='60px'; }, 5000);
+  // Anonymous-visitor CTA only. This script runs at parse time, BEFORE the
+  // async auth check resolves — so CURRENT_USER is still null even for paying
+  // subscribers. Re-check at fire time (and applyAuthenticatedUser() kills the
+  // banner if auth resolves after the timer), so a signed-in user never sees a
+  // "Start Free" sign-up banner.
+  function mpStickyEligible(){
+    return localStorage.getItem('mp-beta-access')!=='true'
+      && !window.CURRENT_USER
+      && !window.__mpAuthSettled
+      && !sessionStorage.getItem('mp-dash-sticky-dismissed');
+  }
+  if(mpStickyEligible()){
+    setTimeout(function(){
+      if(!mpStickyEligible()) return;
+      document.getElementById('dash-sticky-cta').style.display='block';
+      document.body.style.paddingBottom='60px';
+    }, 5000);
   }
 })();
 </script>
