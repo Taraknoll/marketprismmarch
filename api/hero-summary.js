@@ -282,25 +282,44 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
     });
   } else if (narratives && narratives.length) {
     // Fallback to the deduped scorecard narratives view if narrative_analyses
-    // returns nothing fresh.
-    lines.push('');
-    lines.push('Active narratives (most-cited first):');
-    narratives.slice(0, 5).forEach(function(n, i) {
-      var bits = [];
-      if (n.narrative) bits.push(n.narrative);
-      // Translate the physics regime to plain momentum; drop the raw energy/
-      // propagation field names so the model never sees those words.
-      var nMom = plainMomentum(n.narrative_energy_regime, null);
-      if (nMom) bits.push(nMom);
-      if (n.propagation_pressure != null) bits.push('spread=' + Number(n.propagation_pressure).toFixed(0));
-      lines.push('  ' + (i + 1) + '. ' + bits.join(' · '));
+    // returns nothing fresh. Only list narratives that actually carry text: a
+    // row with just a propagation_pressure ("spread=2") and no `narrative` gives
+    // the model nothing to write about, and it responds by asking the caller for
+    // the missing labels (a refusal that then leaks to the page). The bare
+    // spread=N metric is dropped entirely — it's noise, not narrative.
+    var namedNarratives = narratives.filter(function(n) {
+      return n && n.narrative && String(n.narrative).trim();
     });
+    if (namedNarratives.length) {
+      lines.push('');
+      lines.push('Active narratives (most-cited first):');
+      namedNarratives.slice(0, 5).forEach(function(n, i) {
+        var bits = [String(n.narrative).trim()];
+        // Translate the physics regime to plain momentum; drop the raw energy/
+        // propagation field names so the model never sees those words.
+        var nMom = plainMomentum(n.narrative_energy_regime, null);
+        if (nMom) bits.push(nMom);
+        lines.push('  ' + (i + 1) + '. ' + bits.join(' · '));
+      });
+    }
   }
 
   return lines.join('\n');
 }
 
 const rateLimit = require('./_rate-limit');
+
+// Reject raw LLM refusals / meta-responses. When a thin ticker has no real
+// article text, Haiku sometimes asks the caller for input instead of writing a
+// summary (e.g. "I appreciate the request, but I need to flag a data issue: the
+// active narratives list shows only spread metrics ... Could you provide the
+// narrative labels?"). That must never be returned as `summary` — the ticker
+// page renders it verbatim. Mirrors mpIsBadSummary() in _ticker.html.
+const BAD_SUMMARY_RE = /\bI appreciate (?:the|your) request\b|\bneed to flag\b|\bflag a data issue\b|\bas required by the brief\b|\bto write this properly\b|\bcould you (?:provide|clarify|share)\b|\bthe active narratives list\b|\bno descriptive text\b|spread\s*=\s*\d|\bcannot write\b|\bcan['’]?t write\b|\bI['’]?d need\b|\bI would need\b|\bI can (?:deliver|write|provide)\b|\bI (?:am|['’]m) unable\b|\bI apologize\b|\bI['’]m sorry\b|\bplease provide\b|\blet me know if\b|\bwithout knowing what these\b|\bI don['’]?t have (?:enough|access|the)\b/i;
+function isBadSummary(text) {
+  if (!text) return false;
+  return BAD_SUMMARY_RE.test(String(text));
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -361,6 +380,17 @@ module.exports = async (req, res) => {
     '\n\nIMPORTANT: No fair-value data is available for this ticker. Do NOT mention fair value, valuation, premium, discount, over/undervalued, or any "X% above/below fair value" phrasing. Focus sentence 2 on narrative health and earnings instead.';
   var userMessage = 'Ticker dashboard state:\n\n' + stateBlock + fvRule + '\n\nWrite the 2-3 sentence editorial paragraph now.';
 
+  // If there's no real narrative material to synthesize from (no fresh articles,
+  // no named narratives, no story claim), don't ask the LLM to write from empty
+  // inputs — it refuses, and the refusal leaks to the page. Return an empty
+  // summary so the caller shows its neutral / coverage-in-progress fallback.
+  var hasNamedNarrative = narratives.some(function(n) { return n && n.narrative && String(n.narrative).trim(); });
+  var hasStoryClaim = story && (story.story_claim || story.forensic_rebuttal);
+  if (!articles.length && !hasNamedNarrative && !hasStoryClaim) {
+    res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=86400');
+    return res.status(200).json({ ticker: ticker, summary: '', reason: 'insufficient_narrative_content' });
+  }
+
   try {
     var apiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -385,11 +415,15 @@ module.exports = async (req, res) => {
 
     var data = await apiRes.json();
     var text = (data.content && data.content[0] && data.content[0].text || '').trim();
-    if (!text) {
-      return res.status(502).json({ error: 'empty AI response' });
-    }
     // Defensive: collapse any stray newlines into a single sentence.
     text = text.replace(/\s+/g, ' ').trim();
+    // Never return a raw refusal / meta-response as the summary — the caller
+    // renders it verbatim. Fall back to empty so the UI shows its neutral state.
+    // (Belt-and-suspenders with the pre-LLM insufficient-content guard above.)
+    if (!text || isBadSummary(text)) {
+      res.setHeader('Cache-Control', 's-maxage=300');
+      return res.status(200).json({ ticker: ticker, summary: '', reason: 'no_valid_summary' });
+    }
 
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=86400');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');

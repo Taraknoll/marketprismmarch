@@ -6329,6 +6329,24 @@ function mpNoNarrativeCoverage(sc) {
   return zeroWks && lowEnergy;
 }
 
+// Guard: the hero summary / headline occasionally leaks a raw LLM meta-response
+// or refusal instead of an editorial line — e.g. "I appreciate the request, but
+// I need to flag a data issue: the active narratives list shows only spread
+// metrics (five entries of 'spread=2') ... Could you provide the narrative
+// labels?". This happens when a thinly-covered / un-scraped ticker has no real
+// article text for /api/hero-summary to synthesize from, so the model asks the
+// caller for input. That text is never a valid summary, so we drop it (the slot
+// falls back to empty). Real summaries are third-person about the stock and
+// never address the reader or reference "the brief" / "spread=N".
+function mpIsBadSummary(text) {
+  if (!text) return false;
+  var s = String(text).trim();
+  if (!s) return false;
+  // Regex is inline (not a shared const) so this helper stays fully self-
+  // contained — it can't throw on a top-level init-order edge case.
+  return /\bI appreciate (?:the|your) request\b|\bneed to flag\b|\bflag a data issue\b|\bas required by the brief\b|\bto write this properly\b|\bcould you (?:provide|clarify|share)\b|\bthe active narratives list\b|\bno descriptive text\b|spread\s*=\s*\d|\bcannot write\b|\bcan['’]?t write\b|\bI['’]?d need\b|\bI would need\b|\bI can (?:deliver|write|provide)\b|\bI (?:am|['’]m) unable\b|\bI apologize\b|\bI['’]m sorry\b|\bplease provide\b|\blet me know if\b|\bwithout knowing what these\b|\bI don['’]?t have (?:enough|access|the)\b/i.test(s);
+}
+
 // Deterministic synthesized state label + action chip + tone for the
 // narrative strip. Order matters — first match wins. Adapted to columns
 // that actually exist on narrative_scorecard:
@@ -6810,6 +6828,8 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
     : (f.one_line_headline && f.one_line_headline.trim())
       ? f.one_line_headline.trim()
       : (story && (story.story_claim || story.forensic_rebuttal)) || '';
+  // Never let a leaked LLM refusal/meta-response through as the fallback line.
+  if (mpIsBadSummary(headline)) headline = '';
 
   var fresh = ttRelativeTime(f.heavy_refreshed_at);
 
@@ -7831,7 +7851,7 @@ async function loadHero() {
         fetch('/api/hero-summary?ticker=' + encodeURIComponent(r.ticker) + '&v=3')
           .then(function(res){ return res.ok ? res.json() : null; })
           .then(function(j){
-            if (j && j.summary) {
+            if (j && j.summary && !mpIsBadSummary(j.summary)) {
               hl.textContent = j.summary;
               hl.style.display = '';
               hl.removeAttribute('data-pending');
