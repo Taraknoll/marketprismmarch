@@ -4610,6 +4610,27 @@ body.mp-processing .mp-proc-banner{display:block;}
 .mp-proc-icon{font-size:20px;line-height:1.3;flex-shrink:0;}
 .mp-proc-title{font-family:'Inter',system-ui,sans-serif;font-size:16px;font-weight:600;letter-spacing:-0.01em;color:#4DC8F0;margin-bottom:4px;}
 .mp-proc-body{font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.55;color:var(--mp-text-secondary,rgba(255,255,255,0.7));}
+/* ── Narrative Strategy tab — aligned to the Earnings Strategy (signature) DNA:
+   flat panels with the same hairline border, 12px uppercase dim section labels,
+   color lives in the VALUES (amber for the headline read), no hover lifts or
+   accent strips. Scoped to #tab-strategy so no other tab shifts. ── */
+#tab-strategy .behavior-hero{background:var(--mp-surface);border:1px solid rgba(148,163,184,.14);box-shadow:none;}
+#tab-strategy .bh-label{font-size:12px;font-weight:700;letter-spacing:.12em;color:#8A94A6;}
+#tab-strategy .bh-behavior{font-family:'Inter',system-ui,sans-serif;font-size:16px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#FFB800;}
+#tab-strategy .ret-card{box-shadow:none;border-color:rgba(148,163,184,.14);}
+#tab-strategy .ret-card::after{display:none;}
+#tab-strategy .ret-card:hover{transform:none;border-color:rgba(148,163,184,.28);}
+#tab-strategy .rc-label{font-weight:700;letter-spacing:.08em;color:#8A94A6;}
+#tab-strategy .rc-return{font-size:22px;font-weight:800;}
+#tab-strategy .kpi-section{box-shadow:none;border-color:rgba(148,163,184,.14);}
+#tab-strategy .kpi-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8A94A6;}
+#tab-strategy .kpi-sub{font-size:11px;color:#8A94A6;}
+#tab-strategy .breakdown-card{box-shadow:none;border-color:rgba(148,163,184,.14);}
+#tab-strategy .breakdown-card:hover{transform:none;border-color:rgba(148,163,184,.28);}
+#tab-strategy .bk-title{font-size:12px;font-weight:700;letter-spacing:.12em;color:#8A94A6;}
+#tab-strategy .bk-header{border-bottom-color:rgba(148,163,184,.14);}
+#tab-strategy .insight-footer{background:transparent;border-top-color:rgba(148,163,184,.14);}
+#tab-strategy .kpi-note{border-top-color:rgba(148,163,184,.14);}
 body.mp-processing .narr-section,
 body.mp-processing #tk-feed-card,
 body.mp-processing #tab-timeline,
@@ -5391,13 +5412,13 @@ body.mp-processing #scholarly-section{display:none !important;}
 
   <div class="tk-tab-panel" id="tab-strategy" style="position:relative;">
     <div class="mp-tcta">
-      <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>Trading Strategy is Pro.</strong> Entry, target, invalidation and historical analogues for every tracked ticker.</div>
+      <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>Narrative Strategy is Pro.</strong> Entry, target, invalidation and historical analogues for every tracked ticker.</div>
       <button class="mp-tcta-btn" type="button" onclick="(window.mpTeaserUpgrade||function(){location.href='/pricing';})()">Unlock with Pro — $25/mo</button>
     </div>
     <!-- Loading skeleton -->
     <div id="strategy-loading">
       <div class="section">
-        <div class="section-label">Trading Strategy</div>
+        <div class="section-label">Narrative Strategy</div>
         <div class="section-body" style="padding:20px;">
           <div class="skel" style="height:14px;width:40%;margin-bottom:10px;"></div>
           <div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div>
@@ -5416,9 +5437,12 @@ body.mp-processing #scholarly-section{display:none !important;}
     <!-- Strategy content (populated by loadStrategyData) -->
     <div id="strategy-content" style="display:none;">
 
-      <!-- Share / download action -->
-      <div class="ftl-actions" style="margin:0 0 16px;justify-content:flex-end;">
-        <button class="ftl-dl" type="button" onclick="mpDownloadStrategy()" title="Download as image to share">&#8595;&nbsp; Download image</button>
+      <!-- Share / download action — same control as the Earnings Strategy tab -->
+      <div class="ftl-actions" style="display:flex;justify-content:flex-end;margin:0;padding:2px 0 10px;">
+        <button class="action-btn" type="button" onclick="mpDownloadStrategy()" title="Download as image to share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M12 10v6m0 0l-3-3m3 3l3-3"/><path d="M3 17v1a2 2 0 002 2h14a2 2 0 002-2v-1"/></svg>
+          Download image
+        </button>
       </div>
 
       <!-- Behavior Hero -->
@@ -12101,7 +12125,7 @@ async function mpDownloadStrategy() {
     alert('Strategy is still loading — try again in a moment.');
     return;
   }
-  var btn = document.querySelector('#tab-strategy .ftl-dl[onclick="mpDownloadStrategy()"]');
+  var btn = document.querySelector('#tab-strategy .action-btn[onclick="mpDownloadStrategy()"]');
   var btnTxt = btn ? btn.innerHTML : '';
   if (btn) { btn.disabled = true; btn.innerHTML = 'Generating…'; }
 
@@ -12118,7 +12142,16 @@ async function mpDownloadStrategy() {
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      logging: false
+      logging: false,
+      // The fadeUp keyframes restart inside html2canvas's cloned document and
+      // rasterize at 0% (opacity 0), blanking the animated sections — freeze
+      // the clone at its final state before capture.
+      onclone: function (doc) {
+        var root = doc.getElementById('strategy-content');
+        if (!root) return;
+        root.style.animation = 'none';
+        root.querySelectorAll('*').forEach(function (el) { el.style.animation = 'none'; });
+      }
     });
     if (actionRow) actionRow.style.display = '';
 
@@ -12155,12 +12188,12 @@ async function mpDownloadStrategy() {
     x.font = '700 ' + P(17) + 'px' + FONT;
     x.fillText('marketprism.co', W - pad, P(44));
 
-    // Title line — "Trading Strategy · TICKER".
+    // Title line — "Narrative Strategy · TICKER".
     x.textAlign = 'left';
     x.fillStyle = '#FFFFFF';
     x.font = '700 ' + P(22) + 'px' + FONT;
-    x.fillText('Trading Strategy', pad, headerH - P(18));
-    var tW = x.measureText('Trading Strategy').width;
+    x.fillText('Narrative Strategy', pad, headerH - P(18));
+    var tW = x.measureText('Narrative Strategy').width;
     x.fillStyle = '#A0A8B0';
     x.font = '500 ' + P(15) + 'px' + FONT;
     x.fillText('  ·  ' + TICKER, pad + tW, headerH - P(18));
