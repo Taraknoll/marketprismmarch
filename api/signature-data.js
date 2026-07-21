@@ -47,7 +47,7 @@ const SECTOR_FAMILY = {
 
 const SC_COLS = [
   'snapshot_date', 'wks_score', 'narrative_mass', 'narrative_energy_t',
-  'energy_remaining_dynamic', 'decay_rate', 'coordination_score', 'drift_score',
+  'blue_energy', 'energy_remaining_dynamic', 'decay_rate', 'coordination_score', 'drift_score',
   'fvd_pct', 'nrs', 'vms', 'verdict', 'verdict_confidence', 'walsh_regime',
   'narrative_state', 'days_to_earnings', 'suspicion_score', 'suspicion_class',
   'mass_streak_days', 'current_price', 'exhaustion_status', 'narrative_tone',
@@ -309,7 +309,8 @@ module.exports = async (req, res) => {
         d: r.snapshot_date,
         wks: num(r.wks_score, 1),
         mass: num(r.narrative_mass, 2),
-        energy: num(r.narrative_energy_t, 1),
+        energy: num(r.narrative_energy_t, 2),
+        fresh: num(r.blue_energy, 1),
         energy_dyn: num(r.energy_remaining_dynamic, 2),
         decay: num(r.decay_rate, 3),
         coord: num(r.coordination_score, 1),
