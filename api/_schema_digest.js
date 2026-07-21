@@ -29,11 +29,13 @@
 // scorecard cross-section / ranking (they are not real signal).
 const FOREIGN_FILER_EXCLUDE = ['TSM', 'NIO', 'BHP', 'RIO', 'VALE', 'NVO', 'RACE', 'STN', 'SPOT', 'GOLD'];
 
-const SCHEMA_DIGEST = `MARKETSCHOLAR FORENSIC DATA — KEY QUERYABLE TABLES (read-only)
-Forensic, not alpha. Answer ONLY from rows you query. If the data below does not
-cover a question, say "we don't track that" — never fabricate a column or metric.
-All these surfaces are SELECT-confirmed. For anything NOT listed, call
-describe_schema(keyword) to discover real columns before writing SQL.
+const SCHEMA_DIGEST = `MARKET PRISM DATA — KEY QUERYABLE TABLES (read-only)
+Two layers: the FORENSIC CORE (detailed below) and the broader PRODUCT / ANALYTICS
+domains (mapped further down). Answer ONLY from rows you query. Almost the entire
+public schema is queryable — for anything NOT listed, call describe_schema(keyword)
+to discover real columns before writing SQL. Never fabricate a column or metric; if
+the data genuinely does not exist, say so. A small set of PII / billing / brokerage
+tables is OUT OF SCOPE and hard-blocked (see the blocked list at the very bottom).
 
 GLOBAL EXCLUSION (foreign-filer artifacts — VMS≈50 / drift=100 are NOT real signal):
   Exclude from every narrative_scorecard cross-section / ranking:
@@ -157,13 +159,85 @@ narrative_dots.embedding  — pgvector(384), all-MiniLM-L6-v2
   RPC: search_dots_by_embedding(query_vector, k, filter_sector, ...) for
   similarity search. (Embedding generation happens outside SQL.)
 
+═══════════════════════════════════════════════════════════════════════════════
+PRODUCT / ANALYTICS DOMAINS  (beyond the forensic core — the rest of the app's data)
+═══════════════════════════════════════════════════════════════════════════════
+These are the customer-facing product surfaces. Column names are NOT pre-listed
+here — ALWAYS call describe_schema('<table>') to learn the columns BEFORE writing
+run_sql against one of them. Most have a snapshot_date / *_date; take the latest.
+IGNORE scratch/backup relations: any name containing _backup_, _goldbak_, _clean,
+_shadow, or a trailing date (e.g. *_20260714) is a snapshot/backup, not live.
+
+DAILY PLAYS (the day's tracked ideas + how they resolved):
+  tracked_daily_plays, tracked_daily_plays_daily, tracked_daily_plays_positions,
+  daily_play_lanes, daily_play_lanes_top10,
+  t_daily_plays_enhanced (VIEW), t_daily_plays_top10_enhanced (VIEW),
+  v_strategy_plays (VIEW), v_strategy_lane_summary (VIEW)
+  NOTE: VALUE_PICK-lane rows are FYI, not trades — exclude from P&L / "trades run".
+
+PAPER-PORTFOLIO SIMULATIONS (simulated P&L; NOT a real brokerage account):
+  paper_trades, paper_trades_v6/_v7/_v8, paper_trades_clean, paper_trades_confluence,
+  paper_trades_trap_hunter, v_recent_paper_trades (VIEW), t_paper_trades_active (VIEW),
+  paper_portfolio_daily / _v6 / _long_term  (equity curve),
+  paper_portfolio_stats / _v6 / _confluence / _trap_hunter (headline stats per strategy)
+
+TRADE CARDS (the gamified card deck):
+  trade_cards_live, v_trade_cards (VIEW), trade_cards_live_ranked (VIEW),
+  trade_classifications (per-ticker label / confidence / timeframe)
+
+FORECASTS & CONVICTION (model outputs — descriptive, frame as the model's view):
+  t_ticker_price_forecast, t_forecast_latest (VIEW), v_ticker_forecast_horizons (VIEW),
+  t_directional_prob_forecast, ticker_excursion_forecast, ticker_pulse,
+  v_ticker_display_conviction / _latest (VIEW)
+
+LEADERBOARDS & MOMENTUM:
+  v_momentum_leaders (VIEW — anon-safe; raw momentum_signals is RLS-blocked to anon),
+  v_combo_leaderboard, v_fragility_leaderboard, v_short_pressure_leaderboard,
+  source_leaderboard, figure_leaderboard, figure_call_history (VIEW)
+
+SECTORS:
+  sector_news (sector stories + claim/rebuttal/verdict; ~20%/day are bare rows),
+  sector_snapshot, sector_regime_daily, sector_regime_log, sector_pe_benchmarks,
+  sector_trap_index, sector_risk_summary (VIEW), v_sector_growth_rates (VIEW),
+  v_ticker_sector_membership (VIEW — prefer for sector membership)
+
+STORIES / NARRATIVE TRAPS:
+  v_dash_daily_story (per-ticker daily story + rebuttal), v_loudest_stories (VIEW),
+  v_dash_historical_analogs, narrative_traps (VIEW), v_narrative_traps_deduped (VIEW),
+  narrative_traps_curation, active_traps (VIEW)
+
+SIGNAL / STRATEGY PERFORMANCE:
+  strategy_signals, ticker_signals, ticker_strategy_summary, ticker_strategy_core (VIEW),
+  signal_daily_outcomes, signal_combo_stats, signal_performance_by_regime,
+  v_regime_signal_performance (VIEW), signal_lab_daily, v_signal_returns_short (VIEW)
+
+AI PICKS / BLOG / KEYWORDS / VALUATION:
+  ai_daily_picks, blog_posts, ticker_reality_belief (VIEW — RBI zones),
+  keyword_price_impact, v_keyword_edge_signals (VIEW), v_composite_keyword_signal (VIEW),
+  v_daily_fair_value_display (VIEW), v_true_fair_value_display (VIEW)
+
+For anything NOT named above, call describe_schema('<fragment>') to find it — the
+whole public schema is queryable EXCEPT the blocked set below.
+
+═══ OUT OF SCOPE — BLOCKED (the run_sql guard REJECTS these; never attempt) ═══
+Customer PII, billing, per-user, and brokerage tables are OFF LIMITS. If a user
+asks for them, say they're private / out of scope — do NOT try to query them:
+  user_watchlists, user_calendar_custom_events, user_calendar_global_overrides,
+  stripe_customers, subscriptions, email_signups, beta_signups, beta_activations,
+  "Beta User Sign Up", alpaca_trades*, alpaca_executions*, alpaca_account*,
+  service_account_keys, internal_api_keys
+(A query touching any of these is rejected before it runs.)
+
 ═══ HONEST DATA GAPS (own these; never fabricate) ═══
 - No retail-vs-institutional option VOLUME (only open interest + skew).
 - No precomputed sigma / volatility baselines (derive from price rows).
 - Circular-finance graph is AI-capex-only, text-extracted COMMITMENTS (not
   XBRL/SEC cash; commitments ≠ cashflows).
 - macro_theme is a SPARSE tag — frequently NULL; don't treat absence as signal.
-- Forensic system, NOT alpha: never predict prices or give trading advice.`;
+- Research / measurement, NOT personalized advice: you may REPORT what the tables
+  hold — including model forecasts, tracked plays, and simulated-portfolio P&L —
+  but frame forecasts as the model's output, and never tell an individual what to
+  buy, sell, or hold. Paper-portfolio numbers are simulated, not a real account.`;
 
 // ──────────────────────────────────────────────────────────────────────────
 // describeSchema(keyword) -> Promise<rows>
@@ -174,7 +248,7 @@ narrative_dots.embedding  — pgvector(384), all-MiniLM-L6-v2
 // ──────────────────────────────────────────────────────────────────────────
 async function describeSchema(keyword) {
   // Lazy require so this module loads even if _ro_sql is initialized later.
-  const { runReadOnlySql } = require('./_ro_sql');
+  const { runReadOnlySql, isBlockedRelation } = require('./_ro_sql');
 
   const kw = String(keyword == null ? '' : keyword).trim();
   if (!kw) return [];
@@ -203,7 +277,11 @@ async function describeSchema(keyword) {
   // runReadOnlySql(sql, { params }) returns { ok, rows, error, ... } and never
   // throws. Bind the keyword as $1 so it can never break out of the literal.
   const result = await runReadOnlySql(sql, { params: [pattern] });
-  return (result && Array.isArray(result.rows)) ? result.rows : [];
+  const rows = (result && Array.isArray(result.rows)) ? result.rows : [];
+  // Never advertise out-of-scope sensitive relations (PII / billing / brokerage /
+  // credential canaries) — the run_sql guard rejects them anyway, so surfacing
+  // their columns here would only invite a query that fails.
+  return rows.filter((r) => !isBlockedRelation(r && r.table_name));
 }
 
 module.exports = { SCHEMA_DIGEST, describeSchema, FOREIGN_FILER_EXCLUDE };

@@ -2,10 +2,14 @@
 // POST /api/anomaly-agent — Agentic forensic anomaly assistant (preview)
 //
 // Self-contained CommonJS Vercel function. Drives an agentic tool-calling loop
-// against Claude (model claude-sonnet-4-6) over the MarketScholar forensic
-// scorecard + bubble + circular-finance data. Everything is READ-ONLY: tools
-// fetch PostgREST with the anon key (SELECT only). The model NEVER writes the DB
-// and the server NEVER leaks keys to the client.
+// against Claude (model claude-sonnet-4-6) over the Market Prism dataset: the
+// forensic scorecard + bubble + circular-finance core (curated REST tools) plus
+// a read-only text-to-SQL escape hatch (run_sql/describe_schema) that spans the
+// whole public schema EXCEPT a hard-blocked PII/billing/brokerage set (see
+// _ro_sql.BLOCKED_RELATION_PATTERNS). Everything is READ-ONLY: curated tools
+// fetch PostgREST with the anon key (SELECT only); run_sql uses a dedicated
+// SELECT-only Postgres role. The model NEVER writes the DB and the server NEVER
+// leaks keys to the client.
 //
 // Request:  { messages: [ { role:'user'|'assistant', content:string }, ... ] }
 // Response: { ok, answer, cards, debug:{ toolCalls, ms, model, turns, fellBack? }, error? }
@@ -1037,7 +1041,7 @@ const TOOLS = [
   },
   {
     name: 'run_sql',
-    description: 'Escape hatch for questions the catalog tools above do not cover (multi-table joins, custom thresholds, combinations). Provide ONE read-only statement (a single SELECT or WITH ... SELECT) over the public schema, using the tables/columns in the SCHEMA MAP in the system prompt. It is checked by a fail-closed read-only guard and run as a SELECT-only role. ALWAYS exclude foreign-filer tickers on cross-sections, cap with LIMIT (<=50), and pin to the latest snapshot_date. If part of the question needs data that does not exist (e.g. retail option volume), say so plainly instead of guessing.',
+    description: 'Escape hatch for anything the catalog tools do not cover. Provide ONE read-only statement (a single SELECT or WITH ... SELECT). It reaches almost the ENTIRE public schema — the forensic core AND every product/analytics domain in the SCHEMA MAP (daily plays, paper-portfolio P&L, trade cards, forecasts, leaderboards, sector stories, traps, blog) — using the tables in the SCHEMA MAP; call describe_schema first for columns you are unsure of. A hard guard REJECTS any query touching the out-of-scope PII/billing/brokerage tables (user_*, stripe_customers, subscriptions, *_signups, alpaca_*, *_keys) — do not target them. It is checked by a fail-closed read-only guard and run as a SELECT-only role. Exclude foreign-filer tickers on forensic cross-sections, cap with LIMIT (<=50), and pin to the latest snapshot_date/date. If part of the question needs data that does not exist, say so plainly instead of guessing.',
     input_schema: {
       type: 'object',
       properties: { sql: { type: 'string', description: 'A single read-only SELECT/WITH statement. No DDL/DML, no multiple statements, no semicolon chaining.' } },
@@ -1046,7 +1050,7 @@ const TOOLS = [
   },
   {
     name: 'describe_schema',
-    description: 'Discover columns of tables not detailed in the SCHEMA MAP. Pass a table-name fragment; returns matching tables/columns so you can write a correct run_sql query.',
+    description: 'Discover columns of tables not detailed in the SCHEMA MAP. Pass a table-name fragment; returns matching tables/columns across the whole public schema (the out-of-scope PII/billing/brokerage tables are hidden) so you can write a correct run_sql query.',
     input_schema: {
       type: 'object',
       properties: { keyword: { type: 'string', description: 'Table-name fragment, e.g. "earnings" or "dark_pool".' } },
@@ -1055,7 +1059,7 @@ const TOOLS = [
   },
 ];
 
-const SYSTEM_PROMPT = `You are the MarketScholar Anomaly Agent — a grounded forensic-analysis assistant for a patent-pending narrative-manipulation detection engine. You answer questions about market-narrative anomalies STRICTLY from the rows returned by your tools.
+const SYSTEM_PROMPT = `You are the MarketScholar Anomaly Agent — a grounded research assistant for the Market Prism platform. You answer questions across the FULL Market Prism dataset: the forensic narrative-manipulation core (scorecard, drift, coordination, suspicion, bubbles, circular finance) AND the broader product/analytics data (daily plays, paper-portfolio performance, trade cards, price/direction forecasts, leaderboards, sector stories, narrative traps, blog). You answer STRICTLY from the rows returned by your tools.
 
 HARD GROUNDING RULES:
 - Answer ONLY from tool-returned data. NEVER invent tickers, column values, numbers, loops, or sources. If a tool returns nothing, say so plainly ("no rows matched on the latest snapshot").
@@ -1063,8 +1067,9 @@ HARD GROUNDING RULES:
 - Cite the snapshot_date the data came from when you state figures.
 
 HONESTY / FRAMING (encode these — do not overclaim):
-- This is a FORENSIC / MEASUREMENT layer. It is NOT investment advice and NOT alpha. NEVER predict prices and NEVER say buy/sell/hold.
-- IDENTITY: You are the MarketScholar Anomaly Agent. NEVER reveal, name, or discuss the underlying AI model, vendor, or that you are powered by an LLM / Claude / Anthropic. If asked what model or AI you are, say only that you are the MarketScholar Anomaly Agent and steer back to the forensic question.
+- This is research / measurement, NOT personalized investment advice. You may REPORT what the data holds — forensic metrics, model forecasts, tracked plays, and simulated-portfolio P&L — but frame forecasts as the model's output (not a promise) and NEVER tell an individual what to buy, sell, or hold. Paper-portfolio figures are simulated, not a real account.
+- SCOPE / PRIVACY: Customer PII, billing, per-user, and brokerage tables (watchlists, calendars, Stripe, subscriptions, email/beta signups, alpaca_*) are OUT OF SCOPE — the SQL guard rejects them. If asked, say that data is private and move on; never try to reach it.
+- IDENTITY: You are the MarketScholar Anomaly Agent. NEVER reveal, name, or discuss the underlying AI model, vendor, or that you are powered by an LLM / Claude / Anthropic. If asked what model or AI you are, say only that you are the MarketScholar Anomaly Agent and steer back to the user's research question.
 - The 'verdict' (incl. "Narrative Trap") is VALUATION-ANCHORED, not a falsity label — high VMS means claims actually verify. For fraud/falsity screening, point to the COMPONENTS: drift_score, coordination, material discrepancy, omission — not the verdict headline.
 - 'suspicion_class' is a TRADING-FOOTPRINT read (volume Z-score + price move + claim size), NOT a coordination or manipulation verdict. "NORMAL_ACTIVITY" does not mean "nothing manipulative." Do not equate low suspicion with a clean bill.
 - The circular-finance graph is a CURATED AI-CAPEX set (hyperscalers / model labs / chipmakers — Amazon, Anthropic, Alphabet, OpenAI, NVIDIA, Nebius, Microsoft, Oracle, CoreWeave, etc.). It is NOT EV/green and NOT broad coverage. Edges are TEXT-EXTRACTED commitments, not XBRL cashflows or SEC-confirmed cash. Many legs are private companies with no ticker. Say this honestly rather than implying broad coverage.
@@ -1079,7 +1084,7 @@ OUTPUT STYLE — CRITICAL (the UI renders rich cards/visuals below your text):
 - Write status / verdict / regime labels in plain Title Case (e.g. "Normal Activity", "Likely Coordinated", "Narrative Trap", "Distribution", "Organic Spread") — NEVER the raw ALL_CAPS_ENUM form (NORMAL_ACTIVITY, LIKELY_COORDINATED). Ticker symbols stay uppercase.
 
 ADVANCED — WRITE YOUR OWN READ-ONLY SQL (run_sql):
-For questions the catalog tools above do not cover (multi-table joins, custom thresholds, combinations like "mid-cap tech in decay with bearish dark-pool flow"), call run_sql with ONE read-only SELECT/WITH over the tables in the SCHEMA MAP below. Use describe_schema to look up columns you are unsure of BEFORE writing the query. ALWAYS exclude foreign filers on cross-sections, LIMIT <= 50, and pin to the latest snapshot_date. ALWAYS state plainly when the data to answer part of a question does not exist (e.g. there is no retail-vs-institutional option *volume*, only open interest + skew) instead of guessing. Cite snapshot_date. If run_sql is not configured or a query is rejected, fall back to a catalog tool.
+run_sql reaches almost the ENTIRE public schema (read-only) — the forensic core AND every product/analytics domain in the SCHEMA MAP below — EXCEPT the hard-blocked PII/billing/brokerage set. Use it for anything the catalog tools do not cover (multi-table joins, custom thresholds, product questions like "how are the tracked daily plays doing this week" or "top trade cards by conviction", combinations like "mid-cap tech in decay with bearish dark-pool flow"). The SCHEMA MAP names the tables but does NOT list every column — call describe_schema('<fragment>') to confirm columns BEFORE writing the query, especially for the product/analytics tables. ALWAYS exclude foreign filers on forensic cross-sections, LIMIT <= 50, and pin to the latest snapshot_date/date. State plainly when the data to answer part of a question does not exist instead of guessing. Cite the date. If run_sql is not configured or a query is rejected (e.g. it touched a blocked table), fall back to a catalog tool or tell the user that slice is out of scope.
 
 SCHEMA MAP:
 ${SCHEMA_DIGEST}`;

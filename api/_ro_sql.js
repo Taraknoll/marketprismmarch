@@ -108,6 +108,63 @@ const DENYLISTED_PATTERNS = [
 ];
 
 /**
+ * Sensitive-relation blocklist — a DATA-SCOPE boundary on top of read-only.
+ *
+ * The `anomaly_search_ro` role can technically SELECT every table in `public`,
+ * which includes customer PII, billing, per-user, and brokerage tables that must
+ * NEVER be reachable through the public-facing agent — no matter how the prompt
+ * is phrased. This is defense-in-depth in front of revoking the role's SELECT on
+ * these relations at the DB level (db/proposals/anomaly_ro_revoke_sensitive.sql).
+ *
+ * Matched against the comment-stripped query. Patterns are written as whole
+ * identifiers (or safe family prefixes) so `public.stripe_customers`,
+ * `"stripe_customers"`, and a bare reference all trip, while legitimate names or
+ * COLUMNS that merely share a substring do NOT — e.g. a `user_id` column, a
+ * `beta`/`beta_adjusted` factor, `keyword_*` tables, and `narrative_family_key_stats`
+ * are all left alone. The two `*_keys` entries are canary/honeypot views; hiding
+ * them keeps the agent from surfacing decoy rows during broad analytics.
+ */
+const BLOCKED_RELATION_PATTERNS = [
+  // Billing / subscriptions
+  { label: 'stripe_customers', re: /(^|[^a-z0-9_])stripe_customers([^a-z0-9_]|$)/i },
+  { label: 'subscriptions',    re: /(^|[^a-z0-9_])subscriptions([^a-z0-9_]|$)/i },
+  // Signup / email PII
+  { label: 'email_signups',    re: /(^|[^a-z0-9_])email_signups([^a-z0-9_]|$)/i },
+  { label: 'beta_signups',     re: /(^|[^a-z0-9_])beta_signups([^a-z0-9_]|$)/i },
+  { label: 'beta_activations', re: /(^|[^a-z0-9_])beta_activations([^a-z0-9_]|$)/i },
+  { label: 'Beta User Sign Up', re: /beta\s+user\s+sign\s+up/i },
+  // Per-user personal data
+  { label: 'user_watchlists',              re: /(^|[^a-z0-9_])user_watchlists([^a-z0-9_]|$)/i },
+  { label: 'user_calendar_custom_events',  re: /(^|[^a-z0-9_])user_calendar_custom_events([^a-z0-9_]|$)/i },
+  { label: 'user_calendar_global_overrides', re: /(^|[^a-z0-9_])user_calendar_global_overrides([^a-z0-9_]|$)/i },
+  // Brokerage account / real order + execution log (aggregated sim book lives in paper_* instead)
+  { label: 'alpaca_trades*',     re: /(^|[^a-z0-9_])alpaca_trades/i },
+  { label: 'alpaca_executions*', re: /(^|[^a-z0-9_])alpaca_executions/i },
+  { label: 'alpaca_account*',    re: /(^|[^a-z0-9_])alpaca_account/i },
+  // Credential canary/honeypot views (decoys, not real secrets)
+  { label: 'service_account_keys (canary)', re: /(^|[^a-z0-9_])service_account_keys([^a-z0-9_]|$)/i },
+  { label: 'internal_api_keys (canary)',    re: /(^|[^a-z0-9_])internal_api_keys([^a-z0-9_]|$)/i },
+];
+
+/** Return the label of the first blocked relation referenced in `sql`, else null. */
+function blockedRelationHit(sql) {
+  const s = String(sql == null ? '' : sql);
+  for (const { label, re } of BLOCKED_RELATION_PATTERNS) {
+    if (re.test(s)) return label;
+  }
+  return null;
+}
+
+/**
+ * True if a bare relation name is on the sensitive blocklist. Used to hide these
+ * relations from the schema-discovery catalog (describe_schema) so the agent
+ * never even advertises them. Padded so whole-identifier patterns apply.
+ */
+function isBlockedRelation(name) {
+  return blockedRelationHit(' ' + String(name == null ? '' : name) + ' ') !== null;
+}
+
+/**
  * Strip SQL comments so a denylisted token cannot hide behind `--` or a block
  * comment, and so a comment-smuggled second statement cannot pass. String and
  * dollar-quoted literals are preserved verbatim.
@@ -337,6 +394,19 @@ function validateReadOnly(sql) {
   }
   checks.push('phrase-denylist-clear');
 
+  // 5b) Sensitive-relation blocklist — hard data-scope boundary (PII / billing /
+  //      per-user / brokerage / credential-canary tables are out of scope).
+  const blockedRel = blockedRelationHit(work);
+  if (blockedRel) {
+    return {
+      ok: false,
+      reason: `Query references an out-of-scope sensitive relation (${blockedRel}). Customer, billing, brokerage, and signup tables are not available to this agent.`,
+      checks,
+      normalizedSql: rawTrimmed,
+    };
+  }
+  checks.push('relation-blocklist-clear');
+
   // 6) LIMIT injection / clamping.
   let normalizedSql = work;
   const limitMatch = TRAILING_LIMIT_RE.exec(work);
@@ -521,4 +591,6 @@ module.exports = {
   validateReadOnly,
   runReadOnlySql,
   isConfigured,
+  isBlockedRelation,
+  blockedRelationHit,
 };
