@@ -11,3 +11,6 @@ temp_interactive_push.bat
 .gitignore
 
 public/assets/video/*.gif
+
+# local dev harnesses (DO-NOT-COMMIT rigs)
+scripts/__*
