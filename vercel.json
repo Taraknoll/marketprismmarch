@@ -424,6 +424,9 @@
     },
     "api/signature.js": {
       "includeFiles": "_signature.html"
+    },
+    "api/signature-data.js": {
+      "maxDuration": 30
     }
   },
   "headers": [

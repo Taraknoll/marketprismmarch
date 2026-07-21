@@ -124,6 +124,21 @@
   .method{margin-top:20px;font-size:11px;line-height:1.65;color:var(--mp-dim);border-top:1px solid var(--mp-line);padding-top:14px}
   .method b{color:var(--mp-text);font-weight:600}
 
+  .tbl-wrap{overflow-x:auto}
+  .sig-tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .sig-tbl th{font-size:11px;color:var(--mp-dim);text-transform:uppercase;letter-spacing:.05em;text-align:right;padding:6px 8px;border-bottom:1px solid var(--mp-line);font-weight:700;white-space:nowrap}
+  .sig-tbl th:first-child,.sig-tbl td:first-child{text-align:left}
+  .sig-tbl td{padding:6px 8px;text-align:right;border-bottom:1px solid rgba(148,163,184,.07);white-space:nowrap}
+  .sig-tbl tr:last-child td{border-bottom:none}
+  .tbl-note{font-size:11px;color:var(--mp-dim);margin-top:8px}
+  .watch-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--mp-dim);margin-bottom:6px}
+  .watch{display:flex;gap:8px;font-size:12px;line-height:1.55;padding:7px 0;border-bottom:1px solid rgba(148,163,184,.07)}
+  .watch:last-child{border-bottom:none}
+  .watch .wd{color:var(--mp-amber);font-weight:800}
+  .watch b{color:var(--mp-text);font-weight:700}
+  #fvd-cv{height:260px}
+  #coh-cv{height:280px}
+
   .boot{padding:60px 20px;text-align:center;color:var(--mp-dim);font-size:13px}
   .boot a{font-weight:700}
   .hidden{display:none !important}
@@ -186,6 +201,51 @@
     </div>
 
     <div class="stats-row" id="stats-row"></div>
+
+    <div class="grid g-two">
+      <div class="card">
+        <h2>Narrative — now vs past prints <span class="n-badge" id="nvp-n"></span></h2>
+        <div class="tbl-wrap"><table class="sig-tbl" id="nvp-tbl"></table></div>
+        <div class="tbl-note" id="nvp-note"></div>
+      </div>
+      <div class="card">
+        <h2>Price vs fair value into the print <span class="n-badge" id="fvd-now"></span></h2>
+        <canvas id="fvd-cv"></canvas>
+        <div class="legend">
+          <div class="li"><span class="sw" style="background:rgba(148,163,184,.45)"></span>Past cycles (FVD %)</div>
+          <div class="li"><span class="sw" style="background:var(--mp-amber)"></span>Current approach</div>
+          <div class="li"><span class="sw" style="background:rgba(0,222,148,.8)"></span>Fair value (0%)</div>
+        </div>
+        <div class="empty-note hidden" id="fvd-empty"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h2>Cohort this year — how <span id="coh-fam"></span> names trade into their prints <span class="n-badge" id="coh-n"></span></h2>
+      <div class="grid g-two" style="margin-bottom:0">
+        <div>
+          <canvas id="coh-cv"></canvas>
+          <div class="legend">
+            <div class="li"><span class="sw" style="background:var(--mp-green)"></span>Cohort median (2026 cycles)</div>
+            <div class="li"><span class="sw" style="background:rgba(0,222,148,.2);height:8px"></span>Cohort IQR</div>
+            <div class="li"><span class="sw" style="background:var(--mp-amber)"></span>This approach</div>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table class="sig-tbl" id="coh-tbl"></table></div>
+      </div>
+      <div class="empty-note hidden" id="coh-empty"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h2>Earnings forensics — past prints &amp; this cycle's watch items</h2>
+      <div class="grid g-two" style="margin-bottom:0">
+        <div class="tbl-wrap"><table class="sig-tbl" id="for-tbl"></table></div>
+        <div>
+          <div class="watch-title">WHAT TENDS TO MOVE THIS PRINT</div>
+          <div id="watch-list"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="grid g-two">
       <div class="card">
@@ -374,6 +434,10 @@
     drawClock(clock, dte);
     buildAtlas(bars, closes, clock);
     buildStats(bars, closes);
+    buildNarrTable(sc, dte);
+    buildFvdChart(bars, clock);
+    buildCohortCard();
+    buildForensics(bars, closes, sc, cur, clock);
     buildPercentiles(sc, cur, dte);
     buildPeers(cur);
     buildRegistry();
@@ -384,6 +448,8 @@
     function redrawAll(){
       drawClock(clock, dte);
       if (ATLAS) drawAtlas();
+      if (FVDC) drawFvd();
+      if (D.cohort) drawCoh();
       buildPeers(cur);
     }
     function queueRedraw(){ clearTimeout(rsT); rsT = setTimeout(redrawAll, 150); }
@@ -794,6 +860,361 @@
     });
   }
 
+  // ── narrative now vs past prints ──────────────────────────────────────
+  function buildNarrTable(sc, dte){
+    var tbl = $('nvp-tbl'), note = $('nvp-note');
+    var events = (D.events || []).map(function(e){ return e.date; }).slice().reverse();
+    if (!sc.length){
+      tbl.innerHTML = '';
+      note.textContent = 'No scorecard history for this ticker.';
+      $('nvp-n').textContent = '';
+      return;
+    }
+    function preRow(E){
+      for (var i = sc.length-1; i >= 0; i--){
+        if (sc[i].d < E){ return calDays(sc[i].d, E) <= 14 ? sc[i] : null; }
+      }
+      return null;
+    }
+    var cols = [{ label: 'TODAY', sub: fin(dte) ? 'T−' + dte : '', row: sc[sc.length-1] }];
+    var totalCovered = 0;
+    events.forEach(function(E){
+      var pre = preRow(E);
+      if (!pre) return;
+      totalCovered++;
+      if (cols.length < 4) cols.push({ label: fmtDate(E) + ' print', sub: 'T−' + calDays(pre.d, E), row: pre });
+    });
+    var ROWS = [
+      ['wks','WKS',1],['mass','MASS',2],['energy','ENERGY',0],['coord','COORD',0],
+      ['drift','DRIFT',0],['fvd','FVD %',1],['nrs','NRS',0]
+    ];
+    var html = '<thead><tr><th>METRIC</th>' + cols.map(function(c){
+      return '<th>' + c.label + (c.sub ? '<br><span style="letter-spacing:0">' + c.sub + '</span>' : '') + '</th>';
+    }).join('') + '</tr></thead><tbody>';
+    ROWS.forEach(function(m){
+      html += '<tr><td>' + m[1] + '</td>' + cols.map(function(c, ci){
+        return '<td' + (ci === 0 ? ' style="color:var(--mp-amber);font-weight:700"' : '') + '>' + fmtNum(c.row[m[0]], m[2]) + '</td>';
+      }).join('') + '</tr>';
+    });
+    [['v','VERDICT'],['regime','REGIME']].forEach(function(k){
+      html += '<tr><td>' + k[1] + '</td>' + cols.map(function(c, ci){
+        return '<td' + (ci === 0 ? ' style="color:var(--mp-amber);font-weight:700"' : '') + '>' + (c.row[k[0]] || '—') + '</td>';
+      }).join('') + '</tr>';
+    });
+    tbl.innerHTML = html + '</tbody>';
+    $('nvp-n').textContent = '(' + totalCovered + '/' + events.length + ' past prints covered)';
+    note.textContent = 'Snapshot closest to each print (≤14 days before). Narrative coverage begins ' + fmtDate(sc[0].d) + ' — columns accrue with every print.';
+  }
+
+  // ── price vs fair value into the print ────────────────────────────────
+  var FVDC = null;
+  function buildFvdChart(bars, clock){
+    var cv = $('fvd-cv'), empty = $('fvd-empty');
+    var sc = D.sc || [];
+    var fvdByDate = {};
+    sc.forEach(function(r){ if (fin(r.fvd)) fvdByDate[r.d] = r.fvd; });
+    var series = [];
+    (D.events || []).forEach(function(e){
+      var t0 = eventIdx(bars, e.date);
+      if (t0 < W_PRE) return;
+      var pts = [], any = 0;
+      for (var k=-W_PRE;k<=W_POST;k++){
+        var i = t0+k;
+        var v = (i >= 0 && i < bars.length) ? fvdByDate[bars[i][0]] : null;
+        pts.push(fin(v) ? v : null);
+        if (fin(v)) any++;
+      }
+      if (any >= 8) series.push({ date: e.date, pts: pts });
+    });
+    var current = null;
+    if (bars.length && clock && clock.next_earnings_date){
+      var N = bars.length;
+      var tdn = weekdaysAfterThrough(bars[N-1][0], clock.next_earnings_date);
+      if (fin(tdn) && tdn >= 0 && tdn <= W_PRE){
+        var t0f = (N-1) + tdn;
+        current = [];
+        for (var k2=-W_PRE;k2<=-tdn;k2++){
+          var i2 = t0f + k2;
+          if (i2 >= 0 && i2 < N){
+            var v2 = fvdByDate[bars[i2][0]];
+            if (fin(v2)) current.push({ k: k2, v: v2 });
+          }
+        }
+        if (!current.length) current = null;
+      }
+    }
+    var curRow = sc.length ? sc[sc.length-1] : null;
+    if (curRow && fin(curRow.fvd) && bars.length){
+      var fv = bars[bars.length-1][4] / (1 + curRow.fvd/100);
+      $('fvd-now').textContent = '(now ' + (curRow.fvd > 0 ? '+' : '') + curRow.fvd.toFixed(1) + '% vs FV ≈ $' + fv.toFixed(2) + ')';
+    } else $('fvd-now').textContent = '';
+    if (!series.length && !current){
+      cv.classList.add('hidden');
+      empty.classList.remove('hidden');
+      empty.textContent = 'Fair-value history does not overlap a completed cycle yet — this chart accrues with each print.';
+      FVDC = null;
+      return;
+    }
+    cv.classList.remove('hidden');
+    empty.classList.add('hidden');
+    FVDC = { series: series, current: current };
+    drawFvd();
+  }
+  function drawFvd(){
+    if (!FVDC) return;
+    var f = fitCanvas($('fvd-cv'));
+    var ctx = f.ctx, mL = 48, mR = 16, mT = 12, mB = 26;
+    var pw = f.w - mL - mR, ph = f.h - mT - mB;
+    ctx.clearRect(0,0,f.w,f.h);
+    var all = [0];
+    FVDC.series.forEach(function(s){ s.pts.forEach(function(v){ if (fin(v)) all.push(v); }); });
+    if (FVDC.current) FVDC.current.forEach(function(c){ all.push(c.v); });
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+    var pad = (hi-lo)*0.1 || 5; lo -= pad; hi += pad;
+    var X = function(k){ return mL + (k + W_PRE)/(W_PRE + W_POST) * pw; };
+    var Y = function(v){ return mT + (hi - v)/(hi - lo) * ph; };
+    var step = niceStep((hi-lo)/5);
+    ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (var g = Math.ceil(lo/step)*step; g <= hi; g += step){
+      ctx.strokeStyle = C.line;
+      ctx.beginPath(); ctx.moveTo(mL, Y(g)); ctx.lineTo(f.w-mR, Y(g)); ctx.stroke();
+      ctx.fillStyle = C.dim;
+      ctx.fillText((g>0?'+':'') + Math.round(g) + '%', mL-8, Y(g));
+    }
+    if (0 >= lo && 0 <= hi){
+      ctx.strokeStyle = 'rgba(0,222,148,.7)'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(mL, Y(0)); ctx.lineTo(f.w-mR, Y(0)); ctx.stroke();
+    }
+    if (150 <= hi){
+      ctx.strokeStyle = 'rgba(255,77,77,.5)'; ctx.setLineDash([4,4]); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(mL, Y(150)); ctx.lineTo(f.w-mR, Y(150)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,77,77,.85)'; ctx.textAlign = 'left';
+      ctx.fillText('trap gate +150%', mL+4, Y(150)-9);
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    [-15,-10,-5,0,5,10,15,20,25].forEach(function(k){
+      ctx.fillStyle = k === 0 ? C.amber : C.dim;
+      ctx.fillText(k === 0 ? 'E' : (k>0?'+':'')+k, X(k), f.h - mB + 7);
+    });
+    ctx.strokeStyle = 'rgba(255,184,0,.45)'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(X(0), mT); ctx.lineTo(X(0), f.h-mB); ctx.stroke();
+    FVDC.series.forEach(function(s){
+      ctx.strokeStyle = C.ghost; ctx.lineWidth = 1.4;
+      strokeSeries(ctx, s.pts, X, Y);
+    });
+    if (FVDC.current){
+      ctx.strokeStyle = C.amber; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      FVDC.current.forEach(function(c,i){ if (i===0) ctx.moveTo(X(c.k), Y(c.v)); else ctx.lineTo(X(c.k), Y(c.v)); });
+      ctx.stroke();
+      var lp = FVDC.current[FVDC.current.length-1];
+      ctx.fillStyle = C.amber;
+      ctx.beginPath(); ctx.arc(X(lp.k), Y(lp.v), 4, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // ── cohort this year ──────────────────────────────────────────────────
+  function buildCohortCard(){
+    $('coh-fam').textContent = D.family || 'cohort';
+    var c = D.cohort;
+    var tbl = $('coh-tbl');
+    if (!c){
+      $('coh-n').textContent = '';
+      $('coh-cv').classList.add('hidden');
+      tbl.innerHTML = '';
+      var em = $('coh-empty');
+      em.classList.remove('hidden');
+      em.textContent = 'Cohort pooling needs at least 3 peer cycles with price history.';
+      return;
+    }
+    $('coh-n').textContent = '(n=' + c.n + ' peer cycles pooled)';
+    var html = '<thead><tr><th>PEER</th><th>PRINT</th><th>APPROACH</th><th>REACTION</th><th>DRIFT +10</th></tr></thead><tbody>';
+    c.events.slice(0, 8).forEach(function(e){
+      html += '<tr><td style="font-weight:700">' + e.t + '</td><td>' + fmtDate(e.date) + '</td>' +
+        ['approach','reaction','drift'].map(function(k){
+          return '<td class="' + clsRet(e[k]) + '">' + fmtRet(e[k]) + '</td>';
+        }).join('') + '</tr>';
+    });
+    tbl.innerHTML = html + '</tbody>';
+    drawCoh();
+  }
+  function drawCoh(){
+    var c = D.cohort;
+    if (!c) return;
+    var f = fitCanvas($('coh-cv'));
+    var ctx = f.ctx, mL = 48, mR = 16, mT = 12, mB = 26;
+    var pw = f.w - mL - mR, ph = f.h - mT - mB;
+    ctx.clearRect(0,0,f.w,f.h);
+    var all = [];
+    ['med','q1','q3'].forEach(function(k){ c[k].forEach(function(v){ if (fin(v)) all.push(v); }); });
+    var selfCur = ATLAS && ATLAS.current ? ATLAS.current : null;
+    if (selfCur) selfCur.forEach(function(p){ all.push(p.v); });
+    if (!all.length) return;
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+    var pad = (hi-lo)*0.1 || 0.02; lo -= pad; hi += pad;
+    var X = function(k){ return mL + (k + W_PRE)/(W_PRE + W_POST) * pw; };
+    var Y = function(v){ return mT + (hi - v)/(hi - lo) * ph; };
+    var step = niceStep((hi-lo)/5);
+    ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (var g = Math.ceil(lo/step)*step; g <= hi; g += step){
+      ctx.strokeStyle = Math.abs(g) < step/2 ? 'rgba(148,163,184,.28)' : C.line;
+      ctx.beginPath(); ctx.moveTo(mL, Y(g)); ctx.lineTo(f.w-mR, Y(g)); ctx.stroke();
+      ctx.fillStyle = C.dim;
+      ctx.fillText((g>0?'+':'') + Math.round(g*100) + '%', mL-8, Y(g));
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    [-15,-10,-5,0,5,10,15,20,25].forEach(function(k){
+      ctx.fillStyle = k === 0 ? C.amber : C.dim;
+      ctx.fillText(k === 0 ? 'E' : (k>0?'+':'')+k, X(k), f.h - mB + 7);
+    });
+    ctx.strokeStyle = 'rgba(255,184,0,.45)'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(X(0), mT); ctx.lineTo(X(0), f.h-mB); ctx.stroke();
+    ctx.fillStyle = 'rgba(0,222,148,.08)';
+    ctx.beginPath();
+    var started = false;
+    for (var a=-W_PRE;a<=W_POST;a++){
+      var v3 = c.q3[a+W_PRE];
+      if (!fin(v3)) continue;
+      if (!started){ ctx.moveTo(X(a), Y(v3)); started = true; } else ctx.lineTo(X(a), Y(v3));
+    }
+    for (var b=W_POST;b>=-W_PRE;b--){
+      var v1 = c.q1[b+W_PRE];
+      if (!fin(v1)) continue;
+      ctx.lineTo(X(b), Y(v1));
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = C.green; ctx.lineWidth = 2.2;
+    strokeSeries(ctx, c.med, X, Y);
+    if (selfCur && selfCur.length){
+      ctx.strokeStyle = C.amber; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      selfCur.forEach(function(p,i){ if (i===0) ctx.moveTo(X(p.k), Y(p.v)); else ctx.lineTo(X(p.k), Y(p.v)); });
+      ctx.stroke();
+      var lp = selfCur[selfCur.length-1];
+      ctx.fillStyle = C.amber;
+      ctx.beginPath(); ctx.arc(X(lp.k), Y(lp.v), 4, 0, Math.PI*2); ctx.fill();
+      ctx.font = '700 11px Inter, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(D.ticker, X(lp.k), Y(lp.v) - 12);
+    }
+  }
+
+  // ── earnings forensics ────────────────────────────────────────────────
+  function fmtB(v){
+    if (!fin(v)) return '—';
+    if (Math.abs(v) >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+    if (Math.abs(v) >= 1e6) return '$' + (v/1e6).toFixed(0) + 'M';
+    return '$' + Number(v).toFixed(0);
+  }
+  function buildForensics(bars, closes, sc, cur, clock){
+    var eh = D.earnHist || [];
+    var events = (D.events || []).slice().reverse();
+    // Eve-of-print snapshot: the last context row strictly before the print is
+    // the going-in consensus/guide (the nxt field can skip ahead in older rows,
+    // so filtering on it drops real pre-print data). Reject stale rows (>21d).
+    function goingIn(E){
+      var r = null;
+      eh.forEach(function(x){ if (x.d < E) r = x; });
+      return r && calDays(r.d, E) <= 21 ? r : null;
+    }
+    function realized(E){ var r = null; eh.forEach(function(x){ if (x.lst === E && fin(x.act)) r = x; }); return r; }
+    function preScRow(E){
+      for (var i = sc.length-1; i >= 0; i--){
+        if (sc[i].d < E){ return calDays(sc[i].d, E) <= 14 ? sc[i] : null; }
+      }
+      return null;
+    }
+    function reactionOf(E){
+      var t0 = eventIdx(bars, E);
+      if (t0 < 1 || t0+1 >= bars.length) return null;
+      if (!fin(closes[t0+1]) || !fin(closes[t0-1])) return null;
+      return closes[t0+1]/closes[t0-1] - 1;
+    }
+
+    var html = '<thead><tr><th>PRINT</th><th>EPS EST→ACT</th><th>SURPRISE</th><th>GUIDE-IN</th><th>VMS·DRIFT</th><th>REACTION</th></tr></thead><tbody>';
+    events.slice(0, 5).forEach(function(e){
+      var E = e.date;
+      var gi = goingIn(E), rz = realized(E), ps = preScRow(E), rx = reactionOf(E);
+      var sEps = rz && fin(rz.s_eps) ? rz.s_eps : e.eps_s;
+      // Show the consensus the surprise was actually computed against (implied
+      // from actual/surprise) so est→act and the surprise column agree; fall
+      // back to the eve-of-print snapshot when no realized surprise exists.
+      var estShown = (rz && fin(rz.act) && fin(sEps)) ? rz.act / (1 + sEps) : (gi && fin(gi.est) ? gi.est : null);
+      html += '<tr><td style="font-weight:700">' + fmtDate(E) + '</td>' +
+        '<td>' + (fin(estShown) ? '$' + estShown.toFixed(2) : '—') + '→' + (rz && fin(rz.act) ? '$' + rz.act.toFixed(2) : '—') + '</td>' +
+        '<td class="' + clsRet(sEps) + '">' + (fin(sEps) ? fmtRet(sEps) : '—') + '</td>' +
+        '<td>' + (gi && gi.gdir ? gi.gdir : '—') + '</td>' +
+        '<td>' + (ps ? fmtNum(ps.vms,0) + '·' + fmtNum(ps.drift,0) : '—') + '</td>' +
+        '<td class="' + clsRet(rx) + '">' + fmtRet(rx) + '</td></tr>';
+    });
+    $('for-tbl').innerHTML = html + '</tbody>';
+
+    var W = [];
+    var nxtDate = clock && clock.next_earnings_date;
+    // Revision trail for THIS print only: rows from 3+ days after the last
+    // print (the new quarter's consensus needs a few sessions to form), so the
+    // prior quarter's walk can't contaminate the "bar moved" claim.
+    var lastPrint = clock && clock.last_earnings_date;
+    var ehNext = eh.filter(function(x){ return x.nxt === nxtDate && (!lastPrint || calDays(lastPrint, x.d) >= 3); });
+    var last = ehNext.length ? ehNext[ehNext.length-1] : null;
+    var first = ehNext.length ? ehNext[0] : null;
+    if (last && fin(last.est)){
+      var b1 = 'Consensus for this print: EPS <b>$' + last.est.toFixed(2) + '</b>' +
+        (fin(last.rev_est) ? ' · revenue <b>' + fmtB(last.rev_est) + '</b>' : '') + '.';
+      if (first && fin(first.est) && first.d !== last.d && Math.abs(last.est - first.est) > 0.005){
+        var revPct = (last.est/first.est - 1) * 100;
+        var peak = Math.max.apply(null, ehNext.map(function(x){ return fin(x.est) ? x.est : -Infinity; }));
+        b1 += ' Estimates <b>' + (revPct < 0 ? 'CUT ' : 'RAISED ') + Math.abs(revPct).toFixed(0) + '%</b> since ' + fmtDate(first.d) +
+          (peak > last.est + 0.005 ? ' (peak $' + peak.toFixed(2) + ')' : '') +
+          (revPct < 0 ? ' — the bar has been walked DOWN into this print.' : ' — the bar has RISEN into this print.');
+      }
+      W.push(b1);
+    }
+    if (last && (last.gdir || fin(last.gmid))){
+      var b2 = 'Guide on record: <b>' + (last.gdir || '—') + '</b>' +
+        (fin(last.gmid) ? ', EPS midpoint $' + last.gmid.toFixed(2) + (last.gper ? ' (' + last.gper + ')' : '') : '');
+      if (fin(last.gmid) && fin(last.est) && last.gmid > 0){
+        var vsMid = (last.est/last.gmid - 1) * 100;
+        b2 += ' — the street sits <b>' + (vsMid > 0 ? '+' : '') + vsMid.toFixed(0) + '% ' + (vsMid > 0 ? 'ABOVE' : 'below') + '</b> management’s midpoint';
+      }
+      W.push(b2 + '.');
+    }
+    if (D.guid){
+      var g = D.guid;
+      W.push('Guide credibility: EPS meet-or-beat <b>' + fmtNum(g.eps_mob,0) + '%</b> (' + g.eps_g + ' guides) · revenue <b>' + fmtNum(g.rev_mob,0) + '%</b> · ' +
+        g.raised + ' raised / ' + g.maintained + ' maintained / <b>' + g.lowered + ' lowered</b>' +
+        (g.lowered === 0 ? ' — management does not guide high; the risk lives in the OUTLOOK language, not the beat.' : '.'));
+    }
+    var mm = [];
+    events.forEach(function(e){
+      var rz2 = realized(e.date);
+      var s = rz2 && fin(rz2.s_eps) ? rz2.s_eps : e.eps_s;
+      var rx2 = reactionOf(e.date);
+      if (fin(s) && fin(rx2) && s > 0 && rx2 < -0.005) mm.push(fmtDate(e.date) + ': beat EPS ' + fmtRet(s) + ' → stock ' + fmtRet(rx2));
+    });
+    if (mm.length) W.push('Beats have NOT been enough: <b>' + mm.slice(0,2).join(' · ') + '</b> — this name trades the outlook and the run-in, not the headline (n=' + mm.length + ' print' + (mm.length>1?'s':'') + ' with full data).');
+    var appr = ATLAS && ATLAS.current && ATLAS.current.length ? ATLAS.current[ATLAS.current.length-1].v : null;
+    var reas = events.map(function(e){ return reactionOf(e.date); }).filter(fin);
+    var medAbs = median(reas.map(function(r){ return Math.abs(r); }));
+    var stretch = [];
+    if (fin(appr)) stretch.push('approach ' + fmtRet(appr) + ' since T−15');
+    if (cur && fin(cur.fvd)) stretch.push((cur.fvd > 0 ? '+' : '') + cur.fvd.toFixed(0) + '% vs fair value');
+    if (stretch.length){
+      W.push('The run-in: <b>' + stretch.join(', ') + '</b>' +
+        (fin(appr) && appr > 0.05 ? ' — part of a good print is already pre-paid.' : '.') +
+        (fin(medAbs) ? ' Typical print move ±' + (medAbs*100).toFixed(1) + '% (n=' + reas.length + ' cycles).' : ''));
+    }
+    var flags = [];
+    if (last && last.align) flags.push('narrative vs last print’s facts: <b>' + last.align + '</b>');
+    if (cur && fin(cur.cred)) flags.push('earnings-credibility ' + cur.cred.toFixed(2) + '/1');
+    if (cur && cur.warn) flags.push(cur.warn);
+    if (flags.length) W.push('Narrative flags now: ' + flags.join(' · ') + '.');
+
+    $('watch-list').innerHTML = W.length
+      ? W.map(function(w){ return '<div class="watch"><span class="wd">▪</span><span>' + w + '</span></div>'; }).join('')
+      : '<div class="empty-note">No earnings-context history yet for this ticker.</div>';
+  }
+
   // ── registry & readout ────────────────────────────────────────────────
   function buildRegistry(){
     var host = $('plays-list');
@@ -897,6 +1318,8 @@
       '; cycle anchor = 8-K filing date, paths anchored at T−15 sessions, medians need ≥3 cycles per offset.');
     parts.push('Narrative overlay: ' + sc.length + ' scored days (≈' + Math.max(1, Math.round(sc.length / 63)) + ' cycle' + (sc.length > 94 ? 's' : '') + ' of coverage) — percentile placement only, small-n context, not a predictor.');
     parts.push('Peer cohort = ' + (D.family || '—') + ' family from the valuation config (same rollup as the Universe tab).');
+    if (D.cohort) parts.push('Cohort chart pools ' + D.cohort.n + ' peer cycles (2026, same T−15 session anchoring — comparable to the amber approach line).');
+    parts.push('Fair-value chart = scorecard-day FVD (price vs the pure-fundamentals anchor); earnings forensics = SEC 8-K earnings context, consensus-revision trail, and the guidance-accuracy ledger.');
     parts.push('Entries and direction come exclusively from the backtested signal registry; sizing from the hierarchical-Bayes posterior. This page never generates trades.');
     if (D.keyMode === 'anon') parts.push('<b>Degraded mode:</b> service credentials unavailable — price panels hidden.');
     parts.push('TEST PAGE — internal research preview. Not investment advice.');

@@ -50,7 +50,17 @@ const SC_COLS = [
   'energy_remaining_dynamic', 'decay_rate', 'coordination_score', 'drift_score',
   'fvd_pct', 'nrs', 'vms', 'verdict', 'verdict_confidence', 'walsh_regime',
   'narrative_state', 'days_to_earnings', 'suspicion_score', 'suspicion_class',
-  'mass_streak_days', 'current_price', 'exhaustion_status', 'narrative_tone'
+  'mass_streak_days', 'current_price', 'exhaustion_status', 'narrative_tone',
+  'earnings_credibility_score', 'earnings_warning'
+].join(',');
+
+const EARN_COLS = [
+  'snapshot_date', 'next_earnings_date', 'last_earnings_date', 'eps_estimate',
+  'eps_actual', 'eps_surprise_pct', 'revenue_estimate', 'revenue_actual',
+  'revenue_surprise_pct', 'guidance_direction', 'guidance_eps_midpoint',
+  'guidance_eps_low', 'guidance_eps_high', 'guidance_revenue_midpoint',
+  'guidance_fiscal_period', 'guidance_date', 'narrative_earnings_alignment',
+  'earnings_position'
 ].join(',');
 
 const PEER_COLS = [
@@ -71,6 +81,17 @@ const num = (v, dp) => {
   const m = Math.pow(10, dp == null ? 2 : dp);
   return Math.round(f * m) / m;
 };
+
+function medianOf(a) {
+  const s = a.slice().sort((x, y) => x - y);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function quantileOf(a, q) {
+  const s = a.slice().sort((x, y) => x - y);
+  const pos = (s.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+  return s[lo] + (s[hi] - s[lo]) * (pos - lo);
+}
 
 // PostgREST rows can be capped server-side regardless of ?limit= — page with
 // Range headers until short page / hard cap.
@@ -143,7 +164,7 @@ module.exports = async (req, res) => {
     const date = dRows && dRows[0] && dRows[0].snapshot_date;
     if (!date) return sendJson(res, 502, { error: 'no scorecard rows found' });
 
-    const [events, clockRows, bars, sc, valcfg, sizingRows, plays] = await Promise.all([
+    const [events, clockRows, bars, sc, valcfg, sizingRows, plays, earnHistRows, guidRows] = await Promise.all([
       fetchAll(rest + `earnings_releases?ticker=eq.${enc}&select=filing_date,eps_surprise_pct,revenue_surprise_pct&order=filing_date.asc`, headers, 1000),
       fetchAll(rest + `earnings_context?ticker=eq.${enc}&select=snapshot_date,days_to_earnings,next_earnings_date,last_earnings_date,earnings_position,earnings_window_flag&order=snapshot_date.desc&limit=1`, headers, 1000),
       fetchAll(rest + `gold_daily_bars?ticker=eq.${enc}&select=snapshot_date,price_open,price_high,price_low,price_close&order=snapshot_date.asc`, headers, 3000)
@@ -153,6 +174,10 @@ module.exports = async (req, res) => {
       fetchAll(rest + `ticker_sizing_learned?ticker=eq.${enc}&select=ticker,multiplier,tier,n_trades,win_rate,mu_pct,sigma_pct,live_n,live_win_rate`, headers, 100)
         .catch(() => []),
       fetchAll(rest + `tracked_daily_plays?ticker=eq.${enc}&select=lane,direction,entry_date,entry_price,status,predicted_return_pct,predicted_hold_days,current_return_pct,exit_return_pct,hit,snapshot_date&order=created_at.desc&limit=8`, headers, 100)
+        .catch(() => []),
+      fetchAll(rest + `earnings_context?ticker=eq.${enc}&select=${EARN_COLS}&order=snapshot_date.asc`, headers, 2000)
+        .catch(() => []),
+      fetchAll(rest + `guidance_accuracy?ticker=eq.${enc}&select=periods_matched,eps_guidances,eps_meet_or_beat_pct,rev_meet_or_beat_pct,raised_count,maintained_count,lowered_count,overall_accuracy_pct`, headers, 10)
         .catch(() => [])
     ]);
 
@@ -217,6 +242,52 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Cohort cycles this year: pooled price paths of the peer set around their
+    // own 2026 earnings events — computed server-side so the browser payload
+    // stays small (peer bars never leave the function).
+    let cohort = null;
+    if (peers.length) {
+      try {
+        const pList = peers.map((p) => encodeURIComponent(p.t)).join(',');
+        const [pBars, pEvents] = await Promise.all([
+          fetchAll(rest + `gold_daily_bars?ticker=in.(${pList})&select=ticker,snapshot_date,price_close&snapshot_date=gte.2025-11-01&order=ticker.asc,snapshot_date.asc`, headers, 8000),
+          fetchAll(rest + `earnings_releases?ticker=in.(${pList})&select=ticker,filing_date&filing_date=gte.2026-01-01&order=ticker.asc,filing_date.asc`, headers, 1000)
+        ]);
+        const byT = {};
+        for (const b of pBars) (byT[b.ticker] = byT[b.ticker] || []).push([b.snapshot_date, Number(b.price_close)]);
+        const K0 = 15, K1 = 25;
+        const perK = Array.from({ length: K0 + K1 + 1 }, () => []);
+        const evOut = [];
+        for (const ev of pEvents) {
+          const arr = byT[ev.ticker];
+          if (!arr || arr.length < K0 + 2) continue;
+          let t0 = -1;
+          for (let i = 0; i < arr.length; i++) { if (arr[i][0] >= ev.filing_date) { t0 = i; break; } }
+          if (t0 < K0) continue;
+          const base = arr[t0 - K0][1];
+          if (!Number.isFinite(base) || base <= 0) continue;
+          for (let k = -K0; k <= K1; k++) {
+            const i = t0 + k;
+            if (i < arr.length && Number.isFinite(arr[i][1])) perK[k + K0].push(arr[i][1] / base - 1);
+          }
+          const c = (i) => (i >= 0 && i < arr.length && Number.isFinite(arr[i][1]) ? arr[i][1] : null);
+          const approach = c(t0 - 1) != null ? c(t0 - 1) / base - 1 : null;
+          const reaction = c(t0 + 1) != null && c(t0 - 1) != null ? c(t0 + 1) / c(t0 - 1) - 1 : null;
+          const drift = c(t0 + 10) != null && c(t0 + 1) != null ? c(t0 + 10) / c(t0 + 1) - 1 : null;
+          evOut.push({ t: ev.ticker, date: ev.filing_date, approach: num(approach, 4), reaction: num(reaction, 4), drift: num(drift, 4) });
+        }
+        if (evOut.length >= 3) {
+          cohort = {
+            n: evOut.length,
+            med: perK.map((v) => (v.length >= 3 ? num(medianOf(v), 4) : null)),
+            q1: perK.map((v) => (v.length >= 3 ? num(quantileOf(v, 0.25), 4) : null)),
+            q3: perK.map((v) => (v.length >= 3 ? num(quantileOf(v, 0.75), 4) : null)),
+            events: evOut.sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 10)
+          };
+        }
+      } catch (_e) { cohort = null; }
+    }
+
     const payload = {
       ticker,
       date,
@@ -254,9 +325,42 @@ module.exports = async (req, res) => {
         streak: num(r.mass_streak_days, 0),
         price: num(r.current_price, 2),
         exst: r.exhaustion_status || null,
-        tone: r.narrative_tone || null
+        tone: r.narrative_tone || null,
+        cred: num(r.earnings_credibility_score, 3),
+        warn: r.earnings_warning || null
       })),
       peers,
+      cohort,
+      earnHist: earnHistRows.map((r) => ({
+        d: r.snapshot_date,
+        nxt: r.next_earnings_date || null,
+        lst: r.last_earnings_date || null,
+        est: num(r.eps_estimate, 3),
+        act: num(r.eps_actual, 3),
+        s_eps: num(r.eps_surprise_pct, 4),
+        rev_est: num(r.revenue_estimate, 0),
+        rev_act: num(r.revenue_actual, 0),
+        s_rev: num(r.revenue_surprise_pct, 4),
+        gdir: r.guidance_direction || null,
+        gmid: num(r.guidance_eps_midpoint, 3),
+        grev: num(r.guidance_revenue_midpoint, 0),
+        gper: r.guidance_fiscal_period || null,
+        gdate: r.guidance_date || null,
+        align: r.narrative_earnings_alignment || null,
+        pos: r.earnings_position || null
+      })),
+      guid: guidRows[0]
+        ? {
+            periods: num(guidRows[0].periods_matched, 0),
+            eps_g: num(guidRows[0].eps_guidances, 0),
+            eps_mob: num(guidRows[0].eps_meet_or_beat_pct, 1),
+            rev_mob: num(guidRows[0].rev_meet_or_beat_pct, 1),
+            raised: num(guidRows[0].raised_count, 0),
+            maintained: num(guidRows[0].maintained_count, 0),
+            lowered: num(guidRows[0].lowered_count, 0),
+            overall: num(guidRows[0].overall_accuracy_pct, 1)
+          }
+        : null,
       sizing: sizingRows[0]
         ? {
             multiplier: num(sizingRows[0].multiplier, 2),
