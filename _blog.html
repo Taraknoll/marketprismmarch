@@ -561,27 +561,20 @@ nav {
         msg.style.color = '#FF4D4D';
         return;
       }
-      if (!SUPABASE_URL || !SUPABASE_ANON) {
-        window.location.href = '/login#register';
-        return;
-      }
       btn.disabled = true; btn.textContent = 'Sending...';
-      fetch(SUPABASE_URL + '/rest/v1/beta_signups', {
+      // Server-side proxy — anon INSERT on beta_signups was revoked, so the
+      // browser posts to /api/signup (service-role write + rate limit).
+      fetch('/api/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON,
-          'Authorization': 'Bearer ' + SUPABASE_ANON,
-          'Prefer': 'return=minimal'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          list: 'beta',
           email: email,
           source: source,
-          referrer: document.referrer || null,
-          user_agent: navigator.userAgent || null
+          referrer: document.referrer || null
         })
       }).then(function(r){
-        if (r.ok || r.status === 201 || r.status === 409) {
+        if (r.ok) {
           msg.style.color = '#00DE94';
           msg.textContent = "You're on the list. We'll be in touch.";
           input.value = '';

@@ -33,6 +33,10 @@
       "destination": "/api/watchlist"
     },
     {
+      "source": "/api/signup",
+      "destination": "/api/signup"
+    },
+    {
       "source": "/api/live-quotes-batch",
       "destination": "/api/live-quotes-batch"
     },

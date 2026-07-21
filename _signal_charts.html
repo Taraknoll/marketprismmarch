@@ -583,12 +583,11 @@
 })();
 
 // ════════════════════════════════════════════════════════════════════════════
-// Launch priority email capture — writes to email_signups (same table the
-// homepage footer uses). Graceful fallback if Supabase isn't reachable.
+// Launch priority email capture — writes to email_signups via the /api/signup
+// proxy (anon INSERT was revoked; the server writes with the service key).
+// Graceful fallback if the API isn't reachable.
 // ════════════════════════════════════════════════════════════════════════════
 (function(){
-  var SB_URL  = (window.__env||{}).SUPABASE_URL  || '';
-  var SB_ANON = (window.__env||{}).SUPABASE_ANON || '';
   var form = document.getElementById('lp-form');
   var emailInput = document.getElementById('lp-email');
   var submitBtn = document.getElementById('lp-submit');
@@ -610,16 +609,10 @@
       form.style.display = 'none';
       success.classList.add('visible');
     };
-    if(!SB_URL || !SB_ANON){ done(); return; }
-    fetch(SB_URL + '/rest/v1/email_signups', {
+    fetch('/api/signup', {
       method: 'POST',
-      headers: {
-        apikey: SB_ANON,
-        Authorization: 'Bearer ' + SB_ANON,
-        'Content-Type': 'application/json',
-        Prefer: 'resolution=ignore-duplicates'
-      },
-      body: JSON.stringify({email: email, source: 'signal_charts_launch_priority'})
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({list: 'launch', email: email, source: 'signal_charts_launch_priority'})
     }).then(function(r){
       done();
     }).catch(function(){

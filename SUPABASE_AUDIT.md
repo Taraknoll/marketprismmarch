@@ -110,13 +110,13 @@ Page shell, marketing copy, and video are static — the homepage **survives** a
 | `/daily` (`_daily.html`) | Load `allSettled`: `v_dash_daily_story`, `ticker_pulse`, `active_traps`, `v_dash_historical_analogs`, `sector_risk_summary`, `narrative_scorecard`; lazy `macro_narrative_events`, `coordination_alerts`; POST `/api/daily-brief` (headline — static fallback string on failure) | allSettled + silent fails, **no timeouts**; hang = indefinite "Loading…" |
 | `/heatmap` (`_heatmap.html`) | `ticker_pulse` (1000 rows), 5-min refresh | **15s AbortController + hardcoded `FALLBACK_TICKERS` grid** — most resilient page |
 | `/narrative-heatmap` (`_narrative_heatmap.html`) | `ticker_industry_lookup`, `v_narrative_map_daily` per-ticker | 15s aborts; blanks on failure |
-| `/signal-charts` (`_signal_charts.html`) | `ticker_snapshots`, `decay_metrics`, `mv_physics_energy_normalized`, `narrative_scorecard` (+ ⚠ `bubble_metrics`); 30s price refresh | helper returns `[]` on any error — silent, no timeout |
+| `/signal-charts` (`_signal_charts.html`) | `ticker_snapshots`, `decay_metrics`, `mv_physics_energy_normalized`, `narrative_scorecard` (+ ⚠ `bubble_metrics`); 30s price refresh; launch email capture POSTs `/api/signup` proxy → `email_signups` | helper returns `[]` on any error — silent, no timeout; email form shows success regardless |
 | `/search` (`_search.html`, Narrative Lab) | none direct — POST `/api/dots-predict` | stuck spinner if backend hangs (backend has 12s guards) |
 | `/ask`, `/anomaly-search` (`_anomaly_search.html`) | none direct — POST `/api/anomaly-agent` | error bubble on 500; spinner on hang |
 | `/traps`, `/herb` (`_traps.html`) | `narrative_traps` (stats strip only, 300 rows) + `/api/live-quotes-batch` | **cards are hardcoded editorial** — page survives; stats show "—" |
 | `/herbtraps` (`_herbtraps.html`) | none (client-side pw gate + canvas) | immune |
 | `/forensic` (`_forensic.html`) | none direct — `/api/forensic-data` (+ lazy `&section=claims`) | server has 7s/section + `[]`; client spinner has **no timeout** |
-| `/blog`, `/blog/:slug`, `/author/:slug` | `blog_posts` client-side; POST `beta_signups` (newsletter/beta forms, also on blog posts) | spinner → "No posts"; forms error inline; no timeout |
+| `/blog`, `/blog/:slug`, `/author/:slug` | `blog_posts` client-side; beta forms POST `/api/signup` proxy → `beta_signups` (service-role; direct anon INSERT revoked 2026-06-23) | spinner → "No posts"; forms error inline; no timeout |
 | `/stocks/:t`, 3 SEO routes (`why-is-*-down`, `is-*-overvalued`, `should-i-buy-*`) | SSR (see §3.2); client only `/api/live-quote` poll (5s market / 2m off) | SSR shell always renders; client price poll is Polygon |
 | `/growth-calculator`, `/position-size-calculator`, `/calculators`, casestudies, about/faq/terms/privacy/methodology/features | none, or `/api/price-history` only (+ topbar search) | effectively static |
 | `/daily-v2` | `api/daily-plays-v2.js` = 308 redirect to `/dashboard` (retired) | n/a |
