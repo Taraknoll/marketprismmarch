@@ -7116,6 +7116,164 @@ function renderTickerNotFound() {
   if (sidebar) sidebar.style.display = 'none';
 }
 
+// ── Price Physics LITE mode (untracked tickers) ───────────────────────────────
+// For symbols with no forensic coverage we still render a thin, transparent
+// price/volume page instead of the not-found state. All data comes from
+// /api/light-signals (pure Polygon OHLCV) — NO Supabase, NO backtested signal.
+async function loadLiteSignals(t) {
+  if (!t) return null;
+  try {
+    const res = await fetch('/api/light-signals?ticker=' + encodeURIComponent(t));
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) {
+    return null;
+  }
+}
+
+// Inject the LITE-mode CSS once (kept with the JS so the whole feature is one
+// contiguous, reviewable block). Inter only, min sizes per the design standard.
+function _ensureLiteCss() {
+  if (document.getElementById('lite-mode-css')) return;
+  var s = document.createElement('style');
+  s.id = 'lite-mode-css';
+  s.textContent =
+    '.lite-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:32px;flex-wrap:wrap;}'
+    + '.lite-eyebrow{font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#00AEFF;margin-bottom:10px;}'
+    + '.lite-sub{font-family:var(--font-body);font-size:13px;line-height:1.5;color:var(--mp-text-secondary);max-width:520px;}'
+    + '.lite-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:22px;}'
+    + '.lite-stat{background:var(--mp-surface2,#111927);border:1px solid var(--mp-border,rgba(255,255,255,0.06));border-radius:12px;padding:12px 14px;}'
+    + '.lite-stat-k{font-family:var(--font-body);font-size:11px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:var(--mp-text-tertiary,#A0A8B0);margin-bottom:6px;}'
+    + '.lite-stat-v{font-family:var(--font-body);font-size:18px;font-weight:600;color:var(--mp-text-primary,#fff);letter-spacing:-0.01em;}'
+    + '.lite-range-wrap{margin-top:22px;max-width:640px;}'
+    + '.lite-range-labels{display:flex;justify-content:space-between;font-family:var(--font-body);font-size:12px;color:var(--mp-text-tertiary,#A0A8B0);margin-bottom:8px;}'
+    + '.lite-range-track{position:relative;height:8px;border-radius:99px;background:linear-gradient(90deg,rgba(255,77,77,0.25),rgba(255,184,0,0.22),rgba(0,222,148,0.28));}'
+    + '.lite-range-marker{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #00AEFF;transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,0.5);}'
+    + '.lite-range-sub{font-family:var(--font-body);font-size:12px;color:var(--mp-text-secondary);margin-top:8px;}'
+    + '.lite-foot{font-family:var(--font-body);font-size:11px;line-height:1.5;color:var(--mp-text-muted,rgba(255,255,255,0.3));margin-top:20px;}';
+  document.head.appendChild(s);
+}
+
+// Replace the hero band with a descriptive Price-Physics card. Reuses the live
+// price DOM contract (#live-price/#live-dot/#live-label/#live-change/#live-meta)
+// so the shared fetchLivePrice()/scheduleLivePrice() poller keeps it ticking.
+function renderLiteHero(d) {
+  _ensureLiteCss();
+  const hero = document.getElementById('hero');
+  if (!hero) return;
+
+  const fmtSigned = (v) => {
+    if (v == null || !isFinite(v)) return '—';
+    const p = v * 100;
+    const abs = Math.abs(p);
+    return (p > 0 ? '+' : '') + p.toFixed(abs >= 100 ? 0 : 1) + '%';
+  };
+  // Brand green/red for returns (the .delta-* hero classes render white by
+  // design, which would hide the sign here). Muted grey for null/flat.
+  const pctColor = (v) => (v == null || !isFinite(v)) ? 'var(--mp-text-tertiary,#A0A8B0)' : v > 0 ? '#00DE94' : v < 0 ? '#FF4D4D' : 'var(--mp-text-tertiary,#A0A8B0)';
+  const fmtUsdVol = (v) => {
+    if (v == null || !isFinite(v)) return '—';
+    if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
+    if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
+    return '$' + v.toFixed(0);
+  };
+  const fmtVolPct = (v) => (v == null || !isFinite(v)) ? '—' : (v * 100).toFixed(1) + '%';
+  const fmtRelVol = (v) => (v == null || !isFinite(v)) ? '—' : v.toFixed(2) + '×';
+  const fmtAmihud = (v) => (v == null || !isFinite(v)) ? '—' : Number(v).toExponential(1);
+
+  const TREND = {
+    UPTREND:   { label: 'Uptrend',     color: '#00DE94', bg: 'rgba(0,222,148,0.12)',  border: 'rgba(0,222,148,0.35)' },
+    DOWNTREND: { label: 'Downtrend',   color: '#FF4D4D', bg: 'rgba(255,77,77,0.12)',  border: 'rgba(255,77,77,0.35)' },
+    RANGE:     { label: 'Range-bound', color: '#00AEFF', bg: 'rgba(0,174,255,0.12)',  border: 'rgba(0,174,255,0.35)' },
+    QUIET:     { label: 'Quiet',       color: '#A0A8B0', bg: 'rgba(160,168,176,0.12)', border: 'rgba(160,168,176,0.35)' }
+  };
+  const tr = TREND[d.trend] || TREND.RANGE;
+  const trendBadge = '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:600;color:' + tr.color + ';background:' + tr.bg + ';border:1px solid ' + tr.border + ';font-family:var(--font-body);letter-spacing:0.02em;">' + tr.label + '</span>';
+
+  const rr = d.returns || {};
+  const retCell = (label, v) => '<div class="lite-stat"><div class="lite-stat-k">' + label + '</div><div class="lite-stat-v" style="color:' + pctColor(v) + ';">' + fmtSigned(v) + '</div></div>';
+
+  const rp = (d.range_pos != null && isFinite(d.range_pos)) ? Math.max(0, Math.min(1, d.range_pos)) : null;
+  const rangeBar = rp == null ? '' :
+    '<div class="lite-range-wrap">'
+    + '<div class="lite-range-labels"><span>52w Low ' + fmtPrice(d.lo_52w) + '</span><span>High ' + fmtPrice(d.hi_52w) + '</span></div>'
+    + '<div class="lite-range-track"><div class="lite-range-marker" style="left:' + (rp * 100).toFixed(1) + '%;"></div></div>'
+    + '<div class="lite-range-sub">' + fmtSigned(d.pct_from_hi) + ' from 52w high &middot; ' + fmtSigned(d.pct_from_lo) + ' from 52w low</div>'
+    + '</div>';
+
+  hero.style.display = 'block';
+  hero.innerHTML =
+    '<div class="lite-hero-top">'
+      + '<div class="hero-left">'
+        + '<div class="lite-eyebrow">Price Physics &middot; Limited Coverage</div>'
+        + '<div class="hero-ticker-row" style="margin-bottom:8px;">'
+          + '<span class="hero-ticker">' + esc(d.ticker || TICKER) + '</span>'
+          + trendBadge
+        + '</div>'
+        + '<div class="lite-sub">No forensic narrative coverage for this ticker — showing price/volume signals only.</div>'
+      + '</div>'
+      + '<div class="hero-right" id="hero-right">'
+        + '<div class="live-price-row"><span class="live-dot offline" id="live-dot"></span><span class="live-label" id="live-label">Loading</span></div>'
+        + '<div class="live-price-main" id="live-price">' + fmtPrice(d.price) + '</div>'
+        + '<div class="live-change delta-flat" id="live-change"></div>'
+        + '<div class="live-ah" id="live-ah" style="display:none;font-size:12px;color:var(--mp-text-tertiary);font-family:var(--font-body);margin-top:2px;"></div>'
+        + '<div class="live-meta" id="live-meta"></div>'
+      + '</div>'
+    + '</div>'
+    + '<div class="lite-stats-grid">'
+      + retCell('1W', rr.d5)
+      + retCell('1M', rr.d21)
+      + retCell('3M', rr.d63)
+      + retCell('6M', rr.d126)
+      + retCell('1Y', rr.d252)
+      + '<div class="lite-stat"><div class="lite-stat-k">Ann. Volatility</div><div class="lite-stat-v">' + fmtVolPct(d.vol_annual) + '</div></div>'
+      + '<div class="lite-stat"><div class="lite-stat-k">Rel. Volume 5/60d</div><div class="lite-stat-v">' + fmtRelVol(d.rel_volume) + '</div></div>'
+      + '<div class="lite-stat"><div class="lite-stat-k">Avg $ Volume 21d</div><div class="lite-stat-v">' + fmtUsdVol(d.adv_usd_21d) + '</div></div>'
+      + '<div class="lite-stat"><div class="lite-stat-k">Amihud Illiquidity</div><div class="lite-stat-v">' + fmtAmihud(d.amihud_21d) + '</div></div>'
+    + '</div>'
+    + rangeBar
+    + '<div class="lite-foot">Price Physics — descriptive, not forensic. Derived from ' + (d.bars || 0) + ' trading days of Polygon OHLCV' + (d.asOf ? (' &middot; as of ' + esc(d.asOf)) : '') + '.</div>';
+
+  // Kick the shared live-price poller so the price ticks like a tracked page.
+  try { fetchLivePrice(); } catch (e) {}
+}
+
+// Strip the page down to the two panels that work for ANY ticker: the LITE hero
+// + Overview price chart, and the Live Market Snapshot tab. Everything else is
+// forensic/narrative and has no data for an untracked ticker.
+function enterLiteMode() {
+  // Pro verdict/forecast banner + its teaser CTA.
+  var vb = document.getElementById('verdict-banner');
+  if (vb) vb.style.display = 'none';
+  var tcta = document.querySelector('.mp-tcta');
+  if (tcta) tcta.style.display = 'none';
+
+  // Forensic-only tab buttons (Forensic Timeline + Trading Strategy).
+  ['timeline', 'strategy'].forEach(function (t) {
+    var btn = document.querySelector('.tk-tab[data-tab="' + t + '"]');
+    if (btn) btn.style.display = 'none';
+  });
+
+  // Global forensic sections that live below the tabs.
+  ['claim-integrity-section', 'scholarly-section'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Overview tab: keep only the price-chart card; hide the narrative/forensic
+  // cards (they'd render dead skeletons for an untracked ticker).
+  document.querySelectorAll('#tab-overview .tk-col-left > .section, #tab-overview .tk-col-left > .narr-section').forEach(function (card) {
+    if (!card.querySelector('#price-canvas')) card.style.display = 'none';
+  });
+  // Drop the right sidebar (Ask-Scholar AI + Latest Stories) and let the chart
+  // column span full width.
+  var sidebar = document.querySelector('#tab-overview .tk-sidebar');
+  if (sidebar) sidebar.style.display = 'none';
+  var split = document.querySelector('#tab-overview .tk-main-split');
+  if (split) split.style.gridTemplateColumns = '1fr';
+}
+
 // ── 1. Hero + Forensic ───────────────────────────────────────────────────────
 async function loadHero() {
   if (!TICKER) return null;
@@ -7244,6 +7402,16 @@ async function loadHero() {
     // We can't reliably tell those apart with allSettled, so route to the
     // not-found state only when the call succeeded AND returned no rows.
     if (_heroSettled[0].status === 'fulfilled' && (!rows || !rows.length)) {
+      // No forensic narrative coverage for this ticker. Before dropping to the
+      // hard not-found state, try a descriptive "Price Physics" LITE page built
+      // purely from live Polygon OHLCV — this works for ANY US ticker.
+      const lite = await loadLiteSignals(TICKER);
+      if (lite && !lite.insufficient && !lite.error) {
+        window.LITE_MODE = true;
+        renderLiteHero(lite);
+        enterLiteMode();
+        return null;
+      }
       renderTickerNotFound();
       return null;
     }
@@ -12457,6 +12625,15 @@ async function refreshAll() {
   // to an empty-state. Skip every downstream loader so they don't render skeletons.
   if (_TICKER_NOT_FOUND) {
     document.title = TICKER + ' — not tracked | Market Prism';
+    return;
+  }
+  // Price Physics LITE mode — renderLiteHero()/enterLiteMode() already ran inside
+  // loadHero(). Skip every forensic loader (no data for an untracked ticker) but
+  // still draw the Overview price chart, which works for ANY ticker via
+  // /api/price-history.
+  if (window.LITE_MODE) {
+    document.title = TICKER + ' — Price Physics | Market Prism';
+    loadChart();
     return;
   }
   _tickerHeroData = heroData;
