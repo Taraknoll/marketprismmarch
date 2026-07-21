@@ -139,6 +139,8 @@
   #fvd-cv{height:260px}
   #coh-cv{height:280px}
 
+  body.embed .topbar{display:none}
+  body.embed main{padding-top:12px}
   .boot{padding:60px 20px;text-align:center;color:var(--mp-dim);font-size:13px}
   .boot a{font-weight:700}
   .hidden{display:none !important}
@@ -292,11 +294,23 @@
   var pathT = (location.pathname.match(/\/signature\/([A-Za-z0-9.\-]+)/) || [])[1] || '';
   var T = String(env.TICKER || qsParam('t') || pathT || 'PYPL').toUpperCase();
 
+  // Embed mode (?embed=1): rendered inside the Stock Forensics "Earnings
+  // Strategy" tab — hide our own chrome and report our height to the host.
+  var EMBED = /[?&]embed=1/.test(location.search);
+  if (EMBED) document.body.classList.add('embed');
+  var EMBED_SUFFIX = EMBED ? '?embed=1' : '';
+  function postHeight(){
+    if (!EMBED || window.parent === window) return;
+    try {
+      window.parent.postMessage({ mpSignatureHeight: document.documentElement.scrollHeight }, window.location.origin);
+    } catch(_e){}
+  }
+
   $('tk-input').value = T;
   $('tk-form').addEventListener('submit', function(e){
     e.preventDefault();
     var v = String($('tk-input').value || '').replace(/[^A-Za-z0-9.\-]/g, '').toUpperCase();
-    if (v && v !== T) location.href = '/signature/' + v;
+    if (v && v !== T) location.href = '/signature/' + v + EMBED_SUFFIX;
   });
 
   // ── math helpers ──────────────────────────────────────────────────────
@@ -388,6 +402,7 @@
     b.classList.remove('hidden');
     b.innerHTML = msg;
     if (isErr) b.style.color = '#FF7A7A';
+    setTimeout(postHeight, 50);
   }
 
   fetch('/api/signature-data?t=' + encodeURIComponent(T), { credentials: 'same-origin' })
@@ -451,6 +466,7 @@
       if (FVDC) drawFvd();
       if (D.cohort) drawCoh();
       buildPeers(cur);
+      postHeight();
     }
     function queueRedraw(){ clearTimeout(rsT); rsT = setTimeout(redrawAll, 150); }
     window.addEventListener('resize', queueRedraw);
@@ -460,6 +476,8 @@
       new ResizeObserver(queueRedraw).observe($('atlas-cv').parentElement);
     }
     setTimeout(redrawAll, 350);
+    postHeight();
+    setTimeout(postHeight, 900);
   }
 
   function setChip(id, txt, tone){
@@ -473,6 +491,7 @@
   // ── phase clock ───────────────────────────────────────────────────────
   function drawClock(clock, dte){
     var f = fitCanvas($('clock-cv'));
+    if (f.w < 80 || f.h < 60) return; // zero/hidden layout — redraw comes via ResizeObserver
     var ctx = f.ctx, cx = f.w/2, cy = f.h/2, R = Math.min(f.w, f.h)/2 - 16;
     ctx.clearRect(0,0,f.w,f.h);
     if (!clock || !clock.last_earnings_date || !clock.next_earnings_date){
@@ -598,6 +617,7 @@
 
   function drawAtlas(){
     var f = fitCanvas($('atlas-cv'));
+    if (f.w < 80 || f.h < 60) return;
     var ctx = f.ctx;
     var mL = 48, mR = 16, mT = 12, mB = 26;
     var pw = f.w - mL - mR, ph = f.h - mT - mB;
@@ -793,12 +813,13 @@
       var el = document.createElement('span');
       el.className = 'peer-chip' + (soon ? ' soon' : '');
       el.textContent = p.t + ' E−' + p.dte;
-      el.addEventListener('click', function(){ location.href = '/signature/' + p.t; });
+      el.addEventListener('click', function(){ location.href = '/signature/' + p.t + EMBED_SUFFIX; });
       chips.appendChild(el);
     });
 
     var cv = $('peers-cv');
     var f = fitCanvas(cv);
+    if (f.w < 80 || f.h < 60) return;
     var ctx = f.ctx;
     ctx.clearRect(0,0,f.w,f.h);
     var pts = peers.filter(function(p){ return fin(p.wks) && fin(p.fvd); });
@@ -963,6 +984,7 @@
   function drawFvd(){
     if (!FVDC) return;
     var f = fitCanvas($('fvd-cv'));
+    if (f.w < 80 || f.h < 60) return;
     var ctx = f.ctx, mL = 48, mR = 16, mT = 12, mB = 26;
     var pw = f.w - mL - mR, ph = f.h - mT - mB;
     ctx.clearRect(0,0,f.w,f.h);
@@ -1043,6 +1065,7 @@
     var c = D.cohort;
     if (!c) return;
     var f = fitCanvas($('coh-cv'));
+    if (f.w < 80 || f.h < 60) return;
     var ctx = f.ctx, mL = 48, mR = 16, mT = 12, mB = 26;
     var pw = f.w - mL - mR, ph = f.h - mT - mB;
     ctx.clearRect(0,0,f.w,f.h);

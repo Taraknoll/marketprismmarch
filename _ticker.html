@@ -4698,7 +4698,8 @@ body.mp-processing #scholarly-section{display:none !important;}
   <div class="tk-tab-bar">
     <button class="tk-tab active" data-tab="overview">Overview</button>
     <button class="tk-tab" data-tab="timeline">Forensic Timeline</button>
-    <button class="tk-tab" data-tab="strategy">Trading Strategy</button>
+    <button class="tk-tab" data-tab="earnstrat">Earnings Strategy</button>
+    <button class="tk-tab" data-tab="strategy">Narrative Strategy</button>
     <button class="tk-tab" data-tab="companyinfo">Company Profile</button>
     <button class="tk-tab" data-tab="financials">Live Market Snapshot</button>
     <button class="tk-tab" data-tab="fundamentals">Fundamentals</button>
@@ -5376,6 +5377,12 @@ body.mp-processing #scholarly-section{display:none !important;}
   </div><!-- /tab-timeline -->
 
   <!-- ═══ TAB: STRATEGY ═══ -->
+  <!-- ═══ TAB: EARNINGS STRATEGY (Ticker Signature embed — /signature/:t?embed=1) ═══ -->
+  <div class="tk-tab-panel" id="tab-earnstrat">
+    <div id="earnstrat-loading" style="padding:24px 20px 8px;text-align:center;color:rgba(255,255,255,0.55);font-family:'Inter',system-ui,sans-serif;font-size:13px;">Loading earnings signature&hellip;</div>
+    <iframe id="earnstrat-frame" title="Earnings Strategy — Ticker Signature" style="width:100%;height:900px;border:0;background:transparent;" scrolling="no"></iframe>
+  </div>
+
   <div class="tk-tab-panel" id="tab-strategy" style="position:relative;">
     <div class="mp-tcta">
       <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>Trading Strategy is Pro.</strong> Entry, target, invalidation and historical analogues for every tracked ticker.</div>
@@ -7302,8 +7309,10 @@ function enterLiteMode() {
   var tcta = document.querySelector('.mp-tcta');
   if (tcta) tcta.style.display = 'none';
 
-  // Forensic-only tab buttons (Forensic Timeline + Trading Strategy).
-  ['timeline', 'strategy'].forEach(function (t) {
+  // Forensic-only tab buttons (Forensic Timeline + Narrative Strategy +
+  // Earnings Strategy — the signature needs gold bars + earnings history that
+  // untracked tickers don't have).
+  ['timeline', 'strategy', 'earnstrat'].forEach(function (t) {
     var btn = document.querySelector('.tk-tab[data-tab="' + t + '"]');
     if (btn) btn.style.display = 'none';
   });
@@ -11351,6 +11360,11 @@ async function createImage() {
         window._strategyLoaded = true;
         loadStrategyData();
       }
+      // Lazy-load the Earnings Strategy signature embed on first click
+      if (tab.dataset.tab === 'earnstrat' && !window._earnstratLoaded) {
+        window._earnstratLoaded = true;
+        initEarningsStrategy();
+      }
       // Lazy-load financials on first click
       if (tab.dataset.tab === 'financials' && !window._financialsLoaded) {
         window._financialsLoaded = true;
@@ -11369,6 +11383,31 @@ async function createImage() {
     });
   });
 })();
+
+// ── Earnings Strategy tab — embeds the Ticker Signature page (same origin) ──
+// The signature view stays a standalone page (/signature/:t); this tab loads it
+// in embed mode so its CSS/JS can't collide with this 8k-line file, and every
+// improvement to the signature ships to both surfaces at once.
+function initEarningsStrategy() {
+  var frame = document.getElementById('earnstrat-frame');
+  var loading = document.getElementById('earnstrat-loading');
+  if (!frame) return;
+  // The iframe stays visible from the start (rendering inside display:none
+  // gives every canvas a zero rect); the embed posts its real height and we
+  // grow the frame to fit.
+  window.addEventListener('message', function (ev) {
+    if (ev.origin !== window.location.origin) return;
+    var d = ev.data;
+    if (d && d.mpSignatureHeight && isFinite(d.mpSignatureHeight)) {
+      frame.style.height = Math.max(600, Math.ceil(d.mpSignatureHeight) + 24) + 'px';
+      if (loading) loading.style.display = 'none';
+    }
+  });
+  frame.addEventListener('load', function () {
+    if (loading) loading.style.display = 'none';
+  });
+  frame.src = '/signature/' + encodeURIComponent(TICKER || '') + '?embed=1';
+}
 
 // ── Strategy Tab — Narrative Response Intelligence ──────────────────────────
 // ── Forensic Timeline (narrative constellation) ───────────────────────────────
