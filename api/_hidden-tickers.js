@@ -4,7 +4,7 @@
 // Supabase REST responses.
 //
 // To unhide a ticker, remove it from the array and redeploy.
-const HIDDEN_TICKERS = ['GOLD'];
+const HIDDEN_TICKERS = ['GOLD', 'IONQ'];
 
 const HIDDEN_SET = new Set(HIDDEN_TICKERS.map(function (t) { return String(t).toUpperCase(); }));
 
