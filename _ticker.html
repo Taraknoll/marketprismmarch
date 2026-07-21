@@ -5379,6 +5379,12 @@ body.mp-processing #scholarly-section{display:none !important;}
   <!-- ═══ TAB: STRATEGY ═══ -->
   <!-- ═══ TAB: EARNINGS STRATEGY (Ticker Signature embed — /signature/:t?embed=1) ═══ -->
   <div class="tk-tab-panel" id="tab-earnstrat">
+    <div style="display:flex;justify-content:flex-end;padding:2px 0 10px;">
+      <button class="action-btn" id="earnstrat-export-btn" onclick="exportEarningsStrategyImage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M12 10v6m0 0l-3-3m3 3l3-3"/><path d="M3 17v1a2 2 0 002 2h14a2 2 0 002-2v-1"/></svg>
+        Download image
+      </button>
+    </div>
     <div id="earnstrat-loading" style="padding:24px 20px 8px;text-align:center;color:rgba(255,255,255,0.55);font-family:'Inter',system-ui,sans-serif;font-size:13px;">Loading earnings signature&hellip;</div>
     <iframe id="earnstrat-frame" title="Earnings Strategy — Ticker Signature" style="width:100%;height:900px;border:0;background:transparent;" scrolling="no"></iframe>
   </div>
@@ -11402,11 +11408,46 @@ function initEarningsStrategy() {
       frame.style.height = Math.max(600, Math.ceil(d.mpSignatureHeight) + 24) + 'px';
       if (loading) loading.style.display = 'none';
     }
+    // Finished PNG from the embed — download from the top frame (an async
+    // download click inside the iframe is unreliably blocked by Chrome).
+    if (d && d.mpSignatureExportPng) {
+      var a = document.createElement('a');
+      a.download = d.name || 'earnings-signature.png';
+      a.href = d.mpSignatureExportPng;
+      document.body.appendChild(a); a.click(); a.remove();
+      _earnstratExportDone(true);
+    }
+    if (d && d.mpSignatureExportDone && !d.ok) _earnstratExportDone(false);
   });
   frame.addEventListener('load', function () {
     if (loading) loading.style.display = 'none';
   });
   frame.src = '/signature/' + encodeURIComponent(TICKER || '') + '?embed=1';
+}
+
+function _earnstratExportDone(ok) {
+  clearTimeout(window._earnstratExpT);
+  var btn = document.getElementById('earnstrat-export-btn');
+  if (!btn) return;
+  btn.lastChild.textContent = ok ? ' Saved ✓' : ' Export failed';
+  setTimeout(function () {
+    btn.lastChild.textContent = ' Download image';
+    btn.disabled = false;
+  }, 2400);
+}
+
+// Asks the Earnings Strategy embed to render itself into a branded PNG; the
+// finished image comes back via the message handler above.
+function exportEarningsStrategyImage() {
+  var frame = document.getElementById('earnstrat-frame');
+  var btn = document.getElementById('earnstrat-export-btn');
+  if (!frame || !frame.contentWindow) return;
+  if (btn) { btn.disabled = true; btn.lastChild.textContent = ' Rendering…'; }
+  try {
+    frame.contentWindow.postMessage({ mpSignatureExport: 1 }, window.location.origin);
+  } catch (e) { _earnstratExportDone(false); return; }
+  clearTimeout(window._earnstratExpT);
+  window._earnstratExpT = setTimeout(function () { _earnstratExportDone(false); }, 25000);
 }
 
 // ── Strategy Tab — Narrative Response Intelligence ──────────────────────────

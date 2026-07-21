@@ -39,6 +39,9 @@
   .tk-form input:focus{outline:none;border-color:rgba(0,174,255,.55)}
   .tk-form button{background:rgba(0,174,255,.14);border:1px solid rgba(0,174,255,.45);border-radius:8px;color:var(--mp-accent);font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.06em;padding:8px 14px;cursor:pointer}
   .tk-form button:hover{background:rgba(0,174,255,.22)}
+  .tk-export{background:rgba(0,222,148,.10);border:1px solid rgba(0,222,148,.4);border-radius:8px;color:var(--mp-green);font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.06em;padding:8px 14px;cursor:pointer}
+  .tk-export:hover{background:rgba(0,222,148,.18)}
+  .tk-export:disabled{opacity:.6;cursor:default}
   .back-link{font-size:12px;font-weight:600;color:var(--mp-dim)}
 
   main{max-width:1180px;margin:0 auto;padding:22px 22px 40px}
@@ -154,6 +157,7 @@
   <div class="page-name">TICKER SIGNATURE</div>
   <div class="test-badge">TEST PAGE</div>
   <div class="spacer"></div>
+  <button class="tk-export" id="sig-export-btn" type="button">&darr; EXPORT PNG</button>
   <form class="tk-form" id="tk-form">
     <input id="tk-input" placeholder="TICKER" maxlength="6" autocomplete="off" spellcheck="false">
     <button type="submit">LOAD</button>
@@ -1348,6 +1352,96 @@
     parts.push('TEST PAGE — internal research preview. Not investment advice.');
     $('method').innerHTML = parts.join(' ');
   }
+
+  // ── PNG export (Reddit-ready) ─────────────────────────────────────────
+  // Captures <main> with html2canvas (lazy-loaded, same CDN build the rest of
+  // the product uses), then composes a branded header/footer. Standalone: the
+  // topbar button downloads directly. Embed: the host page requests the export
+  // via postMessage and receives the finished dataURL back — an async download
+  // click inside an iframe is unreliable, the top frame's isn't.
+  var EXPORTING = false;
+  function loadHtml2Canvas(){
+    if (window.html2canvas) return Promise.resolve();
+    return new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = resolve;
+      s.onerror = function(){ reject(new Error('html2canvas failed to load')); };
+      document.head.appendChild(s);
+    });
+  }
+  function exportImage(){
+    if (EXPORTING || !D) return;
+    EXPORTING = true;
+    var btn = $('sig-export-btn');
+    if (btn){ btn.disabled = true; btn.textContent = 'RENDERING…'; }
+    var target = document.querySelector('main');
+    var scale = target.clientWidth < 900 ? 2 : 1.5;
+    loadHtml2Canvas()
+      .then(function(){
+        return window.html2canvas(target, { backgroundColor: '#080B11', scale: scale, logging: false, useCORS: true });
+      })
+      .then(function(cap){
+        var s = scale;
+        var headH = Math.round(84*s), footH = Math.round(54*s), padX = Math.round(26*s);
+        var out = document.createElement('canvas');
+        out.width = cap.width;
+        out.height = cap.height + headH + footH;
+        var x = out.getContext('2d');
+        x.fillStyle = '#080B11';
+        x.fillRect(0, 0, out.width, out.height);
+        x.textBaseline = 'middle';
+        x.font = '800 ' + Math.round(20*s) + 'px Inter, sans-serif';
+        x.fillStyle = '#E6EDF7';
+        x.fillText('MARKET ', padX, headH/2);
+        x.fillStyle = '#00AEFF';
+        x.fillText('PRISM', padX + x.measureText('MARKET ').width, headH/2);
+        x.font = '700 ' + Math.round(13*s) + 'px Inter, sans-serif';
+        x.fillStyle = '#8A94A6';
+        x.textAlign = 'right';
+        x.fillText(D.ticker + ' · EARNINGS SIGNATURE · ' + (D.date || ''), out.width - padX, headH/2);
+        x.textAlign = 'left';
+        x.strokeStyle = 'rgba(148,163,184,.18)';
+        x.beginPath(); x.moveTo(0, headH - 1); x.lineTo(out.width, headH - 1); x.stroke();
+        x.drawImage(cap, 0, headH);
+        x.beginPath(); x.moveTo(0, headH + cap.height); x.lineTo(out.width, headH + cap.height); x.stroke();
+        x.font = '600 ' + Math.round(11*s) + 'px Inter, sans-serif';
+        x.fillStyle = '#8A94A6';
+        x.fillText('marketprism.co', padX, headH + cap.height + footH/2);
+        x.textAlign = 'right';
+        x.fillText('Patent pending · research preview · not investment advice', out.width - padX, headH + cap.height + footH/2);
+        x.textAlign = 'left';
+        var name = D.ticker + '-earnings-signature-' + (D.date || 'latest') + '.png';
+        var dataUrl = out.toDataURL('image/png');
+        if (EMBED && window.parent !== window){
+          window.parent.postMessage({ mpSignatureExportPng: dataUrl, name: name }, window.location.origin);
+        } else {
+          var a = document.createElement('a');
+          a.download = name;
+          a.href = dataUrl;
+          document.body.appendChild(a); a.click(); a.remove();
+        }
+        finish(true);
+      })
+      .catch(function(){
+        if (EMBED && window.parent !== window){
+          try { window.parent.postMessage({ mpSignatureExportDone: 1, ok: false }, window.location.origin); } catch(_e){}
+        }
+        finish(false);
+      });
+    function finish(ok){
+      EXPORTING = false;
+      if (btn){
+        btn.textContent = ok ? '✓ SAVED' : 'EXPORT FAILED';
+        setTimeout(function(){ btn.textContent = '↓ EXPORT PNG'; btn.disabled = false; }, 2200);
+      }
+    }
+  }
+  if ($('sig-export-btn')) $('sig-export-btn').addEventListener('click', exportImage);
+  window.addEventListener('message', function(ev){
+    if (ev.origin !== window.location.origin) return;
+    if (ev.data && ev.data.mpSignatureExport) exportImage();
+  });
 })();
 </script>
 </body>
