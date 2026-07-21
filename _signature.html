@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ticker Signature — Market Prism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', TICKER: '' };</script>
+<style>
+  :root{
+    --mp-obsidian:#080B11;
+    --mp-panel:#0C1018;
+    --mp-panel2:#111927;
+    --mp-line:rgba(148,163,184,.14);
+    --mp-text:#E6EDF7;
+    --mp-dim:#8A94A6;
+    --mp-accent:#00AEFF;
+    --mp-green:#00DE94;
+    --mp-red:#FF4D4D;
+    --mp-amber:#FFB800;
+    --font-body:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--mp-obsidian);color:var(--mp-text);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+  a{color:var(--mp-accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  .topbar{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--mp-line);flex-wrap:wrap}
+  .brand{font-size:13px;font-weight:800;letter-spacing:.14em;color:var(--mp-text)}
+  .brand span{color:var(--mp-accent)}
+  .page-name{font-size:12px;font-weight:600;letter-spacing:.10em;color:var(--mp-dim)}
+  .test-badge{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--mp-amber);border:1px solid rgba(255,184,0,.45);border-radius:6px;padding:3px 8px}
+  .topbar .spacer{flex:1}
+  .tk-form{display:flex;gap:8px;align-items:center}
+  .tk-form input{background:var(--mp-panel2);border:1px solid var(--mp-line);border-radius:8px;color:var(--mp-text);font-family:var(--font-body);font-size:13px;font-weight:600;letter-spacing:.06em;padding:8px 10px;width:110px;text-transform:uppercase}
+  .tk-form input:focus{outline:none;border-color:rgba(0,174,255,.55)}
+  .tk-form button{background:rgba(0,174,255,.14);border:1px solid rgba(0,174,255,.45);border-radius:8px;color:var(--mp-accent);font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.06em;padding:8px 14px;cursor:pointer}
+  .tk-form button:hover{background:rgba(0,174,255,.22)}
+  .back-link{font-size:12px;font-weight:600;color:var(--mp-dim)}
+
+  main{max-width:1180px;margin:0 auto;padding:22px 22px 40px}
+  .card{background:var(--mp-panel);border:1px solid var(--mp-line);border-radius:16px;padding:18px 20px}
+  .card h2{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--mp-dim);text-transform:uppercase;margin-bottom:12px}
+  .card h2 .n-badge{font-weight:600;letter-spacing:.04em;color:var(--mp-dim);opacity:.85;text-transform:none}
+
+  .hero{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:16px}
+  .hero .tk{font-size:34px;font-weight:800;letter-spacing:.02em}
+  .hero .px{font-size:20px;font-weight:700;color:var(--mp-text)}
+  .hero .asof{font-size:11px;color:var(--mp-dim)}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.04em;border-radius:999px;padding:5px 12px;border:1px solid var(--mp-line);color:var(--mp-text);background:var(--mp-panel2)}
+  .chip.accent{color:var(--mp-accent);border-color:rgba(0,174,255,.4)}
+  .chip.amber{color:var(--mp-amber);border-color:rgba(255,184,0,.4)}
+  .chip.green{color:var(--mp-green);border-color:rgba(0,222,148,.4)}
+  .chip.red{color:var(--mp-red);border-color:rgba(255,77,77,.4)}
+  .earn-pill{margin-left:auto;display:inline-flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .earn-pill .big{font-size:16px;font-weight:800;color:var(--mp-amber);letter-spacing:.04em}
+  .earn-pill .sub{font-size:11px;color:var(--mp-dim)}
+
+  .grid{display:grid;gap:16px;margin-bottom:16px}
+  .g-clock-atlas{grid-template-columns:300px 1fr}
+  .g-two{grid-template-columns:1fr 1fr}
+  @media (max-width:940px){.g-clock-atlas,.g-two{grid-template-columns:1fr}}
+
+  canvas{display:block;width:100%}
+  #clock-cv{height:230px}
+  #atlas-cv{height:320px}
+  #peers-cv{height:300px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
+  .legend .li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mp-dim)}
+  .legend .sw{width:14px;height:3px;border-radius:2px}
+
+  .clock-caption{text-align:center;margin-top:8px}
+  .clock-caption .l1{font-size:13px;font-weight:700}
+  .clock-caption .l2{font-size:11px;color:var(--mp-dim);margin-top:3px}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+  @media (max-width:940px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--mp-panel);border:1px solid var(--mp-line);border-radius:16px;padding:14px 16px}
+  .stat .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--mp-dim);text-transform:uppercase}
+  .stat .val{font-size:22px;font-weight:800;margin-top:6px}
+  .stat .sub{font-size:11px;color:var(--mp-dim);margin-top:4px}
+  .pos{color:var(--mp-green)} .neg{color:var(--mp-red)} .neu{color:var(--mp-text)}
+
+  .pct-row{display:grid;grid-template-columns:74px 64px 1fr 130px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(148,163,184,.07)}
+  .pct-row:last-child{border-bottom:none}
+  .pct-row .m-lbl{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--mp-dim)}
+  .pct-row .m-val{font-size:13px;font-weight:700;text-align:right}
+  .pct-track{position:relative;height:8px;border-radius:4px;background:var(--mp-panel2)}
+  .pct-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,rgba(0,174,255,.10),rgba(0,174,255,.45))}
+  .pct-marker{position:absolute;top:-3px;width:3px;height:14px;border-radius:2px;background:var(--mp-accent)}
+  .pct-phase{position:absolute;top:-1px;width:2px;height:10px;border-radius:2px;background:var(--mp-amber)}
+  .pct-note{font-size:11px;color:var(--mp-dim);text-align:right}
+
+  .peer-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .peer-chip{font-size:11px;font-weight:700;color:var(--mp-dim);border:1px solid var(--mp-line);border-radius:6px;padding:3px 8px;cursor:pointer}
+  .peer-chip:hover{color:var(--mp-accent);border-color:rgba(0,174,255,.45)}
+  .peer-chip.soon{color:var(--mp-amber);border-color:rgba(255,184,0,.45)}
+
+  .play-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(148,163,184,.07);font-size:12px}
+  .play-row:last-child{border-bottom:none}
+  .play-dir{font-weight:800;font-size:12px;width:52px}
+  .play-lane{font-weight:600;color:var(--mp-text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .play-meta{color:var(--mp-dim);font-size:11px}
+  .play-ret{font-weight:700;width:64px;text-align:right}
+  .sizing-line{margin-top:12px;padding-top:12px;border-top:1px solid var(--mp-line);font-size:12px;color:var(--mp-dim)}
+  .sizing-line b{color:var(--mp-text)}
+  .size-track{position:relative;height:8px;border-radius:4px;background:var(--mp-panel2);margin-top:8px}
+  .size-mid{position:absolute;top:-2px;width:2px;height:12px;background:rgba(148,163,184,.4)}
+  .size-marker{position:absolute;top:-3px;width:4px;height:14px;border-radius:2px;background:var(--mp-accent)}
+  .size-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--mp-dim);margin-top:5px}
+
+  .readout-chip{display:inline-flex;align-items:center;gap:10px;font-size:15px;font-weight:800;letter-spacing:.05em;border-radius:12px;padding:12px 18px;border:1px solid}
+  .readout-chip.enter{color:var(--mp-green);border-color:rgba(0,222,148,.5);background:rgba(0,222,148,.08)}
+  .readout-chip.event{color:var(--mp-amber);border-color:rgba(255,184,0,.5);background:rgba(255,184,0,.08)}
+  .readout-chip.wait{color:var(--mp-dim);border-color:var(--mp-line);background:var(--mp-panel2)}
+  .readout-why{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .readout-why .why{font-size:12px;color:var(--mp-text);display:flex;gap:8px;align-items:baseline}
+  .readout-why .why .dot{color:var(--mp-accent);font-weight:800}
+  .readout-disc{margin-top:14px;font-size:11px;line-height:1.55;color:var(--mp-dim)}
+
+  .method{margin-top:20px;font-size:11px;line-height:1.65;color:var(--mp-dim);border-top:1px solid var(--mp-line);padding-top:14px}
+  .method b{color:var(--mp-text);font-weight:600}
+
+  .boot{padding:60px 20px;text-align:center;color:var(--mp-dim);font-size:13px}
+  .boot a{font-weight:700}
+  .hidden{display:none !important}
+  .empty-note{padding:30px 10px;text-align:center;font-size:12px;color:var(--mp-dim)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">MARKET <span>PRISM</span></div>
+  <div class="page-name">TICKER SIGNATURE</div>
+  <div class="test-badge">TEST PAGE</div>
+  <div class="spacer"></div>
+  <form class="tk-form" id="tk-form">
+    <input id="tk-input" placeholder="TICKER" maxlength="6" autocomplete="off" spellcheck="false">
+    <button type="submit">LOAD</button>
+  </form>
+  <a class="back-link" href="/dashboard">&larr; Dashboard</a>
+</div>
+
+<main>
+  <div class="boot" id="boot">Loading signature&hellip;</div>
+
+  <div id="app" class="hidden">
+    <div class="hero">
+      <div class="tk" id="h-tk">—</div>
+      <div>
+        <div class="px" id="h-px">—</div>
+        <div class="asof" id="h-asof"></div>
+      </div>
+      <span class="chip accent" id="h-verdict"></span>
+      <span class="chip" id="h-regime"></span>
+      <span class="chip" id="h-state"></span>
+      <div class="earn-pill">
+        <div class="big" id="h-earn">—</div>
+        <div class="sub" id="h-earn-sub"></div>
+      </div>
+    </div>
+
+    <div class="grid g-clock-atlas">
+      <div class="card">
+        <h2>Phase Clock</h2>
+        <canvas id="clock-cv"></canvas>
+        <div class="clock-caption">
+          <div class="l1" id="clock-l1"></div>
+          <div class="l2" id="clock-l2"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Cycle Atlas — price path around earnings, in trading sessions <span class="n-badge" id="atlas-n"></span></h2>
+        <canvas id="atlas-cv"></canvas>
+        <div class="legend" id="atlas-legend">
+          <div class="li"><span class="sw" style="background:rgba(148,163,184,.45)"></span>Past cycles</div>
+          <div class="li"><span class="sw" style="background:var(--mp-accent)"></span>Median path</div>
+          <div class="li"><span class="sw" style="background:rgba(0,174,255,.22);height:8px"></span>IQR band</div>
+          <div class="li"><span class="sw" style="background:var(--mp-amber)"></span>Current cycle</div>
+        </div>
+        <div class="empty-note hidden" id="atlas-empty"></div>
+      </div>
+    </div>
+
+    <div class="stats-row" id="stats-row"></div>
+
+    <div class="grid g-two">
+      <div class="card">
+        <h2>Narrative Percentiles — today vs own history <span class="n-badge" id="pct-n"></span></h2>
+        <div id="pct-rows"></div>
+      </div>
+      <div class="card">
+        <h2>Peer Constellation — <span id="peers-fam"></span> <span class="n-badge" id="peers-n"></span></h2>
+        <canvas id="peers-cv"></canvas>
+        <div class="peer-chips" id="peer-chips"></div>
+      </div>
+    </div>
+
+    <div class="grid g-two">
+      <div class="card">
+        <h2>Registry &amp; Sizing — the layer that actually trades</h2>
+        <div id="plays-list"></div>
+        <div class="sizing-line" id="sizing-line"></div>
+      </div>
+      <div class="card">
+        <h2>Readout</h2>
+        <div id="readout-chip" class="readout-chip wait">—</div>
+        <div class="readout-why" id="readout-why"></div>
+        <div class="readout-disc">Context readout, not an order ticket. Entries originate from the backtested
+        signal registry and are sized by the learned posterior; the signature view contextualizes them and
+        never overrides them. Internal research preview — not investment advice.</div>
+      </div>
+    </div>
+
+    <div class="method" id="method"></div>
+  </div>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var env = window.__env || {};
+  var $ = function(id){ return document.getElementById(id); };
+
+  function qsParam(k){
+    var m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  var pathT = (location.pathname.match(/\/signature\/([A-Za-z0-9.\-]+)/) || [])[1] || '';
+  var T = String(env.TICKER || qsParam('t') || pathT || 'PYPL').toUpperCase();
+
+  $('tk-input').value = T;
+  $('tk-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var v = String($('tk-input').value || '').replace(/[^A-Za-z0-9.\-]/g, '').toUpperCase();
+    if (v && v !== T) location.href = '/signature/' + v;
+  });
+
+  // ── math helpers ──────────────────────────────────────────────────────
+  function fin(v){ return v != null && isFinite(v); }
+  function median(a){
+    var s = a.filter(fin).slice().sort(function(x,y){return x-y;});
+    if (!s.length) return null;
+    var m = Math.floor(s.length/2);
+    return s.length % 2 ? s[m] : (s[m-1]+s[m])/2;
+  }
+  function quantile(a, q){
+    var s = a.filter(fin).slice().sort(function(x,y){return x-y;});
+    if (!s.length) return null;
+    var pos = (s.length-1)*q, lo = Math.floor(pos), hi = Math.ceil(pos);
+    return s[lo] + (s[hi]-s[lo])*(pos-lo);
+  }
+  function stdev(a){
+    var s = a.filter(fin);
+    if (s.length < 2) return null;
+    var m = s.reduce(function(x,y){return x+y;},0)/s.length;
+    var v = s.reduce(function(x,y){return x+(y-m)*(y-m);},0)/(s.length-1);
+    return Math.sqrt(v);
+  }
+  function pctRank(arr, val){
+    var s = arr.filter(fin);
+    if (!s.length || !fin(val)) return null;
+    var below = 0, eq = 0;
+    for (var i=0;i<s.length;i++){ if (s[i]<val) below++; else if (s[i]===val) eq++; }
+    return Math.round(100*(below + 0.5*eq)/s.length);
+  }
+  function fmtRet(x, dp){
+    if (!fin(x)) return '—';
+    var v = (x*100).toFixed(dp == null ? 1 : dp);
+    return (x > 0 ? '+' : '') + v + '%';
+  }
+  function fmtNum(x, dp){ return fin(x) ? Number(x).toFixed(dp == null ? 1 : dp) : '—'; }
+  function clsRet(x){ return !fin(x) ? 'neu' : x > 0 ? 'pos' : x < 0 ? 'neg' : 'neu'; }
+  function fmtDate(d){
+    if (!d) return '—';
+    var dt = new Date(d + 'T00:00:00Z');
+    return dt.toLocaleDateString('en-US', { month:'short', day:'numeric', timeZone:'UTC' });
+  }
+  function weekdaysAfterThrough(fromExcl, toIncl){
+    // count of Mon-Fri dates in (fromExcl, toIncl]
+    if (!fromExcl || !toIncl) return null;
+    var a = new Date(fromExcl + 'T00:00:00Z'), b = new Date(toIncl + 'T00:00:00Z');
+    if (b <= a) return 0;
+    var n = 0, cur = new Date(a.getTime());
+    while (cur < b){
+      cur.setUTCDate(cur.getUTCDate()+1);
+      var dow = cur.getUTCDay();
+      if (dow !== 0 && dow !== 6) n++;
+    }
+    return n;
+  }
+  function calDays(d1, d2){
+    if (!d1 || !d2) return null;
+    return Math.round((new Date(d2+'T00:00:00Z') - new Date(d1+'T00:00:00Z'))/86400000);
+  }
+
+  function fitCanvas(cv){
+    var r = cv.getBoundingClientRect();
+    var d = window.devicePixelRatio || 1;
+    cv.width = Math.round(r.width*d);
+    cv.height = Math.round(r.height*d);
+    var ctx = cv.getContext('2d');
+    ctx.setTransform(d,0,0,d,0,0);
+    return { ctx: ctx, w: r.width, h: r.height };
+  }
+  var css = getComputedStyle(document.documentElement);
+  var C = {
+    accent: (css.getPropertyValue('--mp-accent')||'#00AEFF').trim(),
+    amber: (css.getPropertyValue('--mp-amber')||'#FFB800').trim(),
+    green: (css.getPropertyValue('--mp-green')||'#00DE94').trim(),
+    red: (css.getPropertyValue('--mp-red')||'#FF4D4D').trim(),
+    dim: (css.getPropertyValue('--mp-dim')||'#8A94A6').trim(),
+    text: (css.getPropertyValue('--mp-text')||'#E6EDF7').trim(),
+    line: 'rgba(148,163,184,.12)',
+    ghost: 'rgba(148,163,184,.28)'
+  };
+
+  // ── state ─────────────────────────────────────────────────────────────
+  var D = null;          // payload
+  var ATLAS = null;      // computed atlas model
+  var W_PRE = 15, W_POST = 25;
+
+  function boot(msg, isErr){
+    var b = $('boot');
+    b.classList.remove('hidden');
+    b.innerHTML = msg;
+    if (isErr) b.style.color = '#FF7A7A';
+  }
+
+  fetch('/api/signature-data?t=' + encodeURIComponent(T), { credentials: 'same-origin' })
+    .then(function(r){
+      if (r.status === 401) { boot('Session expired — <a href="/login?next=' + encodeURIComponent('/signature/'+T) + '">log in</a> to view the signature.', true); return null; }
+      if (r.status === 404) { boot(T + ' is not supported on this surface (hidden or foreign-filer ticker).', true); return null; }
+      if (!r.ok) { return r.json().catch(function(){return {};}).then(function(e){ boot('Data endpoint error (' + r.status + '): ' + (e.error||'unknown'), true); return null; }); }
+      return r.json();
+    })
+    .then(function(data){
+      if (!data) return;
+      D = data;
+      try { render(); }
+      catch(e){ boot('Render error: ' + e.message, true); }
+    })
+    .catch(function(e){ boot('Failed to load: ' + e.message, true); });
+
+  function render(){
+    document.title = D.ticker + ' · Ticker Signature — Market Prism';
+    $('boot').classList.add('hidden');
+    $('app').classList.remove('hidden');
+
+    var sc = D.sc || [];
+    var cur = sc.length ? sc[sc.length-1] : null;
+    var bars = D.bars || [];
+    var closes = bars.map(function(b){ return b[4]; });
+    var lastBar = bars.length ? bars[bars.length-1] : null;
+
+    // hero
+    $('h-tk').textContent = D.ticker;
+    var px = lastBar ? lastBar[4] : (cur ? cur.price : null);
+    $('h-px').textContent = fin(px) ? '$' + Number(px).toFixed(2) : '—';
+    $('h-asof').textContent = lastBar ? 'close ' + fmtDate(lastBar[0]) : (D.date ? 'as of ' + fmtDate(D.date) : '');
+    setChip('h-verdict', cur && cur.v, 'accent');
+    setChip('h-regime', cur && cur.regime, null);
+    setChip('h-state', cur && cur.state, null);
+
+    var clock = D.clock || null;
+    var dte = clock ? clock.days_to_earnings : (cur ? cur.dte : null);
+    $('h-earn').textContent = fin(dte) ? (dte === 0 ? 'EARNINGS TODAY' : 'T−' + dte) : 'NO DATE';
+    $('h-earn-sub').textContent = clock && clock.next_earnings_date
+      ? 'earnings ' + fmtDate(clock.next_earnings_date) + ' (est)' : 'earnings date unavailable';
+
+    drawClock(clock, dte);
+    buildAtlas(bars, closes, clock);
+    buildStats(bars, closes);
+    buildPercentiles(sc, cur, dte);
+    buildPeers(cur);
+    buildRegistry();
+    buildReadout(cur, dte);
+    buildMethod(sc, clock);
+
+    var rsT = null;
+    function redrawAll(){
+      drawClock(clock, dte);
+      if (ATLAS) drawAtlas();
+      buildPeers(cur);
+    }
+    function queueRedraw(){ clearTimeout(rsT); rsT = setTimeout(redrawAll, 150); }
+    window.addEventListener('resize', queueRedraw);
+    // The pane can finish sizing after first paint (embedded previews start at
+    // near-zero width) — observe the card, not a rAF loop.
+    if (window.ResizeObserver){
+      new ResizeObserver(queueRedraw).observe($('atlas-cv').parentElement);
+    }
+    setTimeout(redrawAll, 350);
+  }
+
+  function setChip(id, txt, tone){
+    var el = $(id);
+    if (!txt){ el.classList.add('hidden'); return; }
+    el.classList.remove('hidden');
+    el.textContent = txt;
+    if (tone === 'accent' && /trap|risk/i.test(txt)) { el.classList.remove('accent'); el.classList.add('red'); }
+  }
+
+  // ── phase clock ───────────────────────────────────────────────────────
+  function drawClock(clock, dte){
+    var f = fitCanvas($('clock-cv'));
+    var ctx = f.ctx, cx = f.w/2, cy = f.h/2, R = Math.min(f.w, f.h)/2 - 16;
+    ctx.clearRect(0,0,f.w,f.h);
+    if (!clock || !clock.last_earnings_date || !clock.next_earnings_date){
+      ctx.fillStyle = C.dim; ctx.font = '12px Inter, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('No earnings calendar for this ticker', cx, cy);
+      $('clock-l1').textContent = '';
+      $('clock-l2').textContent = '';
+      return;
+    }
+    var total = calDays(clock.last_earnings_date, clock.next_earnings_date);
+    var elapsed = Math.max(0, Math.min(total, total - (fin(dte) ? dte : 0)));
+    var frac = total > 0 ? elapsed/total : 0;
+    var a0 = -Math.PI/2; // earnings event at 12 o'clock
+
+    // base ring
+    ctx.lineWidth = 7; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(148,163,184,.15)';
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.stroke();
+
+    // event-window segment (last 5 calendar days before next event)
+    if (total > 0){
+      var wFrac = Math.min(1, 5/total);
+      ctx.strokeStyle = 'rgba(255,184,0,.30)';
+      ctx.beginPath(); ctx.arc(cx, cy, R, a0 + (1-wFrac)*Math.PI*2, a0 + Math.PI*2); ctx.stroke();
+    }
+
+    // progress arc
+    ctx.strokeStyle = C.accent;
+    ctx.beginPath(); ctx.arc(cx, cy, R, a0, a0 + frac*Math.PI*2); ctx.stroke();
+
+    // event marker at top
+    ctx.fillStyle = C.amber;
+    ctx.beginPath(); ctx.arc(cx, cy - R, 5.5, 0, Math.PI*2); ctx.fill();
+    ctx.font = '700 11px Inter, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('E', cx, cy - R - 10);
+
+    // today marker
+    var ta = a0 + frac*Math.PI*2;
+    ctx.fillStyle = C.text;
+    ctx.beginPath(); ctx.arc(cx + R*Math.cos(ta), cy + R*Math.sin(ta), 5, 0, Math.PI*2); ctx.fill();
+
+    // center text
+    ctx.fillStyle = C.text; ctx.font = '800 26px Inter, sans-serif';
+    ctx.fillText(fin(dte) ? (dte === 0 ? 'E DAY' : 'T−' + dte) : '—', cx, cy + 2);
+    ctx.fillStyle = C.dim; ctx.font = '11px Inter, sans-serif';
+    ctx.fillText('days to earnings', cx, cy + 20);
+
+    $('clock-l1').textContent = Math.round(frac*100) + '% through the cycle';
+    $('clock-l2').textContent = 'last: ' + fmtDate(clock.last_earnings_date) + ' · next: ' + fmtDate(clock.next_earnings_date) + ' (est)';
+  }
+
+  // ── cycle atlas ───────────────────────────────────────────────────────
+  function eventIdx(bars, dateStr){
+    for (var i=0;i<bars.length;i++){ if (bars[i][0] >= dateStr) return i; }
+    return -1;
+  }
+
+  function buildAtlas(bars, closes, clock){
+    var events = (D.events || []).map(function(e){ return e.date; });
+    var paths = [];
+    for (var e=0;e<events.length;e++){
+      var t0 = eventIdx(bars, events[e]);
+      if (t0 < W_PRE) continue;
+      var base = closes[t0 - W_PRE];
+      if (!fin(base) || base <= 0) continue;
+      var pts = [];
+      for (var k=-W_PRE;k<=W_POST;k++){
+        var i = t0+k;
+        pts.push(i < bars.length && fin(closes[i]) ? closes[i]/base - 1 : null);
+      }
+      paths.push({ date: events[e], pts: pts, t0: t0 });
+    }
+
+    // current cycle
+    var N = bars.length;
+    var current = null, mode = 'mid', todayK = null;
+    if (N && clock){
+      var idxLast = clock.last_earnings_date ? eventIdx(bars, clock.last_earnings_date) : -1;
+      var sinceLast = idxLast >= 0 ? (N-1) - idxLast : null;
+      var tdn = clock.next_earnings_date ? weekdaysAfterThrough(bars[N-1][0], clock.next_earnings_date) : null;
+      if (fin(sinceLast) && sinceLast <= W_POST && idxLast >= W_PRE){
+        mode = 'post'; todayK = sinceLast;
+        var base2 = closes[idxLast - W_PRE];
+        current = [];
+        for (var k2=-W_PRE;k2<=sinceLast;k2++) current.push({ k:k2, v: closes[idxLast+k2]/base2 - 1 });
+      } else if (fin(tdn) && tdn >= 0 && tdn <= W_PRE && (N-1+tdn) - W_PRE >= 0){
+        mode = 'approach'; todayK = -tdn;
+        var t0f = (N-1) + tdn;
+        var base3 = closes[t0f - W_PRE];
+        current = [];
+        for (var k3=-W_PRE;k3<=-tdn;k3++){
+          var i3 = t0f + k3;
+          if (i3 <= N-1 && fin(closes[i3])) current.push({ k:k3, v: closes[i3]/base3 - 1 });
+        }
+      }
+    }
+
+    ATLAS = { paths: paths, current: current, mode: mode, todayK: todayK };
+    $('atlas-n').textContent = paths.length ? '(n=' + paths.length + ' cycles)' : '';
+
+    if (!bars.length){
+      $('atlas-cv').classList.add('hidden');
+      $('atlas-legend').classList.add('hidden');
+      var em = $('atlas-empty');
+      em.classList.remove('hidden');
+      em.textContent = D.keyMode === 'anon'
+        ? 'Price history unavailable — endpoint is running without service credentials.'
+        : 'No gold price bars for this ticker yet.';
+      ATLAS = null;
+      return;
+    }
+    if (!paths.length){
+      $('atlas-cv').classList.add('hidden');
+      $('atlas-legend').classList.add('hidden');
+      var em2 = $('atlas-empty');
+      em2.classList.remove('hidden');
+      em2.textContent = 'Not enough earnings-event history to build cycle paths.';
+      ATLAS = null;
+      return;
+    }
+    drawAtlas();
+  }
+
+  function drawAtlas(){
+    var f = fitCanvas($('atlas-cv'));
+    var ctx = f.ctx;
+    var mL = 48, mR = 16, mT = 12, mB = 26;
+    var pw = f.w - mL - mR, ph = f.h - mT - mB;
+    ctx.clearRect(0,0,f.w,f.h);
+
+    var paths = ATLAS.paths, current = ATLAS.current;
+    var all = [];
+    paths.forEach(function(p){ p.pts.forEach(function(v){ if (fin(v)) all.push(v); }); });
+    if (current) current.forEach(function(c){ all.push(c.v); });
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+    var pad = (hi-lo)*0.08 || 0.02;
+    lo -= pad; hi += pad;
+
+    var X = function(k){ return mL + (k + W_PRE)/(W_PRE + W_POST) * pw; };
+    var Y = function(v){ return mT + (hi - v)/(hi - lo) * ph; };
+
+    // y grid
+    var step = niceStep((hi-lo)/5);
+    ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (var g = Math.ceil(lo/step)*step; g <= hi; g += step){
+      ctx.strokeStyle = Math.abs(g) < step/2 ? 'rgba(148,163,184,.28)' : C.line;
+      ctx.beginPath(); ctx.moveTo(mL, Y(g)); ctx.lineTo(f.w-mR, Y(g)); ctx.stroke();
+      ctx.fillStyle = C.dim;
+      ctx.fillText((g>0?'+':'') + Math.round(g*100) + '%', mL-8, Y(g));
+    }
+    // x ticks
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    [-15,-10,-5,0,5,10,15,20,25].forEach(function(k){
+      ctx.fillStyle = k === 0 ? C.amber : C.dim;
+      ctx.fillText(k === 0 ? 'E' : (k>0?'+':'')+k, X(k), f.h - mB + 7);
+    });
+    // event line
+    ctx.strokeStyle = 'rgba(255,184,0,.45)'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(X(0), mT); ctx.lineTo(X(0), f.h-mB); ctx.stroke();
+
+    // IQR band + median
+    var med = [], q1 = [], q3 = [];
+    for (var k=-W_PRE;k<=W_POST;k++){
+      var vals = paths.map(function(p){ return p.pts[k+W_PRE]; }).filter(fin);
+      med.push(vals.length >= 3 ? median(vals) : null);
+      q1.push(vals.length >= 3 ? quantile(vals, 0.25) : null);
+      q3.push(vals.length >= 3 ? quantile(vals, 0.75) : null);
+    }
+    ctx.fillStyle = 'rgba(0,174,255,.10)';
+    ctx.beginPath();
+    var started = false;
+    for (var a=-W_PRE;a<=W_POST;a++){
+      if (!fin(q3[a+W_PRE])) continue;
+      if (!started){ ctx.moveTo(X(a), Y(q3[a+W_PRE])); started = true; }
+      else ctx.lineTo(X(a), Y(q3[a+W_PRE]));
+    }
+    for (var b=W_POST;b>=-W_PRE;b--){
+      if (!fin(q1[b+W_PRE])) continue;
+      ctx.lineTo(X(b), Y(q1[b+W_PRE]));
+    }
+    ctx.closePath(); ctx.fill();
+
+    // past paths
+    var isPost = ATLAS.mode === 'post';
+    var lastDate = D.clock && D.clock.last_earnings_date;
+    paths.forEach(function(p){
+      if (isPost && p.date >= lastDate) return; // drawn as current instead
+      ctx.strokeStyle = C.ghost; ctx.lineWidth = 1;
+      strokeSeries(ctx, p.pts, X, Y);
+    });
+    // median
+    ctx.strokeStyle = C.accent; ctx.lineWidth = 2.2;
+    strokeSeries(ctx, med, X, Y);
+
+    // current
+    if (current && current.length){
+      ctx.strokeStyle = C.amber; ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      current.forEach(function(c, i){
+        if (i === 0) ctx.moveTo(X(c.k), Y(c.v)); else ctx.lineTo(X(c.k), Y(c.v));
+      });
+      ctx.stroke();
+      var lastPt = current[current.length-1];
+      ctx.fillStyle = C.amber;
+      ctx.beginPath(); ctx.arc(X(lastPt.k), Y(lastPt.v), 4.5, 0, Math.PI*2); ctx.fill();
+      ctx.font = '700 11px Inter, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('TODAY', X(lastPt.k), Y(lastPt.v) - 12);
+    }
+  }
+
+  function strokeSeries(ctx, pts, X, Y){
+    ctx.beginPath();
+    var pen = false;
+    for (var k=-W_PRE;k<=W_POST;k++){
+      var v = pts[k+W_PRE];
+      if (!fin(v)){ pen = false; continue; }
+      if (!pen){ ctx.moveTo(X(k), Y(v)); pen = true; }
+      else ctx.lineTo(X(k), Y(v));
+    }
+    ctx.stroke();
+  }
+
+  function niceStep(raw){
+    var mag = Math.pow(10, Math.floor(Math.log(raw)/Math.LN10));
+    var n = raw/mag;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag;
+  }
+
+  // ── event stats ───────────────────────────────────────────────────────
+  function buildStats(bars, closes){
+    var row = $('stats-row');
+    row.innerHTML = '';
+    if (!bars.length){ row.classList.add('hidden'); return; }
+    var events = (D.events || []).map(function(e){ return e.date; });
+    var pre = [], rea = [], dri = [], vol = [];
+    events.forEach(function(d){
+      var t0 = eventIdx(bars, d);
+      if (t0 < 6) return;
+      var N = bars.length;
+      if (fin(closes[t0-1]) && fin(closes[t0-6])) pre.push(closes[t0-1]/closes[t0-6] - 1);
+      if (t0+1 < N && fin(closes[t0+1]) && fin(closes[t0-1])) rea.push(closes[t0+1]/closes[t0-1] - 1);
+      if (t0+10 < N && fin(closes[t0+10]) && fin(closes[t0+1])) dri.push(closes[t0+10]/closes[t0+1] - 1);
+      if (t0+5 < N && t0-5 >= 1){
+        var rPost = [], rPre = [];
+        for (var i=t0+1;i<=t0+5;i++) rPost.push(closes[i]/closes[i-1]-1);
+        for (var j=t0-5;j<=t0-1;j++) rPre.push(closes[j]/closes[j-1]-1);
+        var sp = stdev(rPost), sq = stdev(rPre);
+        if (fin(sp) && fin(sq) && sq > 0) vol.push(sp/sq);
+      }
+    });
+    function tile(lbl, arr, isRatio){
+      var m = median(arr);
+      var pos = arr.filter(function(x){ return x > 0; }).length;
+      var val, cls, sub;
+      if (isRatio){
+        val = fin(m) ? '×' + m.toFixed(2) : '—';
+        cls = 'neu';
+        sub = 'post/pre daily vol · n=' + arr.length;
+      } else {
+        val = fmtRet(m); cls = clsRet(m);
+        sub = pos + '/' + arr.length + ' cycles up';
+      }
+      return '<div class="stat"><div class="lbl">' + lbl + '</div><div class="val ' + cls + '">' + val +
+             '</div><div class="sub">' + sub + '</div></div>';
+    }
+    row.innerHTML =
+      tile('Approach T−6→T−1', pre) +
+      tile('Reaction T−1→T+1', rea) +
+      tile('Drift T+1→T+10', dri) +
+      tile('Vol shift', vol, true);
+  }
+
+  // ── percentiles ───────────────────────────────────────────────────────
+  function buildPercentiles(sc, cur, dte){
+    var host = $('pct-rows');
+    host.innerHTML = '';
+    if (!sc.length || !cur){
+      host.innerHTML = '<div class="empty-note">No scorecard history for this ticker.</div>';
+      $('pct-n').textContent = '';
+      return;
+    }
+    $('pct-n').textContent = '(n=' + sc.length + ' scored days)';
+    var phaseRows = fin(dte) ? sc.filter(function(r){ return fin(r.dte) && Math.abs(r.dte - dte) <= 3; }) : [];
+    var METRICS = [
+      ['wks', 'WKS', 1], ['mass', 'MASS', 2], ['energy', 'ENERGY', 0],
+      ['coord', 'COORD', 0], ['drift', 'DRIFT', 0], ['fvd', 'FVD %', 1], ['nrs', 'NRS', 0]
+    ];
+    METRICS.forEach(function(m){
+      var key = m[0], lbl = m[1], dp = m[2];
+      var vals = sc.map(function(r){ return r[key]; });
+      var p = pctRank(vals, cur[key]);
+      if (p == null) return;
+      var pp = phaseRows.length >= 5 ? pctRank(phaseRows.map(function(r){ return r[key]; }), cur[key]) : null;
+      var note = 'p' + p + (pp != null ? ' · phase p' + pp + ' (n=' + phaseRows.length + ')' : '');
+      host.insertAdjacentHTML('beforeend',
+        '<div class="pct-row">' +
+          '<div class="m-lbl">' + lbl + '</div>' +
+          '<div class="m-val">' + fmtNum(cur[key], dp) + '</div>' +
+          '<div class="pct-track"><div class="pct-fill" style="width:' + p + '%"></div>' +
+            '<div class="pct-marker" style="left:calc(' + p + '% - 1px)"></div>' +
+            (pp != null ? '<div class="pct-phase" style="left:calc(' + pp + '% - 1px)"></div>' : '') +
+          '</div>' +
+          '<div class="pct-note">' + note + '</div>' +
+        '</div>');
+    });
+  }
+
+  // ── peers ─────────────────────────────────────────────────────────────
+  function buildPeers(cur){
+    var peers = D.peers || [];
+    $('peers-fam').textContent = D.family || 'no sector map';
+    $('peers-n').textContent = peers.length ? '(' + peers.length + ' names)' : '';
+    var chips = $('peer-chips');
+    chips.innerHTML = '';
+    var withE = peers.filter(function(p){ return fin(p.dte) && p.dte >= 0; }).sort(function(a,b){ return a.dte - b.dte; });
+    withE.slice(0, 10).forEach(function(p){
+      var soon = p.dte <= 3;
+      var el = document.createElement('span');
+      el.className = 'peer-chip' + (soon ? ' soon' : '');
+      el.textContent = p.t + ' E−' + p.dte;
+      el.addEventListener('click', function(){ location.href = '/signature/' + p.t; });
+      chips.appendChild(el);
+    });
+
+    var cv = $('peers-cv');
+    var f = fitCanvas(cv);
+    var ctx = f.ctx;
+    ctx.clearRect(0,0,f.w,f.h);
+    var pts = peers.filter(function(p){ return fin(p.wks) && fin(p.fvd); });
+    var self = cur && fin(cur.wks) && fin(cur.fvd)
+      ? { t: D.ticker, wks: cur.wks, fvd: cur.fvd, mass: cur.mass, self: true } : null;
+    if (self) pts = pts.concat([self]);
+    if (!pts.length){
+      ctx.fillStyle = C.dim; ctx.font = '12px Inter, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('No peer snapshot available', f.w/2, f.h/2);
+      return;
+    }
+    var mL = 44, mR = 14, mT = 12, mB = 26;
+    var xmax = Math.max(15, Math.max.apply(null, pts.map(function(p){ return Math.abs(p.wks); })) * 1.15);
+    var ay = function(v){ return Math.asinh ? Math.asinh(v/40) : Math.log(v/40 + Math.sqrt(v*v/1600 + 1)); };
+    var ymax = Math.max(1, Math.max.apply(null, pts.map(function(p){ return Math.abs(ay(p.fvd)); })) * 1.15);
+    var X = function(v){ return mL + (v + xmax)/(2*xmax) * (f.w - mL - mR); };
+    var Y = function(v){ return mT + (ymax - ay(v))/(2*ymax) * (f.h - mT - mB); };
+
+    // axes
+    ctx.strokeStyle = C.line;
+    ctx.beginPath(); ctx.moveTo(X(0), mT); ctx.lineTo(X(0), f.h - mB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(mL, Y(0)); ctx.lineTo(f.w - mR, Y(0)); ctx.stroke();
+    ctx.fillStyle = C.dim; ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('WKS →', f.w - mR - 24, Y(0) - 8);
+    ctx.save();
+    ctx.translate(mL - 28, mT + 10); ctx.rotate(-Math.PI/2);
+    ctx.textAlign = 'right';
+    ctx.fillText('FVD % →', 0, 0);
+    ctx.restore();
+    // y reference labels
+    ctx.textAlign = 'left';
+    [[-50,'-50'],[0,'0'],[100,'+100']].forEach(function(t){
+      if (Math.abs(ay(t[0])) <= ymax){
+        ctx.fillStyle = 'rgba(148,163,184,.55)';
+        ctx.fillText(t[1], mL - 34, Y(t[0]) + 4);
+      }
+    });
+
+    // bubbles
+    pts.sort(function(a,b){ return (b.mass||0) - (a.mass||0); });
+    pts.forEach(function(p){
+      var r = 4 + Math.sqrt(Math.max(0, p.mass || 0)) * 2.0;
+      r = Math.min(r, 15);
+      var x = X(Math.max(-xmax, Math.min(xmax, p.wks)));
+      var y = Y(p.fvd);
+      if (p.self){
+        ctx.fillStyle = 'rgba(255,184,0,.28)';
+        ctx.strokeStyle = C.amber; ctx.lineWidth = 2;
+      } else {
+        ctx.fillStyle = 'rgba(0,174,255,.16)';
+        ctx.strokeStyle = 'rgba(148,163,184,.55)'; ctx.lineWidth = 1;
+      }
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = p.self ? C.amber : C.dim;
+      ctx.font = (p.self ? '800 ' : '600 ') + '11px Inter, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(p.t, x + r + 4, y + 4);
+    });
+  }
+
+  // ── registry & readout ────────────────────────────────────────────────
+  function buildRegistry(){
+    var host = $('plays-list');
+    host.innerHTML = '';
+    var plays = D.plays || [];
+    var open = plays.filter(function(p){ return String(p.status||'').toUpperCase() === 'OPEN'; });
+    var shown = open.length ? open : plays.slice(0, 3);
+    if (!plays.length){
+      host.innerHTML = '<div class="empty-note">No registry plays recorded for this ticker.</div>';
+    } else {
+      if (!open.length) host.insertAdjacentHTML('beforeend', '<div class="play-meta" style="padding-bottom:6px">No open plays — most recent:</div>');
+      shown.slice(0, 4).forEach(function(p){
+        var isLong = /long|buy/i.test(p.dir || '');
+        var ret = fin(p.cur) ? p.cur : p.exit_ret;
+        host.insertAdjacentHTML('beforeend',
+          '<div class="play-row">' +
+            '<div class="play-dir ' + (isLong ? 'pos' : 'neg') + '">' + (isLong ? '▲ LONG' : '▼ SHORT') + '</div>' +
+            '<div class="play-lane">' + (p.lane || '—') + '</div>' +
+            '<div class="play-meta">' + (p.entry_date ? fmtDate(p.entry_date) : '') +
+              (fin(p.entry) ? ' @ $' + p.entry.toFixed(2) : '') + ' · ' + (p.status || '') + '</div>' +
+            '<div class="play-ret ' + clsRet(ret) + '">' + (fin(ret) ? (ret > 0 ? '+' : '') + ret.toFixed(1) + '%' : '—') + '</div>' +
+          '</div>');
+      });
+      if (open.length > 4) host.insertAdjacentHTML('beforeend', '<div class="play-meta" style="padding-top:6px">+' + (open.length - 4) + ' more open</div>');
+    }
+
+    var s = D.sizing;
+    var line = $('sizing-line');
+    if (!s){
+      line.innerHTML = 'No learned sizing row — unknown ticker defaults to <b>1.00×</b>.';
+      return;
+    }
+    var winPct = fin(s.win_rate) ? Math.round(s.win_rate * 100) : null;
+    var pos = Math.max(0, Math.min(1, ((s.multiplier || 1) - 0.25) / 1.5)) * 100;
+    var midPos = ((1.0 - 0.25) / 1.5) * 100;
+    line.innerHTML =
+      'Learned sizing <b>' + fmtNum(s.multiplier, 2) + '×</b> · tier <b>' + (s.tier || '—') + '</b>' +
+      ' · n=' + (s.n_trades != null ? s.n_trades : '—') +
+      (winPct != null ? ' · win ' + winPct + '%' : '') +
+      (fin(s.mu_pct) ? ' · μ ' + (s.mu_pct > 0 ? '+' : '') + s.mu_pct + '%/trade' : '') +
+      '<div class="size-track"><div class="size-mid" style="left:' + midPos + '%"></div>' +
+      '<div class="size-marker" style="left:calc(' + pos + '% - 2px)"></div></div>' +
+      '<div class="size-ends"><span>0.25×</span><span>pooled mean 1.00×</span><span>1.75×</span></div>';
+  }
+
+  function buildReadout(cur, dte){
+    var chip = $('readout-chip');
+    var why = $('readout-why');
+    why.innerHTML = '';
+    var open = (D.plays || []).filter(function(p){ return String(p.status||'').toUpperCase() === 'OPEN'; });
+    var lines = [];
+
+    if (open.length){
+      var longs = open.filter(function(p){ return /long|buy/i.test(p.dir || ''); }).length;
+      var dirTxt = longs === open.length ? 'LONG' : longs === 0 ? 'SHORT' : 'MIXED';
+      chip.className = 'readout-chip enter';
+      chip.textContent = 'REGISTRY ACTIVE — ' + open.length + ' OPEN ' + dirTxt;
+      var laneNames = [];
+      open.forEach(function(p){ var l = p.lane || '?'; if (laneNames.indexOf(l) < 0) laneNames.push(l); });
+      lines.push('Live lane' + (laneNames.length > 1 ? 's' : '') + ': ' + laneNames.slice(0,4).join(', '));
+    } else if (fin(dte) && dte <= 5){
+      chip.className = 'readout-chip event';
+      chip.textContent = 'EVENT WINDOW — T−' + dte;
+      lines.push('Inside the 5-day earnings window — event risk dominates; tested pre-earnings drift signals carry no edge.');
+    } else {
+      chip.className = 'readout-chip wait';
+      chip.textContent = 'WAIT — NO REGISTRY SIGNAL';
+      lines.push('No open registry play; the signature below is context while you wait for a lane to fire.');
+    }
+
+    if (fin(dte)) lines.push('Phase: T−' + dte + ' to earnings' + (D.clock && D.clock.next_earnings_date ? ' (' + fmtDate(D.clock.next_earnings_date) + ', est)' : '') + '.');
+
+    // strongest percentile outlier
+    if ((D.sc || []).length && cur){
+      var METRICS = [['wks','WKS'],['mass','MASS'],['energy','ENERGY'],['coord','COORD'],['drift','DRIFT'],['fvd','FVD'],['nrs','NRS']];
+      var best = null;
+      METRICS.forEach(function(m){
+        var p = pctRank(D.sc.map(function(r){ return r[m[0]]; }), cur[m[0]]);
+        if (p == null) return;
+        var ext = Math.max(p, 100 - p);
+        if (!best || ext > best.ext) best = { lbl: m[1], p: p, ext: ext };
+      });
+      if (best && best.ext >= 80) lines.push(best.lbl + ' sits at p' + best.p + ' of ' + D.ticker + "'s own scored history.");
+    }
+
+    var soonPeers = (D.peers || []).filter(function(p){ return fin(p.dte) && p.dte >= 0 && p.dte <= 3; });
+    if (soonPeers.length) lines.push(soonPeers.length + ' cohort name' + (soonPeers.length > 1 ? 's' : '') + ' report within 3 days: ' + soonPeers.map(function(p){ return p.t; }).slice(0,4).join(', ') + '.');
+    if (D.sizing && fin(D.sizing.multiplier)) lines.push('If a lane fires, learned sizing applies ' + D.sizing.multiplier.toFixed(2) + '×.');
+
+    lines.forEach(function(l){
+      why.insertAdjacentHTML('beforeend', '<div class="why"><span class="dot">▪</span><span>' + l + '</span></div>');
+    });
+  }
+
+  function buildMethod(sc, clock){
+    var bars = D.bars || [];
+    var nCyc = ATLAS && ATLAS.paths ? ATLAS.paths.length : 0;
+    var parts = [];
+    parts.push('<b>Method &amp; honesty.</b> Price signature: n=' + nCyc + ' completed earnings cycles from split-adjusted gold bars' +
+      (bars.length ? ' (' + fmtDate(bars[0][0]) + ' → ' + fmtDate(bars[bars.length-1][0]) + ', ' + bars.length + ' sessions)' : '') +
+      '; cycle anchor = 8-K filing date, paths anchored at T−15 sessions, medians need ≥3 cycles per offset.');
+    parts.push('Narrative overlay: ' + sc.length + ' scored days (≈' + Math.max(1, Math.round(sc.length / 63)) + ' cycle' + (sc.length > 94 ? 's' : '') + ' of coverage) — percentile placement only, small-n context, not a predictor.');
+    parts.push('Peer cohort = ' + (D.family || '—') + ' family from the valuation config (same rollup as the Universe tab).');
+    parts.push('Entries and direction come exclusively from the backtested signal registry; sizing from the hierarchical-Bayes posterior. This page never generates trades.');
+    if (D.keyMode === 'anon') parts.push('<b>Degraded mode:</b> service credentials unavailable — price panels hidden.');
+    parts.push('TEST PAGE — internal research preview. Not investment advice.');
+    $('method').innerHTML = parts.join(' ');
+  }
+})();
+</script>
+</body>
+</html>

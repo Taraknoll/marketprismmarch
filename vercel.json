@@ -265,6 +265,18 @@
       "destination": "/api/forensic"
     },
     {
+      "source": "/api/signature-data",
+      "destination": "/api/signature-data"
+    },
+    {
+      "source": "/signature/:ticker",
+      "destination": "/api/signature"
+    },
+    {
+      "source": "/signature",
+      "destination": "/api/signature"
+    },
+    {
       "source": "/((?!assets/|favicon\\.ico|og-default\\.png).*)",
       "destination": "/api/index"
     }
@@ -409,6 +421,9 @@
     },
     "api/forensic-data.js": {
       "maxDuration": 30
+    },
+    "api/signature.js": {
+      "includeFiles": "_signature.html"
     }
   },
   "headers": [
