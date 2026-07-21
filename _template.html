@@ -5702,6 +5702,7 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
             <div class="mi-sec-title">Macro Currents</div>
             <div class="mi-sec-sub">Market-wide themes ranked by momentum — what's actually steering the tape today.</div>
           </div>
+          <span id="mi-macro-asof" style="font-size:11px;color:var(--mp-text-tertiary);white-space:nowrap;"></span>
         </div>
         <div id="mi-macro-list"></div>
       </div>
@@ -19534,15 +19535,25 @@ window.computeBoardJaccard = function(opts){
 })();
 
 /* ── MARKET INSIGHTS TAB ──
-   Four independent panels, each backed by an intraday-fresh table:
+   Five independent panels. Their upstream WRITE CADENCE VARIES — do not assume
+   "intraday-fresh" across the board. The tab's "Last updated" reads the real
+   max data-write time across the panels that rendered (miFreshMark → miDate),
+   and Macro Currents carries its own morning-brief stamp, precisely because two
+   of these are once-a-day:
      Narrative Map          ← v_narrative_map_daily (narrative_clusters rolled
                               up per theme/day — view handles the stringified-
-                              jsonb tickers + macro_theme normalization)
-     Macro Currents         ← daily_summaries (summary_type=market_wide)
-     Influential Narratives ← narrative_scorecard ordered by wks_score
-     Sector Stories         ← sector_news (claim vs structural rebuttal);
-                              rows that were never forensically enriched
-                              (~20%/day stay bare forever) are excluded
+                              jsonb tickers + macro_theme normalization).
+                              INTRADAY — rewritten several times a day.
+     Top Stories            ← narrative_scorecard (movement-first; live quotes
+                              re-rank between writes). INTRADAY.
+     Recent Analyst Calls   ← narrative_scorecard (analyst_firm rows). INTRADAY
+                              (same table as Top Stories).
+     Macro Currents         ← daily_summaries (summary_type=market_wide).
+                              ONCE A DAY — step10_daily_brief.py, premarket only
+                              (~5:30–6:50am ET); static after the morning brief.
+     Sector Stories         ← sector_news (claim vs structural rebuttal); rows
+                              never forensically enriched (~20%/day stay bare
+                              forever) are excluded. INTRADAY (a few times/day).
    Panels load in parallel and fail independently. An empty, failed, or
    stale panel collapses its whole section — never a blank box. Snapshot
    panels tolerate 3-day-old data (weekends/holidays) before collapsing.
@@ -19658,6 +19669,32 @@ function miVerdictColor(v){
   return '#A0A8B0';
 }
 
+// ── Per-panel data-freshness tracker ──
+// Each panel records the real write-time (created_at) — or the snapshot date,
+// when that's all the source exposes — of the data it just rendered. The tab's
+// "Last updated" then shows the MAX across panels (see miDate), and Macro
+// Currents shows its own morning-brief stamp. This is what stops a once-a-day
+// panel (daily_summaries) from masquerading as intraday-fresh via render time.
+var MI_FRESH={};
+function miFreshReset(){MI_FRESH={};}
+function miFreshMark(k,ts){if(ts)MI_FRESH[k]=ts;}
+// Parse a Postgres timestamptz OR a bare YYYY-MM-DD date into a local Date.
+// A bare date is pinned to local midnight so it never outranks a same-day
+// intraday timestamp when we take the max.
+function miParseTs(v){
+  if(!v)return null;
+  var s=String(v);
+  var d=new Date(/^\d{4}-\d{2}-\d{2}$/.test(s)?s+'T00:00:00':s);
+  return isNaN(d)?null:d;
+}
+// "as of <date[, time]>" label. Shows a clock time only when we have a real
+// timestamp, not a bare snapshot date.
+function miAsOfLabel(day,ts){
+  var d=miParseTs(ts||day);if(!d)return '';
+  var datePart=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return ts?datePart+', '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):datePart;
+}
+
 /* 1b) NARRATIVE MAP — v_narrative_map_daily (narrative_clusters theme rollup).
    Mosaic of theme tiles (flex-grow = ticker reach, tint = chain strength);
    clicking a tile opens the contagion chain parsed from chain_description. */
@@ -19685,6 +19722,7 @@ async function miLoadNmap(){
     if(!rows||!rows.length){miDropPanel('mi-nmap-mosaic');return;}
     var day=rows[0].snapshot_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-nmap-mosaic');return;}
+    miFreshMark('nmap', day);   // view exposes no created_at — snapshot date only
     rows=rows.filter(function(r){return r.snapshot_date===day&&Number(r.ticker_count)>0;});
     if(!rows.length){miDropPanel('mi-nmap-mosaic');return;}
     miNmapRows=rows;miNmapSel=null;
@@ -19753,9 +19791,15 @@ function miRenderNmapDetail(){
 async function miLoadMacro(){
   var list=document.getElementById('mi-macro-list');
   try{
-    var d=await miq('daily_summaries?select=summary_date&summary_type=eq.market_wide&order=summary_date.desc&limit=1');
+    var d=await miq('daily_summaries?select=summary_date,created_at&summary_type=eq.market_wide&order=summary_date.desc,created_at.desc&limit=1');
     var day=d&&d[0]&&d[0].summary_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-macro-list');return;}
+    // daily_summaries is a once-a-day premarket brief — stamp the panel with its
+    // real generation time so it reads as a morning artifact, not stale intraday.
+    var madeAt=d&&d[0]&&d[0].created_at;
+    miFreshMark('macro', madeAt||day);
+    var asof=document.getElementById('mi-macro-asof');
+    if(asof)asof.textContent='Morning brief · as of '+miAsOfLabel(day,madeAt);
     var rows=await miq('daily_summaries?select=scope_key,status,body,tickers,momentum_score&summary_type=eq.market_wide&summary_date=eq.'+encodeURIComponent(day)+'&order=momentum_score.desc.nullslast&limit=8');
     if(!rows||!rows.length){miDropPanel('mi-macro-list');return;}
     list.innerHTML=rows.map(function(r,i){
@@ -19917,9 +19961,10 @@ function miIsPremarket(){
 async function miLoadTopStories(){
   var list=document.getElementById('mi-wks-list');
   try{
-    var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
+    var d=await miq('narrative_scorecard?select=snapshot_date,created_at&order=snapshot_date.desc,created_at.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-wks-list');return;}
+    miFreshMark('topStories', (d&&d[0]&&d[0].created_at)||day);
     var rows=await miq('narrative_scorecard?select=ticker,narrative,srs,acs,ccp,wks_score,verdict,narrative_energy_regime,narrative_mass_score,nrs,genesis_date,days_elapsed&snapshot_date=eq.'+encodeURIComponent(day)+'&narrative=not.is.null&ticker='+encodeURIComponent(MP_EXCLUDED_TICKERS)+'&order=wks_score.desc.nullslast&limit=120');
     if(!rows||!rows.length){miDropPanel('mi-wks-list');return;}
     // Junk filter + collapse to ONE (most credible) narrative per ticker.
@@ -20064,9 +20109,10 @@ async function miLoadAnalystCalls(){
   var list=document.getElementById('mi-analyst-list');
   if(!list)return;
   try{
-    var d=await miq('narrative_scorecard?select=snapshot_date&order=snapshot_date.desc&limit=1');
+    var d=await miq('narrative_scorecard?select=snapshot_date,created_at&order=snapshot_date.desc,created_at.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-analyst-list');return;}
+    miFreshMark('analyst', (d&&d[0]&&d[0].created_at)||day);
     var rows=await miq('narrative_scorecard?select=ticker,narrative,analyst_firm,source_outlet,srs,acs,verdict,genesis_date,days_elapsed&snapshot_date=eq.'+encodeURIComponent(day)+'&analyst_firm=not.is.null&narrative=not.is.null&ticker='+encodeURIComponent(MP_EXCLUDED_TICKERS)+'&order=genesis_date.desc.nullslast&limit=120');
     if(!rows||!rows.length){miDropPanel('mi-analyst-list');return;}
     // Junk filter + collapse to ONE row per ticker (rating action wins, else higher ACS).
@@ -20132,9 +20178,10 @@ async function miLoadStories(){
   var grid=document.getElementById('mi-story-grid');
   var chips=document.getElementById('mi-sector-chips');
   try{
-    var d=await miq('sector_news?select=snapshot_date&order=snapshot_date.desc&limit=1');
+    var d=await miq('sector_news?select=snapshot_date,created_at&order=snapshot_date.desc,created_at.desc&limit=1');
     var day=d&&d[0]&&d[0].snapshot_date;
     if(!miFreshDay(day,3)){miDropPanel('mi-story-grid');if(chips)chips.innerHTML='';return;}
+    miFreshMark('stories', (d&&d[0]&&d[0].created_at)||day);
     // narrative_claim/structural_rebuttal filters: ~20% of rows land as bare
     // headlines and never get enriched — without the forensic check they're
     // just half-empty cards, so they're excluded outright.
@@ -20229,15 +20276,25 @@ function miSkeleton(){
   var sg=document.getElementById('mi-story-grid');
   if(sg)sg.innerHTML=miSkels(6,170);
 }
+// "Last updated" reflects the real MAX data-write time across the panels that
+// actually rendered this load (populated via miFreshMark) — NOT the wall-clock
+// render time, which used to make once-a-day panels look intraday-fresh. Falls
+// back to render time only when no panel reported a timestamp (all collapsed).
 function miDate(){
   var el=document.getElementById('mi-date-tag');
-  if(el)el.textContent='Last updated: '+new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  if(!el)return;
+  var times=Object.keys(MI_FRESH).map(function(k){return miParseTs(MI_FRESH[k]);})
+    .filter(Boolean).map(function(d){return d.getTime();});
+  var latest=times.length?new Date(Math.max.apply(null,times)):new Date();
+  el.textContent='Last updated: '+latest.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+latest.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
-// The underlying tables (narrative_scorecard, daily_summaries, sector_news,
+// Most underlying tables (narrative_scorecard, sector_news, narrative_clusters,
 // detected_macro_events) are rewritten several times a day — see
-// [[project_scorecard_intraday_maturation]] — but the tab used to boot ONCE
-// and freeze for the whole session. opts.silent skips the skeleton so a
-// background refresh swaps panel content in place without a loading flash.
+// [[project_scorecard_intraday_maturation]] — but the tab used to boot ONCE and
+// freeze for the whole session. EXCEPTION: daily_summaries (Macro Currents) is a
+// once-a-day premarket brief (step10_daily_brief.py), static after the morning;
+// that panel carries its own as-of stamp instead. opts.silent skips the skeleton
+// so a background refresh swaps panel content in place without a loading flash.
 var _miLastLoad=0;
 async function loadMarketInsights(opts){
   opts=opts||{};
@@ -20248,8 +20305,9 @@ async function loadMarketInsights(opts){
     return;
   }
   if(!opts.silent)miSkeleton();
-  miDate();
+  miFreshReset();
   await Promise.all([miLoadNmap(),miLoadMacro(),miLoadTopStories(),miLoadAnalystCalls(),miLoadStories()]);
+  miDate();   // AFTER the loaders — reflects real data freshness, not render time
   miQuietNote();
   _miLastLoad=Date.now();
 }
