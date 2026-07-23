@@ -6397,18 +6397,26 @@ function getCurrentSessionUser(){
 }
 
 // Mint the HttpOnly cookies that server-gated pages (e.g. /api/market-sharing-reports) require.
+// 8s abort on both cookie mints — they're awaited during boot, and an untimed
+// hang here left the dashboard skeleton spinning forever on flaky mobile.
 function mintMpSessionCookie(accessToken){
   if(!accessToken) return Promise.resolve();
+  var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var timer=ctl?setTimeout(function(){ctl.abort();},8000):null;
   return fetch('/api/session', {
     method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
-    body: JSON.stringify({ access_token: accessToken })
-  }).catch(function(){});
+    body: JSON.stringify({ access_token: accessToken }),
+    signal: ctl?ctl.signal:undefined
+  }).catch(function(){}).finally(function(){if(timer)clearTimeout(timer);});
 }
 function mintMpBetaCookie(expiresIso){
+  var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var timer=ctl?setTimeout(function(){ctl.abort();},8000):null;
   return fetch('/api/session', {
     method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
-    body: JSON.stringify({ beta:true, expires: expiresIso })
-  }).catch(function(){});
+    body: JSON.stringify({ beta:true, expires: expiresIso }),
+    signal: ctl?ctl.signal:undefined
+  }).catch(function(){}).finally(function(){if(timer)clearTimeout(timer);});
 }
 function clearMpSessionCookies(){
   return fetch('/api/session', { method:'DELETE', credentials:'same-origin' }).catch(function(){});
@@ -7168,6 +7176,57 @@ async function loadDailyWeekCalendar(){
     renderDailyWeekCalendar([]);
   }
 }
+// ── Dashboard bundle fetch: one RPC + timeout + retry + last-good cache ──────
+// The bundle is built by public.dashboard_bundle() in Postgres (single call,
+// gzip via PostgREST) — replaces the old dashboard-data edge fn fan-out that
+// took ~5-6s per request. The raw JSON is cached in localStorage so a dropped
+// mobile request renders the last-good bundle instead of hanging the skeleton.
+var MP_BUNDLE_CACHE_KEY='mp-dash-bundle-v1';
+var MP_BUNDLE_CACHE_MAX_AGE_MS=24*60*60*1000;
+function mpReadBundleCache(){
+  try{
+    var raw=localStorage.getItem(MP_BUNDLE_CACHE_KEY);
+    if(!raw)return null;
+    var wrap=JSON.parse(raw);
+    if(!wrap||!wrap.t||!wrap.b)return null;
+    if(Date.now()-wrap.t>MP_BUNDLE_CACHE_MAX_AGE_MS)return null;
+    return wrap.b;
+  }catch(_e){return null;}
+}
+function mpWriteBundleCache(text){
+  try{localStorage.setItem(MP_BUNDLE_CACHE_KEY,'{"t":'+Date.now()+',"b":'+text+'}');}
+  catch(_e){/* quota / private mode — cache is best-effort */}
+}
+async function mpFetchDashboardBundle(hdrs){
+  var url=SUPABASE_URL+'/rest/v1/rpc/dashboard_bundle';
+  var lastErr=null;
+  for(var attempt=0;attempt<2;attempt++){
+    var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+    var timer=ctl?setTimeout(function(){ctl.abort();},15000):null;
+    try{
+      var res=await fetch(url,{headers:hdrs,signal:ctl?ctl.signal:undefined});
+      if(timer)clearTimeout(timer);
+      if(!res.ok)throw new Error('Dashboard bundle '+res.status);
+      var text=await res.text();
+      var bundle=JSON.parse(text);
+      mpWriteBundleCache(text);
+      return bundle;
+    }catch(err){
+      if(timer)clearTimeout(timer);
+      lastErr=err;
+    }
+  }
+  var cached=mpReadBundleCache();
+  if(cached){
+    console.warn('[MP] dashboard bundle fetch failed — rendering last-good cache:',lastErr);
+    try{
+      var b=document.getElementById('pipeline-stale-banner');
+      if(b){b.style.display='block';b.textContent='⚠ Connection issue — showing your last loaded data. Refresh to retry.';}
+    }catch(_e){}
+    return cached;
+  }
+  throw (lastErr||new Error('Dashboard bundle unavailable'));
+}
 async function loadData(){
   var feed = document.getElementById('discover-feed');
   var _loadTips = [
@@ -7211,10 +7270,8 @@ async function loadData(){
     if(!SUPABASE_URL || !SUPABASE_ANON) throw new Error('Supabase credentials not configured');
     var hdrs = {'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};
 
-    // ── Single consolidated fetch via edge function (all queries run server-side in parallel) ──
-    var edgeRes = await fetch(SUPABASE_URL+'/functions/v1/dashboard-data',{headers:{'Authorization':'Bearer '+SUPABASE_ANON}});
-    if(!edgeRes.ok) throw new Error('Dashboard data '+edgeRes.status);
-    var _bundle = await edgeRes.json();
+    // ── Single consolidated fetch (one Postgres RPC; timeout + retry + cache fallback) ──
+    var _bundle = await mpFetchDashboardBundle(hdrs);
 
     var rows = _bundle.dailyStory || [];
     var cardRows = _bundle.tradeCards || [];
