@@ -30,6 +30,24 @@
 // Unauthorized requests get JSON 401/402 instead of 302 redirects, so the
 // client can react in-page (e.g. show an "Upgrade" prompt) instead of being
 // bounced through /login.
+//
+// Provider-slowness hardening: both critical Supabase calls (token verify,
+// subscription read) run under an 8s AbortController, and their failures are
+// split into "definite" (Supabase answered: token bad / no subscription row)
+// vs "unavailable" (timeout, network error, 5xx, 429). Degraded policy:
+//   - verify unavailable       -> 302 /login?reason=auth_unavailable (jsonOnly:
+//                                 503). Bounded bounce with a retry hint; the
+//                                 login page suppresses its already-logged-in
+//                                 auto-redirect on this flag so a user with a
+//                                 live local session doesn't ping-pong
+//                                 /login -> gate -> /login.
+//   - subscription unavailable -> FAIL OPEN for the already-verified user
+//                                 (identity is proven; don't bounce a paying
+//                                 customer to /pricing because our provider is
+//                                 slow). Definite "no active subscription"
+//                                 still bounces to /pricing as before.
+
+const AUTH_FETCH_TIMEOUT_MS = 8000;
 
 function parseCookies(header){
   const out = {};
@@ -42,17 +60,27 @@ function parseCookies(header){
   return out;
 }
 
+// Returns { user } on success, { user: null } on a definite rejection
+// (Supabase answered and the token is bad), { user: null, unavailable: true }
+// when Supabase couldn't answer (timeout, network error, 5xx, 429) — callers
+// use `unavailable` to avoid treating provider downtime as "logged out".
 async function verifySupabaseToken(token, supabaseUrl, supabaseAnon){
-  if (!supabaseUrl || !supabaseAnon || !token) return null;
+  if (!supabaseUrl || !supabaseAnon || !token) return { user: null };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AUTH_FETCH_TIMEOUT_MS);
   try {
     const r = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: { 'Authorization': `Bearer ${token}`, 'apikey': supabaseAnon }
+      headers: { 'Authorization': `Bearer ${token}`, 'apikey': supabaseAnon },
+      signal: controller.signal
     });
-    if (!r.ok) return null;
+    if (r.status >= 500 || r.status === 429) return { user: null, unavailable: true };
+    if (!r.ok) return { user: null };
     const u = await r.json();
-    return u && u.id ? u : null;
+    return { user: u && u.id ? u : null };
   } catch (_e) {
-    return null;
+    return { user: null, unavailable: true };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -64,11 +92,18 @@ async function verifySupabaseToken(token, supabaseUrl, supabaseAnon){
 const SUB_CACHE = new Map();
 const SUB_CACHE_TTL_MS = 30 * 1000;
 
+// Returns { ok, sub }. ok=true means Supabase gave a definite answer (sub may
+// still be null = genuinely no subscription row); ok=false means it couldn't
+// answer (timeout, network error, non-2xx) and the caller fails OPEN for an
+// already-verified user. Both outcomes are cached for the TTL, so a saturated
+// provider costs at most one 8s stall per user per instance per 30s window.
 async function getActiveSubscription(userId, supabaseUrl, supabaseAnon, jwt){
-  if (!userId || !supabaseUrl || !supabaseAnon || !jwt) return null;
+  if (!userId || !supabaseUrl || !supabaseAnon || !jwt) return { ok: false, sub: null };
   const cached = SUB_CACHE.get(userId);
   const now = Date.now();
-  if (cached && now - cached.t < SUB_CACHE_TTL_MS) return cached.sub;
+  if (cached && now - cached.t < SUB_CACHE_TTL_MS) return { ok: cached.ok !== false, sub: cached.sub };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AUTH_FETCH_TIMEOUT_MS);
   try {
     // RLS policy "Users see own subscriptions" (auth.uid() = user_id) means
     // this query returns at most the caller's own row.
@@ -78,23 +113,29 @@ async function getActiveSubscription(userId, supabaseUrl, supabaseAnon, jwt){
       + `&order=current_period_end.desc.nullslast`
       + `&limit=1`;
     const r = await fetch(url, {
-      headers: { apikey: supabaseAnon, Authorization: `Bearer ${jwt}` }
+      headers: { apikey: supabaseAnon, Authorization: `Bearer ${jwt}` },
+      signal: controller.signal
     });
     if (!r.ok) {
-      SUB_CACHE.set(userId, { t: now, sub: null });
-      return null;
+      // Non-2xx here is a provider/config problem, not "no subscription" —
+      // RLS denials come back as 200 with an empty array.
+      SUB_CACHE.set(userId, { t: now, sub: null, ok: false });
+      return { ok: false, sub: null };
     }
     const rows = await r.json();
     const sub = (rows && rows[0]) || null;
-    SUB_CACHE.set(userId, { t: now, sub });
+    SUB_CACHE.set(userId, { t: now, sub, ok: true });
     // Cap cache size to keep memory bounded on long-lived instances.
     if (SUB_CACHE.size > 2000) {
       const firstKey = SUB_CACHE.keys().next().value;
       if (firstKey) SUB_CACHE.delete(firstKey);
     }
-    return sub;
+    return { ok: true, sub };
   } catch (_e) {
-    return null;
+    SUB_CACHE.set(userId, { t: now, sub: null, ok: false });
+    return { ok: false, sub: null };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -168,10 +209,11 @@ module.exports = async function requireAuth(req, res, options){
 
   const cookies = parseCookies(req.headers && req.headers.cookie);
   const hasBeta = cookies.mp_beta === '1';
-  let user = null;
+  let authVerify = { user: null };
   if (cookies.mp_session) {
-    user = await verifySupabaseToken(cookies.mp_session, supabaseUrl, supabaseAnon);
+    authVerify = await verifySupabaseToken(cookies.mp_session, supabaseUrl, supabaseAnon);
   }
+  const user = authVerify.user;
 
   // Beta cookie holders bypass the subscription check by design — beta is for
   // testers/press/operators with a valid code. (The code itself is now
@@ -194,9 +236,20 @@ module.exports = async function requireAuth(req, res, options){
       return { user: user, hasBeta: false, subscription: { status: 'admin_allowlist' }, jwt: cookies.mp_session };
     }
 
-    const sub = await getActiveSubscription(user.id, supabaseUrl, supabaseAnon, cookies.mp_session);
-    if (isSubscriptionActive(sub)) {
-      return { user: user, hasBeta: false, subscription: sub, jwt: cookies.mp_session };
+    const subResult = await getActiveSubscription(user.id, supabaseUrl, supabaseAnon, cookies.mp_session);
+    if (isSubscriptionActive(subResult.sub)) {
+      return { user: user, hasBeta: false, subscription: subResult.sub, jwt: cookies.mp_session };
+    }
+
+    if (!subResult.ok) {
+      // Supabase couldn't answer the subscription lookup. This user's identity
+      // is already verified, so fail OPEN on the subscription check only —
+      // don't bounce a (probably paying) customer to /pricing over provider
+      // slowness, and skip the repair call (it hits the same stalled provider).
+      // Blast radius is bounded: the 30s SUB_CACHE keeps re-checking, so the
+      // paywall reasserts itself as soon as Supabase answers again.
+      console.warn('[require-auth] subscription check unavailable — failing open for verified user', user.id);
+      return { user: user, hasBeta: false, subscription: { status: 'unknown_degraded', degraded: true }, jwt: cookies.mp_session };
     }
 
     // Last-chance self-heal: ask Stripe directly. Covers the case where the
@@ -206,7 +259,7 @@ module.exports = async function requireAuth(req, res, options){
     if (repaired) {
       // Populate SUB_CACHE so subsequent requests within the TTL don't
       // re-hit the repair endpoint.
-      SUB_CACHE.set(user.id, { t: Date.now(), sub: repaired });
+      SUB_CACHE.set(user.id, { t: Date.now(), sub: repaired, ok: true });
       return { user: user, hasBeta: false, subscription: repaired, jwt: cookies.mp_session };
     }
 
@@ -217,6 +270,26 @@ module.exports = async function requireAuth(req, res, options){
     }
     res.statusCode = 302;
     res.setHeader('Location', '/pricing?reason=subscription_required');
+    res.setHeader('Cache-Control', 'no-store');
+    res.end();
+    return false;
+  }
+
+  // Session cookie present but Supabase couldn't answer the verify call
+  // (timeout/network/5xx) — NOT a rejected token. Redirect to /login with a
+  // reason flag instead of silently treating provider downtime as "logged
+  // out": the login page shows its outage banner + a retry hint, and
+  // suppresses its already-logged-in auto-redirect for this flag (otherwise a
+  // user with a live local session would ping-pong /login -> gate -> /login).
+  if (authVerify.unavailable) {
+    console.warn('[require-auth] auth verify unavailable — bounced to /login with retry hint');
+    if (jsonOnly) {
+      sendJson(res, 503, { error: 'auth_unavailable', retry: true });
+      return false;
+    }
+    const nextPath = opts.next || (req.url || '/dashboard');
+    res.statusCode = 302;
+    res.setHeader('Location', '/login?next=' + encodeURIComponent(nextPath) + '&reason=auth_unavailable');
     res.setHeader('Cache-Control', 'no-store');
     res.end();
     return false;

@@ -336,6 +336,16 @@ body::before{
   var SUPABASE_URL  = env.SUPABASE_URL  || '';
   var SUPABASE_ANON = env.SUPABASE_ANON || '';
 
+  // ── Degraded-gate arrival ──
+  // The server auth gate (api/_require-auth.js) bounces here with
+  // ?reason=auth_unavailable when Supabase couldn't answer its verify call
+  // (timeout/5xx) — the user's session may be perfectly fine. Show the outage
+  // banner + a retry hint, and suppress the already-logged-in auto-redirect
+  // below; without that suppression a live local session would immediately
+  // bounce back into the stalled gate and loop /login -> gate -> /login.
+  var gateDegraded = false;
+  try { gateDegraded = new URLSearchParams(window.location.search).get('reason') === 'auth_unavailable'; } catch(_e){}
+
   if(!SUPABASE_URL || !SUPABASE_ANON){
     showBanner();
     showMsg('error','Authentication service is temporarily unavailable. Please try again shortly.');
@@ -412,6 +422,20 @@ body::before{
     }).catch(function(){});
   }
 
+  // Bounced here by the server gate mid-outage: reassure + offer a manual
+  // retry instead of auto-bouncing back into the stalled gate.
+  if(gateDegraded){
+    showBanner();
+    showMsg('info', 'We couldn\'t verify your session — our provider is responding slowly. Your account is fine; please retry in a few seconds.');
+    try {
+      var retryLink = document.createElement('a');
+      retryLink.href = nextDestination();
+      retryLink.textContent = 'Retry now →';
+      retryLink.style.cssText = 'display:inline-block;margin-left:6px;font-weight:600;color:inherit;text-decoration:underline;';
+      document.getElementById('auth-message').appendChild(retryLink);
+    } catch(_e){}
+  }
+
   // Check if already logged in (don't hang the page if provider is down)
   try {
     var sessionTimeout = setTimeout(function(){}, 0);
@@ -423,6 +447,10 @@ body::before{
         // Recovery mode: the session here IS the recovery-link session — hold
         // the user on this page until they've set a new password.
         if(isRecovery) return;
+        // Degraded-gate arrival: the gate just failed to verify this session —
+        // auto-redirecting would loop straight back into it. Stay put; the
+        // user retries manually via the link above.
+        if(gateDegraded) return;
         // Self-heal: mint the cookie for legacy localStorage-only sessions, then continue.
         // Also set mp_auth so the legacy pw-gate overlay on dev pages dismisses for
         // returning paid users.

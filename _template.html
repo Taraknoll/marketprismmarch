@@ -7925,6 +7925,31 @@ async function openBillingPortal(){
 }
 window.openBillingPortal = openBillingPortal;
 
+// Read the session supabase-js last persisted to localStorage
+// (sb-<ref>-auth-token) without touching the network. Fallback for when
+// SUPA.auth.getSession() stalls: getSession() resolves locally for a fresh
+// token but goes to the network (untimed) to refresh an expired one, so a
+// Supabase stall used to hang the whole dashboard boot here. Returns a
+// session-shaped {access_token, user} object, or null when nothing usable is
+// stored — expired (or nearly-expired) tokens are rejected so the caller
+// falls through to the normal /login redirect instead of booting on a dead
+// JWT.
+function mpReadPersistedSession(){
+  try {
+    for(var i = 0; i < localStorage.length; i++){
+      var key = localStorage.key(i);
+      if(!key || !/^sb-.+-auth-token$/.test(key)) continue;
+      var parsed = JSON.parse(localStorage.getItem(key) || 'null');
+      var s = parsed && parsed.access_token ? parsed
+            : (parsed && parsed.currentSession && parsed.currentSession.access_token ? parsed.currentSession : null);
+      if(!s || !s.user) continue;
+      if(s.expires_at && (s.expires_at * 1000) < Date.now() + 60000) continue;
+      return s;
+    }
+  } catch(_e){}
+  return null;
+}
+
 function ensureDashboardAuth(){
   if(AUTH_READY) return AUTH_READY;
   AUTH_READY = (async function(){
@@ -7958,8 +7983,19 @@ function ensureDashboardAuth(){
       redirectToLogin();
       return null;
     }
-    var sessionResult = await SUPA.auth.getSession().catch(function(){ return null; });
-    var session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
+    // 8s cap (same budget as the server gate) so a Supabase stall can't hang
+    // the dashboard on the boot spinner; on timeout, boot from the persisted
+    // localStorage session — the server gate re-verifies the JWT anyway.
+    var sessionResult = await Promise.race([
+      SUPA.auth.getSession(),
+      new Promise(function(resolve){ setTimeout(function(){ resolve('__mp-getsession-timeout'); }, 8000); })
+    ]).catch(function(){ return null; });
+    var session = null;
+    if(sessionResult === '__mp-getsession-timeout'){
+      session = mpReadPersistedSession();
+    } else {
+      session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
+    }
     var user = session ? session.user : null;
     if(!user){
       redirectToLogin();

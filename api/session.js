@@ -36,20 +36,35 @@ function clearCookie(name) {
   return `${name}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
 }
 
+// 8s cap so a Supabase stall can't hang cookie-minting until the Vercel
+// function times out (same budget as api/_require-auth.js).
+const AUTH_FETCH_TIMEOUT_MS = 8000;
+
+// Returns { user } on success, { user: null } on a definite rejection
+// (Supabase answered and the token is bad), { user: null, unavailable: true }
+// when Supabase couldn't answer (timeout, network error, 5xx, 429) — the
+// handler maps `unavailable` to a retryable 503 instead of a 401, so clients
+// don't mistake provider downtime for invalid credentials.
 async function verifySupabaseToken(token) {
-  if (!SUPABASE_URL || !SUPABASE_ANON || !token) return null;
+  if (!SUPABASE_URL || !SUPABASE_ANON || !token) return { user: null };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AUTH_FETCH_TIMEOUT_MS);
   try {
     const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'apikey': SUPABASE_ANON,
       },
+      signal: controller.signal,
     });
-    if (!r.ok) return null;
+    if (r.status >= 500 || r.status === 429) return { user: null, unavailable: true };
+    if (!r.ok) return { user: null };
     const u = await r.json();
-    return u && u.id ? u : null;
+    return { user: u && u.id ? u : null };
   } catch (_e) {
-    return null;
+    return { user: null, unavailable: true };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -106,10 +121,15 @@ module.exports = async (req, res) => {
   }
 
   if (body.access_token) {
-    const user = await verifySupabaseToken(body.access_token);
-    if (!user) return res.status(401).json({ error: 'Invalid token' });
+    const verify = await verifySupabaseToken(body.access_token);
+    if (!verify.user) {
+      if (verify.unavailable) {
+        return res.status(503).json({ error: 'Auth service temporarily unavailable. Please try again.', retry: true });
+      }
+      return res.status(401).json({ error: 'Invalid token' });
+    }
     res.setHeader('Set-Cookie', buildCookie('mp_session', body.access_token, SESSION_MAX_AGE));
-    return res.status(200).json({ ok: true, user_id: user.id });
+    return res.status(200).json({ ok: true, user_id: verify.user.id });
   }
 
   if (body.beta === true) {
