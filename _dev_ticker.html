@@ -6687,7 +6687,9 @@ async function loadEarnings() {
       if (isBeat) beats++;
       var period = r.fiscal_period || '';
       var fy = r.fiscal_year || '';
-      var d = r.date ? new Date(r.date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '\u2014';
+      // date-only value parsed as UTC midnight renders a day early for US viewers \u2014
+      // anchor at local noon before formatting. See _ticker.html loadEarnings().
+      var d = r.date ? new Date(String(r.date).slice(0,10) + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '\u2014';
       var timeStr = r.time === 'amc' ? 'After Close' : r.time === 'bmo' ? 'Before Open' : '';
       return '<div class="earnings-row">'
         + '<div class="er-period">' + esc(period) + '</div>'
