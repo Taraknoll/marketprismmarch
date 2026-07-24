@@ -456,6 +456,24 @@
 
     var clock = D.clock || null;
     var dte = clock ? clock.days_to_earnings : (cur ? cur.dte : null);
+    // Guard against a corrupted upstream earnings_context row: it can store a
+    // negative/stale days_to_earnings while next_earnings_date is still in the
+    // future (e.g. dte = −1 with the print three weeks out). When the stored
+    // countdown is missing or negative but we hold a future next_earnings_date,
+    // trust the date and recompute calendar days from the snapshot — the same
+    // approach the peer list already uses in signature-data.js.
+    if ((!fin(dte) || dte < 0) && clock && clock.next_earnings_date) {
+      var refMs = Date.parse((D.date || new Date().toISOString().slice(0, 10)) + 'T00:00:00Z');
+      var nxtMs = Date.parse(clock.next_earnings_date + 'T00:00:00Z');
+      if (isFinite(refMs) && isFinite(nxtMs)) {
+        var recompDte = Math.round((nxtMs - refMs) / 86400000);
+        if (recompDte >= 0) dte = recompDte;
+      }
+    }
+    // Still negative here means next_earnings_date was missing or already in the
+    // past — collapse to null so every consumer reads "NO DATE"/"—" instead of a
+    // nonsensical "T−−1". (dte flows into the clock, tables, and readout below.)
+    if (fin(dte) && dte < 0) dte = null;
     $('h-earn').textContent = fin(dte) ? (dte === 0 ? 'EARNINGS TODAY' : 'T−' + dte) : 'NO DATE';
     $('h-earn-sub').textContent = clock && clock.next_earnings_date
       ? 'earnings ' + fmtDate(clock.next_earnings_date) + ' (est)' : 'earnings date unavailable';

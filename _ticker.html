@@ -6192,6 +6192,18 @@ if (!SUPABASE_URL || !SUPABASE_ANON) {
   throw new Error('Missing Supabase config');
 }
 
+// ── P/E sanity guard ─────────────────────────────────────────────────────────
+// A trailing P/E is only meaningful when earnings are non-trivially positive.
+// Near-zero-EPS names divide price by a tiny GAAP EPS and produce absurd ratios
+// (CRWD carried a stale 6118x, LITE 2253x, NBIS 1233x). The fair-value engine
+// already clamps to 0 < pe < 500 upstream; mirror that at every display site so a
+// raw or stale outlier never renders. Returns the numeric P/E if meaningful, else null.
+function mpMeaningfulPe(v) {
+  if (v == null) return null;
+  const n = Number(v);
+  return (isFinite(n) && n > 0 && n < 500) ? n : null;
+}
+
 // Extract ticker from URL path: /ticker/NVDA
 const pathParts = location.pathname.split('/').filter(Boolean);
 const _envTicker = (window.__env?.TICKER || '').toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
@@ -7811,7 +7823,7 @@ async function loadHero() {
 
     const grossMargin = cv.sec_gross_margin ?? r.sec_gross_margin;
     const netMargin   = cv.sec_net_margin ?? r.sec_net_margin;
-    const peRatio     = r.pe_ratio;
+    const peRatio     = mpMeaningfulPe(r.pe_ratio);
 
     // "Earnings In" must count down to the NEXT report. days_to_earnings on the
     // story row goes negative right after a print (e.g. -1 = reported yesterday)
@@ -8557,7 +8569,7 @@ async function loadSectorIntelligence(heroRow) {
 async function loadSectorPeBubble(heroRow) {
   const el = document.getElementById('hero-pe-bubble');
   if (!el || !heroRow) return;
-  let tickerPe = heroRow.pe_ratio;
+  let tickerPe = mpMeaningfulPe(heroRow.pe_ratio);
   const sector  = heroRow.sector_name;
   // Upstream pipeline intermittently leaves pe_ratio null on the latest row
   // (whole-table outages observed 2026-05-06..08 and 2026-05-14..15). Walk
@@ -8571,7 +8583,8 @@ async function loadSectorPeBubble(heroRow) {
         order: 'snapshot_date.desc',
         limit: '1'
       });
-      if (back && back.length && back[0].pe_ratio != null) tickerPe = back[0].pe_ratio;
+      const _bpe = back && back.length ? mpMeaningfulPe(back[0].pe_ratio) : null;
+      if (_bpe != null) tickerPe = _bpe;
     } catch (_) { /* fall through to next fallback below */ }
   }
   // Second fallback: v_dash_daily_story.pe_ratio is sparsely populated (only ~20
@@ -8587,15 +8600,14 @@ async function loadSectorPeBubble(heroRow) {
         ticker: 'eq.' + TICKER,
         limit: '1'
       });
-      if (fv && fv.length && fv[0].trailing_pe != null) {
-        const v = Number(fv[0].trailing_pe);
-        if (isFinite(v) && v > 0) tickerPe = v;
+      if (fv && fv.length) {
+        const v = mpMeaningfulPe(fv[0].trailing_pe);
+        if (v != null) tickerPe = v;
       }
     } catch (_) { /* fall through to early-return below */ }
   }
-  if (tickerPe == null) return;
-  const tPe = Number(tickerPe);
-  if (!isFinite(tPe) || tPe <= 0) return;
+  const tPe = mpMeaningfulPe(tickerPe);
+  if (tPe == null) return;
 
   // Fallback chip — shown if no matching sector benchmark is available.
   // Keeps a stylized P/E label visible even when the sector lookup misses.
@@ -8633,7 +8645,7 @@ async function loadSectorPeBubble(heroRow) {
       if (!latestPerTicker.has(r.ticker)) latestPerTicker.set(r.ticker, Number(r.pe_ratio));
     }
     const vals = Array.from(latestPerTicker.values())
-      .filter(v => isFinite(v) && v > 0)
+      .filter(v => mpMeaningfulPe(v) != null)
       .sort((a, b) => a - b);
     if (vals.length < 2) return null;
     const mid = Math.floor(vals.length / 2);
@@ -11330,7 +11342,7 @@ function exportReport() {
       kvRow('Current price', '$' + Number(curPrice).toFixed(2), white);
       kvRow('Fair value', '$' + Number(fairVal).toFixed(2), cyan);
       kvRow('Valuation gap', fvLabel, fvColor);
-      if (r.pe_ratio != null) kvRow('P/E ratio', Number(r.pe_ratio).toFixed(1) + 'x', white);
+      { const _pe = mpMeaningfulPe(r.pe_ratio); if (_pe != null) kvRow('P/E ratio', _pe.toFixed(1) + 'x', white); }
       if (r.revenue_growth_pct != null) kvRow('Revenue growth', r.revenue_growth_pct + '%', r.revenue_growth_pct > 0 ? green : red);
       y += 4;
     }

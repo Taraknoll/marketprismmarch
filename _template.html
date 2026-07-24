@@ -6855,6 +6855,14 @@ function ensureJsPDF(){
 <!-- Env vars injected by Vercel API handler — do not edit this line -->
 <script id="__env_script">window.__env = { SUPABASE_URL: '', SUPABASE_ANON: '', SCHOLAR_ENABLED: '' };</script>
 <script>
+// ── P/E sanity guard ─────────────────────────────────────────────────────────
+// A trailing P/E is only meaningful when earnings are non-trivially positive.
+// Near-zero-EPS names divide price by a tiny GAAP EPS and produce absurd ratios
+// (v_dash_daily_story has carried a stale 6118x for CRWD). The fair-value engine
+// already clamps to 0 < pe < 500 upstream; mirror that at every display site so a
+// raw or stale outlier never renders. Returns the numeric P/E if meaningful, else null.
+function mpMeaningfulPe(v){ if(v==null) return null; var n=Number(v); return (isFinite(n)&&n>0&&n<500)?n:null; }
+
 // ── Sidebar toggle (mobile only) ─────────────────────────────────────────────
 // Desktop (≥768px): sidebar is ALWAYS visible — there is no hide/collapse.
 // Mobile  (<768px): sidebar HIDDEN; the mobile-topbar hamburger slides it in.
@@ -7270,7 +7278,7 @@ function renderScorerResult(d){
   // Fundamentals grid
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;">';
   var fundItems=[];
-  if(d.pe_ratio!=null)fundItems.push(['P/E Ratio',d.pe_ratio.toFixed(1),d.pe_ratio>30?'#FFB800':d.pe_ratio<15?'#00DE94':'var(--mp-text-primary)']);
+  {var _pfund=mpMeaningfulPe(d.pe_ratio);if(_pfund!=null)fundItems.push(['P/E Ratio',_pfund.toFixed(1),_pfund>30?'#FFB800':_pfund<15?'#00DE94':'var(--mp-text-primary)']);}
   if(d.eps_ttm!=null)fundItems.push(['EPS (TTM)','$'+d.eps_ttm.toFixed(2),d.eps_ttm>0?'#00DE94':'#FF4D4D']);
   if(d.price_to_sales!=null)fundItems.push(['P/S Ratio',d.price_to_sales.toFixed(1),d.price_to_sales>10?'#FFB800':'var(--mp-text-primary)']);
   if(d.revenue_ttm!=null){var revStr=d.revenue_ttm>=1e9?'$'+(d.revenue_ttm/1e9).toFixed(1)+'B':d.revenue_ttm>=1e6?'$'+(d.revenue_ttm/1e6).toFixed(0)+'M':'$'+fmtNum(d.revenue_ttm);fundItems.push(['Revenue (TTM)',revStr,'var(--mp-text-primary)']);}
@@ -10630,7 +10638,10 @@ async function loadAiPicks(snapshotDate,enriched){
       throw new Error(errMsg);
     }
     var picks=(data&&data.picks)||[];
-    try{sessionStorage.setItem(_ssKey,JSON.stringify(picks));}catch(_){}
+    // Never cache an empty result: an early-morning blank (before the day's
+    // picks generate) must not stick in sessionStorage and keep this tab empty
+    // all day even after the server cache warms.
+    try{if(picks.length){sessionStorage.setItem(_ssKey,JSON.stringify(picks));}}catch(_){}
     renderAiPicks(picks);
   }catch(e){
     console.warn('[AI Picks] Load failed:',e);
@@ -11600,7 +11611,7 @@ function buildForensicHTML(r){
       +'<div class="forensic-detail-title">Fundamentals</div>'
       +'<div class="forensic-row"><span class="forensic-row-label">Price</span><span class="forensic-row-val">$'+fmtPrice(r.price)+'</span></div>'
       +'<div class="forensic-row"><span class="forensic-row-label">Change</span><span class="forensic-row-val">'+delta.txt+'</span></div>'
-      +(r.pe_ratio!=null?'<div class="forensic-row"><span class="forensic-row-label">P/E Ratio</span><span class="forensic-row-val">'+r.pe_ratio.toFixed(1)+'x</span></div>':'')
+      +(mpMeaningfulPe(r.pe_ratio)!=null?'<div class="forensic-row"><span class="forensic-row-label">P/E Ratio</span><span class="forensic-row-val">'+mpMeaningfulPe(r.pe_ratio).toFixed(1)+'x</span></div>':'')
       +(fvd!=null?'<div class="forensic-row"><span class="forensic-row-label">Valuation</span><span class="forensic-row-val">'+Math.abs(fvd).toFixed(0)+'% '+(fvd<0?'undervalued':'overvalued')+'</span></div>':'')
       +(function(){var _d=liveDTE(r);return _d!=null?'<div class="forensic-row"><span class="forensic-row-label">Earnings</span><span class="forensic-row-val">'+(_d===0?'Today':_d>0?_d+'d':Math.abs(_d)+'d ago')+'</span></div>':'';})()
 
@@ -13654,7 +13665,7 @@ async function generateReport(){
         sectionHead('Fundamentals & Metrics',green);
         roundRect(mx,y,cw,22,3,surface);
         var fmStats=[];
-        if(r.pe_ratio!=null)fmStats.push({label:'P/E Ratio',val:r.pe_ratio.toFixed(1)+'x'});
+        if(mpMeaningfulPe(r.pe_ratio)!=null)fmStats.push({label:'P/E Ratio',val:mpMeaningfulPe(r.pe_ratio).toFixed(1)+'x'});
         var _imgDte=liveDTE(r);if(_imgDte!=null)fmStats.push({label:'Days to Earnings',val:_imgDte===0?'Today':String(_imgDte),c:_imgDte<=14?amber:white});
         if(r.guidance_direction)fmStats.push({label:'Guidance',val:r.guidance_direction,c:r.guidance_direction.toLowerCase().indexOf('up')!==-1?green:r.guidance_direction.toLowerCase().indexOf('down')!==-1?red:white});
         if(r.institutional_positioning)fmStats.push({label:'Institutional',val:r.institutional_positioning});
@@ -13744,7 +13755,7 @@ async function generateReport(){
       }
       if(selected.fundamentals){
         lines.push('## Fundamentals','');
-        if(r.pe_ratio!=null)lines.push('- **P/E Ratio:** '+r.pe_ratio.toFixed(1)+'x');
+        if(mpMeaningfulPe(r.pe_ratio)!=null)lines.push('- **P/E Ratio:** '+mpMeaningfulPe(r.pe_ratio).toFixed(1)+'x');
         if(r.days_to_earnings!=null)lines.push('- **Days to Earnings:** '+r.days_to_earnings);
         if(r.guidance_direction)lines.push('- **Guidance:** '+r.guidance_direction);
         if(r.institutional_positioning)lines.push('- **Institutional:** '+r.institutional_positioning);
@@ -13787,7 +13798,7 @@ async function generateReport(){
       }
       if(selected.fundamentals){
         lines.push('','FUNDAMENTALS','─'.repeat(50));
-        if(r.pe_ratio!=null)lines.push('  P/E Ratio: '+r.pe_ratio.toFixed(1)+'x');
+        if(mpMeaningfulPe(r.pe_ratio)!=null)lines.push('  P/E Ratio: '+mpMeaningfulPe(r.pe_ratio).toFixed(1)+'x');
         if(r.days_to_earnings!=null)lines.push('  Days to Earnings: '+r.days_to_earnings);
         if(r.guidance_direction)lines.push('  Guidance: '+r.guidance_direction);
         if(r.institutional_positioning)lines.push('  Institutional: '+r.institutional_positioning);
@@ -14106,7 +14117,7 @@ function buildCardFrontHTML(c,i,dateStr,prefix,showActions){
               // Stats
               +'<div class="back-stats-row">'
                 +'<div class="back-stat-chip"><span class="back-stat-lbl">Price</span><span class="back-stat-val" style="color:#fff;">$'+fmtPrice(c.price)+'</span></div>'
-                +'<div class="back-stat-chip"><span class="back-stat-lbl">P/E</span><span class="back-stat-val" style="color:'+borderColor+';">'+(c.pe_ratio!=null?c.pe_ratio.toFixed(1)+'x':'\u2014')+'</span></div>'
+                +'<div class="back-stat-chip"><span class="back-stat-lbl">P/E</span><span class="back-stat-val" style="color:'+borderColor+';">'+(mpMeaningfulPe(c.pe_ratio)!=null?mpMeaningfulPe(c.pe_ratio).toFixed(1)+'x':'\u2014')+'</span></div>'
                 +'<div class="back-stat-chip"><span class="back-stat-lbl">Conf</span><span class="back-stat-val" style="color:#A0A8B0;">'+conf+'%</span></div>'
               +'</div>'
               // Footer
@@ -14290,7 +14301,7 @@ function buildStratCard(d){
   // FVD, PE, energy, NRS, VMS for back
   var fvdPctVal=d.fvd_pct!=null?d.fvd_pct:(d.fair_value!=null&&d.price!=null?((d.price-d.fair_value)/d.fair_value)*100:null);
   var fv=fvdPctVal!=null?(fvdPctVal>0?'+':'')+Number(fvdPctVal).toFixed(1)+'%':'\u2014';
-  var pe=d.pe_ratio!=null?Number(d.pe_ratio).toFixed(1)+'x':'\u2014';
+  var pe=mpMeaningfulPe(d.pe_ratio)!=null?mpMeaningfulPe(d.pe_ratio).toFixed(1)+'x':'\u2014';
   var energy=d.energy!=null?Math.round(Number(d.energy)):'\u2014';
   var nrs=d.nrs!=null?Math.round(Number(d.nrs)):'\u2014';
   var vms=d.vms!=null?Math.round(Number(d.vms)):'\u2014';
@@ -18904,7 +18915,9 @@ var BOARDS=[
         return [];
       }
       var picks=((data&&data.picks)||[]).slice(0,10);
-      try{sessionStorage.setItem(_ssKey,JSON.stringify(data&&data.picks||[]));}catch(_){}
+      // Never cache an empty result (shared 'ai_picks_<date>' key with the AI tab):
+      // an early blank must not persist and keep the board empty all day.
+      try{if(data&&Array.isArray(data.picks)&&data.picks.length){sessionStorage.setItem(_ssKey,JSON.stringify(data.picks));}}catch(_){}
       // We already pulled verdict + fvd_pct for every snapshot ticker in `rows`,
       // so build the guard map locally instead of a second round-trip.
       var localMap={};

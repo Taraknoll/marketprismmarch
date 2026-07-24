@@ -9256,7 +9256,10 @@ async function loadAiPicks(snapshotDate,enriched){
       throw new Error(errMsg);
     }
     var picks=(data&&data.picks)||[];
-    try{sessionStorage.setItem(_ssKey,JSON.stringify(picks));}catch(_){}
+    // Never cache an empty result: an early-morning blank (before the day's
+    // picks generate) must not stick in sessionStorage and keep this tab empty
+    // all day even after the server cache warms.
+    try{if(picks.length){sessionStorage.setItem(_ssKey,JSON.stringify(picks));}}catch(_){}
     renderAiPicks(picks);
   }catch(e){
     console.warn('[AI Picks] Load failed:',e);
@@ -17286,7 +17289,9 @@ var BOARDS=[
         return [];
       }
       var picks=((data&&data.picks)||[]).slice(0,10);
-      try{sessionStorage.setItem(_ssKey,JSON.stringify(data&&data.picks||[]));}catch(_){}
+      // Never cache an empty result (shared 'ai_picks_<date>' key with the AI tab):
+      // an early blank must not persist and keep the board empty all day.
+      try{if(data&&Array.isArray(data.picks)&&data.picks.length){sessionStorage.setItem(_ssKey,JSON.stringify(data.picks));}}catch(_){}
       // We already pulled verdict + fvd_pct for every snapshot ticker in `rows`,
       // so build the guard map locally instead of a second round-trip.
       var localMap={};
