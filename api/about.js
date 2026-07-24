@@ -6,11 +6,11 @@ module.exports = (req, res) => {
 
     // ── SEO injection ──────────────────────
     const pageUrl = 'https://www.marketprism.co/about';
-    const title = 'Built Out of Rage — Market Prism';
-    const description = 'Why Market Prism exists: a forensic narrative engine for retail traders who got tired of being the exit liquidity. Built for the WSB-burned generation — and against the era of AI-generated market noise.';
+    const title = 'About Market Prism — Narrative-Forensics Research Lab';
+    const description = 'Market Prism is a narrative-forensics research lab — a seven-stage pipeline that ties market narratives to primary SEC filings, scores source authority, and measures when a story saturates and reverses.';
 
     html = html.replace(
-      '<title>Built Out of Rage — Market Prism</title>',
+      '<title>About Market Prism — Narrative-Forensics Research Lab</title>',
       `<title>${title}</title>`
     );
 
