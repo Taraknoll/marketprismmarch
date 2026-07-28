@@ -68,6 +68,10 @@
   #tab-prism .px-hintbar b{color:rgba(255,255,255,0.62);font-weight:600;}
   body.mp-teaser-locked #tab-prism .px-stage,
   body.mp-teaser-locked #tab-prism .px-ctrls,
+  body.mp-teaser-locked #tab-prism .bcyc-flow,
+  body.mp-teaser-locked #tab-prism .bcyc-arc,
+  body.mp-teaser-locked #tab-prism .bcyc-meta,
+  body.mp-teaser-locked #tab-prism #bcyc-board,
   body.mp-teaser-locked #tab-prism .px-stats{filter:blur(6px);opacity:.85;pointer-events:none;user-select:none;-webkit-user-select:none;}
 
   /* loading / error states */
@@ -161,6 +165,69 @@
     #tab-prism .px-spin{animation:none;}
     #tab-prism .px-prog{display:none;}
   }
+
+  /* ══ The Belief Cycle — earnings re-sync clock (bottom experiment) ══ */
+  #tab-prism .bcyc{margin-top:30px;padding-top:24px;border-top:1px solid var(--px-border);}
+  #tab-prism .bcyc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+  #tab-prism .bcyc-head h3{margin:0;font-family:var(--font-body,'Inter',sans-serif);font-size:22px;font-weight:700;letter-spacing:-.025em;color:var(--px-ink);}
+  #tab-prism .bcyc-head h3 span{color:var(--px-ink3);font-weight:600;font-size:15px;letter-spacing:0;}
+  #tab-prism .bcyc-head p{margin:5px 0 0;font-size:13px;color:var(--px-ink3);line-height:1.5;max-width:660px;}
+  #tab-prism .bcyc-head p b{color:#4DC8F0;font-weight:600;}
+  #tab-prism .bcyc-meta{font-size:11px;letter-spacing:.04em;color:var(--px-ink3);white-space:nowrap;}
+  #tab-prism .bcyc-meta b{color:var(--px-ink);}
+  /* phase-flow diagram (the sketch) */
+  #tab-prism .bcyc-flow{display:flex;gap:0;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;}
+  #tab-prism .bcyc-node{flex:1 1 0;min-width:134px;position:relative;cursor:pointer;background:transparent;border:0;
+    font-family:var(--font-body,'Inter',sans-serif);text-align:left;padding:0;color:inherit;}
+  #tab-prism .bcyc-node .bx{border:1px solid var(--px-border);border-top:2px solid var(--nc);background:var(--px-card);
+    border-radius:11px;padding:11px 12px;height:100%;transition:transform .15s,border-color .15s,box-shadow .15s;}
+  #tab-prism .bcyc-node:hover .bx{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.4);}
+  #tab-prism .bcyc-node.dim .bx{opacity:.42;}
+  #tab-prism .bcyc-node.sel .bx{box-shadow:0 0 0 1px var(--nc),0 8px 20px rgba(0,0,0,.4);}
+  #tab-prism .bcyc-node .d{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--nc);}
+  #tab-prism .bcyc-node .nm{font-size:14px;font-weight:700;margin:4px 0 2px;letter-spacing:-.01em;color:var(--px-ink);}
+  #tab-prism .bcyc-node .ft{font-size:11px;color:var(--px-ink3);min-height:26px;}
+  #tab-prism .bcyc-node .ct{font-size:19px;font-weight:800;margin-top:7px;color:var(--px-ink);font-variant-numeric:tabular-nums;}
+  #tab-prism .bcyc-node .ct small{font-size:10px;font-weight:600;color:var(--px-ink3);margin-left:4px;letter-spacing:.03em;}
+  #tab-prism .bcyc-node .ar{position:absolute;top:50%;right:-8px;transform:translateY(-50%);z-index:2;color:var(--px-ink3);opacity:.55;font-size:14px;line-height:1;}
+  #tab-prism .bcyc-node:last-child .ar{display:none;}
+  /* live 0→90 arc */
+  #tab-prism .bcyc-arc{margin-bottom:14px;}
+  #tab-prism .bcyc-axis{height:10px;border-radius:6px;overflow:hidden;display:flex;}
+  #tab-prism .bcyc-axis span{height:100%;}
+  #tab-prism .bcyc-tk{display:flex;justify-content:space-between;margin-top:5px;font-size:10px;color:var(--px-ink3);letter-spacing:.04em;}
+  /* controls */
+  #tab-prism .bcyc-ctrls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+  #tab-prism .bcyc-hint{font-size:11.5px;color:var(--px-ink3);}
+  #tab-prism .bcyc-clear{font-size:12px;font-weight:600;color:var(--px-cyan);background:transparent;border:0;cursor:pointer;display:none;padding:0;}
+  #tab-prism .bcyc-clear.on{display:inline;}
+  /* board */
+  #tab-prism .bcyc-group{margin-bottom:22px;}
+  #tab-prism .bcyc-gh{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--px-border);}
+  #tab-prism .bcyc-gh .gd{width:9px;height:9px;border-radius:3px;background:var(--gc);flex:none;}
+  #tab-prism .bcyc-gh .gt{font-size:15px;font-weight:700;color:var(--px-ink);letter-spacing:-.01em;}
+  #tab-prism .bcyc-gh .gday{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gc);}
+  #tab-prism .bcyc-gh .gs{font-size:11.5px;color:var(--px-ink3);}
+  #tab-prism .bcyc-gh .gn{margin-left:auto;font-size:11px;color:var(--px-ink3);font-weight:600;font-variant-numeric:tabular-nums;}
+  #tab-prism .bcyc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:10px;}
+  #tab-prism .bcyc-c{position:relative;background:var(--px-card);border:1px solid var(--px-border);border-top:2px solid var(--cc);
+    border-radius:11px;padding:11px 12px;transition:transform .14s,border-color .14s;}
+  #tab-prism .bcyc-c:hover{transform:translateY(-2px);border-color:var(--mp-border-hover,rgba(255,255,255,.14));}
+  #tab-prism .bcyc-c .r1{display:flex;align-items:baseline;justify-content:space-between;gap:6px;}
+  #tab-prism .bcyc-c .tk{font-size:16px;font-weight:800;letter-spacing:-.01em;}
+  #tab-prism .bcyc-c .db{font-size:10px;font-weight:700;color:var(--cc);background:color-mix(in srgb,var(--cc) 15%,transparent);border-radius:5px;padding:2px 6px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  #tab-prism .bcyc-c .sub{font-size:11px;color:var(--px-ink3);margin:3px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #tab-prism .bcyc-c .mini{margin:9px 0 8px;position:relative;height:6px;border-radius:4px;overflow:hidden;display:flex;}
+  #tab-prism .bcyc-c .mini span{height:100%;}
+  #tab-prism .bcyc-c .mini .pin{position:absolute;top:-3px;width:3px;height:12px;border-radius:2px;background:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.5);transform:translateX(-1.5px);}
+  #tab-prism .bcyc-c .r2{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  #tab-prism .bcyc-c .bg{font-size:15px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums;}
+  #tab-prism .bcyc-c .bg .k{font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--px-ink3);}
+  #tab-prism .bcyc-c .bg.str{color:#FFB800;} #tab-prism .bcyc-c .bg.dis{color:#38C8B8;} #tab-prism .bcyc-c .bg.mut{color:var(--px-ink2);}
+  #tab-prism .bcyc-c .rp{font-size:11px;color:var(--px-ink3);font-variant-numeric:tabular-nums;}
+  #tab-prism .bcyc-note{font-size:11px;color:var(--px-ink3);line-height:1.6;margin-top:8px;}
+  #tab-prism .bcyc-note code{background:var(--px-card);border:1px solid var(--px-border);border-radius:4px;padding:1px 5px;color:var(--px-ink2);}
+  @media (max-width:640px){ #tab-prism .bcyc-node .ar{display:none;} #tab-prism .bcyc-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));} }
 </style>
 
 <div class="tab-panel" id="tab-prism">
@@ -233,6 +300,32 @@
     <b>BULLISH TAPE</b> runs deep, <b>BEARISH TAPE</b> sits near. Size is narrative mass, re-measured every session. <b>Press ⏮ Replay</b> and
     the whole field marches toward the wall while bodies grow and shrink with their stories. Pick tickers to isolate
     a cast, or filter a sector. <b>T</b> starts the guided tour.</div>
+
+  <!-- ══ The Belief Cycle — earnings re-sync clock (bottom experiment) ══ -->
+  <section class="bcyc" id="px-belief" aria-label="The Belief Cycle">
+    <div class="bcyc-head">
+      <div>
+        <h3>The Belief Cycle <span>· earnings re-sync clock</span></h3>
+        <p>The same field, flattened to one question: how far has each name drifted from its last <b>hard fact</b>?
+          A quarter runs ~90 days between prints — the report re-syncs price to reality, then belief drifts off the
+          fundamentals and coils potential energy until the next one snaps it back.</p>
+      </div>
+      <div class="bcyc-meta" id="bcyc-meta"></div>
+    </div>
+    <div class="bcyc-flow" id="bcyc-flow"></div>
+    <div class="bcyc-arc">
+      <div class="bcyc-axis" id="bcyc-axis"></div>
+      <div class="bcyc-tk"><span>Day 0</span><span>20</span><span>45</span><span>65</span><span>Day 90</span></div>
+    </div>
+    <div class="bcyc-ctrls">
+      <span class="bcyc-hint">Sorted by cycle position · click a phase to filter</span>
+      <button class="bcyc-clear" id="bcyc-clear" type="button">✕ clear phase filter</button>
+    </div>
+    <div id="bcyc-board"><div class="bcyc-note">Loading the cycle…</div></div>
+    <div class="bcyc-note">Position is inferred from each ticker's <b>next report date</b> (Day 0 = just reported · Day 90 = reporting next).
+      <b>Belief gap</b> = price vs. model fair value (<code>fvd_pct</code>); ticker colour = verdict family, matching the field above.
+      Phase boundaries <code>0 · 20 · 65 · 89 · 90</code> are tunable model constants.</div>
+  </section>
 </div>
 
 <script>
@@ -321,6 +414,7 @@ function loadData(){
       if(timer) clearTimeout(timer);
       if(!j || !j.stocks || !j.stocks.length) throw new Error('empty payload');
       PX_DATA=j; buildScene(); setState(null); kick();
+      try{ renderBeliefCycle(j); }catch(_e){ /* never let the cycle strip break the field */ }
     })
     .catch(function(e){
       if(timer) clearTimeout(timer);
@@ -1100,6 +1194,119 @@ function frame(now){
 
   if(W>=560) drawGizmo();
   rafId=requestAnimationFrame(frame);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   THE BELIEF CYCLE — earnings re-sync clock (bottom strip)
+   Fed by the same /api/universe-data payload as the field above. A ticker's
+   position in the ~90-day loop is inferred from `edays` (server-computed
+   days-to-next-earnings integer → no client-side date math, so no US-viewer
+   off-by-one timezone drift). Day 0 = just reported, Day 90 = reporting next.
+   ══════════════════════════════════════════════════════════════════ */
+function renderBeliefCycle(data){
+  var BC_CYCLE=91;
+  var board=$id('bcyc-board'); if(!board) return;
+  var src=(data&&data.stocks)||[];
+
+  var STAGE={
+    RESYNC_POST:{title:'Re-Sync',day:'Day 0',fact:'Hard Fact · just reported',hex:'#00AEFF'},
+    CALIBRATION:{title:'Calibration',day:'Days 1–20',fact:'Low Energy',hex:'#38C8B8'},
+    DRIFT:{title:'The Drift Phase',day:'Days 21–65',fact:'Belief · Fuel Burn',hex:'#7B61FF'},
+    COMPRESSION:{title:'Compression',day:'Days 66–89',fact:'High Potential Energy',hex:'#FFB800'},
+    RESYNC_PRE:{title:'Re-Sync',day:'Day 90',fact:'Hard Fact · reporting next',hex:'#00AEFF'},
+    UNKNOWN:{title:'Unscheduled',day:'No date',fact:'No earnings calendar',hex:'#A0A8B0'}
+  };
+  var ORDER=['RESYNC_POST','CALIBRATION','DRIFT','COMPRESSION','RESYNC_PRE','UNKNOWN'];
+  var NODES=[
+    {keys:['RESYNC_POST','RESYNC_PRE'],day:'Day 0 / 90',name:'Re-Sync',fact:'Hard Fact',hex:'#00AEFF'},
+    {keys:['CALIBRATION'],day:'Days 1–20',name:'Calibration',fact:'Low Energy',hex:'#38C8B8'},
+    {keys:['DRIFT'],day:'Days 21–65',name:'The Drift Phase',fact:'Belief · Fuel Burn',hex:'#7B61FF'},
+    {keys:['COMPRESSION'],day:'Days 66–89',name:'Compression',fact:'High Potential Energy',hex:'#FFB800'}
+  ];
+  var BANDS=[{to:2,hex:'#00AEFF'},{to:20,hex:'#38C8B8'},{to:65,hex:'#7B61FF'},{to:89,hex:'#FFB800'},{to:91,hex:'#00AEFF'}];
+  function bands(){ var prev=0,out=''; BANDS.forEach(function(b){ var w=(Math.min(b.to,BC_CYCLE)-prev)/BC_CYCLE*100;
+    out+='<span style="width:'+w.toFixed(2)+'%;background:'+b.hex+';opacity:.82"></span>'; prev=b.to; }); return out; }
+
+  function classify(s){
+    var ed=s.edays, dse;
+    if(ed==null) return {key:'UNKNOWN',dse:null,pos:0.5};
+    var imm=false;
+    if(ed<0){ dse=-ed; }                      // rare signed fallback = days SINCE last report
+    else { dse=Math.max(0,BC_CYCLE-ed); imm=(ed<=2); }
+    var key = imm ? 'RESYNC_PRE'
+            : dse<=2  ? 'RESYNC_POST'
+            : dse<=20 ? 'CALIBRATION'
+            : dse<=65 ? 'DRIFT'
+            : 'COMPRESSION';
+    return {key:key,dse:dse,pos:Math.max(0,Math.min(1,dse/BC_CYCLE))};
+  }
+  var rows=src.map(function(s){ var c=classify(s); return {t:s.t,sec:s.sec,v:s.v,fvd:s.fvd,edays:s.edays,price:s.price,_k:c.key,_dse:c.dse,_pos:c.pos}; });
+
+  var bc={phase:null, node:null};
+
+  function counts(){ var c={}; ORDER.forEach(function(k){c[k]=0;}); rows.forEach(function(r){c[r._k]=(c[r._k]||0)+1;}); return c; }
+  function signed(v){ if(v==null) return '—'; var n=Math.round(v); return (n>0?'+':'')+n+'%'; }
+  function bgCls(v){ if(v==null) return 'mut'; if(v>2) return 'str'; if(v<-2) return 'dis'; return 'mut'; }
+
+  function card(r){
+    var st=STAGE[r._k]||STAGE.UNKNOWN;
+    var col=(typeof famOf==='function'&&r.v)?famOf(r.v).color:st.hex;
+    var dband=r._dse==null?'—':'Day '+r._dse;
+    var rp=(r._k==='RESYNC_PRE')?'reports ≤2d':(r.edays==null?'unscheduled':'reports in '+r.edays+'d');
+    return '<div class="bcyc-c" style="--cc:'+st.hex+'">'+
+      '<div class="r1"><span class="tk" style="color:'+col+'">'+uvEsc(r.t)+'</span><span class="db">'+dband+'</span></div>'+
+      '<div class="sub">'+uvEsc(r.sec||'—')+(r.v?' · '+uvEsc(r.v):'')+'</div>'+
+      '<div class="mini">'+bands()+'<span class="pin" style="left:'+(r._pos*100).toFixed(1)+'%"></span></div>'+
+      '<div class="r2"><span class="bg '+bgCls(r.fvd)+'">'+signed(r.fvd)+' <span class="k">belief</span></span>'+
+        '<span class="rp">'+rp+'</span></div>'+
+    '</div>';
+  }
+
+  function renderFlow(){
+    var c=counts(), flow=$id('bcyc-flow'); if(flow){ flow.innerHTML='';
+      NODES.forEach(function(nd){
+        var n=nd.keys.reduce(function(a,k){return a+(c[k]||0);},0);
+        var sel=bc.phase&&nd.keys.indexOf(bc.phase)>=0, dim=bc.phase&&!sel;
+        var b=document.createElement('button');
+        b.type='button'; b.className='bcyc-node'+(sel?' sel':'')+(dim?' dim':''); b.style.setProperty('--nc',nd.hex);
+        b.innerHTML='<div class="bx"><div class="d">'+nd.day+'</div><div class="nm">'+uvEsc(nd.name)+'</div>'+
+          '<div class="ft">'+uvEsc(nd.fact)+'</div><div class="ct">'+n+'<small>tickers</small></div></div><span class="ar">→</span>';
+        b.onclick=function(){
+          if(bc.phase&&nd.keys.indexOf(bc.phase)>=0){ bc.phase=null; bc.node=null; }
+          else { bc.phase=nd.keys[0]; bc.node=nd.keys; }
+          draw();
+        };
+        flow.appendChild(b);
+      });
+    }
+    var ax=$id('bcyc-axis'); if(ax) ax.innerHTML=bands();
+    var meta=$id('bcyc-meta');
+    if(meta){ var busiest=ORDER.filter(function(k){return k!=='UNKNOWN';}).sort(function(a,b){return (c[b]||0)-(c[a]||0);})[0];
+      meta.innerHTML='<b>'+rows.length+'</b> names · heaviest in <b style="color:'+STAGE[busiest].hex+'">'+STAGE[busiest].title+'</b> ('+(c[busiest]||0)+')'; }
+  }
+
+  function draw(){
+    renderFlow();
+    var clr=$id('bcyc-clear'); if(clr) clr.classList.toggle('on',!!bc.phase);
+    board.innerHTML=''; var any=false;
+    ORDER.forEach(function(k){
+      if(bc.node&&bc.node.indexOf(k)<0) return;
+      var list=rows.filter(function(r){ return r._k===k; });
+      if(!list.length) return; any=true;
+      list.sort(function(a,b){ var da=a._dse==null?1e9:a._dse, db=b._dse==null?1e9:b._dse; return da-db; });
+      var st=STAGE[k];
+      var g=document.createElement('div'); g.className='bcyc-group'; g.style.setProperty('--gc',st.hex);
+      g.innerHTML='<div class="bcyc-gh"><span class="gd"></span><span class="gt">'+uvEsc(st.title)+'</span>'+
+        '<span class="gday">'+st.day+'</span><span class="gs">· '+uvEsc(st.fact)+'</span>'+
+        '<span class="gn">'+list.length+' name'+(list.length===1?'':'s')+'</span></div>'+
+        '<div class="bcyc-grid">'+list.map(card).join('')+'</div>';
+      board.appendChild(g);
+    });
+    if(!any) board.innerHTML='<div class="bcyc-note">No tickers in this view.</div>';
+  }
+
+  var clr=$id('bcyc-clear'); if(clr) clr.onclick=function(){ bc.phase=null; bc.node=null; draw(); };
+  draw();
 }
 })();
 </script>
