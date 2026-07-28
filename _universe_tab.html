@@ -79,6 +79,7 @@
   #tab-universe .uv-dossier .r1{display:flex;align-items:baseline;gap:10px;}
   #tab-universe .uv-dossier .tk{font-size:26px;font-weight:700;letter-spacing:.01em;}
   #tab-universe .uv-dossier .px{font-size:16px;color:rgba(255,255,255,0.7);font-variant-numeric:tabular-nums;}
+  #tab-universe .uv-dossier .chg{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
   #tab-universe .uv-dossier .x{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.45);font-size:16px;
     cursor:pointer;padding:2px 7px;border-radius:7px;line-height:1;}
   #tab-universe .uv-dossier .x:hover{color:#fff;background:rgba(255,255,255,0.08);}
@@ -181,6 +182,8 @@
     text-transform:uppercase;color:rgba(255,255,255,.7);background:none;border:1px solid rgba(255,255,255,.14);
     border-radius:8px;padding:6px 12px;font-family:var(--font-body,'Inter',sans-serif);}
   #tab-universe .uv-cmpbtn:hover{border-color:#00AEFF;color:#fff;}
+  #tab-universe .uv-viewbtn{display:inline-block;text-decoration:none;background:var(--uv-cyan);color:#04121C;border-color:transparent;}
+  #tab-universe .uv-viewbtn:hover{filter:brightness(1.12);color:#04121C;border-color:transparent;}
   #tab-universe .uv-dossier .x.watch{margin-left:auto;font-size:15px;}
   #tab-universe .uv-dossier .x.watch.on{color:#FFB800;}
   #tab-universe .uv-dossier #uvd-x{margin-left:0;}
@@ -247,12 +250,14 @@
     <aside class="uv-dossier" id="uv-dossier" aria-label="Stock dossier">
       <div class="dh">
         <div class="r1"><span class="tk" id="uvd-tk"></span><span class="px" id="uvd-px"></span>
+          <span class="chg" id="uvd-chg"></span>
           <button class="x watch" id="uvd-watch" aria-label="Watch ticker">☆</button>
           <button class="x" id="uvd-x" aria-label="Close dossier">✕</button></div>
         <div class="sec" id="uvd-sec"></div>
         <div class="chips" id="uvd-chips"></div>
         <button class="uv-cmpbtn" id="uvd-story">▸ Play its 10-day story</button>
         <button class="uv-cmpbtn" id="uvd-cmp">⇄ Compare with another body</button>
+        <a class="uv-cmpbtn uv-viewbtn" id="uvd-view" href="#">▸ View full ticker report</a>
       </div>
       <div class="db">
         <div class="uv-blk"><h4>Price vs fair value</h4>
@@ -842,7 +847,20 @@ function select(s){
   // fold, the dossier gets clipped. 'nearest' scrolls only when needed.
   if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
   $id('uvd-tk').textContent=s.t; $id('uvd-tk').style.color=s.color;
-  $id('uvd-px').textContent=s.price!=null?('$'+Number(s.price).toLocaleString()):'—';
+  // Live price + day-change from the parent's shared quote cache (Massive);
+  // falls back to the snapshot price. data-live-price keeps it ticking while
+  // open; the day move is read from the cache (no data-live-change span).
+  var uq=(window.__LIVE_QUOTES_CACHE||{})[s.t];
+  var uPxEl=$id('uvd-px'); uPxEl.setAttribute('data-live-price',s.t);
+  var uPxVal=(uq&&uq.price!=null)?uq.price:s.price;
+  uPxEl.textContent=uPxVal!=null?((typeof window._fmtLivePrice==='function')?window._fmtLivePrice(uPxVal):('$'+Number(uPxVal).toFixed(2))):'—';
+  var uChg=$id('uvd-chg');
+  if(uq&&uq.changePct!=null){ var uUp=uq.changePct>=0;
+    uChg.textContent=(uUp?'▲ ':'▼ ')+Math.abs(uq.changePct).toFixed(2)+'%';
+    uChg.style.color=uUp?'#00DE94':'#FF4D4D'; uChg.style.display='';
+  } else { uChg.textContent=''; uChg.style.display='none'; }
+  var uView=$id('uvd-view'); if(uView) uView.href='/ticker/'+encodeURIComponent(s.t);
+  if(typeof window._liveQuotesKick==='function') window._liveQuotesKick();
   $id('uvd-sec').textContent=(s.sec||'')+(s.ind?' · '+s.ind:'');
   var chips='<span class="uv-chip" style="color:'+s.color+';border-color:'+s.color+'">'+uvEsc(s.v)+'</span>';
   if(s.conf!=null) chips+='<span class="uv-chip dim">conf '+uvEsc(String(s.conf))+'</span>';

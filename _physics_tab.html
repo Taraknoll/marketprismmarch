@@ -99,6 +99,11 @@
   #tab-prism .px-dossier .r1{display:flex;align-items:baseline;gap:10px;}
   #tab-prism .px-dossier .tk{font-size:22px;font-weight:700;letter-spacing:.01em;}
   #tab-prism .px-dossier .pxp{font-size:16px;color:rgba(255,255,255,0.7);font-variant-numeric:tabular-nums;}
+  #tab-prism .px-dossier .pxd-chg{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  #tab-prism .px-dossier .pxd-view{display:block;margin-top:12px;text-align:center;text-decoration:none;
+    background:var(--px-cyan);color:#04121C;font-weight:700;font-size:13px;letter-spacing:.02em;
+    border-radius:9px;padding:9px 12px;transition:filter .15s;}
+  #tab-prism .px-dossier .pxd-view:hover{filter:brightness(1.12);}
   #tab-prism .px-dossier .x{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.45);font-size:16px;
     cursor:pointer;padding:2px 7px;border-radius:7px;line-height:1;}
   #tab-prism .px-dossier .x:hover{color:#fff;background:rgba(255,255,255,0.08);}
@@ -264,11 +269,13 @@
 
     <aside class="px-dossier" id="px-dossier" aria-label="Ticker card">
       <div class="r1"><span class="tk" id="pxd-tk"></span><span class="pxp" id="pxd-px"></span>
+        <span class="pxd-chg" id="pxd-chg"></span>
         <button class="x" id="pxd-x" aria-label="Close">✕</button></div>
       <span class="px-chip" id="pxd-verdict"></span><span class="px-echip" id="pxd-earn"></span>
       <div class="px-rangebar"><i id="pxd-dot"></i></div>
       <div class="px-rangecap"><span id="pxd-lo"></span><span id="pxd-pos"></span><span id="pxd-hi"></span></div>
       <div id="pxd-rows"></div>
+      <a class="pxd-view" id="pxd-view" href="#">View full report →</a>
     </aside>
 
     <div class="px-replay" id="px-replay" aria-label="Replay controls">
@@ -874,7 +881,21 @@ function select(s){
   $id('px-dossier').classList.add('open');
   if(stage&&stage.scrollIntoView) stage.scrollIntoView({block:'nearest',behavior:reduceMotion?'auto':'smooth'});
   $id('pxd-tk').textContent=s.t; $id('pxd-tk').style.color=s.color;
-  $id('pxd-px').textContent=s.price!=null?('$'+Number(s.price).toLocaleString()):'—';
+  // Live price + day-change from the parent's shared quote cache (Massive);
+  // falls back to the universe-data snapshot price. data-live-price keeps the
+  // price ticking while the card is open. No data-live-change (see the Belief
+  // Cycle note) — the day move is read from the cache here instead.
+  var pxq=(window.__LIVE_QUOTES_CACHE||{})[s.t];
+  var pxEl=$id('pxd-px'); pxEl.setAttribute('data-live-price',s.t);
+  var pxVal=(pxq&&pxq.price!=null)?pxq.price:s.price;
+  pxEl.textContent=pxVal!=null?((typeof window._fmtLivePrice==='function')?window._fmtLivePrice(pxVal):('$'+Number(pxVal).toFixed(2))):'—';
+  var pxChg=$id('pxd-chg');
+  if(pxq&&pxq.changePct!=null){ var pxUp=pxq.changePct>=0;
+    pxChg.textContent=(pxUp?'▲ ':'▼ ')+Math.abs(pxq.changePct).toFixed(2)+'%';
+    pxChg.style.color=pxUp?'#00DE94':'#FF4D4D'; pxChg.style.display='';
+  } else { pxChg.textContent=''; pxChg.style.display='none'; }
+  var pxView=$id('pxd-view'); if(pxView) pxView.href='/ticker/'+encodeURIComponent(s.t);
+  if(typeof window._liveQuotesKick==='function') window._liveQuotesKick();
   var vd=$id('pxd-verdict');
   vd.textContent=s.v; vd.style.color=s.color; vd.style.borderColor=s.color;
   $id('pxd-earn').textContent=s.edays!=null?('earnings in '+s.edays+'d'):'no report scheduled';
