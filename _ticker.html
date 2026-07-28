@@ -3939,6 +3939,61 @@
   .live-price-main { font-size: 38px; font-weight: 600; font-family: var(--font-body); letter-spacing: -0.03em; color: var(--mp-text-primary); line-height: 1; }
   .live-change { font-size: 14px; font-family: var(--font-body); margin-top: 4px; }
   .live-change .chg-amount { margin-right: 6px; }
+  /* ── Average-range bar — the ticker's mean intraday low/high per session over
+     the trailing 90 days. Wraps rather than overflowing the price column. ── */
+  .avg-range {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    font-family: var(--font-body);
+  }
+  .avg-range-end {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mp-text-tertiary);
+    white-space: nowrap;
+  }
+  /* The band itself: a capped segment spanning low → high. End caps make it
+     read as a measured range rather than a progress bar. */
+  .avg-range-band {
+    position: relative;
+    width: 54px;
+    height: 3px;
+    border-radius: 99px;
+    background: currentColor;
+    opacity: 0.55;
+    flex-shrink: 0;
+  }
+  .avg-range-band::before,
+  .avg-range-band::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 2px;
+    height: 9px;
+    border-radius: 1px;
+    background: currentColor;
+    transform: translateY(-50%);
+  }
+  .avg-range-band::before { left: 0; }
+  .avg-range-band::after  { right: 0; }
+  .avg-range.up   { color: #00DE94; }
+  .avg-range.down { color: #FF4D4D; }
+  .avg-range.flat { color: #00AEFF; }
+  .avg-range-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--mp-text-muted);
+    margin-right: 2px;
+  }
+  /* The band draws in currentColor, which is already a brand accent — it needs
+     no light-theme override. Only the muted label needs a touch more contrast. */
+  [data-theme="light"] .avg-range-lbl { color: rgba(17,24,39,0.45); }
   .live-meta { font-size: 11px; color: var(--mp-text-muted); font-family: var(--font-body); margin-top: 6px; display: flex; gap: 12px; justify-content: flex-end; }
   .live-meta span { white-space: nowrap; }
 
@@ -4155,6 +4210,7 @@
     .live-price-row { justify-content: flex-start; }
     .live-price-main { font-size: 28px; }
     .live-meta { justify-content: flex-start; }
+    .avg-range { justify-content: flex-start; }
     .hero-ticker { font-size: 28px; }
     .hero-claim { font-size: 14px; }
     .hero-bias { font-size: 24px; }
@@ -7384,6 +7440,7 @@ function renderLiteHero(d) {
         + '<div class="live-price-main" id="live-price">' + fmtPrice(d.price) + '</div>'
         + '<div class="live-change delta-flat" id="live-change"></div>'
         + '<div class="live-ah" id="live-ah" style="display:none;font-size:12px;color:var(--mp-text-tertiary);font-family:var(--font-body);margin-top:2px;"></div>'
+        + '<div class="avg-range" id="live-range" style="display:none;"></div>'
         + '<div class="live-meta" id="live-meta"></div>'
       + '</div>'
     + '</div>'
@@ -7403,6 +7460,9 @@ function renderLiteHero(d) {
 
   // Kick the shared live-price poller so the price ticks like a tracked page.
   try { fetchLivePrice(); } catch (e) {}
+  // Hero DOM (and its #live-range slot) now exists — paint the 90-day band if
+  // it already loaded; load90dAvgRange() repaints it if it has not.
+  try { renderAvgRange(); } catch (e) {}
 }
 
 // Strip the page down to the two panels that work for ANY ticker: the LITE hero
@@ -7748,6 +7808,7 @@ async function loadHero() {
         <div class="live-price-main" id="live-price">${fmtPrice(r.price)}</div>
         <div class="live-change ${delta.cls}" id="live-change">${delta.txt}</div>
         <div class="live-ah" id="live-ah" style="display:none;font-size:12px;color:var(--mp-text-tertiary);font-family:var(--font-body);margin-top:2px;"></div>
+        <div class="avg-range" id="live-range" style="display:none;"></div>
         <div class="live-meta" id="live-meta"></div>
         <!-- Save to watchlist — prominent, top-of-page. Hidden until the watchlist
              API confirms this user can use it (wired by mpFavInit after render). -->
@@ -7762,6 +7823,9 @@ async function loadHero() {
     // prefetch failed). Without this, the first price update has to wait for
     // the poll interval in scheduleLivePrice (30s during market hours, 2m otherwise).
     try { fetchLivePrice(); } catch(e){}
+    // Hero DOM (and its #live-range slot) now exists — paint the 90-day band if
+    // it already loaded; load90dAvgRange() repaints it if it has not.
+    try { renderAvgRange(); } catch(e){}
 
     // Wire up the Save-to-watchlist button now that the hero (its host) exists.
     try { window.mpFavInit && window.mpFavInit(); } catch(e){}
@@ -13432,6 +13496,89 @@ async function loadRecentTrades(refPrice) {
   }
 }
 
+// ── 90-day average intraday range ────────────────────────────────────────────
+// The ticker's mean INTRADAY low and mean INTRADAY high per session across the
+// trailing 90 days — i.e. the average of each session's own high/low extremes,
+// not the closing range. That's its typical day-to-day trading band.
+//
+// Sourced from /api/price-history (Polygon daily bars). The stored
+// fifty_two_week_high/low columns on ticker_snapshots are null for every
+// ticker, and ticker_prices (which does carry OHLC) is RLS-on with no policies,
+// so the browser reads [] from it. The chart already hits this endpoint and it
+// is edge-cached, so the extra call is effectively free.
+var _avgBand = null;   // { lo, hi, n, lastClose }
+
+async function load90dAvgRange() {
+  if (!TICKER) return;
+  try {
+    // 130 calendar days of bars so the 90-day window is fully covered even
+    // across long holiday stretches.
+    const series = await fetchPriceSeries(TICKER, 130);
+    if (!series || !series.length) return;
+
+    const cutoff = new Date();
+    cutoff.setUTCDate(cutoff.getUTCDate() - 90);
+    const cutoffYmd = cutoff.toISOString().slice(0, 10);
+    const bars = series.filter(b => (b.snapshot_date || '') >= cutoffYmd);
+    // ~62 sessions in 90 calendar days; 30 is a generous floor for newly
+    // listed names, below which an "average" is not worth showing.
+    if (bars.length < 30) return;
+
+    let hiSum = 0, loSum = 0, n = 0;
+    for (const b of bars) {
+      const h = Number(b.price_high), l = Number(b.price_low);
+      if (isFinite(h) && isFinite(l) && l > 0 && h >= l) { hiSum += h; loSum += l; n++; }
+    }
+    if (n < 30) return;
+
+    const lastClose = Number(bars[bars.length - 1].price_close);
+    _avgBand = {
+      lo: loSum / n,
+      hi: hiSum / n,
+      n: n,
+      lastClose: isFinite(lastClose) ? lastClose : null
+    };
+    renderAvgRange();
+  } catch (_) { /* the bar is optional — stay silent */ }
+}
+
+// Paints (or repaints) the bar. Safe to call before the band or the hero DOM
+// exists; called again on every live-price tick so the above/below/within
+// colour stays in step with the price.
+function renderAvgRange() {
+  const el = document.getElementById('live-range');
+  if (!el) return;
+  if (!_avgBand || !(_avgBand.hi > _avgBand.lo)) { el.style.display = 'none'; return; }
+
+  const lo = _avgBand.lo, hi = _avgBand.hi;
+  const q = _lastLivePrice;
+  const px = (q && Number(q.price)) || _avgBand.lastClose;
+  const fmtEnd = v => '$' + (v >= 1000 ? v.toFixed(0) : v.toFixed(2));
+
+  // Deliberately NO position marker inside the band. These are averages of
+  // daily extremes, so the band is narrow (~5% wide on average across the
+  // universe) and the live price sits outside it about 86% of the time — a
+  // dot would pin to one end on most tickers and read as a false signal.
+  // The band is drawn as a plain segment; the price's relationship to it is
+  // carried by the colour and spelled out in the tooltip instead.
+  let tone = 'flat', rel = 'within its average range';
+  if (isFinite(px) && px > 0) {
+    if (px > hi)      { tone = 'up';   rel = 'above its average range'; }
+    else if (px < lo) { tone = 'down'; rel = 'below its average range'; }
+  }
+
+  el.className = 'avg-range ' + tone;
+  el.title = 'Average intraday low / high per session over the past 90 days ('
+    + _avgBand.n + ' sessions): ' + fmtEnd(lo) + ' – ' + fmtEnd(hi)
+    + (isFinite(px) && px > 0 ? ' · now ' + fmtEnd(px) + ' — ' + rel : '');
+  el.innerHTML =
+    '<span class="avg-range-lbl">Avg. intraday 90D</span>'
+    + '<span class="avg-range-end">' + fmtEnd(lo) + '</span>'
+    + '<span class="avg-range-band"></span>'
+    + '<span class="avg-range-end">' + fmtEnd(hi) + '</span>';
+  el.style.display = 'flex';
+}
+
 // ── Live Price via Polygon ────────────────────────────────────────────────────
 var _liveQuoteTimer = null;
 var _lastLivePrice = null;
@@ -13537,6 +13684,10 @@ async function fetchLivePrice() {
       }
     }
 
+    // Re-place the 90-day average-range marker against the new live price.
+    // No-ops until load90dAvgRange() has the band; cheap enough to call every tick.
+    try { renderAvgRange(); } catch (e) {}
+
     // Meta: high/low, volume, updated time
     if (metaEl) {
       var parts = [];
@@ -13559,6 +13710,7 @@ async function fetchLivePrice() {
 
 // Initial fetch + poll every 30s during market hours, 2 min otherwise
 fetchLivePrice();
+load90dAvgRange();
 function scheduleLivePrice() {
   var now = new Date();
   var et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
