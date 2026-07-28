@@ -9275,54 +9275,78 @@ async function loadLifecycle() {
   if (!TICKER) return;
   try {
     const rows = await sbFetch('v_dash_narrative_health', {
-      select: 'energy_absolute,energy_regime,narrative_trend,narrative_health',
+      select: 'energy_regime,narrative_trend,narrative_health',
       ticker: `eq.${TICKER}`,
       order:  'snapshot_date.desc',
-      limit:  '2'
+      limit:  '1'
     }).catch(() => []);
 
-    if (!rows.length) {
+    // Exhaustion tracks narrative ENERGY REMAINING (the decay / half-life axis),
+    // not the near-static narrative_health score. avg_energy_remaining +
+    // nearest_exhaustion_days come from ticker_pulse, already loaded into
+    // _tickerPulseData before this loader runs. A story can read EXPLOSIVE/loud
+    // right now (energy_regime) yet be late in its half-life — that's why loudness
+    // stays a stat while the BAR tracks how far the story has burned down.
+    const p = _tickerPulseData || (typeof window !== 'undefined' ? window._tickerPulseData : null) || {};
+    const h = rows[0] || {};
+    const energyLeft = (p.avg_energy_remaining != null && isFinite(Number(p.avg_energy_remaining)))
+      ? Math.max(0, Math.min(100, Number(p.avg_energy_remaining)))
+      : null;
+
+    if (!rows.length && energyLeft == null) {
       document.getElementById('lc-body').innerHTML = '<div class="no-data">No lifecycle data available.</div>';
       return;
     }
 
-    const h = rows[0];
+    const stages = ['Birth', 'Growth', 'Maturity', 'Decline', 'Death'];
+    let stageIdx, barPct, headlineRight, statLabel, statVal, statValCls;
 
-    // Map energy_regime to lifecycle stage
-    const regimeToStage = {
-      EXPLOSIVE: 'Birth', HIGH: 'Growth', MODERATE: 'Maturity',
-      LOW: 'Decline', DORMANT: 'Death'
-    };
-    const stage = regimeToStage[h.energy_regime] || 'Maturity';
-
-    // Use narrative_health (0–100) as the bar percentage
-    const pct = h.narrative_health != null ? h.narrative_health : null;
-
-    const stages    = ['Birth', 'Growth', 'Maturity', 'Decline', 'Death'];
-    const activeIdx = stages.indexOf(stage);
-    const barPct = pct != null ? Math.max(2, Math.round(pct)) : 0;
-
-    // Energy delta: % change in energy_absolute vs the prior snapshot (rows[1]).
-    // ±1% band stays neutral so near-flat days don't read as a signal.
-    const currEnergy = h.energy_absolute != null ? Number(h.energy_absolute) : null;
-    const prevEnergy = rows[1] && rows[1].energy_absolute != null ? Number(rows[1].energy_absolute) : null;
-    let delta = null;
-    if (currEnergy != null && prevEnergy != null && isFinite(currEnergy) && isFinite(prevEnergy) && prevEnergy > 0) {
-      delta = (currEnergy / prevEnergy - 1) * 100;
+    if (energyLeft != null) {
+      // Fuel gauge: the bar fills toward Death as energy depletes, so barPct is
+      // exhaustion progress (100 − energy left). The lc-track gradient (green→red)
+      // is built for exactly this — a fresh story shows only green, an exhausted
+      // one reveals the red near the Death marker.
+      const exhaustPct = 100 - energyLeft;
+      stageIdx = exhaustPct < 15 ? 0 : exhaustPct < 40 ? 1 : exhaustPct < 65 ? 2 : exhaustPct < 85 ? 3 : 4;
+      barPct   = Math.max(2, Math.round(exhaustPct));
+      const days = p.nearest_exhaustion_days != null ? Number(p.nearest_exhaustion_days) : null;
+      headlineRight = (days != null && isFinite(days) && days >= 0)
+        ? '~' + Math.round(days) + 'd to exhaustion'
+        : Math.round(energyLeft) + '% energy left';
+      statLabel  = 'Energy left';
+      statVal    = Math.round(energyLeft) + '%';
+      statValCls = energyLeft < 20 ? 'color:var(--accent-breaking)'
+                 : energyLeft < 40 ? 'color:var(--mp-amber)'
+                 : 'color:var(--accent-surging)';
+    } else {
+      // Fallback: no ticker_pulse energy for this ticker — keep the old
+      // narrative_health bar so the panel degrades instead of going blank.
+      const regimeToIdx = { EXPLOSIVE: 0, HIGH: 1, MODERATE: 2, LOW: 3, DORMANT: 4 };
+      stageIdx = regimeToIdx[h.energy_regime] != null ? regimeToIdx[h.energy_regime] : 2;
+      const pct = h.narrative_health != null ? Math.round(h.narrative_health) : null;
+      barPct = pct != null ? Math.max(2, pct) : 0;
+      headlineRight = pct != null ? pct + '% health' : '—';
+      statLabel  = 'Health';
+      statVal    = pct != null ? pct + '%' : '—';
+      statValCls = '';
     }
-    const deltaStr  = delta != null ? (delta > 0 ? '+' : '') + Math.round(delta) + '% today' : '—';
-    const deltaCls  = delta > 1 ? 'color:var(--accent-surging)' : delta < -1 ? 'color:var(--accent-breaking)' : '';
+
+    const stage = stages[stageIdx];
 
     var lcHTML = `
       <div class="lc-top">
         <div class="lc-stage">${esc(stage)}</div>
-        <div class="lc-energy">${pct != null ? Math.round(pct) + '% health' : '—'}</div>
+        <div class="lc-energy">${esc(headlineRight)}</div>
       </div>
       <div class="lc-track"><div class="lc-unfill" style="width:${100 - barPct}%;"></div></div>
       <div class="lc-markers">
-        ${stages.map((s,i) => `<div class="lc-marker ${i === activeIdx ? 'active' : ''}">${s}</div>`).join('')}
+        ${stages.map((s,i) => `<div class="lc-marker ${i === stageIdx ? 'active' : ''}">${s}</div>`).join('')}
       </div>
       <div class="lc-stats">
+        <div class="lc-stat">
+          <div class="lc-stat-label">${esc(statLabel)}</div>
+          <div class="lc-stat-val" style="${statValCls}">${esc(statVal)}</div>
+        </div>
         <div class="lc-stat">
           <div class="lc-stat-label">Regime</div>
           <div class="lc-stat-val" style="font-size:13px;">${esc(h.energy_regime || '—')}</div>
@@ -9330,10 +9354,6 @@ async function loadLifecycle() {
         <div class="lc-stat">
           <div class="lc-stat-label">Trend</div>
           <div class="lc-stat-val" style="font-size:13px;">${esc(h.narrative_trend || '—')}</div>
-        </div>
-        <div class="lc-stat">
-          <div class="lc-stat-label">Energy Δ</div>
-          <div class="lc-stat-val" style="${deltaCls}">${deltaStr}</div>
         </div>
       </div>`;
     document.getElementById('lc-body').innerHTML = lcHTML;
