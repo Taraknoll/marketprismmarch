@@ -8,13 +8,13 @@ var MP_DOMAINS = {
   // Semiconductors
   NVDA:'nvidia.com',AMD:'amd.com',INTC:'intel.com',AVGO:'broadcom.com',
   QCOM:'qualcomm.com',TSM:'tsmc.com',MRVL:'marvell.com',AMAT:'appliedmaterials.com',
-  LRCX:'lamresearch.com',TXN:'ti.com',SNPS:'synopsys.com',CDNS:'cadence.com',
+  LRCX:'lamresearch.com',TXN:'ti.com',SNPS:'www.synopsys.com',CDNS:'cadence.com',
   MU:'micron.com',ARM:'arm.com',SMCI:'supermicro.com',
   // Software / Cloud
   AAPL:'apple.com',MSFT:'microsoft.com',GOOGL:'google.com',META:'meta.com',
   AMZN:'amazon.com',ADBE:'adobe.com',CRM:'salesforce.com',ORCL:'oracle.com',
   NFLX:'netflix.com',INTU:'intuit.com',NOW:'servicenow.com',WDAY:'workday.com',
-  PANW:'paloaltonetworks.com',CRWD:'crowdstrike.com',PLTR:'palantir.com',
+  PANW:'panw.com',CRWD:'crowdstrike.com',PLTR:'palantir.com',
   IBM:'ibm.com',HPQ:'hp.com',DELL:'dell.com',MSTR:'microstrategy.com',
   SHOP:'shopify.com',SNOW:'snowflake.com',SQ:'squareup.com',
   // Consumer Tech / Social
@@ -25,16 +25,16 @@ var MP_DOMAINS = {
   // Finance
   JPM:'jpmorganchase.com',GS:'goldmansachs.com',V:'visa.com',MA:'mastercard.com',
   WFC:'wellsfargo.com',BAC:'bankofamerica.com',MS:'morganstanley.com',
-  PYPL:'paypal.com','BRK.B':'berkshirehathaway.com',OWL:'blueowl.com',
+  PYPL:'paypal.com','BRK.B':'brk.com',OWL:'blueowl.com',
   // Consumer / Retail
   COST:'costco.com',WMT:'walmart.com',TGT:'target.com',HD:'homedepot.com',
   LOW:'lowes.com',MCD:'mcdonalds.com',SBUX:'starbucks.com',NKE:'nike.com',
   CMG:'chipotle.com',KO:'coca-cola.com',PEP:'pepsico.com',GIS:'generalmills.com',
-  KHC:'kraftheinzcompany.com',MDLZ:'mondelezinternational.com',TSN:'tysonfoods.com',
+  KHC:'kraftheinz.com',MDLZ:'mondelezinternational.com',TSN:'tysonfoods.com',
   BUD:'ab-inbev.com',BYND:'beyondmeat.com',KVUE:'kenvue.com',
   // Healthcare / Pharma
   JNJ:'jnj.com',LLY:'lilly.com',PFE:'pfizer.com',MRK:'merck.com',
-  ABBV:'abbvie.com',UNH:'unitedhealthgroup.com',DHR:'danaher.com',
+  ABBV:'abbvie.com',UNH:'unitedhealthgroup.com',DHR:'investors.danaher.com',
   TMO:'thermofisher.com',ABT:'abbott.com',NVO:'novonordisk.com',
   HIMS:'forhims.com',IBRX:'immunitybio.com',NBIS:'nebius.com',
   // Auto / Transport
@@ -42,15 +42,15 @@ var MP_DOMAINS = {
   LCID:'lucidmotors.com',TM:'toyota.com',HMC:'honda.com',RACE:'ferrari.com',
   UAL:'united.com',UPS:'ups.com',
   // Energy
-  XOM:'exxonmobil.com',CVX:'chevron.com',COP:'conocophillips.com',
+  XOM:'exxonmobil.com',CVX:'chevron.com',COP:'www.conocophillips.com',
   EOG:'eogresources.com',OXY:'oxy.com',HAL:'halliburton.com',SLB:'slb.com',
-  VST:'vistraenergy.com',CEG:'constellation.com',NEE:'nexteraenergy.com',
+  VST:'vistraenergy.com',CEG:'constellationenergy.com',NEE:'nexteraenergy.com',
   DUK:'duke-energy.com',SO:'southerncompany.com',ENPH:'enphase.com',
   FSLR:'firstsolar.com',OKLO:'oklo.com',SMR:'nuscalepower.com',
   CCJ:'cameco.com',LEU:'centrusenergy.com',
   // Materials / Mining
   FCX:'fcx.com',NEM:'newmont.com',GOLD:'barrick.com',AA:'alcoa.com',
-  CLF:'clevelandcliffs.com',MP:'mpcorp.com',SCCO:'southerncoppercorp.com',
+  CLF:'clevelandcliffs.com',MP:'mpmaterials.com',SCCO:'southerncoppercorp.com',
   BHP:'bhp.com',RIO:'riotinto.com',VALE:'vale.com',MOS:'mosaicco.com',
   BG:'bunge.com',ADM:'adm.com',
   // Industrials
@@ -58,15 +58,15 @@ var MP_DOMAINS = {
   VRT:'vertiv.com',RTX:'rtx.com',LMT:'lockheedmartin.com',BA:'boeing.com',
   URI:'unitedrentals.com',PWR:'quanta.com',MLM:'martinmarietta.com',
   VMC:'vulcanmaterials.com',WM:'wm.com',ACM:'aecom.com',
-  J:'jacobs.com',TTEK:'tetratech.com',STN:'stantec.com',
+  J:'jacobs.com',TTEK:'tetratech.com',STN:'www.stantec.com',
   // Real Estate
   AMT:'americantower.com',PLD:'prologis.com',DHI:'dhi.com',
   // Utilities / Water / Chemicals
-  AWK:'amwater.com',WTRG:'essentialutilities.com',CWT:'californiawater.com',
+  AWK:'amwater.com',WTRG:'essential.co',CWT:'californiawater.com',
   AWR:'gswater.com',XYL:'xylem.com',PNR:'pentair.com',ECL:'ecolab.com',
   APD:'airproducts.com',LIN:'linde.com',VEOEY:'veolia.com',
   // Media
-  DIS:'disney.com',CMCSA:'comcast.com',SONY:'sony.com',
+  DIS:'disney.com',CMCSA:'corporate.comcast.com',SONY:'sony.com',
   // Telecom
   VZ:'verizon.com',TMUS:'t-mobile.com',
   // Storage / Hardware
@@ -75,6 +75,24 @@ var MP_DOMAINS = {
   ASTS:'ast-science.com',
   // ETF
   SPY:'ssga.com',
+  // ── Newer coverage tickers ──
+  DDOG:'datadoghq.com',NET:'cloudflare.com',ZM:'zoom.us',DOCU:'docusign.com',
+  PINS:'pinterest.com',LYFT:'lyft.com',FDX:'fedex.com',HON:'honeywell.com',PG:'pg.com',
+  ALAB:'asteralabs.com',ANET:'arista.com',APLD:'applieddigital.com',ASML:'asml.com',
+  CLS:'celestica.com',COHR:'coherent.com',CRDO:'credosemi.com',CRWV:'coreweave.com',
+  CIEN:'ciena.com',KLAC:'kla.com',LITE:'lumentum.com',NOK:'nokia.com',SKHY:'skhynix.com',
+  ERIC:'ericsson.com',DLR:'digitalrealty.com',EQIX:'equinix.com',IRM:'ironmountain.com',
+  APP:'applovin.com',PATH:'uipath.com',SOUN:'soundhound.com',IONQ:'ionq.com',
+  RGTI:'rigetti.com',QUBT:'quantumcomputinginc.com',TEM:'tempus.com',
+  CIFR:'ciphermining.com',WULF:'terawulf.com',AFRM:'affirm.com',KLAR:'klarna.com',
+  DKNG:'draftkings.com',CVNA:'carvana.com',CELH:'celsius.com',RUM:'rumble.com',
+  SECZ:'securitize.io',BABA:'alibabagroup.com',BIDU:'baidu.com',PDD:'temu.com',
+  RKLB:'rocketlabusa.com',LUNR:'intuitivemachines.com',SPCX:'spacex.com',IRDM:'iridium.com',
+  JOBY:'jobyaviation.com',HWM:'howmet.com',BE:'bloomenergy.com',CVE:'cenovus.com',
+  SU:'suncor.com',PSX:'phillips66.com',DINO:'hfsinclair.com',ECO:'okeanisecotankers.com',
+  INSW:'intlseas.com',TNK:'teekay.com',ETN:'eaton.com',GEV:'gevernova.com',
+  FERG:'ferguson.com',FIX:'comfortsystemsusa.com',MOD:'modine.com',XPO:'xpo.com',
+  CRS:'carpentertechnology.com',BSP:'trimble.com',ISRG:'intuitive.com',T:'att.com',
 };
 
 var LOGO_COLORS = [
