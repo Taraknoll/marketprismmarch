@@ -287,6 +287,54 @@
   #tab-qfield .bcyc-note{font-size:11px;color:var(--px-ink3);line-height:1.6;margin-top:8px;}
   #tab-qfield .bcyc-note code{background:var(--px-card);border:1px solid var(--px-border);border-radius:4px;padding:1px 5px;color:var(--px-ink2);}
   @media (max-width:640px){ #tab-qfield .bcyc-node .ar{display:none;} #tab-qfield .bcyc-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));} }
+
+  /* Belief-Cycle groups are DROPDOWNS — headers always visible, card grids
+     collapsed until opened (first populated phase opens by default). */
+  #tab-qfield .bcyc-gh{cursor:pointer;transition:border-color .15s;}
+  #tab-qfield .bcyc-gh:hover{border-bottom-color:var(--mp-border-hover,rgba(255,255,255,.14));}
+  #tab-qfield .bcyc-gh:hover .gt{color:#fff;}
+  #tab-qfield .bcyc-gh .gc{font-size:11px;color:var(--px-ink3);margin-left:10px;flex:none;}
+  #tab-qfield .bcyc-group.closed{margin-bottom:10px;}
+  #tab-qfield .bcyc-group.closed .bcyc-grid{display:none;}
+
+  /* ══ Narrative Map — the day's story landscape as a mindmap ══ */
+  #tab-qfield .nmap{margin-top:30px;padding-top:24px;border-top:1px solid var(--px-border);}
+  #tab-qfield .nmap-stage{position:relative;background:#080B11;border:1px solid var(--px-border);border-radius:16px;
+    overflow:hidden;height:clamp(420px,56vh,640px);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+  #tab-qfield .nmap-stage::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,#7B61FF,#00AEFF);z-index:4;}
+  #tab-qfield #nmap-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #tab-qfield .nmap-hint{position:absolute;left:14px;bottom:10px;z-index:5;font-size:11px;letter-spacing:.04em;
+    color:rgba(255,255,255,0.38);pointer-events:none;}
+  #tab-qfield .nmap-hint b{color:rgba(255,255,255,0.62);font-weight:600;}
+  #tab-qfield .nmap-detail{display:none;position:relative;overflow:hidden;background:var(--px-card);
+    border:1px solid var(--px-border);border-radius:14px;padding:16px 18px;margin-top:12px;}
+  #tab-qfield .nmap-detail.open{display:block;}
+  #tab-qfield .nmap-detail::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--nm-accent,#00AEFF);}
+  #tab-qfield .nmap-det-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  #tab-qfield .nmap-det-title{font-size:16px;font-weight:700;color:var(--px-ink);letter-spacing:-0.01em;}
+  #tab-qfield .nmap-det-meta{font-size:11px;color:var(--px-ink3);}
+  #tab-qfield .nmap-strength{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:10px;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--px-ink3);}
+  #tab-qfield .nmap-strength-track{width:70px;height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;}
+  #tab-qfield .nmap-strength-fill{display:block;height:100%;border-radius:3px;background:var(--nm-accent,#00AEFF);}
+  #tab-qfield .nmap-strength-val{font-size:16px;font-weight:700;color:var(--px-ink);}
+  #tab-qfield .nmap-chain{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  #tab-qfield .nmap-step{flex:1 1 170px;background:var(--mp-surface2,#111927);border:1px solid var(--px-border);
+    border-radius:10px;padding:10px 12px;}
+  #tab-qfield .nmap-step-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--nm-accent,#00AEFF);margin-bottom:4px;}
+  #tab-qfield .nmap-step-txt{font-size:13px;line-height:1.5;color:var(--px-ink2);}
+  #tab-qfield .nmap-arrow{align-self:center;color:var(--nm-accent,#00AEFF);font-size:15px;flex:0 0 auto;line-height:1;}
+  #tab-qfield .nmap-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  #tab-qfield .nmap-chip{cursor:pointer;font-family:var(--font-body,'Inter',sans-serif);display:inline-flex;align-items:center;
+    gap:6px;padding:4px 11px;border-radius:16px;font-size:11px;font-weight:600;color:#fff;background:var(--px-card);
+    border:1px solid rgba(255,255,255,.14);transition:border-color .15s;}
+  #tab-qfield .nmap-chip:hover{border-color:#00AEFF;}
+  #tab-qfield .nmap-chip .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  #tab-qfield .nmap-chip.na{cursor:default;opacity:.55;}
+  #tab-qfield .nmap-chip.na:hover{border-color:rgba(255,255,255,.14);}
+  @media(max-width:700px){ #tab-qfield .nmap-arrow{display:none;} #tab-qfield .nmap-stage{height:420px;} }
 </style>
 
 <div class="tab-panel active" id="tab-qfield">
@@ -413,7 +461,25 @@
     <div id="bcyc-board"><div class="bcyc-note">Loading the cycle…</div></div>
     <div class="bcyc-note">Position is inferred from each ticker's <b>next report date</b> (Day 0 = just reported · Day 90 = reporting next).
       <b>Belief gap</b> = price vs. model fair value (<code>fvd_pct</code>); ticker colour = verdict family, matching the field above.
-      Phase boundaries <code>0 · 20 · 65 · 89 · 90</code> are tunable model constants.</div>
+      Phase boundaries <code>0 · 20 · 65 · 89 · 90</code> are tunable model constants. Click a phase header to open or close its names.</div>
+  </section>
+
+  <!-- ══ Narrative Map — today's story landscape from the clustering engine ══ -->
+  <section class="nmap" id="qf-nmap" aria-label="Narrative Map" style="display:none;">
+    <div class="bcyc-head">
+      <div>
+        <h3>Narrative Map <span>· today's story landscape</span></h3>
+        <p>Every narrative theme the clustering engine sees today, drawn as one mind — each branch sized by how many
+          tickers its story touches, coloured by story family. <b>Click a theme</b> to unfold its contagion chain
+          (anchor event → transmission → impact) and the names it touches; click a name to open its dossier in the field above.</p>
+      </div>
+      <div class="bcyc-meta" id="nmap-meta"></div>
+    </div>
+    <div class="nmap-stage" id="nmap-stage">
+      <canvas id="nmap-canvas"></canvas>
+      <div class="nmap-hint"><b>Click</b> a theme to unfold it · <b>click</b> a ticker to open its dossier · click the space to fold back</div>
+    </div>
+    <div class="nmap-detail" id="nmap-detail"></div>
   </section>
 </div>
 
@@ -509,6 +575,7 @@ function loadData(){
       if(!j || !j.stocks || !j.stocks.length) throw new Error('empty payload');
       QF_DATA=j; buildScene(); setState(null); kick();
       try{ renderBeliefCycle(j); }catch(_e){ /* never let the cycle strip break the field */ }
+      try{ renderNarrativeMap(j); }catch(_e){ /* map section is optional */ }
     })
     .catch(function(e){
       if(timer) clearTimeout(timer);
@@ -1705,6 +1772,10 @@ function renderBeliefCycle(data){
   var rows=src.map(function(s){ var c=classify(s); return {t:s.t,sec:s.sec,v:s.v,fvd:s.fvd,edays:s.edays,price:s.price,_k:c.key,_dse:c.dse,_pos:c.pos}; });
 
   var bc={phase:null, node:null};
+  // Groups are dropdowns: card grids stay hidden behind their headers until
+  // opened. The first populated phase opens by default; a phase-node click in
+  // the flow diagram opens its groups too.
+  var bcOpen={}, bcOpenInit=false;
 
   function counts(){ var c={}; ORDER.forEach(function(k){c[k]=0;}); rows.forEach(function(r){c[r._k]=(c[r._k]||0)+1;}); return c; }
   function signed(v){ if(v==null) return '—'; var n=Math.round(v); return (n>0?'+':'')+n+'%'; }
@@ -1739,7 +1810,7 @@ function renderBeliefCycle(data){
           '<div class="ft">'+uvEsc(nd.fact)+'</div><div class="ct">'+n+'<small>tickers</small></div></div><span class="ar">→</span>';
         b.onclick=function(){
           if(bc.phase&&nd.keys.indexOf(bc.phase)>=0){ bc.phase=null; bc.node=null; }
-          else { bc.phase=nd.keys[0]; bc.node=nd.keys; }
+          else { bc.phase=nd.keys[0]; bc.node=nd.keys; nd.keys.forEach(function(kk){ bcOpen[kk]=true; }); }
           draw();
         };
         flow.appendChild(b);
@@ -1754,6 +1825,13 @@ function renderBeliefCycle(data){
   function draw(){
     renderFlow();
     var clr=$id('bcyc-clear'); if(clr) clr.classList.toggle('on',!!bc.phase);
+    if(!bcOpenInit){
+      for(var oi=0;oi<ORDER.length;oi++){
+        var ok=ORDER[oi];
+        if(rows.some(function(r){ return r._k===ok; })){ bcOpen[ok]=true; break; }
+      }
+      bcOpenInit=true;
+    }
     board.innerHTML=''; var any=false;
     ORDER.forEach(function(k){
       if(bc.node&&bc.node.indexOf(k)<0) return;
@@ -1761,11 +1839,21 @@ function renderBeliefCycle(data){
       if(!list.length) return; any=true;
       list.sort(function(a,b){ var da=a._dse==null?1e9:a._dse, db=b._dse==null?1e9:b._dse; return da-db; });
       var st=STAGE[k];
-      var g=document.createElement('div'); g.className='bcyc-group'; g.style.setProperty('--gc',st.hex);
-      g.innerHTML='<div class="bcyc-gh"><span class="gd"></span><span class="gt">'+uvEsc(st.title)+'</span>'+
+      var open=!!bcOpen[k];
+      var g=document.createElement('div'); g.className='bcyc-group'+(open?'':' closed'); g.style.setProperty('--gc',st.hex);
+      g.innerHTML='<div class="bcyc-gh" role="button" aria-expanded="'+(open?'true':'false')+'"><span class="gd"></span><span class="gt">'+uvEsc(st.title)+'</span>'+
         '<span class="gday">'+st.day+'</span><span class="gs">· '+uvEsc(st.fact)+'</span>'+
-        '<span class="gn">'+list.length+' name'+(list.length===1?'':'s')+'</span></div>'+
+        '<span class="gn">'+list.length+' name'+(list.length===1?'':'s')+'</span>'+
+        '<span class="gc">'+(open?'▾ hide':'▸ show')+'</span></div>'+
         '<div class="bcyc-grid">'+list.map(card).join('')+'</div>';
+      (function(key,grp){
+        grp.querySelector('.bcyc-gh').onclick=function(){
+          bcOpen[key]=!bcOpen[key];
+          grp.classList.toggle('closed',!bcOpen[key]);
+          this.setAttribute('aria-expanded',bcOpen[key]?'true':'false');
+          this.querySelector('.gc').textContent=bcOpen[key]?'▾ hide':'▸ show';
+        };
+      })(k,g);
       board.appendChild(g);
     });
     if(!any) board.innerHTML='<div class="bcyc-note">No tickers in this view.</div>';
@@ -1783,6 +1871,232 @@ function renderBeliefCycle(data){
 
   var clr=$id('bcyc-clear'); if(clr) clr.onclick=function(){ bc.phase=null; bc.node=null; draw(); };
   draw();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NARRATIVE MAP — today's theme rollup (v_narrative_map_daily via the quant
+   feed's `nmap` block) drawn as a radial mindmap in the field's own visual
+   language. Folded: every theme branches from the day's hub, sized by ticker
+   reach. Unfolded: the chosen theme takes the center and its tickers branch
+   around it — names covered by the field open their dossier above; the strip
+   below unfolds the contagion chain (anchor event → transmission → impact).
+   Static canvas — redraws on interaction/resize only, no rAF loop.
+   ══════════════════════════════════════════════════════════════════ */
+var nmRows=[], nmSel=null, nmHover='', nmNodes=[], nmLeaves=[];
+var nmCv=null, nmCtx=null, nmStage=null, nmW=0, nmH=0, nmDPR=1, nmRect=null, nmDate='';
+function nmAccent(k){
+  if(/(^|_)ai(_|$)|fintech|software_disruption/.test(k))return '#7B61FF';
+  if(/rate|policy|regulat|geopolit|china|tariff|trade|election|currency|populist|macro/.test(k))return '#FFB800';
+  if(/earnings|company|sector_rotation|analyst|valuation/.test(k))return '#00AEFF';
+  return '#38C8B8';
+}
+function nmTitle(k){
+  return String(k||'').split('_').map(function(w){return w?w.charAt(0).toUpperCase()+w.slice(1):'';}).join(' ')
+    .replace(/\bAi\b/g,'AI').replace(/\bEv\b/g,'EV').replace(/\bUs\b/g,'US').replace(/\bGlp1\b/g,'GLP-1');
+}
+// chain stores "event -> mechanism -> impact" (several chains joined by " | ")
+function nmSteps(txt){
+  var first=String(txt||'').split(' | ')[0];
+  return first.split(/\s*(?:--+>|->|→|⟶|=>)\s*/).map(function(s){return s.trim();}).filter(Boolean).slice(0,4);
+}
+function renderNarrativeMap(data){
+  var secEl=$id('qf-nmap'); if(!secEl) return;
+  var rows=(data&&data.nmap)||[];
+  if(!rows.length){ secEl.style.display='none'; return; }
+  nmRows=rows; nmSel=null; nmHover=''; nmDate=data.date||'';
+  secEl.style.display='';
+  $id('nmap-meta').innerHTML='<b>'+rows.length+'</b> themes · '+uvEsc(nmDate);
+  nmCv=$id('nmap-canvas'); nmCtx=nmCv.getContext('2d'); nmStage=$id('nmap-stage');
+  if(!nmCv._qfWired){
+    nmCv._qfWired=1;
+    if(window.ResizeObserver) new ResizeObserver(function(){ nmResize(); nmLayout(); nmDraw(); }).observe(nmStage);
+    addEventListener('scroll',function(){ nmRect=null; },{capture:true,passive:true});
+    nmCv.addEventListener('pointerenter',function(){ nmRect=null; });
+    nmCv.addEventListener('pointermove',function(e){
+      var h=nmPick(e);
+      var key=h?(h.kind+':'+(h.kind==='theme'?h.i:h.t)):'';
+      if(key!==nmHover){ nmHover=key; nmCv.style.cursor=h?'pointer':'default'; nmDraw(); }
+    });
+    nmCv.addEventListener('pointerleave',function(){ if(nmHover){ nmHover=''; nmDraw(); } });
+    nmCv.addEventListener('click',function(e){
+      var h=nmPick(e);
+      if(h&&h.kind==='theme'){ nmSel=(nmSel===h.i?null:h.i); nmLayout(); nmDraw(); nmDetail(); return; }
+      if(h&&h.kind==='leaf'){ var s=byTicker[h.t]; if(s){ select(s); flyTo(s,480); } return; }
+      if(nmSel!=null){ nmSel=null; nmLayout(); nmDraw(); nmDetail(); }
+    });
+  }
+  nmResize(); nmLayout(); nmDraw(); nmDetail();
+}
+function nmResize(){
+  if(!nmStage||!nmCv) return;
+  nmDPR=Math.min(2,window.devicePixelRatio||1);
+  nmW=nmStage.clientWidth; nmH=nmStage.clientHeight;
+  if(!nmW||!nmH) return;
+  nmCv.width=nmW*nmDPR; nmCv.height=nmH*nmDPR;
+  nmCtx.setTransform(nmDPR,0,0,nmDPR,0,0);
+  nmRect=null;
+}
+function nmLayout(){
+  nmNodes=[]; nmLeaves=[];
+  if(!nmRows.length||!nmW||!nmH) return;
+  var cx=nmW/2, cy=nmH/2;
+  var maxN=nmRows.reduce(function(a,r){return Math.max(a,r.n||1);},1);
+  var n=nmRows.length;
+  var Rx=Math.max(120,Math.min(nmW*.38,nmW/2-110)), Ry=Math.max(90,Math.min(nmH*.36,nmH/2-70));
+  nmRows.forEach(function(r,i){
+    var a=-Math.PI/2 + i*(2*Math.PI/n);
+    var shell=(n>10&&i%2)?1.0:0.72;          // alternate shells declutter labels
+    var rad=9+Math.sqrt((r.n||1)/maxN)*17;
+    nmNodes.push({i:i,r:r,color:nmAccent(r.k),rad:rad,
+      x:cx+Math.cos(a)*Rx*shell, y:cy+Math.sin(a)*Ry*shell, ghost:false});
+  });
+  if(nmSel!=null&&nmNodes[nmSel]){
+    // unfold: the chosen theme takes the center, its tickers branch around it
+    nmNodes.forEach(function(nd){ nd.ghost=(nd.i!==nmSel); });
+    var node=nmNodes[nmSel];
+    node.x=cx; node.y=cy; node.rad=Math.max(node.rad,22);
+    var tks=node.r.tks||[];
+    var m=tks.length;
+    var LRx=Math.max(110,Math.min(nmW*.36,nmW/2-90)), LRy=Math.max(80,Math.min(nmH*.34,nmH/2-56));
+    tks.forEach(function(t,j){
+      var la=-Math.PI/2 + j*(2*Math.PI/Math.max(m,1));
+      var shell=(m>12&&j%2)?1.0:0.66;
+      var s=byTicker[t];
+      nmLeaves.push({t:t, has:!!s, color:s?s.color:'#5A6472',
+        x:cx+Math.cos(la)*LRx*shell, y:cy+Math.sin(la)*LRy*shell});
+    });
+  }
+}
+function nmPick(e){
+  if(!nmRect) nmRect=nmCv.getBoundingClientRect();
+  var mx=e.clientX-nmRect.left, my=e.clientY-nmRect.top, i;
+  for(i=0;i<nmLeaves.length;i++){
+    var L=nmLeaves[i];
+    if(Math.hypot(L.x-mx,L.y-my)<12) return {kind:'leaf',t:L.t,has:L.has};
+  }
+  for(i=0;i<nmNodes.length;i++){
+    var N=nmNodes[i];
+    if(N.ghost) continue;
+    if(Math.hypot(N.x-mx,N.y-my)<N.rad+9) return {kind:'theme',i:N.i};
+  }
+  return null;
+}
+function nmCurve(x1,y1,x2,y2,style,w){
+  var mx2=(x1+x2)/2, my2=(y1+y2)/2;
+  var dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+  nmCtx.strokeStyle=style; nmCtx.lineWidth=w||1;
+  nmCtx.beginPath(); nmCtx.moveTo(x1,y1);
+  nmCtx.quadraticCurveTo(mx2-dy/len*len*.12, my2+dx/len*len*.12, x2,y2);
+  nmCtx.stroke();
+}
+function nmDraw(){
+  if(!nmCtx||!nmW||!nmH) return;
+  var g=nmCtx, cx=nmW/2, cy=nmH/2, i;
+  g.clearRect(0,0,nmW,nmH);
+  var bg=g.createRadialGradient(cx,cy*.9,0,cx,cy*.9,Math.max(nmW,nmH)*.7);
+  bg.addColorStop(0,'#0C1220'); bg.addColorStop(.55,'#080B11'); bg.addColorStop(1,'#04060B');
+  g.fillStyle=bg; g.fillRect(0,0,nmW,nmH);
+  g.font='600 11px '+UV_FONT; g.textAlign='center';
+  var selNode=nmSel!=null?nmNodes[nmSel]:null;
+  // branches
+  if(!selNode){
+    for(i=0;i<nmNodes.length;i++){
+      var Nb=nmNodes[i];
+      nmCurve(cx,cy,Nb.x,Nb.y,hexA(Nb.color,.20),1+((Nb.r.s||0)/10)*1.4);
+    }
+  } else {
+    for(i=0;i<nmLeaves.length;i++){
+      var Lb=nmLeaves[i];
+      nmCurve(selNode.x,selNode.y,Lb.x,Lb.y,hexA(Lb.has?Lb.color:'#5A6472',.28),1);
+    }
+  }
+  // ghost themes (folded into the background while one is unfolded)
+  for(i=0;i<nmNodes.length;i++){
+    var Ng=nmNodes[i]; if(!Ng.ghost) continue;
+    g.fillStyle=hexA(Ng.color,.10);
+    g.beginPath(); g.arc(Ng.x,Ng.y,Math.max(3,Ng.rad*.45),0,7); g.fill();
+  }
+  // hub
+  if(!selNode){
+    g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=.7;
+    g.drawImage(sprite('#00AEFF'),cx-26,cy-26,52,52); g.restore();
+    g.fillStyle='#E8F1FF'; g.beginPath(); g.arc(cx,cy,5,0,7); g.fill();
+    g.fillStyle='rgba(255,255,255,.85)'; g.font='700 13px '+UV_FONT;
+    g.fillText('NARRATIVE MAP',cx,cy+24);
+    g.fillStyle='rgba(255,255,255,.45)'; g.font='600 11px '+UV_FONT;
+    g.fillText(nmDate+' · '+nmRows.length+' themes',cx,cy+40);
+  }
+  // theme nodes
+  for(i=0;i<nmNodes.length;i++){
+    var N2=nmNodes[i]; if(N2.ghost) continue;
+    var hov=(nmHover==='theme:'+N2.i);
+    g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=hov?.95:.65;
+    var gr=N2.rad*3.2;
+    g.drawImage(sprite(N2.color),N2.x-gr,N2.y-gr,gr*2,gr*2);
+    g.restore();
+    g.fillStyle=N2.color; g.beginPath(); g.arc(N2.x,N2.y,N2.rad,0,7); g.fill();
+    g.fillStyle='rgba(255,255,255,.75)';
+    g.beginPath(); g.arc(N2.x-N2.rad*.28,N2.y-N2.rad*.28,N2.rad*.32,0,7); g.fill();
+    if(hov||N2.i===nmSel){
+      g.strokeStyle='rgba(255,255,255,.85)'; g.lineWidth=1.3;
+      g.beginPath(); g.arc(N2.x,N2.y,N2.rad+4,0,7); g.stroke();
+    }
+    g.shadowColor='rgba(4,6,11,.9)'; g.shadowBlur=4;
+    g.fillStyle=hov?'#FFFFFF':'rgba(225,232,245,.9)'; g.font='600 11px '+UV_FONT;
+    g.fillText(nmTitle(N2.r.k),N2.x,N2.y+N2.rad+15);
+    g.fillStyle='rgba(255,255,255,.45)';
+    g.fillText(N2.r.n+' ticker'+(N2.r.n===1?'':'s')+' · strength '+(N2.r.s==null?'—':N2.r.s),N2.x,N2.y+N2.rad+29);
+    g.shadowBlur=0;
+  }
+  // ticker leaves
+  for(i=0;i<nmLeaves.length;i++){
+    var L2=nmLeaves[i];
+    var lhov=(nmHover==='leaf:'+L2.t);
+    if(L2.has){
+      g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=lhov?.9:.55;
+      g.drawImage(sprite(L2.color),L2.x-14,L2.y-14,28,28); g.restore();
+    }
+    g.fillStyle=L2.has?L2.color:'#5A6472';
+    g.beginPath(); g.arc(L2.x,L2.y,lhov?6:4.5,0,7); g.fill();
+    g.shadowColor='rgba(4,6,11,.9)'; g.shadowBlur=4;
+    g.fillStyle=lhov?'#FFFFFF':(L2.has?'rgba(225,232,245,.85)':'rgba(160,168,176,.6)');
+    g.fillText(L2.t,L2.x,L2.y-11);
+    g.shadowBlur=0;
+  }
+}
+function nmDetail(){
+  var det=$id('nmap-detail'); if(!det) return;
+  if(nmSel==null||!nmRows[nmSel]){ det.classList.remove('open'); det.innerHTML=''; return; }
+  var r=nmRows[nmSel], ac=nmAccent(r.k);
+  var steps=nmSteps(r.chain);
+  var stepHtml=steps.map(function(st,i){
+    var lbl=steps.length===1?'Story':(i===0?'Anchor event':(i===steps.length-1?'Impact':'Transmission'));
+    return (i>0?'<span class="nmap-arrow">→</span>':'')
+      +'<div class="nmap-step"><div class="nmap-step-lbl">'+lbl+'</div><div class="nmap-step-txt">'+uvEsc(st)+'</div></div>';
+  }).join('');
+  var chips=(r.tks||[]).map(function(t){
+    var s=byTicker[t];
+    return '<button type="button" class="nmap-chip'+(s?'':' na')+'" data-nm-tk="'+uvEsc(t)+'"'+(s?'':' title="Not in today\'s scored field"')+'>'+
+      '<span class="dot" style="background:'+(s?s.color:'#5A6472')+'"></span>'+uvEsc(t)+'</button>';
+  }).join('');
+  det.innerHTML='<div class="nmap-det-head">'
+    +'<span class="nmap-det-title">'+uvEsc(nmTitle(r.k))+'</span>'
+    +'<span class="nmap-det-meta">'+(r.c||0)+' cluster'+((r.c||0)===1?'':'s')+' · '+(r.n||0)+' tickers</span>'
+    +'<span class="nmap-strength">Chain strength<span class="nmap-strength-track"><span class="nmap-strength-fill" style="width:'+Math.max(0,Math.min(100,(r.s||0)*10))+'%"></span></span><span class="nmap-strength-val">'+(r.s==null?'—':r.s)+'</span></span>'
+    +'</div>'
+    +(stepHtml?'<div class="nmap-chain">'+stepHtml+'</div>':'')
+    +(chips?'<div class="nmap-chips">'+chips+'</div>':'');
+  det.style.setProperty('--nm-accent',ac);
+  det.classList.add('open');
+  if(!det._qfWired){
+    det._qfWired=1;
+    det.addEventListener('click',function(e){
+      var b=e.target&&e.target.closest?e.target.closest('[data-nm-tk]'):null;
+      if(!b) return;
+      var s=byTicker[b.getAttribute('data-nm-tk')];
+      if(s){ select(s); flyTo(s,480); }
+    });
+  }
 }
 })();
 </script>

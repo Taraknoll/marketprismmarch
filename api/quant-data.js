@@ -195,6 +195,38 @@ module.exports = async (req, res) => {
       ]);
     }
 
+    // ── quant-only extension (NOT part of the universe-data mirror): the
+    // Narrative Map theme rollup (v_narrative_map_daily — narrative_clusters
+    // per theme/day) powers the terminal's mindmap section. Non-fatal.
+    let nmap = [];
+    try {
+      const nmapRows = await fetchAll(
+        rest + 'v_narrative_map_daily?select=snapshot_date,theme_key,clusters,max_strength,avg_strength,top_chain,tickers,ticker_count&order=snapshot_date.desc,ticker_count.desc&limit=40',
+        headers, 1000);
+      if (nmapRows.length) {
+        const nday = nmapRows[0].snapshot_date;
+        const parseTks = (v) => {
+          let a = v;
+          if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_e) { a = []; } }
+          if (!Array.isArray(a)) return [];
+          return a.map((t) => String(t || '').toUpperCase().trim())
+            .filter((t) => t && !dropTicker(t)).slice(0, 40);
+        };
+        nmap = nmapRows
+          .filter((r) => r.snapshot_date === nday && Number(r.ticker_count) > 0)
+          .map((r) => ({
+            k: String(r.theme_key || ''),
+            n: Number(r.ticker_count) || 0,
+            c: Number(r.clusters) || 0,
+            s: num(r.max_strength, 1),
+            sa: num(r.avg_strength, 1),
+            chain: String(r.top_chain || '').slice(0, 500),
+            tks: parseTks(r.tickers)
+          }))
+          .filter((r) => r.k);
+      }
+    } catch (_e) { nmap = []; }
+
     const stocks = [];
     for (const r of today) {
       if (dropTicker(r.ticker)) continue;
@@ -235,7 +267,7 @@ module.exports = async (req, res) => {
 
     // Gated response — never CDN-cache it.
     res.setHeader('Cache-Control', 'private, no-store');
-    return sendJson(res, 200, { date, days, count: stocks.length, stocks });
+    return sendJson(res, 200, { date, days, count: stocks.length, stocks, nmap });
   } catch (error) {
     if (error && error.detail !== undefined) {
       return sendJson(res, 502, { error: error.message, status: error.status, detail: error.detail });
