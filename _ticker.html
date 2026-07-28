@@ -6348,8 +6348,17 @@ async function fetchPriceSeries(ticker, days) {
     if (!res.ok) return [];
     const j = await res.json();
     if (!j || !Array.isArray(j.series)) return [];
+    // Carry the full OHLC bar. Chart callers only read snapshot_date/price_close,
+    // but the 90-day average intraday range needs each session's own high/low —
+    // dropping them here silently starved it (every bar scored as invalid).
     return j.series.map(function (r) {
-      return { snapshot_date: r.snapshot_date, price_close: r.price_close };
+      return {
+        snapshot_date: r.snapshot_date,
+        price_close: r.price_close,
+        price_open: r.price_open,
+        price_high: r.price_high,
+        price_low: r.price_low
+      };
     });
   } catch (_) { return []; }
 }
