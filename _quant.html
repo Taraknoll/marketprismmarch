@@ -53,13 +53,7 @@ a{color:var(--mp-cyan);}
 .mq-date{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-tertiary);
   border:1px solid var(--mp-border);border-radius:20px;padding:5px 12px;font-variant-numeric:tabular-nums;}
 .mq-date b{color:var(--mp-text-secondary);font-weight:600;}
-.mq-tabs{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;}
-.mq-tab{cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:600;letter-spacing:.02em;
-  color:var(--mp-text-secondary);background:var(--mp-surface);border:1px solid var(--mp-border);
-  border-radius:10px;padding:9px 16px;transition:border-color .15s,color .15s,background .15s;}
-.mq-tab:hover{border-color:var(--mp-border-hover);color:#fff;}
-.mq-tab.active{color:#04121C;background:var(--mp-cyan);border-color:var(--mp-cyan);}
-.mq-lock{cursor:pointer;font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.06em;
+.mq-lock{margin-left:auto;cursor:pointer;font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.06em;
   text-transform:uppercase;color:var(--mp-text-tertiary);background:none;border:1px solid var(--mp-border);
   border-radius:10px;padding:9px 14px;transition:border-color .15s,color .15s;}
 .mq-lock:hover{border-color:var(--mp-red);color:var(--mp-red);}
@@ -69,11 +63,9 @@ a{color:var(--mp-cyan);}
 .tab-panel.active{display:block;animation:mq-in .35s ease both;}
 @keyframes mq-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
-/* This surface is an evaluation terminal, not the product app — the partials'
-   "View full report" buttons lead to the login wall, so they stay hidden here. */
-#uvd-view,#pxd-view{display:none !important;}
-#tab-prism .bcyc-c{cursor:default;}
-#tab-prism .bcyc-c:hover .tk{text-decoration:none;}
+/* This surface is an evaluation terminal, not the product app — the partial's
+   "View full report" button leads to the login wall, so it stays hidden here. */
+#uvd-view{display:none !important;}
 
 .mq-foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--mp-border);
   display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline;}
@@ -197,16 +189,11 @@ window.__MQ = { authed: false };
     </span>
     <span class="mq-badge">Live Feed</span>
     <span class="mq-date" id="mq-date">connecting…</span>
-    <nav class="mq-tabs" role="tablist" aria-label="Views">
-      <button class="mq-tab active" id="mq-tab-prism" data-tab="prism" role="tab" aria-selected="true">Market Physics</button>
-      <button class="mq-tab" id="mq-tab-universe" data-tab="universe" role="tab" aria-selected="false">Narrative Universe</button>
-    </nav>
     <button class="mq-lock" id="mq-lock" title="End this session">Lock</button>
   </header>
 
   <main>
-    <!-- PHYSICS_TAB_INJECT -->
-    <!-- UNIVERSE_TAB_INJECT -->
+    <!-- QUANT_FIELD_INJECT -->
   </main>
 
   <footer class="mq-foot">
@@ -219,23 +206,10 @@ window.__MQ = { authed: false };
 <script>
 (function(){
 'use strict';
-/* ═══ Minimal shell: the tab contract the injected partials expect ═══
-   (same API surface as the dashboard: onTabSwitch / switchTab / lazy init) */
+/* ═══ Minimal shell: single always-active view. onTabSwitch is kept as a
+   no-op registry because the injected partial guards on its existence. ═══ */
 var _tabHooks = [];
 window.onTabSwitch = function(fn){ if (typeof fn === 'function') _tabHooks.push(fn); };
-window.switchTab = function(id){
-  ['prism','universe'].forEach(function(t){
-    var el = document.getElementById('tab-' + t);
-    if (el) el.classList.toggle('active', t === id);
-    var btn = document.getElementById('mq-tab-' + t);
-    if (btn) { btn.classList.toggle('active', t === id); btn.setAttribute('aria-selected', t === id ? 'true' : 'false'); }
-  });
-  if (id === 'prism'    && typeof window.prismInit === 'function') setTimeout(window.prismInit, 50);
-  if (id === 'universe' && typeof window.uvInit    === 'function') setTimeout(window.uvInit, 50);
-  for (var h = 0; h < _tabHooks.length; h++) { try { _tabHooks[h](id); } catch(e) { console.warn('Tab hook error:', e); } }
-};
-document.getElementById('mq-tab-prism').onclick    = function(){ window.switchTab('prism'); };
-document.getElementById('mq-tab-universe').onclick = function(){ window.switchTab('universe'); };
 
 /* ── header date chip (stamped by the fetch choke point in <head>) ── */
 window.__mqStampDate = function(date, count){
@@ -319,15 +293,11 @@ function boot(){
     booted = true;
     lqInstallObserver();
     try { fetch('/api/live-quotes-batch?tickers=SPY', {cache:'no-store'}).catch(function(){}); } catch(_e){}
-    var initial = 'prism';
-    try { if (new URLSearchParams(location.search).get('tab') === 'universe') initial = 'universe'; } catch(_e){}
-    window.switchTab(initial);
+    if (typeof window.qfInit === 'function') setTimeout(window.qfInit, 50);
   } else {
-    // Re-auth mid-session: retry any tab that errored while locked out.
-    ['px-retry','uv-retry'].forEach(function(id){
-      var b = document.getElementById(id);
-      if (b) { try { b.click(); } catch(_e){} }
-    });
+    // Re-auth mid-session: retry a load that errored while locked out.
+    var b = document.getElementById('px-retry');
+    if (b) { try { b.click(); } catch(_e){} }
   }
 }
 window.__mqRelock = function(reason){

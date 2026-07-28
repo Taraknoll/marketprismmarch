@@ -424,7 +424,7 @@
       "includeFiles": "{_forensic.html,lib/**}"
     },
     "api/quant.js": {
-      "includeFiles": "{_quant.html,_universe_tab.html,_physics_tab.html}"
+      "includeFiles": "{_quant.html,_quant_field.html}"
     },
     "api/forensic-data.js": {
       "maxDuration": 30

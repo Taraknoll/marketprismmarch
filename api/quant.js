@@ -1,9 +1,10 @@
 // /quant — standalone, access-code-gated quant terminal (institutional
-// evaluation surface). Serves _quant.html with the SAME production tab
-// partials the dashboard uses (Market Physics + Narrative Universe), so the
-// terminal always matches the product view. The shell contains no data and
-// no Supabase keys: everything flows through /api/quant-data, which requires
-// the mq_session access-code cookie (see api/_require-quant.js).
+// evaluation surface). Serves _quant.html with _quant_field.html — ONE merged
+// view: the Market Physics earnings-wall scene wearing the Narrative
+// Universe's full interaction layer (dossier/radar/story/compare/feed), with
+// the Belief Cycle below. The shell contains no data and no Supabase keys:
+// everything flows through /api/quant-data, which requires the mq_session
+// access-code cookie (see api/_require-quant.js).
 //
 // The shell itself is served ungated — it is markup + the gate overlay. If
 // the request already carries a valid quant cookie, __MQ.authed is flipped so
@@ -18,20 +19,13 @@ module.exports = async (req, res) => {
   try {
     let html = resolveTemplate('_quant.html');
 
-    // Inject Market Physics tab partial (shared with the dashboard)
+    // Inject the merged quant field (earnings-wall scene + full Universe
+    // interaction layer + Belief Cycle) — the terminal's single view.
     try {
-      const pxTab = resolveTemplate('_physics_tab.html');
-      html = html.replace('<!-- PHYSICS_TAB_INJECT -->', function () { return pxTab; });
+      const qfView = resolveTemplate('_quant_field.html');
+      html = html.replace('<!-- QUANT_FIELD_INJECT -->', function () { return qfView; });
     } catch (e) {
-      console.warn('Physics tab not found:', e.message);
-    }
-
-    // Inject Narrative Universe tab partial (shared with the dashboard)
-    try {
-      const uvTab = resolveTemplate('_universe_tab.html');
-      html = html.replace('<!-- UNIVERSE_TAB_INJECT -->', function () { return uvTab; });
-    } catch (e) {
-      console.warn('Universe tab not found:', e.message);
+      console.warn('Quant field not found:', e.message);
     }
 
     if (quant.isAuthed(req)) {
