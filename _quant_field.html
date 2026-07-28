@@ -1274,10 +1274,33 @@ function select(s){
     kvRow('coordination', s.coord!=null? s.coord+(s.coordCls?' · '+s.coordCls.split('_').join(' ').toLowerCase():'') : null) +
     kvRow('tape anomaly', (s.susp==null?'—':s.susp)+(s.suspCls?' · '+s.suspCls.split('_').join(' ').toLowerCase():'')) +
     kvRow('narrative risk', s.nrs);
-  $id('uvd-syn').textContent=s.syn||'No synopsis recorded for this snapshot.';
+  qfSyn(s);
   $id('uvd-story').style.display = storyTrail(s).length>=3 ? '' : 'none';
   syncWatchBtn();
   drawRadar(s);
+}
+// Narrative read: show the snapshot synopsis instantly, then swap in the same
+// Claude hero narrative the ticker pages show in their header
+// (/api/hero-summary — edge-cached 30 min, rate-limited, no login gate).
+// Cached per ticker for the page's lifetime; thin-coverage tickers ('' reply)
+// keep the snapshot synopsis.
+var qfHero={};
+function qfSyn(s){
+  var el=$id('uvd-syn'); if(!el) return;
+  var fallback=s.syn||'No synopsis recorded for this snapshot.';
+  var hero=qfHero[s.t];
+  if(typeof hero==='string'){ el.textContent=hero||fallback; return; }
+  el.textContent=fallback;
+  if(hero===null) return;                      // fetch already in flight
+  qfHero[s.t]=null;
+  fetch('/api/hero-summary?ticker='+encodeURIComponent(s.t))
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(j){
+      var txt=(j&&j.summary)?String(j.summary).replace(/\s+/g,' ').trim():'';
+      qfHero[s.t]=txt;
+      if(selected===s&&txt) el.textContent=txt;
+    })
+    .catch(function(){ delete qfHero[s.t]; });   // transient — retry next open
 }
 function closeDossier(){
   selected=null; $id('uv-dossier').classList.remove('open');

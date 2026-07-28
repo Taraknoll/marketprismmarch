@@ -46,6 +46,18 @@ const num = (v, dp) => {
   return Math.round(f * m) / m;
 };
 
+// Quant-only divergence from the universe-data mirror: the terminal's dossier
+// renders the synopsis as prose (and swaps in the ticker page's hero summary
+// async), so cut at a sentence boundary within 600 chars instead of the tab's
+// hard mid-word 200-char slice.
+const cleanSyn = (v) => {
+  const t = String(v || '').trim();
+  if (t.length <= 600) return t;
+  const cut = t.slice(0, 600);
+  const i = cut.lastIndexOf('. ');
+  return i > 250 ? cut.slice(0, i + 1) : cut + '…';
+};
+
 // Exhaustion level 0..1 — composite of the engine's own exhaustion outputs.
 // Mirrors universe-data.js exactly so the two surfaces agree.
 function exhaustLevel(st, conf, regime, verdict) {
@@ -260,7 +272,7 @@ module.exports = async (req, res) => {
         streak: num(r.mass_streak_days, 0),
         exst: r.exhaustion_status || null,
         exh: exhaustLevel(r.exhaustion_status, num(r.exhaustion_confidence), r.walsh_regime, r.verdict),
-        syn: (r.synopsis || '').trim().slice(0, 200),
+        syn: cleanSyn(r.synopsis),
         trail: trails[r.ticker] || []
       });
     }
