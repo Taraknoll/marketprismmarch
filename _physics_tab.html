@@ -210,12 +210,16 @@
   #tab-prism .bcyc-gh .gs{font-size:11.5px;color:var(--px-ink3);}
   #tab-prism .bcyc-gh .gn{margin-left:auto;font-size:11px;color:var(--px-ink3);font-weight:600;font-variant-numeric:tabular-nums;}
   #tab-prism .bcyc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:10px;}
-  #tab-prism .bcyc-c{position:relative;background:var(--px-card);border:1px solid var(--px-border);border-top:2px solid var(--cc);
-    border-radius:11px;padding:11px 12px;transition:transform .14s,border-color .14s;}
-  #tab-prism .bcyc-c:hover{transform:translateY(-2px);border-color:var(--mp-border-hover,rgba(255,255,255,.14));}
+  #tab-prism .bcyc-c{display:block;text-decoration:none;color:var(--px-ink2);position:relative;background:var(--px-card);border:1px solid var(--px-border);border-top:2px solid var(--cc);
+    border-radius:11px;padding:11px 12px;transition:transform .14s,border-color .14s,box-shadow .14s;}
+  #tab-prism .bcyc-c:hover{transform:translateY(-2px);border-color:var(--mp-border-hover,rgba(255,255,255,.14));box-shadow:0 8px 20px rgba(0,0,0,.35);}
   #tab-prism .bcyc-c .r1{display:flex;align-items:baseline;justify-content:space-between;gap:6px;}
   #tab-prism .bcyc-c .tk{font-size:16px;font-weight:800;letter-spacing:-.01em;}
+  #tab-prism .bcyc-c:hover .tk{text-decoration:underline;text-underline-offset:2px;}
   #tab-prism .bcyc-c .db{font-size:10px;font-weight:700;color:var(--cc);background:color-mix(in srgb,var(--cc) 15%,transparent);border-radius:5px;padding:2px 6px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  #tab-prism .bcyc-c .pxr{display:flex;align-items:baseline;gap:7px;margin:6px 0 0;min-height:19px;}
+  #tab-prism .bcyc-c .px{font-size:16px;font-weight:800;color:var(--px-ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  #tab-prism .bcyc-c .pxc{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--px-ink3);}
   #tab-prism .bcyc-c .sub{font-size:11px;color:var(--px-ink3);margin:3px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   #tab-prism .bcyc-c .mini{margin:9px 0 8px;position:relative;height:6px;border-radius:4px;overflow:hidden;display:flex;}
   #tab-prism .bcyc-c .mini span{height:100%;}
@@ -1248,18 +1252,26 @@ function renderBeliefCycle(data){
   function signed(v){ if(v==null) return '—'; var n=Math.round(v); return (n>0?'+':'')+n+'%'; }
   function bgCls(v){ if(v==null) return 'mut'; if(v>2) return 'str'; if(v<-2) return 'dis'; return 'mut'; }
 
+  function fmtPx(p){ if(p==null) return ''; return (typeof window!=='undefined'&&typeof window._fmtLivePrice==='function')?window._fmtLivePrice(p):('$'+Number(p).toFixed(2)); }
   function card(r){
     var st=STAGE[r._k]||STAGE.UNKNOWN;
     var col=(typeof famOf==='function'&&r.v)?famOf(r.v).color:st.hex;
     var dband=r._dse==null?'—':'Day '+r._dse;
     var rp=(r._k==='RESYNC_PRE')?'reports ≤2d':(r.edays==null?'unscheduled':'reports in '+r.edays+'d');
-    return '<div class="bcyc-c" style="--cc:'+st.hex+'">'+
+    var enc=encodeURIComponent(r.t);
+    // Whole card links to the ticker's Stock Forensics deep-dive. Live price +
+    // day change fill from the parent template's shared /api/live-quotes-batch
+    // (Massive) pass via the data-live-* hooks — its MutationObserver catches
+    // these cells on render; the snapshot price seeds the cell so no empty flash.
+    return '<a class="bcyc-c" href="/ticker/'+enc+'" style="--cc:'+st.hex+'">'+
       '<div class="r1"><span class="tk" style="color:'+col+'">'+uvEsc(r.t)+'</span><span class="db">'+dband+'</span></div>'+
+      '<div class="pxr"><span class="px" data-live-price="'+uvEsc(r.t)+'">'+fmtPx(r.price)+'</span>'+
+        '<span class="pxc" data-live-change="'+uvEsc(r.t)+'"></span></div>'+
       '<div class="sub">'+uvEsc(r.sec||'—')+(r.v?' · '+uvEsc(r.v):'')+'</div>'+
       '<div class="mini">'+bands()+'<span class="pin" style="left:'+(r._pos*100).toFixed(1)+'%"></span></div>'+
       '<div class="r2"><span class="bg '+bgCls(r.fvd)+'">'+signed(r.fvd)+' <span class="k">belief</span></span>'+
         '<span class="rp">'+rp+'</span></div>'+
-    '</div>';
+    '</a>';
   }
 
   function renderFlow(){
@@ -1303,6 +1315,11 @@ function renderBeliefCycle(data){
       board.appendChild(g);
     });
     if(!any) board.innerHTML='<div class="bcyc-note">No tickers in this view.</div>';
+    // Nudge the parent template's shared live-price pass to fill the new
+    // data-live-price / data-live-change cells now (its MutationObserver also
+    // catches them, but kicking here fills prices without waiting for the tick).
+    try{ if(typeof window._liveQuotesKick==='function') window._liveQuotesKick();
+         else if(typeof window.liveQuotesRefreshDaily==='function') window.liveQuotesRefreshDaily(); }catch(_e){}
   }
 
   var clr=$id('bcyc-clear'); if(clr) clr.onclick=function(){ bc.phase=null; bc.node=null; draw(); };
