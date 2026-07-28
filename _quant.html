@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quant Terminal — Market Prism™</title>
+<meta name="description" content="Market Prism institutional quant terminal — access-controlled evaluation surface.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --mp-obsidian:#080B11;
+  --mp-deep:#0C0D14;
+  --mp-surface:#0C1018;
+  --mp-surface2:#111927;
+  --mp-border:rgba(255,255,255,0.06);
+  --mp-border-mid:rgba(255,255,255,0.10);
+  --mp-border-hover:rgba(255,255,255,0.14);
+  --mp-blue:#00AEFF;
+  --mp-blue-glow:rgba(0,174,255,0.08);
+  --mp-cyan:#00AEFF;
+  --mp-teal:#00DE94;
+  --mp-violet:#7B61FF;
+  --mp-red:#FF4D4D;
+  --mp-amber:#FFB800;
+  --mp-text-primary:#F5F7FA;
+  --mp-text-secondary:#D1D5DB;
+  --mp-text-tertiary:#9CA3AF;
+  --mp-text-muted:rgba(255,255,255,0.40);
+  --font-display:'Inter','DM Sans',system-ui,sans-serif;
+  --font-body:'Inter','DM Sans',system-ui,sans-serif;
+}
+html{background:var(--mp-obsidian);}
+body{background:var(--mp-obsidian);color:var(--mp-text-primary);font-family:var(--font-body);
+  min-height:100vh;-webkit-font-smoothing:antialiased;}
+a{color:var(--mp-cyan);}
+::selection{background:rgba(0,174,255,0.30);}
+
+/* ── page chrome ── */
+.mq-wrap{max-width:1560px;margin:0 auto;padding:0 24px 40px;}
+.mq-topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 0 14px;
+  border-bottom:1px solid var(--mp-border);margin-bottom:20px;}
+.mq-brand{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.mq-brand img{height:26px;width:auto;display:block;}
+.mq-brand .div{width:1px;height:22px;background:var(--mp-border-mid);}
+.mq-brand .nm{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-primary);}
+.mq-badge{font-size:10px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:#04121C;
+  background:var(--mp-cyan);border-radius:5px;padding:3px 8px;}
+.mq-date{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-tertiary);
+  border:1px solid var(--mp-border);border-radius:20px;padding:5px 12px;font-variant-numeric:tabular-nums;}
+.mq-date b{color:var(--mp-text-secondary);font-weight:600;}
+.mq-tabs{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;}
+.mq-tab{cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:600;letter-spacing:.02em;
+  color:var(--mp-text-secondary);background:var(--mp-surface);border:1px solid var(--mp-border);
+  border-radius:10px;padding:9px 16px;transition:border-color .15s,color .15s,background .15s;}
+.mq-tab:hover{border-color:var(--mp-border-hover);color:#fff;}
+.mq-tab.active{color:#04121C;background:var(--mp-cyan);border-color:var(--mp-cyan);}
+.mq-lock{cursor:pointer;font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--mp-text-tertiary);background:none;border:1px solid var(--mp-border);
+  border-radius:10px;padding:9px 14px;transition:border-color .15s,color .15s;}
+.mq-lock:hover{border-color:var(--mp-red);color:var(--mp-red);}
+
+/* tab panels (contract the injected partials rely on) */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:mq-in .35s ease both;}
+@keyframes mq-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* This surface is an evaluation terminal, not the product app — the partials'
+   "View full report" buttons lead to the login wall, so they stay hidden here. */
+#uvd-view,#pxd-view{display:none !important;}
+#tab-prism .bcyc-c{cursor:default;}
+#tab-prism .bcyc-c:hover .tk{text-decoration:none;}
+
+.mq-foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--mp-border);
+  display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline;}
+.mq-foot p{font-size:11px;color:var(--mp-text-muted);line-height:1.6;}
+.mq-foot b{color:var(--mp-text-tertiary);font-weight:600;letter-spacing:.06em;}
+
+/* ── access gate ── */
+#mq-gate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:var(--mp-obsidian);opacity:1;visibility:visible;
+  transition:opacity .45s ease,visibility 0s linear 0s;}
+#mq-gate::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 70% 55% at 50% 40%,black 20%,transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 40%,black 20%,transparent 100%);}
+#mq-gate::after{content:'';position:absolute;top:-30%;left:50%;transform:translateX(-50%);
+  width:70vw;height:70vw;pointer-events:none;
+  background:radial-gradient(circle,rgba(0,174,255,0.05) 0%,transparent 65%);}
+body.mq-open #mq-gate{opacity:0;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .45s;}
+.mq-card{position:relative;z-index:2;width:min(420px,100%);background:var(--mp-surface);
+  border:1px solid var(--mp-border);border-radius:16px;padding:36px 34px 28px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));overflow:hidden;}
+.mq-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,#00AEFF,#7B61FF);}
+.mq-card img{height:30px;width:auto;display:block;margin-bottom:22px;}
+.mq-eyebrow{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#4DC8F0;margin-bottom:8px;}
+.mq-card h1{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:-0.025em;
+  color:var(--mp-text-primary);margin-bottom:10px;}
+.mq-card .sub{font-size:13px;line-height:1.6;color:var(--mp-text-tertiary);margin-bottom:24px;}
+.mq-field{display:flex;gap:8px;}
+#mq-code{flex:1;min-width:0;height:44px;font-family:var(--font-body);font-size:16px;font-weight:600;
+  letter-spacing:.08em;color:var(--mp-text-primary);background:var(--mp-obsidian);
+  border:1px solid var(--mp-border-mid);border-radius:10px;padding:0 14px;outline:none;
+  text-transform:uppercase;}
+#mq-code::placeholder{color:var(--mp-text-muted);font-weight:400;letter-spacing:.02em;text-transform:none;}
+#mq-code:focus-visible{border-color:var(--mp-cyan);box-shadow:0 0 0 1px var(--mp-cyan);}
+#mq-enter{cursor:pointer;height:44px;font-family:var(--font-body);font-size:13px;font-weight:700;
+  letter-spacing:.04em;color:#04121C;background:var(--mp-cyan);border:none;border-radius:10px;
+  padding:0 20px;transition:filter .15s;}
+#mq-enter:hover{filter:brightness(1.12);}
+#mq-enter:disabled{opacity:.55;cursor:wait;filter:none;}
+#mq-err{min-height:20px;margin-top:12px;font-size:13px;font-weight:500;color:var(--mp-red);}
+.mq-note{margin-top:18px;padding-top:16px;border-top:1px solid var(--mp-border);
+  font-size:11px;line-height:1.6;color:var(--mp-text-muted);}
+.mq-note a{color:var(--mp-text-tertiary);text-decoration:none;}
+.mq-note a:hover{color:var(--mp-cyan);}
+.mq-shake{animation:mq-shake .4s ease;}
+@keyframes mq-shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}
+  40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+
+@media(max-width:767px){
+  .mq-wrap{padding:0 14px 32px;}
+  .mq-tabs{margin-left:0;width:100%;}
+  .mq-tab{flex:1;text-align:center;}
+  .mq-card{padding:28px 22px 22px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .tab-panel.active{animation:none;}
+  .mq-shake{animation:none;}
+}
+</style>
+<script>
+window.__MQ = { authed: false };
+// The injected tab partials fetch '/api/universe-data' (the product's
+// login-gated endpoint). On this surface every data read is re-pointed at the
+// access-code-gated twin, /api/quant-data — the mq_session cookie rides along
+// automatically. The same choke point feeds the header date chip and re-arms
+// the gate if the session expires mid-visit.
+(function(){
+  var _f = window.fetch.bind(window);
+  window.fetch = function(input, init){
+    var url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (!/^\/api\/universe-data(\?|$)/.test(url)) return _f(input, init);
+    var q = url.indexOf('?') >= 0 ? url.slice(url.indexOf('?')) : '';
+    return _f('/api/quant-data' + q, init).then(function(r){
+      if (r && r.status === 401 && typeof window.__mqRelock === 'function') window.__mqRelock('expired');
+      if (r && r.ok) {
+        try {
+          r.clone().json().then(function(j){
+            if (j && j.date && typeof window.__mqStampDate === 'function') window.__mqStampDate(j.date, j.count);
+          }).catch(function(){});
+        } catch(_e){}
+      }
+      return r;
+    });
+  };
+})();
+</script>
+</head>
+<body>
+
+<!-- ── access gate ── -->
+<div id="mq-gate" role="dialog" aria-modal="true" aria-label="Access code required">
+  <div class="mq-card" id="mq-card">
+    <img src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+    <div class="mq-eyebrow">Institutional Evaluation</div>
+    <h1>Quant Terminal</h1>
+    <p class="sub">The live narrative-physics field — every tracked ticker, scored ~6×/day
+      by the Market Prism forensic engine. Enter your access code to continue.</p>
+    <div class="mq-field">
+      <input id="mq-code" type="password" placeholder="Access code" autocomplete="off"
+        spellcheck="false" aria-label="Access code">
+      <button id="mq-enter" type="button">Unlock</button>
+    </div>
+    <div id="mq-err" aria-live="polite"></div>
+    <div class="mq-note">Provided solely for evaluation under the terms of your agreement.
+      Forensic measurement layer — narrative structure, not investment advice.
+      Patent pending 63/971,470 · 63/971,478.<br>
+      Questions · <a href="mailto:founder@marketprism.co">founder@marketprism.co</a></div>
+  </div>
+</div>
+
+<!-- ── terminal ── -->
+<div class="mq-wrap">
+  <header class="mq-topbar">
+    <span class="mq-brand">
+      <img src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+      <span class="div"></span>
+      <span class="nm">Quant Terminal</span>
+    </span>
+    <span class="mq-badge">Live Feed</span>
+    <span class="mq-date" id="mq-date">connecting…</span>
+    <nav class="mq-tabs" role="tablist" aria-label="Views">
+      <button class="mq-tab active" id="mq-tab-prism" data-tab="prism" role="tab" aria-selected="true">Market Physics</button>
+      <button class="mq-tab" id="mq-tab-universe" data-tab="universe" role="tab" aria-selected="false">Narrative Universe</button>
+    </nav>
+    <button class="mq-lock" id="mq-lock" title="End this session">Lock</button>
+  </header>
+
+  <main>
+    <!-- PHYSICS_TAB_INJECT -->
+    <!-- UNIVERSE_TAB_INJECT -->
+  </main>
+
+  <footer class="mq-foot">
+    <p><b>CONFIDENTIAL</b> — provided for institutional evaluation only. Not investment advice;
+      the platform is a forensic measurement layer over public narratives and SEC filings.</p>
+    <p>© Market Prism™ · marketprism.co · Patent pending 63/971,470 &amp; 63/971,478</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ═══ Minimal shell: the tab contract the injected partials expect ═══
+   (same API surface as the dashboard: onTabSwitch / switchTab / lazy init) */
+var _tabHooks = [];
+window.onTabSwitch = function(fn){ if (typeof fn === 'function') _tabHooks.push(fn); };
+window.switchTab = function(id){
+  ['prism','universe'].forEach(function(t){
+    var el = document.getElementById('tab-' + t);
+    if (el) el.classList.toggle('active', t === id);
+    var btn = document.getElementById('mq-tab-' + t);
+    if (btn) { btn.classList.toggle('active', t === id); btn.setAttribute('aria-selected', t === id ? 'true' : 'false'); }
+  });
+  if (id === 'prism'    && typeof window.prismInit === 'function') setTimeout(window.prismInit, 50);
+  if (id === 'universe' && typeof window.uvInit    === 'function') setTimeout(window.uvInit, 50);
+  for (var h = 0; h < _tabHooks.length; h++) { try { _tabHooks[h](id); } catch(e) { console.warn('Tab hook error:', e); } }
+};
+document.getElementById('mq-tab-prism').onclick    = function(){ window.switchTab('prism'); };
+document.getElementById('mq-tab-universe').onclick = function(){ window.switchTab('universe'); };
+
+/* ── header date chip (stamped by the fetch choke point in <head>) ── */
+window.__mqStampDate = function(date, count){
+  var el = document.getElementById('mq-date');
+  if (el) el.innerHTML = '<b>' + String(date).replace(/[<>&]/g,'') + '</b> · ' + (count || 0) + ' tickers';
+};
+
+/* ── live quotes (compact port of the dashboard's data-live-price system) ──
+   The partials tag price cells with data-live-price / data-live-change and
+   call window._liveQuotesKick() after renders; quotes come from the shared
+   /api/live-quotes-batch endpoint. One kick per render — no polling cadence. */
+var _lqInFlight = false, _lqPending = false, _lqObserver = null;
+function _fmtLivePrice(p){
+  if (p == null) return '';
+  if (p >= 1000) return '$' + p.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (p >= 100) return '$' + p.toFixed(2);
+  return '$' + p.toFixed(3);
+}
+window._fmtLivePrice = _fmtLivePrice;
+function lqRefresh(){
+  if (_lqInFlight) return;
+  var els = document.querySelectorAll('[data-live-price]');
+  if (!els.length) return;
+  var set = {};
+  els.forEach(function(el){ var t = el.getAttribute('data-live-price'); if (t) set[t] = true; });
+  var list = Object.keys(set);
+  if (!list.length) return;
+  _lqInFlight = true;
+  fetch('/api/live-quotes-batch?tickers=' + encodeURIComponent(list.join(',')))
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      var quotes = (data && data.quotes) || {};
+      if (!Object.keys(quotes).length) return;
+      window.__LIVE_QUOTES_CACHE = quotes;
+      document.querySelectorAll('[data-live-price]').forEach(function(el){
+        var q = quotes[el.getAttribute('data-live-price')];
+        if (q && q.price != null) el.textContent = _fmtLivePrice(q.price);
+      });
+      document.querySelectorAll('[data-live-change]').forEach(function(el){
+        var q = quotes[el.getAttribute('data-live-change')];
+        if (!q || q.changePct == null) return;
+        el.textContent = (q.changePct > 0 ? '+' : '') + q.changePct.toFixed(2) + '%';
+        el.style.color = q.changePct >= 0 ? '#00DE94' : '#FF4D4D';
+      });
+    })
+    .catch(function(){})
+    .then(function(){ _lqInFlight = false; });
+}
+window._liveQuotesKick = function(){
+  if (_lqPending) return;
+  _lqPending = true;
+  setTimeout(function(){ _lqPending = false; lqRefresh(); }, 300);
+};
+function lqInstallObserver(){
+  if (_lqObserver || !window.MutationObserver) return;
+  _lqObserver = new MutationObserver(function(muts){
+    for (var i = 0; i < muts.length; i++){
+      var m = muts[i];
+      for (var j = 0; j < m.addedNodes.length; j++){
+        var n = m.addedNodes[j];
+        if (n.nodeType !== 1) continue;
+        if (n.hasAttribute && n.hasAttribute('data-live-price')) { window._liveQuotesKick(); return; }
+        if (n.querySelector && n.querySelector('[data-live-price]')) { window._liveQuotesKick(); return; }
+      }
+    }
+  });
+  _lqObserver.observe(document.body, {childList:true, subtree:true});
+}
+
+/* ── keep evaluation traffic on this page: the deep-dive app is login-walled ── */
+document.addEventListener('click', function(e){
+  var a = e.target && e.target.closest ? e.target.closest('a[href^="/ticker/"]') : null;
+  if (a) e.preventDefault();
+}, true);
+
+/* ── gate ── */
+var booted = false;
+function boot(){
+  document.body.classList.add('mq-open');
+  if (!booted){
+    booted = true;
+    lqInstallObserver();
+    try { fetch('/api/live-quotes-batch?tickers=SPY', {cache:'no-store'}).catch(function(){}); } catch(_e){}
+    var initial = 'prism';
+    try { if (new URLSearchParams(location.search).get('tab') === 'universe') initial = 'universe'; } catch(_e){}
+    window.switchTab(initial);
+  } else {
+    // Re-auth mid-session: retry any tab that errored while locked out.
+    ['px-retry','uv-retry'].forEach(function(id){
+      var b = document.getElementById(id);
+      if (b) { try { b.click(); } catch(_e){} }
+    });
+  }
+}
+window.__mqRelock = function(reason){
+  window.__MQ.authed = false;
+  document.body.classList.remove('mq-open');
+  var err = document.getElementById('mq-err');
+  if (err) err.textContent = reason === 'expired' ? 'Session expired — enter your access code again.' : '';
+  var inp = document.getElementById('mq-code');
+  if (inp) setTimeout(function(){ inp.focus(); }, 250);
+};
+function unlock(){
+  var inp = document.getElementById('mq-code');
+  var btn = document.getElementById('mq-enter');
+  var err = document.getElementById('mq-err');
+  var code = (inp.value || '').trim();
+  if (!code) { inp.focus(); return; }
+  btn.disabled = true; err.textContent = '';
+  fetch('/api/quant-session', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code: code})
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){ return {status: r.status, body: j}; });
+  }).then(function(res){
+    btn.disabled = false;
+    if (res.status === 200 && res.body && res.body.ok){
+      window.__MQ.authed = true;
+      inp.value = '';
+      boot();
+      return;
+    }
+    var card = document.getElementById('mq-card');
+    card.classList.remove('mq-shake'); void card.offsetWidth; card.classList.add('mq-shake');
+    if (res.status === 503) err.textContent = 'Access is not configured yet — contact founder@marketprism.co.';
+    else if (res.status === 429) err.textContent = 'Too many attempts — wait a moment and try again.';
+    else err.textContent = 'That code was not recognized.';
+    inp.focus(); inp.select();
+  }).catch(function(){
+    btn.disabled = false;
+    err.textContent = 'Network error — try again.';
+  });
+}
+document.getElementById('mq-enter').onclick = unlock;
+document.getElementById('mq-code').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') unlock();
+});
+document.getElementById('mq-lock').onclick = function(){
+  fetch('/api/quant-session', {method:'DELETE'})
+    .catch(function(){})
+    .then(function(){ location.reload(); });
+};
+
+/* server pre-flight: a valid cookie skips the gate without a flash */
+if (window.__MQ.authed) boot();
+else setTimeout(function(){ var i = document.getElementById('mq-code'); if (i) i.focus(); }, 300);
+})();
+</script>
+</body>
+</html>

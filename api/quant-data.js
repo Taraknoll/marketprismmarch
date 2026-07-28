@@ -1,24 +1,16 @@
-// api/universe-data.js
-// Narrative Universe — the 3D field for the dashboard's Universe tab.
-// ⚠️ api/quant-data.js is a deliberate verbatim mirror of this data path
-// behind the /quant access-code gate — when columns/shaping change here,
-// change them there too.
-// Returns the latest scored day of narrative_scorecard (one row per ticker)
-// plus a short per-ticker history ("trail") and a sector map, shaped for the
-// client engine. Runs server-side with the service-role key so it survives the
-// planned RLS hardening; the browser hits this endpoint, never the tables.
+// api/quant-data.js
+// Data feed for the standalone /quant terminal (access-code gated).
 //
-// Env:
-//   SUPABASE_URL
-//   SUPABASE_SERVICE_ROLE_KEY  (falls back to SUPABASE_KEY)
-//
-// Query params:
-//   days   trail window in calendar days, 7–30 (default 16 ≈ 11 trading days)
-//
-// Payload is identical for every caller → CDN-cached (s-maxage).
+// ⚠️ KEEP IN SYNC WITH api/universe-data.js — the data path below (columns,
+// exhaustion composite, trail shape, sector roll-up, earnings resolution) is a
+// deliberate verbatim mirror so the /quant terminal shows EXACTLY what the
+// product's Universe + Market Physics tabs show. Only the gate differs:
+// universe-data requires a product login (requireAuth); this endpoint requires
+// the mq_session access-code cookie (api/_require-quant.js) and nothing else.
+// If TODAY_COLS / HIST_COLS / shaping change there, change them here too.
 
 const rateLimit = require('./_rate-limit');
-const requireAuth = require('./_require-auth');
+const quant = require('./_require-quant');
 const { isHidden } = require('./_hidden-tickers');
 
 // Dashboard-wide exclusion: scorecard values for these foreign filers are
@@ -54,10 +46,8 @@ const num = (v, dp) => {
   return Math.round(f * m) / m;
 };
 
-// Exhaustion level 0..1 — composite of the engine's own exhaustion outputs:
-// status classifier base, confidence as spread, pushed by the Exhausted
-// verdict / EXHAUSTING regime, pulled back by FRESH regimes and continuation.
-// Mirrors the standalone demo so the two surfaces agree.
+// Exhaustion level 0..1 — composite of the engine's own exhaustion outputs.
+// Mirrors universe-data.js exactly so the two surfaces agree.
 function exhaustLevel(st, conf, regime, verdict) {
   let lv = st === 'NARRATIVE_EXHAUSTED' ? 0.60
          : st === 'EXHAUSTION_LIKELY'   ? 0.42
@@ -94,11 +84,13 @@ async function fetchAll(url, headers, cap) {
 }
 
 module.exports = async (req, res) => {
-  if (!rateLimit(req, res, 'universe-data', 60)) return;
-  // Gated like the dashboard that hosts it: this payload is the full latest-day
-  // signal layer in one GET — not an anonymous bulk export.
-  const auth = await requireAuth(req, res, { jsonOnly: true });
-  if (!auth) return;
+  if (!rateLimit(req, res, 'quant-data', 60)) return;
+  // Access-code cookie only — minted by api/quant-session.js. 401 (not a
+  // redirect): the /quant page reacts by re-showing its gate overlay.
+  if (!quant.isAuthed(req)) {
+    res.setHeader('Cache-Control', 'private, no-store');
+    return sendJson(res, 401, { error: 'access_code_required' });
+  }
   try {
     const url = new URL(req.url, 'http://localhost');
     const days = Math.min(Math.max(parseInt(url.searchParams.get('days') || '16', 10) || 16, 7), 30);
@@ -158,10 +150,8 @@ module.exports = async (req, res) => {
     };
 
     // ticker_valuation_config mixes broad sectors with curated narrative themes
-    // ("AI Infrastructure" = one ticker). The Universe filter needs families with
-    // real populations, so themes roll up to a canonical family here and the
-    // theme itself ships separately as `ind` for the dossier. DB rows stay
-    // untouched — other surfaces keep the curated labels.
+    // ("AI Infrastructure" = one ticker). Themes roll up to a canonical family;
+    // the theme itself ships separately as `ind` for the dossier.
     const SECTOR_FAMILY = {
       'AI Infrastructure': 'Technology',
       'Cloud Computing': 'Technology',
@@ -243,7 +233,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Auth-gated response — never CDN-cache it.
+    // Gated response — never CDN-cache it.
     res.setHeader('Cache-Control', 'private, no-store');
     return sendJson(res, 200, { date, days, count: stocks.length, stocks });
   } catch (error) {

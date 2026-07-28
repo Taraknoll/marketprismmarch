@@ -265,6 +265,10 @@
       "destination": "/api/forensic"
     },
     {
+      "source": "/quant",
+      "destination": "/api/quant"
+    },
+    {
       "source": "/api/signature-data",
       "destination": "/api/signature-data"
     },
@@ -418,6 +422,9 @@
     },
     "api/forensic.js": {
       "includeFiles": "{_forensic.html,lib/**}"
+    },
+    "api/quant.js": {
+      "includeFiles": "{_quant.html,_universe_tab.html,_physics_tab.html}"
     },
     "api/forensic-data.js": {
       "maxDuration": 30
