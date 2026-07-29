@@ -42,7 +42,9 @@ function validCodes() {
   const raw = process.env.QUANT_ACCESS_CODES || '';
   const map = new Map();
   for (const entry of String(raw).split(',')) {
-    const trimmed = entry.trim();
+    // Tolerate quote-wrapped entries — a pasted `"code1","code2"` value
+    // should still match the bare codes users type at the gate.
+    const trimmed = entry.trim().replace(/^["']+|["']+$/g, '');
     if (!trimmed) continue;
     const i = trimmed.lastIndexOf(':');
     let code = trimmed, hours = DEFAULT_TTL_HOURS;

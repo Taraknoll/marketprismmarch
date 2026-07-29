@@ -61,10 +61,14 @@
   #tab-qfield .px-fam .dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 6px currentColor;}
   #tab-qfield .px-fam .n{color:var(--px-ink3);font-variant-numeric:tabular-nums;font-size:11px;}
 
-  /* ── the field card (always-dark viz surface) ── */
+  /* ── the field card (always-dark viz surface) ──
+     No upper cap: on big monitors the field grows to fill the viewport minus
+     the chrome above it. The ⛶ button takes the stage truly full screen. */
   #tab-qfield .px-stage{position:relative;background:#080B11;border:1px solid var(--px-border);border-radius:16px;
-    overflow:hidden;height:clamp(500px,calc(100vh - 300px),1040px);height:clamp(500px,calc(100dvh - 300px),1040px);
+    overflow:hidden;height:max(500px,calc(100vh - 270px));height:max(500px,calc(100dvh - 270px));
     filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+  #tab-qfield .px-stage:fullscreen{height:100vh;border-radius:0;border:none;}
+  #tab-qfield .px-stage:-webkit-full-screen{height:100vh;border-radius:0;border:none;}
   #tab-qfield .px-stage::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
     background:linear-gradient(90deg,#00AEFF,#FFB800);z-index:4;}
   #tab-qfield #px-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y pinch-zoom;}
@@ -155,12 +159,14 @@
   #tab-qfield .uv-frow .tx{font-size:13px;line-height:1.45;color:rgba(255,255,255,.68);}
   #tab-qfield .uv-empty{padding:10px 12px;font-size:13px;color:rgba(255,255,255,.45);line-height:1.5;}
 
-  #tab-qfield .px-snap{position:absolute;top:12px;right:12px;z-index:6;cursor:pointer;
+  #tab-qfield .px-snap,#tab-qfield .px-fs{position:absolute;top:12px;z-index:6;cursor:pointer;
     font-family:var(--font-body,'Inter',sans-serif);font-size:11px;font-weight:600;letter-spacing:.06em;
     color:rgba(255,255,255,.75);background:rgba(12,16,24,0.85);border:1px solid rgba(255,255,255,0.12);
     border-radius:9px;padding:7px 12px;}
-  #tab-qfield .px-snap:hover{border-color:#00AEFF;color:#fff;}
-  #tab-qfield .px-stage.dossier-open .px-snap{display:none;}
+  #tab-qfield .px-fs{right:12px;}
+  #tab-qfield .px-snap{right:124px;}
+  #tab-qfield .px-snap:hover,#tab-qfield .px-fs:hover{border-color:#00AEFF;color:#fff;}
+  #tab-qfield .px-stage.dossier-open .px-snap,#tab-qfield .px-stage.dossier-open .px-fs{display:none;}
 
   #tab-qfield .uv-comparecard{position:absolute;bottom:14px;left:14px;z-index:8;display:none;width:308px;max-width:calc(100% - 28px);
     background:rgba(12,16,24,0.95);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 14px;
@@ -300,7 +306,7 @@
   /* ══ Narrative Map — the day's story landscape as a mindmap ══ */
   #tab-qfield .nmap{margin-top:30px;padding-top:24px;border-top:1px solid var(--px-border);}
   #tab-qfield .nmap-stage{position:relative;background:#080B11;border:1px solid var(--px-border);border-radius:16px;
-    overflow:hidden;height:clamp(420px,56vh,640px);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+    overflow:hidden;height:clamp(420px,62vh,880px);filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
   #tab-qfield .nmap-stage::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
     background:linear-gradient(90deg,#7B61FF,#00AEFF);z-index:4;}
   #tab-qfield #nmap-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
@@ -369,6 +375,7 @@
       <div class="fb" id="uvf-list"></div>
     </div>
     <button class="px-snap" id="px-snap" title="Download this view as an image">⤓ Snapshot</button>
+    <button class="px-fs" id="px-fs" title="Toggle full screen">⛶ Full screen</button>
 
     <div class="px-replay" id="px-replay" aria-label="Replay controls">
       <button id="pxr-play" aria-label="Play replay">▸</button>
@@ -1160,6 +1167,25 @@ function wireInput(){
   addEventListener('blur',function(){ keys={}; });
   $id('uvd-x').onclick=closeDossier;
   $id('px-snap').onclick=snapshot;
+  // Full-screen toggle: the stage itself goes fullscreen (dossier, replay,
+  // tour and story cards all live inside it, so the whole instrument comes
+  // along). ResizeObserver + fsSync re-fit the canvas on both transitions.
+  var fsBtn=$id('px-fs');
+  if(fsBtn){
+    var fsOn=function(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); };
+    fsBtn.onclick=function(){
+      try{
+        if(fsOn()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
+        else{ var rq=stage.requestFullscreen||stage.webkitRequestFullscreen; if(rq) rq.call(stage); }
+      }catch(_e){}
+    };
+    var fsSync=function(){
+      fsBtn.textContent=fsOn()?'✕ Exit full screen':'⛶ Full screen';
+      needResize=true; if(uvActive) kick();
+    };
+    document.addEventListener('fullscreenchange',fsSync);
+    document.addEventListener('webkitfullscreenchange',fsSync);
+  }
   $id('px-tour').onclick=startTour;
   $id('pxt-next').onclick=function(){ tourGo(tourIdx+1); };
   $id('pxt-prev').onclick=function(){ tourGo(tourIdx-1); };

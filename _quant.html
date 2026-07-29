@@ -41,7 +41,10 @@ a{color:var(--mp-cyan);}
 ::selection{background:rgba(0,174,255,0.30);}
 
 /* ── page chrome ── */
-.mq-wrap{max-width:1560px;margin:0 auto;padding:0 24px 40px;}
+/* Full-bleed terminal: the field is the product — let it use the whole
+   monitor. Sections below (Belief Cycle, Narrative Map) are auto-fill grids
+   and canvas, so they scale with the width. */
+.mq-wrap{max-width:none;margin:0 auto;padding:0 28px 40px;}
 .mq-topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 0 14px;
   border-bottom:1px solid var(--mp-border);margin-bottom:20px;}
 .mq-brand{display:flex;align-items:center;gap:12px;text-decoration:none;}
