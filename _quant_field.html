@@ -367,7 +367,7 @@
 
   <div class="px-stage" id="px-stage">
     <canvas id="px-canvas"></canvas>
-    <div class="px-hintbar"><b>Scroll</b> to fly in · <b>WASD</b> to walk (Q/E rise · Shift sprint) · <b>Drag</b> to orbit · <b>Click</b> a body for its dossier · <b>T</b> tour</div>
+    <div class="px-hintbar"><b>Scroll</b> to fly in · <b>Drag</b> to orbit · <b>Shift-drag</b> to pan · <b>WASD</b> to walk (Q/E rise) · <b>Click</b> a body for its dossier · <b>T</b> tour</div>
     <div id="px-tip"></div>
 
     <div class="uv-feed" id="uv-feed" aria-label="Today's shifts">
@@ -539,7 +539,7 @@ var cam={theta:0.62, phi:0.30, dist:1250, tx:0, ty:0, tz:0};
 var tween=null, eye, Rv, Uv, Fw, FOC=900, imm=0;
 var warp=0, pex=null, pey=0, pez=0;
 var keys={}, FLY_KEYS={w:1,a:1,s:1,d:1,q:1,e:1,shift:1};
-var dragging=false, moved=false, px0=0, py0=0, lastInteract=0, pinch0=0;
+var dragging=false, panning=false, moved=false, px0=0, py0=0, lastInteract=0, pinch0=0;
 var hovered=null, selected=null, projCache=[];
 var hiddenFams={}, sectorFilter='', picks={}, pickCount=0;
 var replayOpen=false, replayD=0, replayMax=0, replayPlaying=false, replayAcc=0;
@@ -561,6 +561,11 @@ window.qfInit = function(){
   QF_BOOTED=true;
   cv=$id('px-canvas'); ctx=cv.getContext('2d'); stage=$id('px-stage');
   wireInput();
+  // Scripted-demo hook (same idea as the original universe demo's window.__MS):
+  // lets a driver select/fly/tour without synthesizing pointer events.
+  window.__qf={cam:cam, flyTo:function(t,d){ var s=byTicker[t]; if(s) flyTo(s,d||480); },
+    select:function(t){ var s=byTicker[t]; if(s){ select(s); flyTo(s,480); } },
+    startTour:function(){ startTour(); }};
   if(window.ResizeObserver){ new ResizeObserver(function(){ needResize=true; }).observe(stage); }
   if(typeof onTabSwitch==='function') onTabSwitch(function(id){
     uvActive = (id==='qfield');
@@ -1125,9 +1130,15 @@ function wireInput(){
   addEventListener('scroll',function(){ rectDirty=true; },{capture:true,passive:true});
   cv.addEventListener('pointerenter',refreshRect);
   cv.addEventListener('pointercancel',function(){ dragging=false; pinch0=0; cv.classList.remove('dragging'); });
+  // Zoomed in, orbit alone circles a fixed target and the camera can't
+  // translate — the field feels frozen. Shift-drag (or right/middle-drag)
+  // pans the target grab-style: the field follows the cursor at any depth.
+  cv.addEventListener('contextmenu',function(e){ e.preventDefault(); });
   cv.addEventListener('pointerdown',function(e){
     refreshRect();
-    dragging=true; moved=false; px0=e.clientX; py0=e.clientY; lastInteract=performance.now();
+    dragging=true; panning=(e.button===1||e.button===2||e.shiftKey);
+    moved=false; px0=e.clientX; py0=e.clientY; lastInteract=performance.now();
+    if(e.button===1) e.preventDefault();
     cv.classList.add('dragging'); try{ cv.setPointerCapture(e.pointerId); }catch(err){}
   });
   cv.addEventListener('pointermove',function(e){
@@ -1135,13 +1146,22 @@ function wireInput(){
     if(dragging){
       var dx=e.clientX-px0, dy=e.clientY-py0;
       if(Math.abs(dx)+Math.abs(dy)>3) moved=true;
-      cam.theta-=dx*.0052; cam.phi=Math.max(-1.25,Math.min(1.25,cam.phi+dy*.0042));
+      if(panning){
+        if(!Rv||!Uv) updateCamera();        // basis normally comes from the frame loop
+        var wpp=cam.dist/Math.max(1,FOC);   // world units per pixel at target depth
+        cam.tx-=(Rv.x*dx-Uv.x*dy)*wpp; cam.ty-=(Rv.y*dx-Uv.y*dy)*wpp; cam.tz-=(Rv.z*dx-Uv.z*dy)*wpp;
+        cam.tx=Math.max(-SX*1.5,Math.min(SX*1.5,cam.tx));
+        cam.ty=Math.max(-SY*1.5,Math.min(SY*1.5,cam.ty));
+        cam.tz=Math.max(-SZ*1.5,Math.min(SZ*1.5,cam.tz));
+      } else {
+        cam.theta-=dx*.0052; cam.phi=Math.max(-1.25,Math.min(1.25,cam.phi+dy*.0042));
+      }
       px0=e.clientX; py0=e.clientY; tween=null;
     } else hovered=pick(e);
   });
   cv.addEventListener('pointerup',function(e){
     dragging=false; cv.classList.remove('dragging');
-    if(!moved){ var s=pick(e); if(s) select(s); else closeDossier(); }
+    if(!moved&&e.button===0){ var s=pick(e); if(s) select(s); else closeDossier(); }
   });
   cv.addEventListener('pointerleave',function(){ hovered=null; });
   cv.addEventListener('wheel',function(e){
