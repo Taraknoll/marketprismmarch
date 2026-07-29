@@ -23,7 +23,9 @@
   #tab-universe .uv-ctl{height:36px;box-sizing:border-box;font-family:var(--font-body,'Inter',sans-serif);font-size:13px;
     color:var(--uv-ink);background:var(--uv-card);border:1px solid var(--uv-border);border-radius:10px;padding:0 12px;outline:none;}
   #tab-universe .uv-ctl:focus-visible{border-color:var(--uv-cyan);box-shadow:0 0 0 1px var(--uv-cyan);}
-  #tab-universe #uv-search{width:150px;}
+  /* the browser draws the suggestion popup at the width of the input, so this
+     has to hold "TICKER — Company" without clipping the name */
+  #tab-universe #uv-search{width:250px;}
   #tab-universe #uv-search::placeholder{color:var(--uv-ink3);}
   #tab-universe select.uv-ctl{cursor:pointer;}
   #tab-universe #uv-tour{cursor:pointer;font-weight:700;font-size:13px;letter-spacing:.04em;color:#04121C;
@@ -193,7 +195,7 @@
     #tab-universe .uv-stat{padding:0 10px;}
     #tab-universe .uv-stage{height:62vh;min-height:440px;}
     #tab-universe .uv-dossier{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-height:56%;}
-    #tab-universe #uv-search{width:120px;}
+    #tab-universe #uv-search{width:180px;}
     #tab-universe .uv-hintbar{display:none;}
     #tab-universe .uv-feed{display:none;}
     #tab-universe .uv-comparecard{left:10px;right:10px;width:auto;}
@@ -215,7 +217,7 @@
   </div>
 
   <div class="uv-ctrls">
-    <input class="uv-ctl" id="uv-search" list="uv-tickers" placeholder="Ticker…" autocomplete="off" aria-label="Fly to ticker">
+    <input class="uv-ctl" id="uv-search" list="uv-tickers" placeholder="Ticker or company…" autocomplete="off" aria-label="Fly to a ticker by symbol or company name">
     <datalist id="uv-tickers"></datalist>
     <select class="uv-ctl" id="uv-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
     <button class="uv-ctl" id="uv-tour">▸ Guided tour</button>
@@ -445,12 +447,36 @@ function buildScene(){
   });
   sel.onchange=function(){ sectorFilter=sel.value; };
   var dl=$id('uv-tickers'); dl.innerHTML='';
-  stocks.map(function(s){ return s.t; }).sort().forEach(function(t){
-    var o=document.createElement('option'); o.value=t; dl.appendChild(o);
+  // Each option reads "TICKER — Company". The name rides in the VALUE, not the
+  // label attribute, because the browser filters a datalist on the value alone —
+  // carrying it here is what lets "boeing" find BA. Nameless tickers stay bare
+  // symbols.
+  stocks.slice().sort(function(a,b){ return a.t<b.t?-1:a.t>b.t?1:0; }).forEach(function(s){
+    var o=document.createElement('option');
+    o.value = s.nm ? (s.t+' — '+s.nm) : s.t;
+    dl.appendChild(o);
   });
   var se=$id('uv-search');
+  // Accepts a bare symbol, the "TICKER — Company" string the datalist hands
+  // back, or a company name typed on its own ("boeing" → BA). Exact name beats
+  // prefix beats substring.
+  function resolvePick(raw){
+    var q=String(raw||'').trim();
+    if(!q) return null;
+    var sym=q.split('—')[0].trim().toUpperCase();
+    if(byTicker[sym]) return byTicker[sym];
+    var ql=q.toLowerCase(), starts=null, has=null;
+    for(var i=0;i<stocks.length;i++){
+      var nm=(stocks[i].nm||'').toLowerCase();
+      if(!nm) continue;
+      if(nm===ql) return stocks[i];
+      if(!starts&&nm.indexOf(ql)===0) starts=stocks[i];
+      else if(!has&&nm.indexOf(ql)>=0) has=stocks[i];
+    }
+    return starts||has;
+  }
   se.onchange=function(){
-    var s=byTicker[se.value.toUpperCase().trim()];
+    var s=resolvePick(se.value);
     if(s){ select(s); flyTo(s,480); se.blur(); }
   };
   replayMax=0;

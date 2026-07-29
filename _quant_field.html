@@ -35,7 +35,9 @@
   #tab-qfield .px-ctl{height:36px;box-sizing:border-box;font-family:var(--font-body,'Inter',sans-serif);font-size:13px;
     color:var(--px-ink);background:var(--px-card);border:1px solid var(--px-border);border-radius:10px;padding:0 12px;outline:none;}
   #tab-qfield .px-ctl:focus-visible{border-color:var(--px-cyan);box-shadow:0 0 0 1px var(--px-cyan);}
-  #tab-qfield #px-pick{width:170px;}
+  /* the browser draws the suggestion popup at the width of the input, so this
+     has to hold "TICKER — Company" without clipping the name */
+  #tab-qfield #px-pick{width:250px;}
   #tab-qfield #px-pick::placeholder{color:var(--px-ink3);}
   #tab-qfield select.px-ctl{cursor:pointer;}
   #tab-qfield #px-tour{cursor:pointer;font-weight:700;font-size:13px;letter-spacing:.04em;color:#04121C;
@@ -222,7 +224,7 @@
     #tab-qfield .px-stat{padding:0 10px;}
     #tab-qfield .px-stage{height:62vh;min-height:440px;}
     #tab-qfield .uv-dossier{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-height:56%;}
-    #tab-qfield #px-pick{width:130px;}
+    #tab-qfield #px-pick{width:180px;}
     #tab-qfield .px-hintbar{display:none;}
     #tab-qfield .uv-feed{display:none;}
     #tab-qfield .uv-comparecard{left:10px;right:10px;width:auto;}
@@ -355,7 +357,7 @@
   </div>
 
   <div class="px-ctrls">
-    <input class="px-ctl" id="px-pick" list="px-tickers" placeholder="Find ticker…" autocomplete="off" aria-label="Fly to a ticker">
+    <input class="px-ctl" id="px-pick" list="px-tickers" placeholder="Find ticker or company…" autocomplete="off" aria-label="Fly to a ticker by symbol or company name">
     <datalist id="px-tickers"></datalist>
     <select class="px-ctl" id="px-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
     <button class="px-ctl" id="px-tour">▸ Guided tour</button>
@@ -521,6 +523,18 @@ function xOfDays(d){
   if(d==null) return -SX*1.05;
   return SX*(1 - 2*Math.sqrt(Math.max(0,Math.min(d,EDAY_MAX))/EDAY_MAX));
 }
+// `edays` is SIGNED: negative means the name already reported and the calendar
+// has no next date on it yet. Never phrase that as a countdown ("reports in
+// -5d") — say how long ago it was, the way the ticker page's pill does.
+function eDaysTxt(d){
+  return d==null ? 'no report scheduled'
+       : d<0     ? ('reported '+Math.abs(d)+'d ago')
+       : d===0   ? 'reports today'
+                 : ('reports in '+d+'d');
+}
+// True only for a name still walking toward the wall — the guard for every
+// "within N days" count, ring, and label.
+function eUpcoming(d,within){ return d!=null && d>=0 && d<=within; }
 // Z: tape energy — bullish runs deep.
 function zOfW(w){ return Math.max(-1,Math.min(1.25,(w==null?0:w)/80)) * SZ; }
 function rOf(m){ return 3.5 + Math.max(0,Math.min(1,((m==null?0.5:m)-0.35)/0.5)) * 9; }
@@ -632,10 +646,10 @@ function buildScene(){
   alwaysLabel={};
   stocks.slice().sort(function(a,b){ return (b.mass||0)-(a.mass||0); }).slice(0,10)
     .forEach(function(s){ alwaysLabel[s.t]=1; });
-  stocks.forEach(function(s){ if(s.fam.id==='trap'||(s.edays!=null&&s.edays<=7)) alwaysLabel[s.t]=1; });
+  stocks.forEach(function(s){ if(s.fam.id==='trap'||eUpcoming(s.edays,7)) alwaysLabel[s.t]=1; });
   counts.total=stocks.length;
-  counts.week=stocks.filter(function(s){ return s.edays!=null&&s.edays<=7; }).length;
-  counts.month=stocks.filter(function(s){ return s.edays!=null&&s.edays<=30; }).length;
+  counts.week=stocks.filter(function(s){ return eUpcoming(s.edays,7); }).length;
+  counts.month=stocks.filter(function(s){ return eUpcoming(s.edays,30); }).length;
   $id('px-stats').innerHTML =
     '<div class="px-stat"><div class="n">'+counts.total+'</div><div class="k">tickers</div></div>'+
     '<div class="px-stat"><div class="n hot">'+counts.week+'</div><div class="k">report ≤7d</div></div>'+
@@ -662,8 +676,14 @@ function buildScene(){
   });
   sel.onchange=function(){ sectorFilter=sel.value; };
   var dl=$id('px-tickers'); dl.innerHTML='';
-  stocks.map(function(s){ return s.t; }).sort().forEach(function(t){
-    var o=document.createElement('option'); o.value=t; dl.appendChild(o);
+  // Each option reads "TICKER — Company". The name rides in the VALUE, not the
+  // label attribute, because the browser filters a datalist on the value alone —
+  // carrying it here is what lets "boeing" find BA. resolvePick() parses the
+  // symbol back off the front. Nameless tickers stay bare symbols.
+  stocks.slice().sort(function(a,b){ return a.t<b.t?-1:a.t>b.t?1:0; }).forEach(function(s){
+    var o=document.createElement('option');
+    o.value = s.nm ? (s.t+' — '+s.nm) : s.t;
+    dl.appendChild(o);
   });
   replayMax=0;
   stocks.forEach(function(s){ replayMax=Math.max(replayMax,(s.trailPts?s.trailPts.length:1)-1); });
@@ -806,9 +826,8 @@ function openCompare(a,b){
     return '<div class="uv-crow"><span>'+lbl+'</span><b style="color:'+a.color+'">'+va+'</b>'+
            '<b style="color:'+b.color+'">'+vb+'</b><b>'+d+'</b></div>';
   }
-  function fmtD(x){ return x==null?'—':(x+'d'); }
   var h='';
-  h+=row('reports in', fmtD(a.edays), fmtD(b.edays),
+  h+=row('next report', fmtD(a.edays), fmtD(b.edays),
     (a.edays!=null&&b.edays!=null)?('Δ'+Math.abs(a.edays-b.edays)+'d'):'—');
   h+=row('vs fundamental value', fmt(a.fvd==null?null:Math.round(a.fvd),'%'), fmt(b.fvd==null?null:Math.round(b.fvd),'%'),
     (a.fvd!=null&&b.fvd!=null)?('Δ'+Math.abs(Math.round(a.fvd-b.fvd))):'—');
@@ -823,11 +842,12 @@ function openCompare(a,b){
 }
 
 /* ── guided tour (data-driven, earnings-field narrative) ── */
-function fmtD(d){ return d==null?'—':(d+'d'); }
+function fmtD(d){ return d==null?'—':(d<0?(Math.abs(d)+'d ago'):(d+'d')); }
 function buildTour(){
   var stops=[], used={};
   function pickFirst(arr){ for(var i=0;i<arr.length;i++){ if(arr[i]&&!used[arr[i].t]){ used[arr[i].t]=1; return arr[i]; } } return null; }
-  var sched=stocks.filter(function(s){ return s.edays!=null; });
+  // upcoming only — a name that just reported is not "closest to the wall"
+  var sched=stocks.filter(function(s){ return s.edays!=null&&s.edays>=0; });
   var nearest=pickFirst(sched.slice().sort(function(a,b){ return a.edays-b.edays || (b.mass||0)-(a.mass||0); }));
   var cold=pickFirst(sched.filter(function(s){ return s.edays<=21 && s.wks!=null && s.wks<0; })
     .sort(function(a,b){ return (a.wks||0)-(b.wks||0); }));
@@ -928,7 +948,7 @@ function buildStory(s,tr){
     body:'Every trail is a road toward the wall. '+s.t+' entered this window at '+fp(first.f)+
       ' versus its SEC-anchored fundamental value, tape energy '+(first.w==null?'—':Math.round(first.w))+
       ', with '+pctE(first.e)+'% of its narrative fuel spent'+
-      (s.edays!=null?(' — and '+(s.edays+ago)+' sessions from its report.'):'.')+
+      (s.edays!=null&&s.edays>=0?(' — and '+(s.edays+ago)+' sessions from its report.'):'.')+
       ' The line brightens as it approaches today — follow it.',
     chips:[fp(first.f)+' vs value','energy '+(first.w==null?'—':Math.round(first.w)),'exhaustion '+pctE(first.e)+'%'],
     cam:{tx:first.pt.x,ty:first.pt.y,tz:first.pt.z,dist:470,phi:.20}, focus:s.t, node:first.pt});
@@ -949,7 +969,7 @@ function buildStory(s,tr){
       body:'Tape energy moved '+Math.round(first.w)+' → '+Math.round(last.w)+'. The read asks who is really buying: '+
         (dW>0?'rising energy under a verified story reads as accumulation — under a stretched one, it reads as the crowd arriving late.'
              :'falling energy is the tape walking away — distribution wearing a narrative’s clothes.')+
-        (s.edays!=null&&s.edays<=21?(' With '+s.edays+'d to the report, that direction matters twice.'):''),
+        (eUpcoming(s.edays,21)?(' With '+s.edays+'d to the report, that direction matters twice.'):''),
       chips:['energy '+Math.round(first.w)+' → '+Math.round(last.w),'Δ '+(dW>0?'+':'')+Math.round(dW)],
       cam:{tx:(first.pt.x+last.pt.x)/2,ty:(first.pt.y+last.pt.y)/2,tz:(first.pt.z+last.pt.z)/2,dist:480,phi:.14}, focus:s.t});
   }
@@ -985,9 +1005,11 @@ function buildStory(s,tr){
   steps.push({title:s.t+' today: '+s.v, step:'TODAY', color:s.color,
     body:'The verdict reads '+s.v+' — '+(MEAN[s.fam.id]||MEAN.neutral)+'.'+
       (s.pv&&s.pv!==s.v?(' Yesterday it was '+s.pv+' — the engine re-classified it overnight.'):'')+
-      (s.edays!=null?(' The wall stands '+s.edays+' session'+(s.edays===1?'':'s')+' away.'):'')+
+      (s.edays==null?''
+        :s.edays<0?(' It cleared the wall '+Math.abs(s.edays)+' session'+(s.edays===-1?'':'s')+' ago.')
+        :(' The wall stands '+s.edays+' session'+(s.edays===1?'':'s')+' away.'))+
       ' Click the body for its full dossier.',
-    chips:[fp(s.fvd)+' vs value','energy '+(s.wks==null?'—':Math.round(s.wks)),'exhaustion '+Math.round((s.exh||0)*100)+'%',s.edays!=null?('reports in '+s.edays+'d'):null].filter(Boolean),
+    chips:[fp(s.fvd)+' vs value','energy '+(s.wks==null?'—':Math.round(s.wks)),'exhaustion '+Math.round((s.exh||0)*100)+'%',s.edays!=null?eDaysTxt(s.edays):null].filter(Boolean),
     cam:{tx:s.x,ty:s.y,tz:s.z,dist:450,phi:.22}, focus:s.t, node:{x:s.x,y:s.y,z:s.z}});
   return steps;
 }
@@ -1251,10 +1273,28 @@ function wireInput(){
     $id('uvf-c').textContent=fd.classList.contains('closed')?'▸':'▾';
   };
   var pk=$id('px-pick');
+  // Accepts any of three things: a bare symbol typed by hand, the
+  // "TICKER — Company" string the datalist hands back, or a company name typed
+  // on its own ("boeing" → BA). Exact name beats prefix beats substring.
+  function resolvePick(raw){
+    var q=String(raw||'').trim();
+    if(!q) return null;
+    var sym=q.split('—')[0].trim().toUpperCase();
+    if(byTicker[sym]) return byTicker[sym];
+    var ql=q.toLowerCase(), starts=null, has=null;
+    for(var i=0;i<stocks.length;i++){
+      var nm=(stocks[i].nm||'').toLowerCase();
+      if(!nm) continue;
+      if(nm===ql) return stocks[i];
+      if(!starts&&nm.indexOf(ql)===0) starts=stocks[i];
+      else if(!has&&nm.indexOf(ql)>=0) has=stocks[i];
+    }
+    return starts||has;
+  }
   pk.onchange=function(){
-    var t=pk.value.toUpperCase().trim(), s=byTicker[t];
+    var s=resolvePick(pk.value);
     if(s){
-      if(!picks[t]){ picks[t]=1; pickCount++; renderPicks(); }
+      if(!picks[s.t]){ picks[s.t]=1; pickCount++; renderPicks(); }
       select(s); flyTo(s,480);
     }
     pk.value='';
@@ -1304,7 +1344,7 @@ function select(s){
   if(typeof window._liveQuotesKick==='function') window._liveQuotesKick();
   $id('uvd-sec').textContent=(s.sec||'')+(s.ind?' · '+s.ind:'');
   var chips='<span class="uv-chip" style="color:'+s.color+';border-color:'+s.color+'">'+uvEsc(s.v)+'</span>';
-  chips+='<span class="uv-chip earn">'+(s.edays!=null?('reports in '+s.edays+'d'+(s.edate?(' · '+uvEsc(s.edate)):'')):'no report scheduled')+'</span>';
+  chips+='<span class="uv-chip earn">'+eDaysTxt(s.edays)+(s.edays!=null&&s.edate?(' · '+uvEsc(s.edate)):'')+'</span>';
   if(s.conf!=null) chips+='<span class="uv-chip dim">conf '+uvEsc(String(s.conf))+'</span>';
   if(s.regime) chips+='<span class="uv-chip dim">'+uvEsc(s.regime.split('_').join(' '))+'</span>';
   if(s.state) chips+='<span class="uv-chip dim">'+uvEsc(s.state.split('_').join(' '))+'</span>';
@@ -1713,7 +1753,7 @@ function frame(now){
     ctx.beginPath(); ctx.arc(pp.x-sr*.28,pp.y-sr*.28,sr*.32,0,7); ctx.fill();
     ctx.restore();
     // reporting within a week: amber countdown ring — the wall is close
-    if(sb.edays!=null&&sb.edays<=7&&!replayD){
+    if(eUpcoming(sb.edays,7)&&!replayD){
       ctx.strokeStyle='rgba(255,184,0,.85)'; ctx.lineWidth=1.4;
       ctx.setLineDash([4,4]); ctx.lineDashOffset=reduceMotion?0:-now*.02;
       ctx.beginPath(); ctx.arc(pp.x,pp.y,sr+7,0,7); ctx.stroke(); ctx.setLineDash([]);
@@ -1741,7 +1781,7 @@ function frame(now){
       : (ls===cmpA||ls===cmpB)?1
       : picks[ls.t]?2
       : watch[ls.t]?3
-      : (ls.edays!=null&&ls.edays<=7)?4
+      : eUpcoming(ls.edays,7)?4
       : ls.fam.id==='trap'?5
       : (alwaysLabel[ls.t]&&cam.dist<1600)?6 : -1;
     if(pri>=0) lbls.push({lc:lc,ls:ls,pri:pri});
@@ -1755,7 +1795,7 @@ function frame(now){
     ctx.fillStyle=(L.ls===hovered||L.ls===selected)?'#FFFFFF'
       :(picks[L.ls.t]?'rgba(160,220,255,.95)'
       :(watch[L.ls.t]?'rgba(255,214,120,.9)'
-      :((L.ls.edays!=null&&L.ls.edays<=7)?'rgba(255,214,120,.9)':'rgba(210,220,235,.78)')));
+      :(eUpcoming(L.ls.edays,7)?'rgba(255,214,120,.9)':'rgba(210,220,235,.78)')));
     ctx.shadowColor='rgba(4,6,11,.9)'; ctx.shadowBlur=4;
     ctx.fillText(L.ls.t,L.lc.sx,L.lc.sy-L.lc.sr-7);
     ctx.shadowBlur=0;
@@ -1784,7 +1824,7 @@ function frame(now){
     tip.style.display='block';
     tip.innerHTML='<div class="t" style="color:'+h.color+'">'+uvEsc(h.t)+'</div>'+
       '<div class="v" style="color:'+h.color+'">'+uvEsc(h.v)+'</div>'+
-      '<div class="m">'+(h.edays!=null?('earnings in '+h.edays+'d · '):'no report set · ')+
+      '<div class="m">'+eDaysTxt(h.edays)+' · '+
       (h.price!=null?'$'+h.price+' · ':'')+(pos==null?'no range':pos+'% of range')+
       ' · energy '+(h.wks==null?'—':Math.round(h.wks))+' · exhaustion '+Math.round((h.exh||0)*100)+'%</div>';
     var pc=null;
@@ -1881,7 +1921,7 @@ function renderBeliefCycle(data){
     var st=STAGE[r._k]||STAGE.UNKNOWN;
     var col=(typeof famOf==='function'&&r.v)?famOf(r.v).color:st.hex;
     var dband=r._dse==null?'—':'Day '+r._dse;
-    var rp=(r._k==='RESYNC_PRE')?'reports ≤2d':(r.edays==null?'unscheduled':'reports in '+r.edays+'d');
+    var rp=(r._k==='RESYNC_PRE')?'reports ≤2d':(r.edays==null?'unscheduled':eDaysTxt(r.edays));
     // Cards are informational on this surface (the deep-dive app is
     // login-walled) — clicking one opens the ticker's dossier in the field.
     return '<a class="bcyc-c" href="#" data-qf-ticker="'+uvEsc(r.t)+'" style="--cc:'+st.hex+'">'+

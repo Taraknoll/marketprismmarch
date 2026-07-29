@@ -54,6 +54,16 @@ const num = (v, dp) => {
   return Math.round(f * m) / m;
 };
 
+// YYYY-MM-DD for "now" in America/New_York (the earnings calendar runs on ET).
+function etDateStr(d) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(d);
+  const get = (t) => parts.find((p) => p.type === t).value;
+  return get('year') + '-' + get('month') + '-' + get('day');
+}
+
 // Exhaustion level 0..1 — composite of the engine's own exhaustion outputs:
 // status classifier base, confidence as spread, pushed by the Exhausted
 // verdict / EXHAUSTING regime, pulled back by FRESH regimes and continuation.
@@ -130,22 +140,62 @@ module.exports = async (req, res) => {
 
     const cutoff = new Date(new Date(date + 'T00:00:00Z').getTime() - days * 86400000)
       .toISOString().slice(0, 10);
+    // earnings_context lookback — one row per ticker PER DAY, so the read below
+    // is windowed (see the query's note) rather than scanning the whole table.
+    const earnCutoff = new Date(new Date(date + 'T00:00:00Z').getTime() - 30 * 86400000)
+      .toISOString().slice(0, 10);
+    // Company-name lookback — every scored ticker reports quarterly, so ~13
+    // months back names all but the handful with no Benzinga row at all.
+    const nameCutoff = new Date(new Date(date + 'T00:00:00Z').getTime() - 400 * 86400000)
+      .toISOString().slice(0, 10);
 
-    // 2-5. latest day + trail history + sector map + earnings calendar
-    const [today, hist, sectors, earnRows] = await Promise.all([
+    // 2-6. latest day + trail history + sector map + earnings calendar + names
+    const [today, hist, sectors, earnRows, nameRows] = await Promise.all([
       fetchAll(rest + `narrative_scorecard?select=${TODAY_COLS}&snapshot_date=eq.${encodeURIComponent(date)}&order=ticker.asc`, headers, 2000),
       fetchAll(rest + `narrative_scorecard?select=${HIST_COLS}&snapshot_date=gte.${encodeURIComponent(cutoff)}&order=ticker.asc,snapshot_date.asc`, headers, 8000),
       fetchAll(rest + 'ticker_valuation_config?select=ticker,sector,primary_sector_override&active=eq.true&order=ticker.asc', headers, 1000),
       // Market Physics: freshest next_earnings_date per ticker. Same resolution
       // order as the retired 2D Prism — earnings_context first, scorecard
       // days_to_earnings as fallback. Non-fatal on failure.
-      fetchAll(rest + `earnings_context?select=ticker,days_to_earnings,next_earnings_date,snapshot_date&next_earnings_date=gte.${encodeURIComponent(date)}&order=ticker.asc,snapshot_date.desc`, headers, 3000)
+      //
+      // Sort DATE-major, not ticker-major. earnings_context holds a row per
+      // ticker per day (~16k rows match the future-date filter), so a
+      // ticker-major sort spent the whole row cap on the first ~37 tickers'
+      // history and every ticker past the Cs came back with no earnings row at
+      // all — the field drew them as "no report scheduled" while their ticker
+      // pages showed the real countdown. Date-major puts the freshest row for
+      // EVERY ticker on the first page; the cap now only trims history depth.
+      fetchAll(rest + `earnings_context?select=ticker,days_to_earnings,next_earnings_date,snapshot_date&next_earnings_date=gte.${encodeURIComponent(date)}&snapshot_date=gte.${encodeURIComponent(earnCutoff)}&order=snapshot_date.desc,ticker.asc`, headers, 4000)
+        .catch(() => []),
+      // Company name per ticker, for the ticker picker. benzinga_earnings is the
+      // only table carrying a short human name for the whole scored universe
+      // (ticker_industry_lookup names barely a third of it, and pads what it has
+      // with "… Common Stock" boilerplate). One row per report, so sort
+      // DATE-major — a ticker-major sort would spend the row cap on the first
+      // few tickers' report history and leave the rest of the alphabet nameless.
+      // Non-fatal: a nameless ticker just shows its symbol, as before.
+      fetchAll(rest + `benzinga_earnings?select=ticker,company_name,date&company_name=not.is.null&date=gte.${encodeURIComponent(nameCutoff)}&order=date.desc,ticker.asc`, headers, 4000)
         .catch(() => [])
     ]);
 
+    // date-desc order → first row per ticker is the freshest spelling of the name
+    const nameOf = {};
+    for (const r of nameRows) {
+      if (!r.ticker || nameOf[r.ticker]) continue;
+      // "Nebius Group N.V. - Class A Ordinary Shares" → "Nebius Group N.V."
+      const n = String(r.company_name || '').split(' - ')[0].trim().slice(0, 44);
+      if (n && n.toUpperCase() !== String(r.ticker).toUpperCase()) nameOf[r.ticker] = n;
+    }
+
     const earnByT = {};
-    for (const e of earnRows) if (!earnByT[e.ticker]) earnByT[e.ticker] = e;   // desc order → first is freshest
-    const dateMs = new Date(date + 'T00:00:00Z').getTime();
+    for (const e of earnRows) if (!earnByT[e.ticker]) earnByT[e.ticker] = e;   // date-desc order → first per ticker is freshest
+    // Count down from TODAY (ET), not from the snapshot date. narrative_scorecard
+    // skips weekends, so anchoring to `date` hands a Monday visitor a 3-day-stale
+    // countdown while the ticker page — which recomputes against today — shows
+    // the real one. Same basis as _ticker.html's earnings pill.
+    const todayET = etDateStr(new Date());
+    const anchor = todayET > date ? todayET : date;
+    const dateMs = new Date(anchor + 'T00:00:00Z').getTime();
     const dteOf = (r) => {
       const e = earnByT[r.ticker];
       if (e && e.next_earnings_date) {
@@ -153,7 +203,14 @@ module.exports = async (req, res) => {
         if (Number.isFinite(d) && d >= 0) return d;
       }
       if (e && e.days_to_earnings != null) return num(e.days_to_earnings, 0);
-      if (r.days_to_earnings != null) return num(r.days_to_earnings, 0);
+      // Dateless fallback — a bare integer with no calendar row behind it, so it
+      // goes stale silently. Trust it only inside the quarter-ish window
+      // _ticker.html uses for the same reason. Negative = just reported; the
+      // client phrases that as elapsed, never as a countdown.
+      if (r.days_to_earnings != null) {
+        const d = num(r.days_to_earnings, 0);
+        if (d != null && d >= -14 && d <= 95) return d;
+      }
       return null;
     };
 
@@ -210,6 +267,7 @@ module.exports = async (req, res) => {
       if (dropTicker(r.ticker)) continue;
       stocks.push({
         t: r.ticker,
+        nm: nameOf[r.ticker] || null,
         sec: secOf[r.ticker] || 'Other',
         ind: indOf[r.ticker] || null,
         edays: dteOf(r),
