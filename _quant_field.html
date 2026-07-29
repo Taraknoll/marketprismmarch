@@ -404,7 +404,7 @@
         <a class="uv-cmpbtn uv-viewbtn" id="uvd-view" href="#">▸ View full ticker report</a>
       </div>
       <div class="db">
-        <div class="uv-blk"><h4>Price vs fair value</h4>
+        <div class="uv-blk"><h4>Price vs Fundamental Value</h4>
           <div class="uv-fvd" id="uvd-fvd"></div><div class="uv-fvdcap" id="uvd-fvdcap"></div></div>
         <div class="uv-blk"><h4>Signature — the narrative vector</h4>
           <div id="uv-radar-wrap"><canvas id="uv-radar" width="272" height="216"></canvas></div></div>
@@ -467,7 +467,7 @@
     </div>
     <div id="bcyc-board"><div class="bcyc-note">Loading the cycle…</div></div>
     <div class="bcyc-note">Position is inferred from each ticker's <b>next report date</b> (Day 0 = just reported · Day 90 = reporting next).
-      <b>Belief gap</b> = price vs. model fair value (<code>fvd_pct</code>); ticker colour = verdict family, matching the field above.
+      <b>Belief gap</b> = price vs. modeled fundamental value (<code>fvd_pct</code>); ticker colour = verdict family, matching the field above.
       Phase boundaries <code>0 · 20 · 65 · 89 · 90</code> are tunable model constants. Click a phase header to open or close its names.</div>
   </section>
 
@@ -687,7 +687,7 @@ function buildFeed(){
     if(n>=2&&s.trail[n-1][2]!=null&&s.trail[n-2][2]!=null){
       var d=s.trail[n-1][2]-s.trail[n-2][2];
       if(Math.abs(d)>=10) rows.push({s:s,pri:2,mag:Math.abs(d),
-        txt:(d>0?'+':'−')+Math.abs(Math.round(d))+' pts vs fair value overnight'});
+        txt:(d>0?'+':'−')+Math.abs(Math.round(d))+' pts vs fundamental value overnight'});
     }
   });
   rows.sort(function(a,b){ return a.pri-b.pri || b.mag-a.mag; });
@@ -805,7 +805,7 @@ function openCompare(a,b){
   var h='';
   h+=row('reports in', fmtD(a.edays), fmtD(b.edays),
     (a.edays!=null&&b.edays!=null)?('Δ'+Math.abs(a.edays-b.edays)+'d'):'—');
-  h+=row('vs fair value', fmt(a.fvd==null?null:Math.round(a.fvd),'%'), fmt(b.fvd==null?null:Math.round(b.fvd),'%'),
+  h+=row('vs fundamental value', fmt(a.fvd==null?null:Math.round(a.fvd),'%'), fmt(b.fvd==null?null:Math.round(b.fvd),'%'),
     (a.fvd!=null&&b.fvd!=null)?('Δ'+Math.abs(Math.round(a.fvd-b.fvd))):'—');
   h+=row('tape energy', fmt(a.wks), fmt(b.wks),
     (a.wks!=null&&b.wks!=null)?('Δ'+Math.abs(Math.round(a.wks-b.wks))):'—');
@@ -921,7 +921,7 @@ function buildStory(s,tr){
   // 1 — where it started
   steps.push({title:s.t+' — where the story stood', step:'CHAPTER 1 · '+ago+' SESSIONS AGO', color:s.color,
     body:'Every trail is a road toward the wall. '+s.t+' entered this window at '+fp(first.f)+
-      ' versus its SEC-anchored fair value, tape energy '+(first.w==null?'—':Math.round(first.w))+
+      ' versus its SEC-anchored fundamental value, tape energy '+(first.w==null?'—':Math.round(first.w))+
       ', with '+pctE(first.e)+'% of its narrative fuel spent'+
       (s.edays!=null?(' — and '+(s.edays+ago)+' sessions from its report.'):'.')+
       ' The line brightens as it approaches today — follow it.',
@@ -961,7 +961,7 @@ function buildStory(s,tr){
   for(i=1;i<days;i++){
     if(tr[i-1].f!=null&&tr[i].f!=null&&tr[i-1].f<150&&tr[i].f>=150){
       steps.push({title:'The day it crossed the gate', step:'TRAP GATE', color:'#FF4D4D',
-        body:'Between session −'+(days-i)+' and −'+(days-1-i)+', '+s.t+' crossed 150% above its fair value — the line where a true story at the wrong price becomes trap-shaped. The engine watches what the chorus and the filings do next.',
+        body:'Between session −'+(days-i)+' and −'+(days-1-i)+', '+s.t+' crossed 150% above its fundamental value — the line where a true story at the wrong price becomes trap-shaped. The engine watches what the chorus and the filings do next.',
         chips:['crossed ≥150%','now '+fp(last.f)],
         cam:{tx:tr[i].pt.x,ty:tr[i].pt.y,tz:tr[i].pt.z,dist:380,phi:.16}, focus:s.t, node:tr[i].pt});
       break;
@@ -1288,7 +1288,7 @@ function select(s){
   $id('uvd-fvd').style.color=f==null?'rgba(255,255,255,0.4)':(f>=150?'#FF4D4D':f>=50?'#E07A2E':'#fff');
   $id('uvd-fvdcap').textContent=f==null
     ? 'no fundamental anchor possible (pre-revenue / no positive EPS)'
-    : 'price vs pure-fundamentals fair value'+(f>=150?' — inside the trap gate (≥150%)':'');
+    : 'price vs modeled fundamental value'+(f>=150?' — inside the trap gate (≥150%)':'');
   $id('uvd-bars').innerHTML=[['SEC MATCH',s.vms],['SOURCE TRUST',s.srs],['CONFIDENCE',s.ccp],['PERSISTENCE',s.npi]]
     .map(function(kv){
       var v=kv[1];
@@ -1321,9 +1321,18 @@ function select(s){
 // Cached per ticker for the page's lifetime; thin-coverage tickers ('' reply)
 // keep the snapshot synopsis.
 var qfHero={};
+// House terminology on this surface: "fundamental value", never "fair value" —
+// applied to server-written prose (hero narratives, scorecard synopses) too.
+function qfTerm(t){
+  return String(t||'')
+    .replace(/Fair Value/g,'Fundamental Value')
+    .replace(/Fair value/g,'Fundamental value')
+    .replace(/fair value/g,'fundamental value')
+    .replace(/FAIR VALUE/g,'FUNDAMENTAL VALUE');
+}
 function qfSyn(s){
   var el=$id('uvd-syn'); if(!el) return;
-  var fallback=s.syn||'No synopsis recorded for this snapshot.';
+  var fallback=qfTerm(s.syn)||'No synopsis recorded for this snapshot.';
   var hero=qfHero[s.t];
   if(typeof hero==='string'){ el.textContent=hero||fallback; return; }
   el.textContent=fallback;
@@ -1332,7 +1341,7 @@ function qfSyn(s){
   fetch('/api/hero-summary?ticker='+encodeURIComponent(s.t))
     .then(function(r){ return r.ok?r.json():null; })
     .then(function(j){
-      var txt=(j&&j.summary)?String(j.summary).replace(/\s+/g,' ').trim():'';
+      var txt=(j&&j.summary)?qfTerm(String(j.summary).replace(/\s+/g,' ').trim()):'';
       qfHero[s.t]=txt;
       if(selected===s&&txt) el.textContent=txt;
     })
