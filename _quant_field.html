@@ -367,7 +367,7 @@
 
   <div class="px-stage" id="px-stage">
     <canvas id="px-canvas"></canvas>
-    <div class="px-hintbar"><b>Scroll</b> to fly in · <b>Drag</b> to orbit · <b>Shift-drag</b> to pan · <b>WASD</b> to walk (Q/E rise) · <b>Click</b> a body for its dossier · <b>T</b> tour</div>
+    <div class="px-hintbar"><b>Scroll</b> to fly in · <b>Drag</b> to orbit — once you fly in, <b>drag grabs the field</b> (Shift-drag to orbit) · <b>WASD</b> to walk · <b>Click</b> a body · <b>T</b> tour</div>
     <div id="px-tip"></div>
 
     <div class="uv-feed" id="uv-feed" aria-label="Today's shifts">
@@ -1131,12 +1131,16 @@ function wireInput(){
   cv.addEventListener('pointerenter',refreshRect);
   cv.addEventListener('pointercancel',function(){ dragging=false; pinch0=0; cv.classList.remove('dragging'); });
   // Zoomed in, orbit alone circles a fixed target and the camera can't
-  // translate — the field feels frozen. Shift-drag (or right/middle-drag)
-  // pans the target grab-style: the field follows the cursor at any depth.
+  // translate — the field feels frozen. Roles depend on depth: far out,
+  // plain drag orbits and Shift/right-drag pans; once flown in (dist<950),
+  // plain drag GRABS the field (pan) and Shift/right-drag orbits instead.
+  var PAN_GRAB_DIST=950;
   cv.addEventListener('contextmenu',function(e){ e.preventDefault(); });
   cv.addEventListener('pointerdown',function(e){
     refreshRect();
-    dragging=true; panning=(e.button===1||e.button===2||e.shiftKey);
+    dragging=true;
+    var mod=(e.button===1||e.button===2||e.shiftKey);
+    panning=(cam.dist<PAN_GRAB_DIST)?!mod:mod;
     moved=false; px0=e.clientX; py0=e.clientY; lastInteract=performance.now();
     if(e.button===1) e.preventDefault();
     cv.classList.add('dragging'); try{ cv.setPointerCapture(e.pointerId); }catch(err){}
@@ -1165,6 +1169,9 @@ function wireInput(){
   });
   cv.addEventListener('pointerleave',function(){ hovered=null; });
   cv.addEventListener('wheel',function(e){
+    // Scroll chaining: fully zoomed out, a further scroll-down releases the
+    // wheel to the page so the sections below the field stay reachable.
+    if(e.deltaY>0&&cam.dist>=MAX_DIST-1) return;
     e.preventDefault(); lastInteract=performance.now(); tween=null;
     cam.dist=Math.max(MIN_DIST,Math.min(MAX_DIST,cam.dist*(1+Math.sign(e.deltaY)*.09)));
   },{passive:false});
