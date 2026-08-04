@@ -262,7 +262,7 @@
         <a class="uv-cmpbtn uv-viewbtn" id="uvd-view" href="#">▸ View full ticker report</a>
       </div>
       <div class="db">
-        <div class="uv-blk"><h4>Price vs fair value</h4>
+        <div class="uv-blk"><h4>Price vs fundamental value</h4>
           <div class="uv-fvd" id="uvd-fvd"></div><div class="uv-fvdcap" id="uvd-fvdcap"></div></div>
         <div class="uv-blk"><h4>Signature — the narrative vector</h4>
           <div id="uv-radar-wrap"><canvas id="uv-radar" width="272" height="216"></canvas></div></div>
@@ -294,10 +294,10 @@
     </div>
   </div>
 
-  <div class="uv-caption"><b>Reading the field:</b> toward <b>OVERVALUED</b> = priced above its SEC-anchored fair value
-    (past the FAIR VALUE meridian) · toward <b>DISCOUNT</b> = below it · <b>TAPE ENERGY</b> = bullish tape ·
+  <div class="uv-caption"><b>Reading the field:</b> toward <b>OVERVALUED</b> = priced above its SEC-anchored fundamental value
+    (past the FUNDAMENTAL VALUE meridian) · toward <b>DISCOUNT</b> = below it · <b>TAPE ENERGY</b> = bullish tape ·
     <b>EXHAUSTED</b> = a spent story. The labels and arrowheads ride the 3D frame, so they stay true as you orbit.
-    The red slab marks the trap gate (≥150% above fair value). Trails show each
+    The red slab marks the trap gate (≥150% above fundamental value). Trails show each
     narrative's 10-day path. Exhaustion is the engine's composite read (status classifier × confidence, verdict and
     decay-regime adjusted). <b>Scroll to fly in</b> — the lens widens, the dust streams past, and you move through
     the field itself. <b>WASD walks you through it</b> like a game (Q/E rise and sink, hold Shift to sprint —
@@ -505,7 +505,7 @@ function buildFeed(){
     if(n>=2&&s.trail[n-1][2]!=null&&s.trail[n-2][2]!=null){
       var d=s.trail[n-1][2]-s.trail[n-2][2];
       if(Math.abs(d)>=10) rows.push({s:s,pri:2,mag:Math.abs(d),
-        txt:(d>0?'+':'−')+Math.abs(Math.round(d))+' pts vs fair value overnight'});
+        txt:(d>0?'+':'−')+Math.abs(Math.round(d))+' pts vs fundamental value overnight'});
     }
   });
   rows.sort(function(a,b){ return a.pri-b.pri || b.mag-a.mag; });
@@ -568,7 +568,7 @@ function openCompare(a,b){
            '<b style="color:'+b.color+'">'+vb+'</b><b>'+d+'</b></div>';
   }
   var h='';
-  h+=row('vs fair value', fmt(a.fvd==null?null:Math.round(a.fvd),'%'), fmt(b.fvd==null?null:Math.round(b.fvd),'%'),
+  h+=row('vs fundamental value', fmt(a.fvd==null?null:Math.round(a.fvd),'%'), fmt(b.fvd==null?null:Math.round(b.fvd),'%'),
     (a.fvd!=null&&b.fvd!=null)?('Δ'+Math.abs(Math.round(a.fvd-b.fvd))):'—');
   h+=row('tape energy', fmt(a.wks), fmt(b.wks),
     (a.wks!=null&&b.wks!=null)?('Δ'+Math.abs(Math.round(a.wks-b.wks))):'—');
@@ -899,7 +899,7 @@ function select(s){
   $id('uvd-fvd').style.color=f==null?'rgba(255,255,255,0.4)':(f>=150?'#FF4D4D':f>=50?'#E07A2E':'#fff');
   $id('uvd-fvdcap').textContent=f==null
     ? 'no fundamental anchor possible (pre-revenue / no positive EPS)'
-    : 'price vs pure-fundamentals fair value'+(f>=150?' — inside the trap gate (≥150%)':'');
+    : 'price vs modeled fundamental value'+(f>=150?' — inside the trap gate (≥150%)':'');
   $id('uvd-bars').innerHTML=[['SEC MATCH',s.vms],['SOURCE TRUST',s.srs],['CONFIDENCE',s.ccp],['PERSISTENCE',s.npi]]
     .map(function(kv){
       var v=kv[1];
@@ -984,12 +984,12 @@ function buildTour(){
 
   // 1 — the instrument
   stops.push({title:'One field. '+stocks.length+' narratives.', step:'THE INSTRUMENT',
-    body:'Every light is a stock, placed by forensic physics: how stretched the price is against its SEC-anchored fair value, how much energy the tape carries, and how exhausted the story has become. Size is narrative mass; glow is coordinated media heat.',
+    body:'Every light is a stock, placed by forensic physics: how stretched the price is against its SEC-anchored fundamental value, how much energy the tape carries, and how exhausted the story has become. Size is narrative mass; glow is coordinated media heat.',
     chips:[(UV_DATA.date||'today')+' snapshot','scored ~6×/day','194 metrics per ticker'],
     cam:{tx:0,ty:0,tz:0,dist:1350,phi:.30}});
   // 2 — how to read the space
   stops.push({title:'Three axes. One language.', step:'THE MAP',
-    body:'Follow the labels — they ride the frame as it turns. Toward OVERVALUED, price runs above its SEC-anchored fair value, crossing the FAIR VALUE meridian; toward DISCOUNT it runs below. TAPE ENERGY climbs with the Wyckoff read of who is really buying. And every story ages from FRESH toward EXHAUSTED. Once you can read the space, every stock is a sentence.',
+    body:'Follow the labels — they ride the frame as it turns. Toward OVERVALUED, price runs above its SEC-anchored fundamental value, crossing the FUNDAMENTAL VALUE meridian; toward DISCOUNT it runs below. TAPE ENERGY climbs with the Wyckoff read of who is really buying. And every story ages from FRESH toward EXHAUSTED. Once you can read the space, every stock is a sentence.',
     chips:['valuation — DISCOUNT ⇄ OVERVALUED','tape energy — bearish ⇄ bullish','story age — FRESH ⇄ EXHAUSTED'],
     cam:{tx:0,ty:-50,tz:0,dist:1520,phi:.10,theta:1.47}});
   // 3..4 — the valuation axis, hot end (or the empty gate)
@@ -1001,11 +1001,11 @@ function buildTour(){
   });
   if(!traps.length) stops.push({title:'The trap gate stands empty.', step:'TRAP GATE',
     body:'No name clears the full gate today — price at least 150% above its anchor with claims that verify and a coordinated chorus behind them. The red slab waits all the same. When a story walks in, it gets a beacon.',
-    chips:['gate: ≥150% above fair value','claims verify (SEC)','coordinated heat'],
+    chips:['gate: ≥150% above fundamental value','claims verify (SEC)','coordinated heat'],
     cam:{tx:(xOf(150)+SX)/2,ty:0,tz:0,dist:950,phi:.28}});
   // 5 — the valuation axis, cold end
   if(value) stops.push({title:value.t+' — priced below its anchor', step:'THE DISCOUNT SHELF', color:value.color,
-    body:'At '+fmtFvd(value)+' versus fair value with a '+value.v+' verdict, '+value.t+' sits at the opposite end of the valuation axis from the traps. Cheap plus structurally sound is a different animal from cheap plus broken — the physics tells them apart.',
+    body:'At '+fmtFvd(value)+' versus fundamental value with a '+value.v+' verdict, '+value.t+' sits at the opposite end of the valuation axis from the traps. Cheap plus structurally sound is a different animal from cheap plus broken — the physics tells them apart.',
     chips:['FVD '+fmtFvd(value),'verdict: '+value.v,'SEC verification '+(value.vms==null?'—':value.vms)],
     cam:{tx:value.x,ty:value.y,tz:value.z,dist:540,phi:.16}, focus:value.t});
   // 6..7 — the energy axis, top and floor
@@ -1105,7 +1105,7 @@ function buildStory(s,tr){
   // 1 — where it started
   steps.push({title:s.t+' — where the story stood', step:'CHAPTER 1 · '+ago+' SESSIONS AGO', color:s.color,
     body:'Every trail is a road through the physics. '+s.t+' entered this window at '+fp(first.f)+
-      ' versus its SEC-anchored fair value, tape energy '+(first.w==null?'—':Math.round(first.w))+
+      ' versus its SEC-anchored fundamental value, tape energy '+(first.w==null?'—':Math.round(first.w))+
       ', with '+pctE(first.e)+'% of its narrative fuel spent. The line brightens as it approaches today — follow it.',
     chips:[fp(first.f)+' vs value','energy '+(first.w==null?'—':Math.round(first.w)),'exhaustion '+pctE(first.e)+'%'],
     cam:{tx:first.pt.x,ty:first.pt.y,tz:first.pt.z,dist:470,phi:.20}, focus:s.t, node:first.pt});
@@ -1142,7 +1142,7 @@ function buildStory(s,tr){
   for(i=1;i<days;i++){
     if(tr[i-1].f!=null&&tr[i].f!=null&&tr[i-1].f<150&&tr[i].f>=150){
       steps.push({title:'The day it crossed the gate', step:'TRAP GATE', color:'#FF4D4D',
-        body:'Between session −'+(days-i)+' and −'+(days-1-i)+', '+s.t+' crossed 150% above its fair value — the line where a true story at the wrong price becomes trap-shaped. The engine watches what the chorus and the filings do next.',
+        body:'Between session −'+(days-i)+' and −'+(days-1-i)+', '+s.t+' crossed 150% above its fundamental value — the line where a true story at the wrong price becomes trap-shaped. The engine watches what the chorus and the filings do next.',
         chips:['crossed ≥150%','now '+fp(last.f)],
         cam:{tx:tr[i].pt.x,ty:tr[i].pt.y,tz:tr[i].pt.z,dist:380,phi:.16}, focus:s.t, node:tr[i].pt});
       break;
@@ -1209,7 +1209,7 @@ function drawFrame(now){
   text3D({x:-SX,y:gy-16,z:-SZ*1.25},'FRESH','rgba(90,190,255,.75)',lf);
   // Fair-value meridian + % ticks — absolute references that survive any orbit
   line3({x:0,y:gy,z:-SZ},{x:0,y:gy,z:SZ},'rgba(255,255,255,.17)',1);
-  text3D({x:0,y:gy-13,z:-SZ*1.08},'FAIR VALUE','rgba(255,255,255,.55)',lf);
+  text3D({x:0,y:gy-13,z:-SZ*1.08},'FUNDAMENTAL VALUE','rgba(255,255,255,.55)',lf);
   // Ticks only render while the axis is face-on enough to read — when it goes
   // edge-on their projected spacing collapses and they all hide together.
   var tA=project({x:xOf(50),y:gy,z:-SZ}), tB=project({x:xOf(150),y:gy,z:-SZ});
@@ -1227,7 +1227,7 @@ function drawFrame(now){
     ctx.setLineDash([5,5]);
     ctx.beginPath(); ctx.moveTo(cs[0].x,cs[0].y); ctx.lineTo(cs[3].x,cs[3].y); ctx.lineTo(cs[7].x,cs[7].y); ctx.lineTo(cs[4].x,cs[4].y); ctx.closePath(); ctx.stroke();
     ctx.setLineDash([]);
-    text3D({x:(x0+SX)/2,y:SY*1.05,z:0},'TRAP ZONE · ≥150% ABOVE FAIR VALUE','rgba(255,77,77,.75)','700 11px '+UV_FONT);
+    text3D({x:(x0+SX)/2,y:SY*1.05,z:0},'TRAP ZONE · ≥150% ABOVE FUNDAMENTAL VALUE','rgba(255,77,77,.75)','700 11px '+UV_FONT);
   }
 }
 

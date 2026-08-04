@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
       'ccj': {
         file: 'casestudy/ccj_case_study.html',
         title: 'CCJ Case Study — The Uranium Narrative Machine | Market Prism',
-        description: 'How a supply constraint story with zero SEC confirmation traded Cameco to 499% above fair value — and why Market Prism classified it a Narrative Trap.'
+        description: 'How a supply constraint story with zero SEC confirmation traded Cameco to 499% above fundamental value — and why Market Prism classified it a Narrative Trap.'
       },
       'nke': {
         file: 'casestudy/nke_case_study.html',
@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
       'nvda': {
         file: 'casestudy/nvda_case_study.html',
         title: 'NVDA Case Study — The Inverse Trap | Market Prism',
-        description: 'Five China narrative cycles. A Coordinated Campaign classification. How NVIDIA was talked down to $65 below fair value by high-credibility bearish sources.'
+        description: 'Five China narrative cycles. A Coordinated Campaign classification. How NVIDIA was talked down to $65 below fundamental value by high-credibility bearish sources.'
       }
     };
 

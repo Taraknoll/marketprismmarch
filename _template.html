@@ -5256,8 +5256,8 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
           if(useFadeHero){
             var f=fades[0];
             rowCls='fade';badge='Trade against';tkr=f.ticker;
-            sum='~'+Math.max(1,Math.round(f.days_left||0))+' days of story left · '+daPct(f.fvd_pct,true)+' vs model fair value · for '+daEsc(sess.trade_label||'next session');
-            panel+='<div class="da-headline">The story propping this name up is model-dated: <b>~'+Math.max(1,Math.round(f.days_left||0))+' days of narrative left</b>, with price sitting <b>'+daPct(f.fvd_pct,true)+'</b> above the model’s fair value ('+daMoney(f.fair_value)+' vs '+daMoney(f.price)+'). When the story runs out, so does the bid.</div>';
+            sum='~'+Math.max(1,Math.round(f.days_left||0))+' days of story left · '+daPct(f.fvd_pct,true)+' vs model fundamental value · for '+daEsc(sess.trade_label||'next session');
+            panel+='<div class="da-headline">The story propping this name up is model-dated: <b>~'+Math.max(1,Math.round(f.days_left||0))+' days of narrative left</b>, with price sitting <b>'+daPct(f.fvd_pct,true)+'</b> above the model’s fundamental value ('+daMoney(f.fair_value)+' vs '+daMoney(f.price)+'). When the story runs out, so does the bid.</div>';
             panel+='<ul class="da-why">'+
               '<li>Verdict: '+daEsc(f.verdict||'Narrative Trap')+' — the claim driving the move failed forensic checks.</li>'+
               '<li>Story is '+(f.days_elapsed!=null?f.days_elapsed+' days old':'aging')+' with roughly '+Math.max(1,Math.round(f.days_left||0))+' days of predicted life left — that’s your window, not a price target.</li>'+
@@ -5401,7 +5401,7 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
           <button class="nf-tab" data-nf-tab="tickers" onclick="switchNFTab('tickers',this)">Biggest Movers</button>
           <button class="nf-tab" data-nf-tab="sectors" onclick="switchNFTab('sectors',this)">Sectors</button>
           <button class="nf-tab" data-nf-tab="market" onclick="switchNFTab('market',this)">Market-Wide</button>
-          <button class="nf-tab active" data-nf-tab="traps" onclick="switchNFTab('traps',this)">Traps <span class="info-tip" data-tip="Narrative Traps are tickers where the media story contradicts SEC filings, fundamentals, or fair value — price may be running ahead of reality."><i class="info-icon">i</i></span></button>
+          <button class="nf-tab active" data-nf-tab="traps" onclick="switchNFTab('traps',this)">Traps <span class="info-tip" data-tip="Narrative Traps are tickers where the media story contradicts SEC filings, fundamentals, or fundamental value — price may be running ahead of reality."><i class="info-icon">i</i></span></button>
           <button class="nf-tab" data-nf-tab="coordination" onclick="switchNFTab('coordination',this)">Coordination <span class="info-tip" data-tip="Coordination alerts detect when multiple media sources publish suspiciously similar narratives within a short window — a signal of possible coordinated coverage."><i class="info-icon">i</i></span></button>
         </div>
         <div class="nf-scroll">
@@ -7148,12 +7148,12 @@ function renderScorerResult(d){
   };
   // Verdict explainer — maps each verdict to a plain-English reason + the trigger logic
   var verdictExplain={
-    'Narrative Trap':{icon:'\uD83D\uDEA8',reason:'Price has moved far beyond what fundamentals justify, and the narrative is amplifying the disconnect.',trigger:'Fair value deviation >100%, or >50% with elevated narrative risk.'},
-    'Structurally Supported':{icon:'\u2705',reason:'Low narrative risk, strong filing verification, and price is close to fair value.',trigger:'NRS <30, VMS >80, fair value deviation within \u00B130%.'},
-    'Air Pocket Short':{icon:'\u26A0\uFE0F',reason:'Stock appears undervalued on paper but narrative risk is present \u2014 a potential value trap.',trigger:'Fair value deviation < -14.8% with NRS \u226525.'},
-    'Accumulate':{icon:'\uD83D\uDFE2',reason:'Trading below fair value with low narrative risk and decent verification.',trigger:'FV deviation negative, NRS <30, VMS >70.'},
+    'Narrative Trap':{icon:'\uD83D\uDEA8',reason:'Price has moved far beyond what fundamentals justify, and the narrative is amplifying the disconnect.',trigger:'Fundamental value deviation >100%, or >50% with elevated narrative risk.'},
+    'Structurally Supported':{icon:'\u2705',reason:'Low narrative risk, strong filing verification, and price is close to fundamental value.',trigger:'NRS <30, VMS >80, fundamental value deviation within \u00B130%.'},
+    'Air Pocket Short':{icon:'\u26A0\uFE0F',reason:'Stock appears undervalued on paper but narrative risk is present \u2014 a potential value trap.',trigger:'Fundamental value deviation < -14.8% with NRS \u226525.'},
+    'Accumulate':{icon:'\uD83D\uDFE2',reason:'Trading below fundamental value with low narrative risk and decent verification.',trigger:'FV deviation negative, NRS <30, VMS >70.'},
     'Drift Compression Short':{icon:'\uD83D\uDCC9',reason:'High narrative drift combined with high narrative risk \u2014 the story is pulling away from reality.',trigger:'NRS \u226545.8 and drift score \u226550.'},
-    'High Conviction Continuation':{icon:'\uD83D\uDE80',reason:'Trading well above fair value but strongly verified \u2014 the premium may be justified.',trigger:'FV deviation 82\u2013100% with VMS \u226583.'},
+    'High Conviction Continuation':{icon:'\uD83D\uDE80',reason:'Trading well above fundamental value but strongly verified \u2014 the premium may be justified.',trigger:'FV deviation 82\u2013100% with VMS \u226583.'},
     'Narrative Risk':{icon:'\u26A0\uFE0F',reason:'Elevated narrative risk detected \u2014 claims may not be well-supported by data.',trigger:'NRS \u226560.'},
     'Elevated Risk':{icon:'\uD83D\uDFE1',reason:'Moderate narrative risk \u2014 worth watching but not yet alarming.',trigger:'NRS \u226540.'},
     'Low Risk':{icon:'\uD83D\uDFE2',reason:'Low narrative risk with reasonable filing verification.',trigger:'NRS <25 and VMS \u226565.'},
@@ -7273,7 +7273,7 @@ function renderScorerResult(d){
     h+='<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">';
     if(fvd!=null)h+='<div style="padding:12px 16px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid var(--mp-border);"><div style="font-size:10px;color:var(--mp-text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">FV Deviation</div><div style="font-size:18px;font-weight:700;color:'+fvdC+';">'+(fvd>0?'+':'')+fvd.toFixed(1)+'%</div></div>';
     // Overvalued/undervalued label
-    if(fvd!=null){var fvLabel=fvd>30?'Overvalued':fvd>10?'Slightly Overvalued':fvd<-15?'Undervalued':fvd<-5?'Slightly Undervalued':'Near Fair Value';h+='<div style="padding:12px 16px;border-radius:10px;background:'+fvdC+'0a;border:1px solid '+fvdC+'22;display:flex;align-items:center;"><span style="font-size:13px;font-weight:600;color:'+fvdC+';">'+fvLabel+'</span></div>';}
+    if(fvd!=null){var fvLabel=fvd>30?'Overvalued':fvd>10?'Slightly Overvalued':fvd<-15?'Undervalued':fvd<-5?'Slightly Undervalued':'Near Fundamental Value';h+='<div style="padding:12px 16px;border-radius:10px;background:'+fvdC+'0a;border:1px solid '+fvdC+'22;display:flex;align-items:center;"><span style="font-size:13px;font-weight:600;color:'+fvdC+';">'+fvLabel+'</span></div>';}
     h+='</div>';
   }
   // Fundamentals grid
@@ -8379,7 +8379,7 @@ async function loadData(){
     'scores source reliability using Wilson lower-bound confidence intervals',
     'monitors dark pool activity and short interest for confirmation signals',
     'maps upstream and downstream ticker relationships for contagion risk',
-    'generates fair value estimates using sector-specific PE and PS models',
+    'generates fundamental value estimates using sector-specific PE and PS models',
     'runs a physics engine that models narrative energy, half-life, and drift',
     'identifies "Fundamental Disconnect" when price diverges from fundamentals',
     'watches for bubble keywords that historically precede corrections',
@@ -8943,8 +8943,8 @@ function nfAssessTruth(verdict,extra,sc){
   }
   // Fair value deviation signals
   if(sc.fvd_pct!=null){
-    if(sc.fvd_pct>50) return {cls:'contradicted',icon:'\u2716',label:'Price disconnected from fair value',reason:'Trading '+Math.round(sc.fvd_pct)+'% above fair value estimate.'};
-    if(sc.fvd_pct<-20) return {cls:'verified',icon:'\u2714',label:'Undervalued relative to fundamentals',reason:'Trading '+Math.abs(Math.round(sc.fvd_pct))+'% below fair value estimate.'};
+    if(sc.fvd_pct>50) return {cls:'contradicted',icon:'\u2716',label:'Price disconnected from fundamental value',reason:'Trading '+Math.round(sc.fvd_pct)+'% above fundamental value estimate.'};
+    if(sc.fvd_pct<-20) return {cls:'verified',icon:'\u2714',label:'Undervalued relative to fundamentals',reason:'Trading '+Math.abs(Math.round(sc.fvd_pct))+'% below fundamental value estimate.'};
   }
   // Coordination / manipulation signals
   if(sc.coordination_class&&sc.coordination_class.toLowerCase().indexOf('coordinated')>=0)
@@ -8989,7 +8989,7 @@ function nfTopSignals(extra,sc){
   } else if(sc.fvd_pct!=null){
     if(sc.fvd_pct>100) signals.push({label:'High Hype Gap',color:'rgba(255,77,77,0.7)',border:'rgba(255,77,77,0.15)'});
     else if(sc.fvd_pct>30) signals.push({label:'+'+Math.round(sc.fvd_pct)+'% Overvalued',color:'rgba(255,77,77,0.6)',border:'rgba(255,77,77,0.12)'});
-    else if(sc.fvd_pct<-20) signals.push({label:Math.round(sc.fvd_pct)+'% Below Fair Value',color:'rgba(0,222,148,0.6)',border:'rgba(0,222,148,0.12)'});
+    else if(sc.fvd_pct<-20) signals.push({label:Math.round(sc.fvd_pct)+'% Below Fundamental Value',color:'rgba(0,222,148,0.6)',border:'rgba(0,222,148,0.12)'});
   }
   if(sc.energy_remaining!=null){
     if(sc.energy_remaining<=15) signals.push({label:'Story Exhausted',color:'rgba(160,168,176,0.6)',border:'rgba(160,168,176,0.12)'});
@@ -9822,7 +9822,7 @@ var VAL_SIGNAL_LABELS={
   'CLEAR_PATH':'Clear Path',
   'GREED_VMS':'Greed · VMS',
   'ACS_LOW':'Abnormal Activity Low',
-  'FVD_DISCOUNT':'Fair Value Discount',
+  'FVD_DISCOUNT':'Fundamental Value Discount',
   'NRS_SPIKE':'NRS Spike',
   'NARRATIVE_TRAP':'Narrative Trap'
 };
@@ -12307,8 +12307,8 @@ function getTickerInsightTags(r){
   // ── Priority 9: Existing scorecard-derived tags ──
   var fvd=r.fvd_pct;
   if(fvd!=null){
-    if(fvd<-20) tags.push({label:'Below Fair Value',color:'rgba(0,222,148,0.4)',bg:'rgba(0,222,148,0.03)',border:'rgba(0,222,148,0.08)'});
-    else if(fvd<-5) tags.push({label:'Under Fair Value',color:'rgba(0,222,148,0.35)',bg:'rgba(0,222,148,0.03)',border:'rgba(0,222,148,0.08)'});
+    if(fvd<-20) tags.push({label:'Below Fundamental Value',color:'rgba(0,222,148,0.4)',bg:'rgba(0,222,148,0.03)',border:'rgba(0,222,148,0.08)'});
+    else if(fvd<-5) tags.push({label:'Under Fundamental Value',color:'rgba(0,222,148,0.35)',bg:'rgba(0,222,148,0.03)',border:'rgba(0,222,148,0.08)'});
     else if(fvd>100) tags.push({label:'High Hype Gap',color:'rgba(255,77,77,0.4)',bg:'rgba(255,77,77,0.03)',border:'rgba(255,77,77,0.08)'});
     else if(fvd>30) tags.push({label:'Overvalued',color:'rgba(255,77,77,0.35)',bg:'rgba(255,77,77,0.03)',border:'rgba(255,77,77,0.08)'});
   }
@@ -13563,8 +13563,8 @@ async function generateReport(){
       if(_qfTier==='NO_SIGNAL'){
         insightTags.push({label:'Narrative signal only',c:[255,184,0]});
       } else if(sc.fvd_pct!=null){
-        if(sc.fvd_pct<-20) insightTags.push({label:'Below Fair Value',c:green});
-        else if(sc.fvd_pct<-5) insightTags.push({label:'Under Fair Value',c:green});
+        if(sc.fvd_pct<-20) insightTags.push({label:'Below Fundamental Value',c:green});
+        else if(sc.fvd_pct<-5) insightTags.push({label:'Under Fundamental Value',c:green});
         else if(sc.fvd_pct>100) insightTags.push({label:'High Hype Gap',c:red});
         else if(sc.fvd_pct>30) insightTags.push({label:'Overvalued',c:red});
       }
@@ -14698,7 +14698,7 @@ async function renderLeaderboardCards(){
         return lbRow(i+1,r.ticker,gap,'VMS '+vms,accent1);
       }).join('')
     : emptyRows('No undervalued signals today');
-  var underFooter='Price \u2264 Fair Value \u2022 Sorted by discount';
+  var underFooter='Price \u2264 Fundamental Value \u2022 Sorted by discount';
 
   // ── Card 2: Most Overvalued ───────────────────────────────────────────────
   // fvd_pct positive = price above fair value = overvalued
@@ -14710,7 +14710,7 @@ async function renderLeaderboardCards(){
         return lbRow(i+1,r.ticker,gap,'VMS '+vms,accent2);
       }).join('')
     : emptyRows('No overvalued signals today');
-  var overFooter='Price \u2265 Fair Value \u2022 Sorted by premium';
+  var overFooter='Price \u2265 Fundamental Value \u2022 Sorted by premium';
 
   // ── Card 3: Narratives Aligned with Earnings ──────────────────────────────
   // days_to_earnings < 21, narrative_state or guidance gives alignment signal
@@ -14727,11 +14727,11 @@ async function renderLeaderboardCards(){
   // ── Card config array ─────────────────────────────────────────────────────
   var LB_DEFS=[
     {accent:accent1,rarityColor:accent1,rarityBorder:'rgba(0,222,148,0.25)',rarityLabel:'VALUE',
-     tickerLabel:'UNDERVALUED',companyLabel:'Price below fair value',
+     tickerLabel:'UNDERVALUED',companyLabel:'Price below fundamental value',
      command:'MOST UNDERVALUED',metaTxt:'FVD Ranked \u2022 Daily',
      context:underContent,sectorDate:underFooter,phaseClass:'OPPORTUNITY'},
     {accent:accent2,rarityColor:accent2,rarityBorder:'rgba(255,107,107,0.25)',rarityLabel:'RISK',
-     tickerLabel:'OVERVALUED',companyLabel:'Price above fair value',
+     tickerLabel:'OVERVALUED',companyLabel:'Price above fundamental value',
      command:'MOST OVERVALUED',metaTxt:'FVD Ranked \u2022 Daily',
      context:overContent,sectorDate:overFooter,phaseClass:'ELEVATED RISK'},
     {accent:accent3,rarityColor:accent3,rarityBorder:'rgba(167,139,250,0.25)',rarityLabel:'CATALYST',
@@ -19016,7 +19016,7 @@ var BOARDS=[
   }},
   {id:'consistent-keywords',title:'CLEAN SIGNALS',sub:'Highest signal-to-noise keyword patterns',color:'#38C8B8',bg:'rgba(56,200,184,0.12)',scoreLabel:'Signal Ratio',
   fetch:async function(){try{var rows=await sq('keyword_price_impact?select=ticker,keyword,keyword_type,article_count,avg_return_5d,stddev_10d&article_count=gte.20&order=avg_return_5d.desc&limit=50');if(!rows||!rows.length)return[];return rows.map(function(r){var ret=Number(r.avg_return_5d)||0;var std=Number(r.stddev_10d)||0;var ratio=std>0?Math.abs(ret)/std:0;return{name:r.ticker,link:'/ticker/'+r.ticker,meta:r.keyword.replace(/_/g,' ')+' \u00b7 '+Number(r.article_count)+' articles',score:ratio,scoreDisplay:ratio.toFixed(2),_scoreColor:ret>0?'#00DE94':'#FF4D4D'};}).sort(function(a,b){return b.score-a.score;}).slice(0,10);}catch(e){return[];}}},
-  {id:'undervalued',title:'HIDDEN BARGAINS',sub:'Below fair value with low narrative risk',color:'#00DE94',bg:'rgba(0,222,148,0.12)',scoreLabel:'Discount %',
+  {id:'undervalued',title:'HIDDEN BARGAINS',sub:'Below fundamental value with low narrative risk',color:'#00DE94',bg:'rgba(0,222,148,0.12)',scoreLabel:'Discount %',
   fetch:function(){return scorecardFallback(function(s){return s.fvd_pct!=null&&Number(s.fvd_pct)<-5&&Number(s.nrs)<40;},function(s){var disc=Math.abs(Number(s.fvd_pct)||0);return{name:s.ticker,link:'/ticker/'+s.ticker,meta:'VMS '+Math.round(Number(s.vms)||0)+' \u00b7 '+(s.verdict||''),score:disc,scoreDisplay:'-'+Math.round(disc)+'%',_scoreColor:'#00DE94'};},function(a,b){return(Number(a.fvd_pct)||0)-(Number(b.fvd_pct)||0);},10);}},
   {id:'strongest',title:'TODAY’S VERDICTS',sub:'Highest confidence calls on the board',color:'#00AEFF',bg:'rgba(0,174,255,0.12)',scoreLabel:'Confidence',
   fetch:function(){return scorecardFallback(function(s){return Number(s.verdict_confidence)>50;},function(s){var conf=Number(s.verdict_confidence)||0;return{name:s.ticker,link:'/ticker/'+s.ticker,meta:(s.verdict||'')+(s.walsh_regime?' \u00b7 '+s.walsh_regime:''),score:conf,scoreDisplay:Math.round(conf)+'%',_scoreColor:conf>75?'#00DE94':conf>60?'#00AEFF':'#38C8B8'};},function(a,b){return(Number(b.verdict_confidence)||0)-(Number(a.verdict_confidence)||0);},10);}},

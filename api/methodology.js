@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
     // ── SEO injection (non-destructive, head-only) ──────────────────────
     const pageUrl = 'https://www.marketprism.co/methodology';
     const title = 'Methodology \u2014 Seven Forensic Layers | Market Prism';
-    const description = 'How Market Prism analyzes equity markets: 7 forensic layers including narrative classification, decay physics, SEC filing forensics, coordination detection, Bayesian reliability, fair value stress testing, and contagion mapping.';
+    const description = 'How Market Prism analyzes equity markets: 7 forensic layers including narrative classification, decay physics, SEC filing forensics, coordination detection, Bayesian reliability, fundamental value stress testing, and contagion mapping.';
 
     // Replace title
     html = html.replace(
@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
         { "@type": "HowToStep", "position": 3, "name": "SEC Filing Forensics", "text": "Measure divergence between management narrative claims in MD&A sections and quantitative disclosures in SEC filing tables." },
         { "@type": "HowToStep", "position": 4, "name": "Coordination Detection", "text": "Detect when multiple independent sources converge on the same thesis within a narrow window, identifying coordinated narrative clusters." },
         { "@type": "HowToStep", "position": 5, "name": "Bayesian Analyst Reliability", "text": "Maintain Bayesian reliability models for every source, updating conviction weights based on historical accuracy, sector expertise, and timing precision." },
-        { "@type": "HowToStep", "position": 6, "name": "Fair Value Stress Testing", "text": "Compare current price against where the narrative implies it should be using multi-factor models combining fundamental anchors with narrative energy." },
+        { "@type": "HowToStep", "position": 6, "name": "Fundamental Value Stress Testing", "text": "Compare current price against where the narrative implies it should be using multi-factor models combining fundamental anchors with narrative energy." },
         { "@type": "HowToStep", "position": 7, "name": "Contagion Mapping", "text": "Map how narrative shocks propagate through supply chains, sector peers, and thematic clusters to identify upstream and downstream impact." }
       ]
     };
@@ -67,8 +67,8 @@ module.exports = async (req, res) => {
       {
         "@context": "https://schema.org",
         "@type": "DefinedTerm",
-        "name": "Fair Value Deviation",
-        "description": "A Market Prism metric quantifying how far a stock's current price has diverged from its estimated fair value, expressed as a percentage. Positive values indicate overvaluation, negative values indicate undervaluation.",
+        "name": "Fundamental Value Deviation",
+        "description": "A Market Prism metric quantifying how far a stock's current price has diverged from its estimated fundamental value, expressed as a percentage. Positive values indicate overvaluation, negative values indicate undervaluation.",
         "inDefinedTermSet": { "@type": "DefinedTermSet", "name": "Market Prism Metrics" }
       },
       {

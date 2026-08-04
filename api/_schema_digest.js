@@ -66,8 +66,8 @@ narrative_scorecard  (1 row per ticker per snapshot_date; refreshed daily; INSER
   mass_decay_class     text — mass-to-decay class
   narrative_state      text — Wyckoff-style state: DISTRIBUTION / RETAIL_PUMP /
                               WHALE_ACCUMULATION / DORMANT
-  fvd_pct        num   — Fair-Value Divergence % (price vs daily_fair_value)
-  fair_value     num   — modeled fair value (pure fundamentals)
+  fvd_pct        num   — Fundamental-Value Divergence % (price vs daily_fair_value)
+  fair_value     num   — modeled fundamental value (pure fundamentals)
   nrs            num    — Narrative Risk Score 0-100 (higher = more dangerous)
   ccp            num    — Composite Confidence Percentile 0-100
   srs            num    — Source Reliability Score 0-100
@@ -118,13 +118,13 @@ bubble_metrics  (keys: ticker, snapshot_date)
   regime              text — bubble regime label
   current_episode_start date — start of current bubble episode
 
-═══ DOMAIN: FAIR VALUE ═══
+═══ DOMAIN: FUNDAMENTAL VALUE ═══
 daily_fair_value  (keys: ticker, snapshot_date)
   market_cap      num
-  fvd_pct         num   — Fair-Value Divergence %
+  fvd_pct         num   — Fundamental-Value Divergence %
   fair_value      num
   industry_pe_avg num
-  NOTE: pure-fundamentals anchor; ~9 pre-revenue names have no fair value (correct).
+  NOTE: pure-fundamentals anchor; ~9 pre-revenue names have no fundamental value (correct).
 
 ═══ DOMAIN: CLUSTERS ═══
 narrative_ticker_clusters    — ticker→cluster membership

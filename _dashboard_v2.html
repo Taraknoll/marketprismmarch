@@ -2224,7 +2224,7 @@ async function init(){
           + '<th data-sort="primary_label">Signal</th>'
           + '<th>Action</th>'
           + '<th data-sort="direction">Direction</th>'
-          + '<th data-sort="pct_above_fair_value">vs Fair Value</th>'
+          + '<th data-sort="pct_above_fair_value">vs Fundamental Value</th>'
           + '<th>Flags</th>'
         + '</tr></thead>'
         + '<tbody id="snap-table-body"></tbody>'
@@ -2336,8 +2336,8 @@ async function init(){
         + '<p>'+rows.length+' tickers scored and ranked by narrative forensics</p>'
       + '</div>'
       + buildSection('Highest Conviction', 'Top signals by trade score', topScore)
-      + buildSection('Most Overvalued', 'Stocks trading furthest above fair value', overvalued)
-      + buildSection('Most Undervalued', 'Stocks trading below fair value', undervalued)
+      + buildSection('Most Overvalued', 'Stocks trading furthest above fundamental value', overvalued)
+      + buildSection('Most Undervalued', 'Stocks trading below fundamental value', undervalued)
       + buildSection('Coordinated Activity', 'Tickers with suspicious narrative patterns', coordinated);
 
     root.querySelectorAll('.lb-row[data-ticker]').forEach(function(row){

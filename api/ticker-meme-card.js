@@ -39,7 +39,7 @@ const ACCENT = { bull: '#00DE94', bear: '#FFB800' };
 const BULL_CLOSERS = [
   'The tape is repricing.',
   'Mass building. Energy intact.',
-  'Fair value gap is open.',
+  'Fundamental value gap is open.',
   'Narrative loaded. Conviction rising.',
   'Discount visible. Engine confirms.',
 ];
@@ -211,7 +211,7 @@ function composeBull(sc, narratives, earn) {
   if (isFiniteNum(sc.fvd_pct) && sc.fvd_pct < 0) {
     candidates.push({
       magnitude: Math.abs(sc.fvd_pct),
-      headline: { value: fmtPct(Math.abs(sc.fvd_pct)), label: 'discount to fair value' },
+      headline: { value: fmtPct(Math.abs(sc.fvd_pct)), label: 'discount to fundamental value' },
     });
   }
   if (earn && isFiniteNum(earn.eps_surprise_pct) && earn.eps_surprise_pct > 0) {
@@ -241,7 +241,7 @@ function composeBull(sc, narratives, earn) {
     value: fmtNum(sc.energy_remaining, 0), label: 'energy remaining',
   });
   pushIf(supporting, isFiniteNum(sc.fair_value) && isFiniteNum(sc.current_price), {
-    value: '$' + fmtNum(sc.fair_value, 2), label: 'engine fair value',
+    value: '$' + fmtNum(sc.fair_value, 2), label: 'engine fundamental value',
   });
   pushIf(supporting, isFiniteNum(sc.vms) && sc.vms > 0, {
     value: fmtNum(sc.vms, 1), label: 'narrative mass score',
@@ -267,7 +267,7 @@ function composeBear(sc, narratives, earn) {
   if (isFiniteNum(sc.fvd_pct) && sc.fvd_pct > 0) {
     candidates.push({
       magnitude: Math.abs(sc.fvd_pct),
-      headline: { value: fmtPct(sc.fvd_pct, true), label: 'premium to fair value' },
+      headline: { value: fmtPct(sc.fvd_pct, true), label: 'premium to fundamental value' },
     });
   }
   if (earn && isFiniteNum(earn.eps_surprise_pct) && earn.eps_surprise_pct < 0) {
@@ -306,7 +306,7 @@ function composeBear(sc, narratives, earn) {
     value: fmtNum(sc.decay_rate, 2), label: 'decay rate',
   });
   pushIf(supporting, isFiniteNum(sc.fair_value), {
-    value: '$' + fmtNum(sc.fair_value, 2), label: 'engine fair value',
+    value: '$' + fmtNum(sc.fair_value, 2), label: 'engine fundamental value',
   });
   pushIf(supporting, sc.verdict, {
     value: titleCase(sc.verdict), label: 'verdict',

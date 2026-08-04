@@ -6543,6 +6543,17 @@ function mpIsBadSummary(text) {
   // contained — it can't throw on a top-level init-order edge case.
   return /\bI appreciate (?:the|your) request\b|\bneed to flag\b|\bflag a data issue\b|\bas required by the brief\b|\bto write this properly\b|\bcould you (?:provide|clarify|share)\b|\bthe active narratives list\b|\bno descriptive text\b|spread\s*=\s*\d|\bcannot write\b|\bcan['’]?t write\b|\bI['’]?d need\b|\bI would need\b|\bI can (?:deliver|write|provide)\b|\bI (?:am|['’]m) unable\b|\bI apologize\b|\bI['’]m sorry\b|\bplease provide\b|\blet me know if\b|\bwithout knowing what these\b|\bI don['’]?t have (?:enough|access|the)\b/i.test(s);
 }
+// House terminology on this page: "fundamental value", never "fair value".
+// Applied to server-written prose (LLM headline synthesis, upstream
+// headline_explanation/story_claim columns) so cached or upstream text that
+// still carries the old term never reaches the reader.
+function mpTerm(t) {
+  return String(t || '')
+    .replace(/Fair Value/g, 'Fundamental Value')
+    .replace(/Fair value/g, 'Fundamental value')
+    .replace(/fair value/g, 'fundamental value')
+    .replace(/FAIR VALUE/g, 'FUNDAMENTAL VALUE');
+}
 
 // Deterministic synthesized state label + action chip + tone for the
 // narrative strip. Order matters — first match wins. Adapted to columns
@@ -7027,6 +7038,7 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
       : (story && (story.story_claim || story.forensic_rebuttal)) || '';
   // Never let a leaked LLM refusal/meta-response through as the fallback line.
   if (mpIsBadSummary(headline)) headline = '';
+  headline = mpTerm(headline);
 
   var fresh = ttRelativeTime(f.heavy_refreshed_at);
 
@@ -7108,10 +7120,10 @@ function renderTradeTicket(f, story, sc, fv, earn, priceRange, strategy, hzMap) 
   }
   if (sc && sc.fvd_pct != null) {
     var fvd = Number(sc.fvd_pct);
-    signalRows.push({ label:'Fair-value gap', val: (fvd > 0 ? '+' : '') + fvd.toFixed(1) + '%' });
+    signalRows.push({ label:'Fundamental-value gap', val: (fvd > 0 ? '+' : '') + fvd.toFixed(1) + '%' });
   }
   if (fv && fv.fair_value != null) {
-    signalRows.push({ label:'Fair value', val: ttFmtUsd(fv.fair_value) });
+    signalRows.push({ label:'Fundamental value', val: ttFmtUsd(fv.fair_value) });
   }
   if (sc && sc.walsh_regime) {
     signalRows.push({ label:'Regime', val: String(sc.walsh_regime).replace(/_/g,' ') });
@@ -7306,7 +7318,7 @@ function classifyLane(sc, earn) {
   // 6. Value Pick
   if (fvd != null && fvd < -5 && nrs < 40 && vms != null && vms > 50 && walsh !== 'PERSISTENT') {
     return { lane:'Value Pick', action:'Accumulate', direction:'BULLISH', color:'#00DE94',
-             reason: Math.abs(fvd).toFixed(1) + '% below fair value with strong fundamentals.' };
+             reason: Math.abs(fvd).toFixed(1) + '% below fundamental value with strong fundamentals.' };
   }
 
   return null;
@@ -8059,7 +8071,7 @@ async function loadHero() {
           .then(function(res){ return res.ok ? res.json() : null; })
           .then(function(j){
             if (j && j.summary && !mpIsBadSummary(j.summary)) {
-              hl.textContent = j.summary;
+              hl.textContent = mpTerm(j.summary);
               hl.style.display = '';
               hl.removeAttribute('data-pending');
             } else {
@@ -8124,7 +8136,7 @@ async function enrichLeaderboardBadges() {
     const findRank = (list) => { const idx = list.findIndex(x => x.ticker === TICKER); return idx >= 0 ? idx + 1 : null; };
 
     const uvRank = findRank(undervalued);
-    if (uvRank) rankBadges.push({ label: `#${uvRank} Under Fair Value`, color: '#00DE94', bg: 'rgba(0,222,148,0.12)', border: 'rgba(0,222,148,0.30)' });
+    if (uvRank) rankBadges.push({ label: `#${uvRank} Under Fundamental Value`, color: '#00DE94', bg: 'rgba(0,222,148,0.12)', border: 'rgba(0,222,148,0.30)' });
 
     const ovRank = findRank(overvalued);
     if (ovRank) rankBadges.push({ label: `#${ovRank} Most Overvalued`, color: '#FF4D4D', bg: 'rgba(255,77,77,0.12)', border: 'rgba(255,77,77,0.30)' });
@@ -8383,9 +8395,9 @@ function ciFlagEvidence(flag, r) {
   switch (String(flag || '').toLowerCase()) {
     case 'overvalued anchor':
       return (r.fvd_pct != null && !isNaN(Number(r.fvd_pct)))
-        ? 'Priced ~' + Math.round(Number(r.fvd_pct)) + '% above model fair value'
+        ? 'Priced ~' + Math.round(Number(r.fvd_pct)) + '% above model fundamental value'
             + (String(r.npp_conclusion || '').toUpperCase() === 'PRICED_FOR_PERFECTION' ? ' — priced for perfection' : '')
-        : 'Trades well above model fair value';
+        : 'Trades well above model fundamental value';
     case 'omission cascade':
       return 'Material facts the narrative leaves out'
         + (r.omission_gap_score != null ? ' (omission-gap ' + Math.round(Number(r.omission_gap_score)) + '/100)' : '');
@@ -10746,9 +10758,9 @@ function renderDiagStrip(p) {
       <div class="diag-sub">${esc(p.sentiment_momentum || 'Momentum')}</div>
     </div>
     <div class="diag-cell">
-      <div class="diag-label">Fair Value Gap</div>
+      <div class="diag-label">Fundamental Value Gap</div>
       <div class="diag-val">${fvd}</div>
-      <div class="diag-sub">${p.fvd_pct != null ? (Math.abs(p.fvd_pct) > 5 ? 'Price stretched' : 'Near fair value') : '—'}</div>
+      <div class="diag-sub">${p.fvd_pct != null ? (Math.abs(p.fvd_pct) > 5 ? 'Price stretched' : 'Near fundamental value') : '—'}</div>
     </div>`;
 }
 
@@ -10881,7 +10893,7 @@ function renderWarranted(p) {
     + '<div class="tug-stats-grid">'
     +   '<div class="tug-stat-item" title="How well the price move is backed by verified SEC-filing evidence (higher = more grounded)."><div class="tug-stat-val" style="color:var(--mp-green);">' + evidence + '</div><div class="tug-stat-lbl">Evidence</div></div>'
     +   '<div class="tug-stat-item" title="Narrative durability — the inverse of fragility (higher = more stable, less likely to snap)."><div class="tug-stat-val" style="color:var(--mp-blue);">' + (100 - frag) + '</div><div class="tug-stat-lbl">Tractability</div></div>'
-    +   '<div class="tug-stat-item" title="How far price has stretched from fair value (higher = more over- or under-valued)."><div class="tug-stat-val" style="color:var(--mp-amber);">' + valStr + '</div><div class="tug-stat-lbl">Val Stretch</div></div>'
+    +   '<div class="tug-stat-item" title="How far price has stretched from fundamental value (higher = more over- or under-valued)."><div class="tug-stat-val" style="color:var(--mp-amber);">' + valStr + '</div><div class="tug-stat-lbl">Val Stretch</div></div>'
     +   '<div class="tug-stat-item" title="Narrative drift pressure pushing the story (higher = a stronger directional push / hype force)."><div class="tug-stat-val" style="color:var(--mp-red);">' + pressure + '</div><div class="tug-stat-lbl">Pressure</div></div>'
     + '</div>'
     + '<div class="tug-note">' + summary + '</div>'
@@ -11399,7 +11411,7 @@ function exportReport() {
         y += 1;
         textBlock(descTxt);
       }
-      // Signals rows (Narrative state, Coordination, Fair-value gap, Fair value,
+      // Signals rows (Narrative state, Coordination, Fundamental-value gap, Fundamental value,
       // Regime, Verdict) — render exactly the labels the live page shows.
       narr.querySelectorAll('.tt-narr-signal').forEach(function(row){
         var lbl = row.querySelector('.tt-narr-signal-label');
@@ -11442,17 +11454,17 @@ function exportReport() {
       y += 4;
     }
 
-    // Fair Value Analysis — pulled from hero data (not pulse, to avoid stale
+    // Fundamental Value Analysis — pulled from hero data (not pulse, to avoid stale
     // sources). Uses current vocabulary only.
     var fairVal = r.fair_value || p.fair_value;
     var curPrice = r.price;
     if (fairVal != null && curPrice != null) {
-      sectionLabel('Fair value');
+      sectionLabel('Fundamental value');
       var fvDev = ((curPrice - fairVal) / fairVal * 100).toFixed(1);
       var fvColor = fvDev > 15 ? red : fvDev < -15 ? green : cyan;
-      var fvLabel = fvDev > 0 ? fvDev + '% above fair value' : Math.abs(fvDev) + '% below fair value';
+      var fvLabel = fvDev > 0 ? fvDev + '% above fundamental value' : Math.abs(fvDev) + '% below fundamental value';
       kvRow('Current price', '$' + Number(curPrice).toFixed(2), white);
-      kvRow('Fair value', '$' + Number(fairVal).toFixed(2), cyan);
+      kvRow('Fundamental value', '$' + Number(fairVal).toFixed(2), cyan);
       kvRow('Valuation gap', fvLabel, fvColor);
       { const _pe = mpMeaningfulPe(r.pe_ratio); if (_pe != null) kvRow('P/E ratio', _pe.toFixed(1) + 'x', white); }
       if (r.revenue_growth_pct != null) kvRow('Revenue growth', r.revenue_growth_pct + '%', r.revenue_growth_pct > 0 ? green : red);
@@ -13037,7 +13049,7 @@ async function refreshAll() {
     document.title = t + ' — AI Stock Analysis | Market Prism';
   })();
 
-  // Leaderboard rank badges (#N Most Overvalued / Under Fair Value / Hype Gap /
+  // Leaderboard rank badges (#N Most Overvalued / Under Fundamental Value / Hype Gap /
   // Coordinated) suppressed 2026-05-02 — the numeric rankings cluttered the
   // hero row and frequently contradicted the existing insight chips.
   // enrichLeaderboardBadges();

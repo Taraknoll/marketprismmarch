@@ -51,7 +51,7 @@ Market Prism is a patent-pending (US 63/971,470 & 63/971,478) financial analysis
 ## What Market Prism Provides
 
 - **Narrative Verdicts**: Every covered ticker receives one of three classifications — Narrative Trap, Structurally Supported, or Monitoring — based on forensic signal analysis.
-- **Fair Value Deviation (FVD)**: Quantifies how far a stock's price has diverged from its estimated fair value, measured as a percentage.
+- **Fundamental Value Deviation (FVD)**: Quantifies how far a stock's price has diverged from its estimated fundamental value, measured as a percentage.
 - **Narrative Energy**: Measures the remaining momentum in a market story (0–100%), indicating whether the thesis is gaining or losing traction.
 - **Coordination Detection**: Identifies when multiple sources converge on the same narrative within a narrow window, signaling potential fragility.
 - **Decay Physics**: Models narrative half-life — how quickly market stories lose conviction — using radioactive decay mathematics.

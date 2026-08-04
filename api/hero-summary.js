@@ -5,7 +5,7 @@
 // Inputs include recent narrative_analyses article text (last 3 days), the
 // full narrative_scorecard signals (state, coordination, regime, sentiment),
 // daily_fair_value, and earnings context. The synthesized state label is
-// passed in explicitly so the LLM can avoid restating it. Fair-value
+// passed in explicitly so the LLM can avoid restating it. Fundamental-value
 // percentages are now allowed (and expected) in output — the second sentence
 // is supposed to quantify the narrative/fundamentals disconnect.
 //
@@ -19,9 +19,9 @@ const SYSTEM_PROMPT = `You are writing a 2-3 sentence editorial summary for a st
 
 Sentence 1 — Lead with what's dominating discourse. If multiple articles share a theme, name it specifically (use proper nouns from the articles). If they conflict, describe the conflict.
 
-Sentence 2 — Quantify the disconnect between narrative and fundamentals. If a fair value gap is provided in the input, reference it; if it is not provided, do NOT mention fair value, valuation, premium, discount, over/undervalued, or any "X% above/below fair value" phrasing. Always reference narrative health in plain market English - use the "Story momentum" read in the input to say whether the story is building, holding steady, fading, or losing momentum - and reference recent earnings when applicable.
+Sentence 2 — Quantify the disconnect between narrative and fundamentals. If a fundamental value gap is provided in the input, reference it; if it is not provided, do NOT mention fundamental value, valuation, premium, discount, over/undervalued, or any "X% above/below fundamental value" phrasing. Always reference narrative health in plain market English - use the "Story momentum" read in the input to say whether the story is building, holding steady, fading, or losing momentum - and reference recent earnings when applicable.
 
-Valuation lens consistency — CRITICAL: A "P/E vs sector" badge sits visually adjacent to this paragraph. If the input provides P/E context (current P/E, 5-yr median, implied-at-fair-value, industry average) AND those signals disagree with the fair-value premium (e.g. fair-value model says +16% overvalued but P/E is below sector or below the stock's own 5-yr median), you MUST acknowledge both lenses rather than lead with just one. Example phrasing: "trades at 42x vs a 5-yr median of 34x even as the multiple sits below sector peers, with the fair-value model still flagging X% of stretch on narrative-adjusted fundamentals". Never write a sentence that contradicts what the adjacent badge shows.
+Valuation lens consistency — CRITICAL: A "P/E vs sector" badge sits visually adjacent to this paragraph. If the input provides P/E context (current P/E, 5-yr median, implied-at-fundamental-value, industry average) AND those signals disagree with the fundamental-value premium (e.g. fundamental-value model says +16% overvalued but P/E is below sector or below the stock's own 5-yr median), you MUST acknowledge both lenses rather than lead with just one. Example phrasing: "trades at 42x vs a 5-yr median of 34x even as the multiple sits below sector peers, with the fundamental-value model still flagging X% of stretch on narrative-adjusted fundamentals". Never write a sentence that contradicts what the adjacent badge shows.
 
 Sentence 3 (optional) — If the institutional signal is meaningful (narrative_state = WHALE_ACCUMULATION or DISTRIBUTION, or strong coordination), add the institutional read in plain English.
 
@@ -35,7 +35,7 @@ Hard rules:
 - Read like a Bloomberg analyst wrote it. Not breathless, not robotic.
 - Banned words (always): crash, guaranteed, certain, always, never, explosion, manipulation. Use "stretched", "diverging", or "outpacing fundamentals" instead.
 - NO narrative-physics or scientific-metaphor vocabulary in the output, ever. Specifically banned: half-life, decay, decaying, energy (including "narrative energy", "sentiment energy", "temporal energy"), velocity, mass, friction, fuel, radioactive, critical, subcritical, supercritical, exhaustion, exhausting. Never cite a number of days of "half-life". Describe the story in plain market English instead: "the story is losing momentum", "fresh coverage is thinning", "the narrative is fading", "conviction is slipping", "coverage is still consensus-long". The plain word "momentum" on its own is allowed - only the physics/energy metaphors are banned. Keep the paragraph focused on the narrative and the stock price.
-- Conditional banned words: when the input contains "Valuation flag: TEMPERATE", these additional words become banned in the paragraph: hype, hyped, frothy, froth, mania, manic, euphoria, euphoric, bubble, parabolic, blow-off. A TEMPERATE flag means the stock is within 20% of fair value AND the multiple is below sector peers, so any "hype" framing would contradict the multiple math. Use "extended", "consensus-long", "well-owned", or "crowded" instead. The synthesized state label above the paragraph may still contain "hype" - that is fine, the label is separate; but the paragraph itself must avoid those words. When the flag is "ELEVATED" or absent, normal valuation language is allowed.
+- Conditional banned words: when the input contains "Valuation flag: TEMPERATE", these additional words become banned in the paragraph: hype, hyped, frothy, froth, mania, manic, euphoria, euphoric, bubble, parabolic, blow-off. A TEMPERATE flag means the stock is within 20% of fundamental value AND the multiple is below sector peers, so any "hype" framing would contradict the multiple math. Use "extended", "consensus-long", "well-owned", or "crowded" instead. The synthesized state label above the paragraph may still contain "hype" - that is fine, the label is separate; but the paragraph itself must avoid those words. When the flag is "ELEVATED" or absent, normal valuation language is allowed.
 
 Output ONLY the paragraph. No headers, no quotes around it, no preamble.`;
 
@@ -141,17 +141,17 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
     var fvPrice = Number(fv.fair_value);
     var gapPct = (Number(s.price) - fvPrice) / fvPrice * 100;
     var direction = gapPct >= 0 ? 'overvalued' : 'undervalued';
-    lines.push('Fair value: $' + fvPrice.toFixed(2)
-      + ' (stock is ' + Math.abs(gapPct).toFixed(1) + '% ' + direction + ' vs fair value)');
+    lines.push('Fundamental value: $' + fvPrice.toFixed(2)
+      + ' (stock is ' + Math.abs(gapPct).toFixed(1) + '% ' + direction + ' vs fundamental value)');
   } else if (sc.fvd_pct != null) {
     var fvd = Number(sc.fvd_pct);
     var fvdDirection = fvd >= 0 ? 'overvalued' : 'undervalued';
-    lines.push('Fair-value gap: stock is ' + Math.abs(fvd).toFixed(1) + '% ' + fvdDirection + ' vs fair value');
+    lines.push('Fundamental-value gap: stock is ' + Math.abs(fvd).toFixed(1) + '% ' + fvdDirection + ' vs fundamental value');
   }
 
   // Valuation-temperature flag — controls hype-style word bans in the LLM
   // paragraph. TEMPERATE = stock is within VALUATION_PREMIUM_TEMPERATE_PCT of
-  // fair value AND pe_used < industry_pe_median (multiple below sector peers).
+  // fundamental value AND pe_used < industry_pe_median (multiple below sector peers).
   // Both conditions must be computable; when industry_pe_median is null (current
   // state for most rows pending the upstream backfill of daily_fair_value),
   // the flag is left absent rather than guessed.
@@ -197,7 +197,7 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
     if (fv.pe_implied != null) {
       var peImp = Number(fv.pe_implied);
       var impDir = peNow >= peImp ? 'above' : 'below';
-      peLines.push('Implied P/E at fair value: ' + peImp.toFixed(1) + 'x (current is '
+      peLines.push('Implied P/E at fundamental value: ' + peImp.toFixed(1) + 'x (current is '
         + impDir + ' the implied multiple)');
     }
     if (fv.industry_pe_median != null) {
@@ -208,7 +208,7 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
         + indGap.toFixed(0) + '% ' + indDir + ' sector peers — THIS matches what the visible "vs Sector" badge displays)');
     }
     lines.push('');
-    lines.push('Valuation multiples (use these alongside fair value for the disagreement rule):');
+    lines.push('Valuation multiples (use these alongside fundamental value for the disagreement rule):');
     peLines.forEach(function(l) { lines.push('- ' + l); });
   }
   // Earnings timing — recompute days_to_earnings from next_earnings_date relative
@@ -321,6 +321,18 @@ function isBadSummary(text) {
   return BAD_SUMMARY_RE.test(String(text));
 }
 
+// House terminology on the ticker page: "fundamental value", never "fair
+// value". The system prompt instructs Haiku accordingly, but this is a
+// belt-and-suspenders normalizer on the output in case the model still
+// slips. Mirrors qfTerm() in _quant_field.html / mpTerm() in _ticker.html.
+function houseTerm(text) {
+  return String(text || '')
+    .replace(/Fair Value/g, 'Fundamental Value')
+    .replace(/Fair value/g, 'Fundamental value')
+    .replace(/fair value/g, 'fundamental value')
+    .replace(/FAIR VALUE/g, 'FUNDAMENTAL VALUE');
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
@@ -377,7 +389,7 @@ module.exports = async (req, res) => {
   var hasFV = (fairValue && fairValue.fair_value != null)
     || (scorecard && scorecard.fvd_pct != null);
   var fvRule = hasFV ? '' :
-    '\n\nIMPORTANT: No fair-value data is available for this ticker. Do NOT mention fair value, valuation, premium, discount, over/undervalued, or any "X% above/below fair value" phrasing. Focus sentence 2 on narrative health and earnings instead.';
+    '\n\nIMPORTANT: No fundamental-value data is available for this ticker. Do NOT mention fundamental value, valuation, premium, discount, over/undervalued, or any "X% above/below fundamental value" phrasing. Focus sentence 2 on narrative health and earnings instead.';
   var userMessage = 'Ticker dashboard state:\n\n' + stateBlock + fvRule + '\n\nWrite the 2-3 sentence editorial paragraph now.';
 
   // If there's no real narrative material to synthesize from (no fresh articles,
@@ -417,6 +429,7 @@ module.exports = async (req, res) => {
     var text = (data.content && data.content[0] && data.content[0].text || '').trim();
     // Defensive: collapse any stray newlines into a single sentence.
     text = text.replace(/\s+/g, ' ').trim();
+    text = houseTerm(text);
     // Never return a raw refusal / meta-response as the summary — the caller
     // renders it verbatim. Fall back to empty so the UI shows its neutral state.
     // (Belt-and-suspenders with the pre-LLM insufficient-content guard above.)

@@ -185,7 +185,7 @@ function valuationClause(fvdPct) {
   if (mult >= 1.5)  return `trades at ~${mult.toFixed(1)}× what its fundamentals justify`;
   if (mult >= 1.15) return `carries a ~${Math.round(f)}% premium to fundamentals`;
   if (mult >= 0.9)  return 'is priced roughly in line with fundamentals';
-  if (mult > 0)     return `trades ~${Math.round(Math.abs(f))}% below fundamental fair value`;
+  if (mult > 0)     return `trades ~${Math.round(Math.abs(f))}% below fundamental value`;
   return 'is priced below any fundamental anchor';
 }
 
@@ -322,10 +322,10 @@ async function execTickerDossier(input, ctx) {
     { name: 'Trading footprint', level: r.suspicion_class === 'HIGH_MANIPULATION_RISK' ? 'severe'
         : r.suspicion_class === 'MODERATE' ? 'elevated' : 'ok',
       reading: `${r.suspicion_class || 'n/a'} — trading-footprint read, NOT a manipulation verdict` },
-    { name: 'Fair-value divergence', level: (() => {
+    { name: 'Fundamental-value divergence', level: (() => {
         const a = Math.abs(num(r.fvd_pct) || 0);
         return a >= 150 ? 'severe' : a >= 100 ? 'elevated' : a >= 50 ? 'weak' : 'ok';
-      })(), reading: `FVD ${round(r.fvd_pct, 1)}% vs fair value ${round(r.fair_value, 2)}` },
+      })(), reading: `FVD ${round(r.fvd_pct, 1)}% vs fundamental value ${round(r.fair_value, 2)}` },
     { name: 'Bubble (idiosyncratic)', level: bubbleActive ? 'elevated' : 'ok',
       reading: bubbleActive ? `bubble_active_idio=true (${bubbleRegime || 'regime n/a'})` : 'no active idiosyncratic bubble' },
   ];

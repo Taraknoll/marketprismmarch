@@ -116,7 +116,7 @@ module.exports = async (req, res) => {
         line += ' | Driver: ' + (d.primary_driver || '–') + ' | Sector: ' + (d.sector_name || '–');
         if (d.story_claim) line += ' | Story: ' + d.story_claim;
         if (d.pe_ratio) line += ' | P/E: ' + d.pe_ratio;
-        if (d.fair_value) line += ' | Fair Value: $' + d.fair_value;
+        if (d.fair_value) line += ' | Fundamental Value: $' + d.fair_value;
         if (d.narrative_health) line += ' | Health: ' + d.narrative_health;
         if (d.narrative_trend) line += ' | Trend: ' + d.narrative_trend;
         if (d.recovery_probability) line += ' | Recovery: ' + d.recovery_probability;
@@ -181,7 +181,7 @@ module.exports = async (req, res) => {
             extraContext.push('Driver: ' + (r.primary_driver || '–') + ' | Sector: ' + (r.sector_name || '–'));
             if (r.story_claim) extraContext.push('Story: ' + r.story_claim);
             if (r.pe_ratio) extraContext.push('P/E: ' + r.pe_ratio);
-            if (r.fair_value) extraContext.push('Fair Value: $' + r.fair_value);
+            if (r.fair_value) extraContext.push('Fundamental Value: $' + r.fair_value);
             if (r.guidance_direction) extraContext.push('Guidance: ' + r.guidance_direction);
           });
         }

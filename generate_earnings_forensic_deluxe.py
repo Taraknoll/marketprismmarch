@@ -91,7 +91,7 @@ STRUCTURAL TEMPLATE — FOLLOW THIS ORDER
 1. Opening paragraph — frame the central pre-print (or post-print) question with
    asymmetry. State what's at stake in one tight paragraph.
 2. **Key Diagnostics** — markdown table of headline numbers (earnings date, price,
-   fair value, consensus, guidance midpoint, options-implied move if available,
+   fundamental value, consensus, guidance midpoint, options-implied move if available,
    short interest, YTD action, capital return events).
 3. **Executive Summary** — one paragraph attesting to data sources and row counts.
    Explicit framing of what the report does NOT do (no prediction).
@@ -527,7 +527,7 @@ def render_walsh_diagnostics(ctx: dict) -> str:
     sr = ctx.get("sector_regime", {}) or {}
     sig = ctx.get("signature", {}) or {}
     lines = ["Diagnostic | Reading"]
-    lines.append(f"  FVD (fair value divergence) | {_fpct(sc.get('fvd_pct'))}")
+    lines.append(f"  FVD (fundamental value divergence) | {_fpct(sc.get('fvd_pct'))}")
     lines.append(f"  Verdict | {sc.get('verdict', 'N/A')}")
     lines.append(f"  Narrative state | {sc.get('narrative_state', 'N/A')}")
     lines.append(f"  Energy remaining | {_f(sc.get('energy_remaining'))}")
@@ -678,9 +678,9 @@ Internal verdict: {sc.get('verdict', 'N/A')}
 Story claim: {story.get('story_claim', 'N/A')}
 Forensic rebuttal: {story.get('forensic_rebuttal', 'N/A')}
 Institutional positioning: {story.get('institutional_positioning', 'N/A')}
-Fair value (daily_fair_value): {_fdollar(fv.get('fair_value'))} (low {_fdollar(fv.get('fv_low'))}, high {_fdollar(fv.get('fv_high'))})
-Fair value method: {fv.get('method', 'N/A')}
-Fair value verdict: {fv.get('verdict', 'N/A')}
+Fundamental value (daily_fair_value): {_fdollar(fv.get('fair_value'))} (low {_fdollar(fv.get('fv_low'))}, high {_fdollar(fv.get('fv_high'))})
+Fundamental value method: {fv.get('method', 'N/A')}
+Fundamental value verdict: {fv.get('verdict', 'N/A')}
 
 SECTOR / INDUSTRY
 -----------------

@@ -814,7 +814,7 @@ function renderTrapCards(){
         +'<div class="td-block">'
           +'<div class="td-lbl">Story Analysis</div>'
           +(r.current_price?'<div class="td-row"><span class="td-key">Current price</span><span class="td-val">$'+fmtP(r.current_price)+'</span></div>':'')
-          +(r.fair_value?'<div class="td-row"><span class="td-key">Fair value</span><span class="td-val">$'+fmtP(r.fair_value)+'</span></div>':'')
+          +(r.fair_value?'<div class="td-row"><span class="td-key">Fundamental value</span><span class="td-val">$'+fmtP(r.fair_value)+'</span></div>':'')
           +(fvdAbs?'<div class="td-row"><span class="td-key">Valuation</span><span class="td-val">'+fvdAbs+'% '+fvdDir+'</span></div>':'')
           +(r.energy_remaining!=null?'<div class="td-row"><span class="td-key">Story energy</span><span class="td-val">'+Math.round(r.energy_remaining)+'%</span></div>':'')
           +(r.verdict_confidence!=null?'<div class="td-row"><span class="td-key">Engine confidence</span><span class="td-val">'+Math.round(r.verdict_confidence)+'%</span></div>':'')

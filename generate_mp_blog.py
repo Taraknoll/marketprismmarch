@@ -353,11 +353,11 @@ def build_prompt(ctx: dict, live: dict, sentiment: str = None) -> str:
     else:
         energy_framing = "narrative energy is low — the thesis is losing traction"
 
-    # FVD framing (fair value deviation as % — positive = above fair value)
+    # FVD framing (fundamental value deviation as % — positive = above fundamental value)
     if fvd and abs(fvd) > 20:
-        fvd_framing = f"significant valuation dislocation detected ({fvd:+.1f}% from estimated fair value)"
+        fvd_framing = f"significant valuation dislocation detected ({fvd:+.1f}% from estimated fundamental value)"
     elif fvd:
-        fvd_framing = f"modest valuation gap ({fvd:+.1f}% from estimated fair value)"
+        fvd_framing = f"modest valuation gap ({fvd:+.1f}% from estimated fundamental value)"
     else:
         fvd_framing = "valuation gap data unavailable"
 

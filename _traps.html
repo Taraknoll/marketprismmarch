@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Narrative Traps of the Week — Market Prism</title>
-<meta name="description" content="Tickers where the media story has run ahead of the filings — flagged this week by the Market Prism forensic pipeline. Claims, sources, fair-value gaps, coordination signals, and what happened after each flag.">
+<meta name="description" content="Tickers where the media story has run ahead of the filings — flagged this week by the Market Prism forensic pipeline. Claims, sources, fundamental-value gaps, coordination signals, and what happened after each flag.">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <link rel="canonical" href="https://www.marketprism.co/traps">
 <meta property="og:type" content="website">
@@ -349,7 +349,7 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
     <div class="hero-eyebrow">Forensic watchlist · refreshed weekly</div>
     <h1 class="hero-h">Narrative Traps <em>of the week.</em></h1>
     <p class="hero-lead">
-      A narrative trap is a stock story that has <strong>run ahead of the filings</strong> — where the claim being repeated in the media contradicts the fundamentals, the fair value, or both. These are the tickers the forensic pipeline flagged over the past seven days, with the claim, the source, and the data.
+      A narrative trap is a stock story that has <strong>run ahead of the filings</strong> — where the claim being repeated in the media contradicts the fundamentals, the fundamental value, or both. These are the tickers the forensic pipeline flagged over the past seven days, with the claim, the source, and the data.
     </p>
     <span class="hero-week" id="week-range">Loading this week's slate…</span>
     <p class="hero-note">
@@ -363,9 +363,9 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
   <div class="container">
     <div class="stat-grid" id="stat-grid">
       <div class="stat-cell"><div class="stat-v" id="st-count">—</div><div class="stat-l">Traps flagged</div><div class="stat-d">Distinct tickers, past 7 days.</div></div>
-      <div class="stat-cell"><div class="stat-v" id="st-severe">—</div><div class="stat-l">Severe</div><div class="stat-d">Price ≥150% above model fair value.</div></div>
+      <div class="stat-cell"><div class="stat-v" id="st-severe">—</div><div class="stat-l">Severe</div><div class="stat-d">Price ≥150% above model fundamental value.</div></div>
       <div class="stat-cell"><div class="stat-v" id="st-coord">—</div><div class="stat-l">Coordination flags</div><div class="stat-d">Suspicious or coordinated coverage patterns.</div></div>
-      <div class="stat-cell"><div class="stat-v" id="st-gap">—</div><div class="stat-l">Median fair-value gap</div><div class="stat-d">Across this week's flagged tickers.</div></div>
+      <div class="stat-cell"><div class="stat-v" id="st-gap">—</div><div class="stat-l">Median fundamental-value gap</div><div class="stat-d">Across this week's flagged tickers.</div></div>
     </div>
   </div>
 </section>
@@ -387,7 +387,7 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
     <div class="how-grid">
       <div class="how-card">
         <div class="how-h">Anchored to the filings</div>
-        <p class="how-p">Each claim is scored against the company's actual SEC filings and a model fair value. A story trading far above what the filings support raises the fair-value gap.</p>
+        <p class="how-p">Each claim is scored against the company's actual SEC filings and a model fundamental value. A story trading far above what the filings support raises the fundamental-value gap.</p>
       </div>
       <div class="how-card">
         <div class="how-h">Coordination detection</div>
@@ -474,10 +474,10 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
   var EDITORIAL = [
     {
       ticker:'TSLA', sector:'Autos/EV',
-      statement:'Robotaxi hype at ~5× fair value — as senators seek a review of its "misleading" FSD safety data.',
+      statement:'Robotaxi hype at ~5× fundamental value — as senators seek a review of its "misleading" FSD safety data.',
       source:'Investing.com (carrying Reuters), Jun 16',
       url:'https://www.investing.com/news/stock-market-news/us-senators-ask-for-review-of-teslas-full-selfdriving-safety-data-citing-reuters-report-4745048',
-      rebuttal:'At +393% FVD the tape is ~5× the model\'s fair value. The robotaxi re-rating prices an autonomous fleet that isn\'t deployed at scale — and lawmakers are now pressing regulators over the safety data behind the FSD claims it leans on.',
+      rebuttal:'At +393% FVD the tape is ~5× the model\'s fundamental value. The robotaxi re-rating prices an autonomous fleet that isn\'t deployed at scale — and lawmakers are now pressing regulators over the safety data behind the FSD claims it leans on.',
       figure:'+393% FVD', badge:'Narrative Trap'
     },
     {
@@ -494,7 +494,7 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
       statement:'"2 supercharged trends could send MP to new heights" — the EV-magnet demand wave plus the reshoring of rare-earth supply away from China.',
       source:'AOL.com, Jun 17',
       url:'https://www.aol.com/articles/2-supercharged-trends-could-send-155000000.html',
-      rebuttal:'The headline concedes the gap: the model puts price ~3.2× fair value (+221% FVD). Both trends are real but early and capital-intensive — a multi-year build, not the cash flows the price already implies.',
+      rebuttal:'The headline concedes the gap: the model puts price ~3.2× fundamental value (+221% FVD). Both trends are real but early and capital-intensive — a multi-year build, not the cash flows the price already implies.',
       figure:'+221% FVD', badge:'Narrative Trap'
     },
     {
@@ -502,7 +502,7 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
       statement:'"16% undervalued after the peace deal" — a recovering-jetmaker thesis on a company still posting losses.',
       source:'Yahoo Finance, Jun 17',
       url:'https://finance.yahoo.com/markets/stocks/articles/boeing-ba-stock-could-16-221507212.html',
-      rebuttal:'The forensic model reads the opposite of "16% undervalued": price sits ~3.2× fair value (+217% FVD). The bull case extrapolates a clean production ramp the filings don\'t guarantee, with delivery cadence and free cash flow still the gating risks.',
+      rebuttal:'The forensic model reads the opposite of "16% undervalued": price sits ~3.2× fundamental value (+217% FVD). The bull case extrapolates a clean production ramp the filings don\'t guarantee, with delivery cadence and free cash flow still the gating risks.',
       figure:'+217% FVD', badge:'Narrative Trap'
     },
     {
@@ -510,7 +510,7 @@ footer{border-top:1px solid var(--mp-border);padding:44px 0 30px;background:var(
       statement:'Texas Instruments\' manufacturing expansion will lift profit margins — the bull case on its 300mm fab buildout.',
       source:'The Globe and Mail, Jun 18',
       url:'https://www.theglobeandmail.com/investing/markets/stocks/ADI/pressreleases/2515855/txns-manufacturing-expansion-continues-can-it-strengthen-margins/',
-      rebuttal:'Right now the expansion is the headwind, not the tailwind: elevated capex and depreciation on still-ramping 300mm fabs are compressing free cash flow and margins. At ~2.9× fair value (+188% FVD), the tape already prices the future payoff as if it has landed.',
+      rebuttal:'Right now the expansion is the headwind, not the tailwind: elevated capex and depreciation on still-ramping 300mm fabs are compressing free cash flow and margins. At ~2.9× fundamental value (+188% FVD), the tape already prices the future payoff as if it has landed.',
       figure:'+188% FVD', badge:'Narrative Trap'
     }
   ];

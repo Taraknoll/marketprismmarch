@@ -54,7 +54,7 @@ export default async function handler(req) {
 
   const fvdNum = fvd == null ? null : Number(fvd);
   const fvdChip = fvdNum == null ? null
-    : `${fvdNum > 0 ? '+' : ''}${fvdNum.toFixed(1)}% vs fair value`;
+    : `${fvdNum > 0 ? '+' : ''}${fvdNum.toFixed(1)}% vs fundamental value`;
 
   const chip = (text, color) => ({
     type: 'div',

@@ -425,7 +425,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     if(yMin<0 && yMax>0){
       var zy=sy(0).toFixed(1);
       zero='<line x1="'+padL+'" y1="'+zy+'" x2="'+(W-padR)+'" y2="'+zy+'" class="sc-zero"/>'
-        +'<text x="'+(W-padR)+'" y="'+(parseFloat(zy)-4).toFixed(1)+'" text-anchor="end" class="sc-note">fair value</text>';
+        +'<text x="'+(W-padR)+'" y="'+(parseFloat(zy)-4).toFixed(1)+'" text-anchor="end" class="sc-note">fundamental value</text>';
     }
     var dots=points.map(function(p){
       var cx=sx(num(p.x)).toFixed(1), cy=sy(num(p.y)).toFixed(1), r=p.focus?6:4.5;
@@ -547,7 +547,7 @@ a.src{color:var(--mp-cyan);text-decoration:none;}a.src:hover{text-decoration:und
     var cp=num(c.consensusPct);
     var scatterChart=scatterSvg((c.peers||[]).map(function(a){
       return { x:num(a.drift), y:num(a.fvdPct), label:a.ticker, focus:(a.ticker===c.ticker) };
-    }),{ xLabel:'Narrative drift →', yLabel:'Fair-value divergence %' });
+    }),{ xLabel:'Narrative drift →', yLabel:'Fundamental-value divergence %' });
     return '<div class="card">'
       +'<div class="card-top"><div class="tkr">'+esc(c.ticker)+'<small>Narrative Lab</small></div></div>'
       +(c.plain?'<div class="verdict-line">'+esc(c.plain)+'</div>':'')

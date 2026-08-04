@@ -317,10 +317,10 @@
     }
     if(fv){
       var kvf='';
-      if(fv.fair_value!=null) kvf+=kvrow('Fair value', '$'+Number(fv.fair_value).toFixed(2)+(fv.fv_low!=null&&fv.fv_high!=null?(' ('+Number(fv.fv_low).toFixed(0)+'–'+Number(fv.fv_high).toFixed(0)+')'):''));
+      if(fv.fair_value!=null) kvf+=kvrow('Fundamental value', '$'+Number(fv.fair_value).toFixed(2)+(fv.fv_low!=null&&fv.fv_high!=null?(' ('+Number(fv.fv_low).toFixed(0)+'–'+Number(fv.fv_high).toFixed(0)+')'):''));
       if(fv.price_close!=null) kvf+=kvrow('Price', '$'+Number(fv.price_close).toFixed(2));
       if(fv.premium_pct!=null) kvf+=kvrow('Divergence', pctv(fv.premium_pct)+(fv.verdict?(' · '+esc(fv.verdict)):''));
-      if(kvf) cards+='<div class="mini"><div class="h">Fair value</div>'+kvf+'</div>';
+      if(kvf) cards+='<div class="mini"><div class="h">Fundamental value</div>'+kvf+'</div>';
     }
     if(ea){
       var kve='';

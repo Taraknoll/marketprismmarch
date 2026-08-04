@@ -216,12 +216,12 @@
         <div class="tbl-note" id="nvp-note"></div>
       </div>
       <div class="card">
-        <h2>Price vs fair value into the print <span class="n-badge" id="fvd-now"></span></h2>
+        <h2>Price vs fundamental value into the print <span class="n-badge" id="fvd-now"></span></h2>
         <canvas id="fvd-cv"></canvas>
         <div class="legend">
           <div class="li"><span class="sw" style="background:rgba(148,163,184,.45)"></span>Past cycles (FVD %)</div>
           <div class="li"><span class="sw" style="background:var(--mp-amber)"></span>Current approach</div>
-          <div class="li"><span class="sw" style="background:rgba(0,222,148,.8)"></span>Fair value (0%)</div>
+          <div class="li"><span class="sw" style="background:rgba(0,222,148,.8)"></span>Fundamental value (0%)</div>
         </div>
         <div class="empty-note hidden" id="fvd-empty"></div>
       </div>
@@ -1004,7 +1004,7 @@
     if (!series.length && !current){
       cv.classList.add('hidden');
       empty.classList.remove('hidden');
-      empty.textContent = 'Fair-value history does not overlap a completed cycle yet — this chart accrues with each print.';
+      empty.textContent = 'Fundamental-value history does not overlap a completed cycle yet — this chart accrues with each print.';
       FVDC = null;
       return;
     }
@@ -1253,7 +1253,7 @@
     var medAbs = median(reas.map(function(r){ return Math.abs(r); }));
     var stretch = [];
     if (fin(appr)) stretch.push('approach ' + fmtRet(appr) + ' since T−15');
-    if (cur && fin(cur.fvd)) stretch.push((cur.fvd > 0 ? '+' : '') + cur.fvd.toFixed(0) + '% vs fair value');
+    if (cur && fin(cur.fvd)) stretch.push((cur.fvd > 0 ? '+' : '') + cur.fvd.toFixed(0) + '% vs fundamental value');
     if (stretch.length){
       W.push('The run-in: <b>' + stretch.join(', ') + '</b>' +
         (fin(appr) && appr > 0.05 ? ' — part of a good print is already pre-paid.' : '.') +
@@ -1374,7 +1374,7 @@
     parts.push('Narrative overlay: ' + sc.length + ' scored days (≈' + Math.max(1, Math.round(sc.length / 63)) + ' cycle' + (sc.length > 94 ? 's' : '') + ' of coverage) — percentile placement only, small-n context, not a predictor.');
     parts.push('Peer cohort = ' + (D.family || '—') + ' family from the valuation config (same rollup as the Universe tab).');
     if (D.cohort) parts.push('Cohort chart pools ' + D.cohort.n + ' peer cycles (2026, same T−15 session anchoring — comparable to the amber approach line).');
-    parts.push('Fair-value chart = scorecard-day FVD (price vs the pure-fundamentals anchor); earnings forensics = SEC 8-K earnings context, consensus-revision trail, and the guidance-accuracy ledger.');
+    parts.push('Fundamental-value chart = scorecard-day FVD (price vs the pure-fundamentals anchor); earnings forensics = SEC 8-K earnings context, consensus-revision trail, and the guidance-accuracy ledger.');
     parts.push('Entries and direction come exclusively from the backtested signal registry; sizing from the hierarchical-Bayes posterior. This page never generates trades.');
     if (D.keyMode === 'anon') parts.push('<b>Degraded mode:</b> service credentials unavailable — price panels hidden.');
     parts.push('TEST PAGE — internal research preview. Not investment advice.');

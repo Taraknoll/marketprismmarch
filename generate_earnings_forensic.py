@@ -293,7 +293,7 @@ Verdict (internal): {_fmt(sc.get('verdict'))}
 Story claim: {_fmt(story.get('story_claim'))}
 Forensic rebuttal: {_fmt(story.get('forensic_rebuttal'))}
 Institutional positioning: {_fmt(story.get('institutional_positioning'))}
-Fair value gap: {_fmt_pct(sc.get('fvd_pct'))}
+Fundamental value gap: {_fmt_pct(sc.get('fvd_pct'))}
 Energy remaining: {_fmt(sc.get('energy_remaining'))}
 
 LAST REPORTED QUARTER (for surprise track record)
@@ -331,7 +331,7 @@ Required:
 - Open with the central pre-print question (one paragraph)
 - Frame the narrative state heading into the print (what is the market pricing in?)
 - Include an Estimates Table with consensus EPS, consensus revenue, prior surprise (use last quarter's data above)
-- Surface at least 3 quantifiable evidence signals using the data above (short %, 52w return, fair value gap, prior surprise, narrative state)
+- Surface at least 3 quantifiable evidence signals using the data above (short %, 52w return, fundamental value gap, prior surprise, narrative state)
 - Show two-sided risk (beat scenario / miss scenario) without predicting either
 - End with exactly 4 watchlist bullets and one definitive structural closing sentence
 
@@ -391,7 +391,7 @@ Sentiment: {_fmt(sc.get('current_sentiment'))}
 Internal verdict: {_fmt(sc.get('verdict'))}
 Story claim: {_fmt(story.get('story_claim'))}
 Forensic rebuttal: {_fmt(story.get('forensic_rebuttal'))}
-Fair value gap: {_fmt_pct(sc.get('fvd_pct'))}
+Fundamental value gap: {_fmt_pct(sc.get('fvd_pct'))}
 
 LIVE MARKET DATA (T+1 — post-print reaction)
 --------------------------------------------

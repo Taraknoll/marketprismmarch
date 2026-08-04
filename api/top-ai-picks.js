@@ -88,7 +88,7 @@ SIGNAL GLOSSARY (use these terms in your thesis lines, never invent new ones):
 - wks_score: Keyword sentiment (-100 to +100, + bullish, - bearish)
 - walsh_regime: CLEAR_PATH (bullish), PERSISTENT (bearish entrenchment), DRIFT (quiet short), or null
 - narrative_energy_absolute: raw energy (>500 = momentum present, >1000 = explosive)
-- fvd_pct: fair-value deviation (negative = undervalued)
+- fvd_pct: fundamental-value deviation (negative = undervalued)
 - verdict: "Narrative Trap" / "Structurally Supported" / etc
 - half_life: narrative decay window in days (<15 = fast-moving)
 - coordination_score: coordinated-coverage signal (0-100, >30 = suspicious)
