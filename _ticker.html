@@ -4762,6 +4762,17 @@ body.mp-processing #tab-timeline,
 body.mp-processing .tk-tab[data-tab="timeline"],
 body.mp-processing #claim-integrity-section,
 body.mp-processing #scholarly-section{display:none !important;}
+
+/* ── "New coverage" note. body.mp-new-coverage is set server-side by
+   api/ticker.js when the ticker is in api/_new-coverage-tickers.js (just
+   graduated out of PROCESSING_TICKERS). Sections render normally — this is a
+   single small note, not a section-hider, per house style: minimal, not
+   alarmist. Inter only, no serif. ── */
+.mp-new-banner{display:none;align-items:center;gap:8px;margin:0 0 16px;padding:9px 14px;background:rgba(0,174,255,0.05);border:1px solid rgba(0,174,255,0.16);border-radius:10px;}
+body.mp-new-coverage .mp-new-banner{display:flex;}
+.mp-new-banner-icon{font-size:13px;line-height:1;flex-shrink:0;}
+.mp-new-banner-text{font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.5;color:var(--mp-text-secondary,rgba(255,255,255,0.7));}
+.mp-new-banner-text strong{color:#4DC8F0;font-weight:600;}
 </style>
 <div class="app-layout">
   <!-- ── SIDE NAV ── (rendered by lib/mp-sidebar.js — single source of truth across pages) -->
@@ -4839,6 +4850,14 @@ body.mp-processing #scholarly-section{display:none !important;}
     </div>
   </div>
   <script>(function(){var t=(window.__env&&window.__env.TICKER)||'';var e=document.getElementById('mp-proc-tkr');if(e&&t)e.textContent=t;})();</script>
+
+  <!-- "New coverage" note — shown only when body.mp-new-coverage is set
+       server-side (ticker just graduated out of the processing list above). -->
+  <div class="mp-new-banner" role="status">
+    <span class="mp-new-banner-icon" aria-hidden="true">&#128337;</span>
+    <span class="mp-new-banner-text"><strong>New coverage.</strong> Narrative tracking for <span id="mp-new-tkr">this ticker</span> started recently, so story history here is shorter than for long-tracked names.</span>
+  </div>
+  <script>(function(){var t=(window.__env&&window.__env.TICKER)||'';var e=document.getElementById('mp-new-tkr');if(e&&t)e.textContent=t;})();</script>
 
   <!-- ═══ TAB BAR ═══ -->
   <div class="tk-tab-bar">

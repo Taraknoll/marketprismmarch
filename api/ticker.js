@@ -2,6 +2,7 @@ const resolveTemplate = require('./_resolve-template');
 const requireAuth = require('./_require-auth');
 const { isHidden: isHiddenTicker } = require('./_hidden-tickers');
 const { isProcessing: isProcessingTicker } = require('./_processing-tickers');
+const { isNewCoverage: isNewCoverageTicker } = require('./_new-coverage-tickers');
 
 module.exports = async (req, res) => {
   try {
@@ -71,6 +72,11 @@ module.exports = async (req, res) => {
     // + banner markup live in _ticker.html, gated on body.mp-processing.
     if (isProcessingTicker(safeTicker)) {
       html = html.replace('<body>', '<body class="mp-processing">');
+    } else if (isNewCoverageTicker(safeTicker)) {
+      // Just graduated out of PROCESSING_TICKERS — narratives are real and
+      // rendering, but the history is only as old as the backfill. Small note,
+      // not a section-hider. See _new-coverage-tickers.js.
+      html = html.replace('<body>', '<body class="mp-new-coverage">');
     }
 
     // ── SEO + AEO injection (server-side, non-destructive) ──────────────

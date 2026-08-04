@@ -23,14 +23,9 @@
 //   order by t.ticker;
 //
 // Remove a ticker from this list once the scraper is backfilling `articles`
-// for it — the full page then renders on its own. (Snapshot: 2026-07-21.)
+// for it — the full page then renders on its own. (Snapshot: 2026-08-04.)
 const PROCESSING_TICKERS = [
-  'AFRM', 'AIBZ', 'ALAB', 'APLD', 'BABA', 'BE', 'BIDU', 'BSP', 'CELH', 'CIEN',
-  'CIFR', 'CLS', 'COHR', 'CRDO', 'CRS', 'CRWV', 'CVE', 'DINO', 'DKNG', 'DLR',
-  'ECO', 'EQIX', 'ERIC', 'ETN', 'FERG', 'FIX', 'GEV', 'HWM', 'INSW', 'IONQ',
-  'IRDM', 'IRM', 'ISRG', 'KLAR', 'LITE', 'LUNR', 'MOD', 'NOK', 'PATH', 'PDD',
-  'PSTG', 'PSX', 'RGTI', 'RKLB', 'RUM', 'SKHY', 'SOUN', 'SU', 'TEM', 'TNK',
-  'WULF', 'XPO',
+  'IONQ',
 ];
 
 const PROCESSING_SET = new Set(PROCESSING_TICKERS.map(function (t) { return String(t).toUpperCase(); }));
