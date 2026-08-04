@@ -6382,6 +6382,46 @@ async function fetchPriceSeries(ticker, days) {
   } catch (_) { return []; }
 }
 
+// ── Ticker P/E resolution ────────────────────────────────────────────────────
+// Daily Fair Value (`daily_fair_value`) is the valuation engine's own source of
+// truth and is the authoritative P/E for the page. It's RLS-blocked from the
+// browser directly, so `v_ticker_pe` (price_close / ttm_eps_actual, both columns
+// of daily_fair_value) exposes it anon-readable — covers ~194/235 tickers.
+// v_dash_daily_story.pe_ratio is a separate, independently-computed pipeline
+// that only covers ~20/193 tickers and can disagree with the fair-value engine's
+// own number, so it's a fallback, not the primary source.
+async function resolveTickerPe(ticker, fallbackRatio) {
+  if (ticker) {
+    try {
+      const fv = await sbFetch('v_ticker_pe', {
+        select: 'trailing_pe',
+        ticker: 'eq.' + ticker,
+        limit: '1'
+      });
+      const v = fv && fv.length ? mpMeaningfulPe(fv[0].trailing_pe) : null;
+      if (v != null) return v;
+    } catch (_) { /* fall through to story-row fallback below */ }
+  }
+  let tickerPe = mpMeaningfulPe(fallbackRatio);
+  // Upstream pipeline intermittently leaves pe_ratio null on the latest row
+  // (whole-table outages observed 2026-05-06..08 and 2026-05-14..15). Walk
+  // back up to 14 days to find the last good value before giving up.
+  if (tickerPe == null && ticker) {
+    try {
+      const back = await sbFetch('v_dash_daily_story', {
+        select: 'pe_ratio',
+        ticker: 'eq.' + ticker,
+        pe_ratio: 'not.is.null',
+        order: 'snapshot_date.desc',
+        limit: '1'
+      });
+      const _bpe = back && back.length ? mpMeaningfulPe(back[0].pe_ratio) : null;
+      if (_bpe != null) tickerPe = _bpe;
+    } catch (_) { /* give up, caller handles null */ }
+  }
+  return tickerPe;
+}
+
 // ── Utils ────────────────────────────────────────────────────────────────────
 function esc(s) {
   return s ? String(s)
@@ -7927,7 +7967,7 @@ async function loadHero() {
 
     const grossMargin = cv.sec_gross_margin ?? r.sec_gross_margin;
     const netMargin   = cv.sec_net_margin ?? r.sec_net_margin;
-    const peRatio     = mpMeaningfulPe(r.pe_ratio);
+    const peRatio     = await resolveTickerPe(TICKER, r.pe_ratio);
 
     // "Earnings In" must count down to the NEXT report. days_to_earnings on the
     // story row goes negative right after a print (e.g. -1 = reported yesterday)
@@ -8673,44 +8713,8 @@ async function loadSectorIntelligence(heroRow) {
 async function loadSectorPeBubble(heroRow) {
   const el = document.getElementById('hero-pe-bubble');
   if (!el || !heroRow) return;
-  let tickerPe = mpMeaningfulPe(heroRow.pe_ratio);
-  const sector  = heroRow.sector_name;
-  // Upstream pipeline intermittently leaves pe_ratio null on the latest row
-  // (whole-table outages observed 2026-05-06..08 and 2026-05-14..15). Walk
-  // back up to 14 days to find the last good value so the chip stays visible.
-  if (tickerPe == null && TICKER) {
-    try {
-      const back = await sbFetch('v_dash_daily_story', {
-        select: 'pe_ratio',
-        ticker: 'eq.' + TICKER,
-        pe_ratio: 'not.is.null',
-        order: 'snapshot_date.desc',
-        limit: '1'
-      });
-      const _bpe = back && back.length ? mpMeaningfulPe(back[0].pe_ratio) : null;
-      if (_bpe != null) tickerPe = _bpe;
-    } catch (_) { /* fall through to next fallback below */ }
-  }
-  // Second fallback: v_dash_daily_story.pe_ratio is sparsely populated (only ~20
-  // of 193 tickers carry it). v_ticker_pe exposes a trailing P/E (price / TTM EPS)
-  // derived from daily_fair_value for ~150 more (e.g. INTC, which is profitable but
-  // never gets pe_ratio set). It's a dedicated anon-readable view because
-  // daily_fair_value itself is RLS-blocked from the browser; genuinely unprofitable
-  // names (ttm_eps_actual <= 0) are excluded there and correctly stay blank.
-  if (tickerPe == null && TICKER) {
-    try {
-      const fv = await sbFetch('v_ticker_pe', {
-        select: 'trailing_pe',
-        ticker: 'eq.' + TICKER,
-        limit: '1'
-      });
-      if (fv && fv.length) {
-        const v = mpMeaningfulPe(fv[0].trailing_pe);
-        if (v != null) tickerPe = v;
-      }
-    } catch (_) { /* fall through to early-return below */ }
-  }
-  const tPe = mpMeaningfulPe(tickerPe);
+  const sector = heroRow.sector_name;
+  const tPe = await resolveTickerPe(TICKER, heroRow.pe_ratio);
   if (tPe == null) return;
 
   // Fallback chip — shown if no matching sector benchmark is available.
