@@ -317,6 +317,15 @@
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-tertiary); }
   .leg-line { width: 14px; height: 2px; border-radius: 1px; }
   .leg-dot  { width: 7px; height: 7px; border-radius: 50%; }
+  /* Shown only when the visible window reaches back past the 90-day signal
+     coverage window — Narrative Force / Risk Pressure stop at that boundary. */
+  .chart-signal-note {
+    display: none; align-items: center; gap: 6px;
+    font-family: var(--font-body); font-size: 11px; line-height: 1.5;
+    color: var(--text-tertiary);
+  }
+  .chart-signal-note.show { display: flex; }
+  .chart-signal-note .csn-mark { width: 14px; height: 0; border-top: 1px dashed var(--mp-border-hover, rgba(255,255,255,0.14)); flex: none; }
   .chart-tip {
     position: absolute; background: var(--mp-surface);
     color: var(--mp-text-primary); font-size: 11px; font-family: var(--font-body);
@@ -699,6 +708,7 @@
           <div class="legend-item" title="NRS-weighted risk score. Above 20 = bearish pressure."><div class="leg-line" style="background:#FF6B4A;height:2px;width:14px;"></div> Risk Pressure</div>
           <div class="legend-item" title="Dot size = narrative mass. Color = keyword sentiment (green=bullish, red=bearish)."><div class="leg-dot" style="background:linear-gradient(135deg,#00DE94,#A0A8B8,#FF4D4D);"></div> Mass Dots</div>
         </div>
+        <div class="chart-signal-note" id="chart-signal-note"><span class="csn-mark"></span><span id="chart-signal-note-text"></span></div>
       </div>
 
       <!-- AI Interpretation -->
@@ -1001,6 +1011,19 @@ function getActiveDays() {
   return active ? parseInt(active.dataset.days) : 90;
 }
 
+// Signal coverage window. Narrative Force and Risk Pressure are only computed
+// for the trailing 90 days, so on 6M / 1Y / All views the lines stop at this
+// boundary instead of trailing off into dates we have no signal history for.
+const SIGNAL_HISTORY_DAYS = 90;
+function signalCutoff() {
+  const c = new Date();
+  c.setDate(c.getDate() - SIGNAL_HISTORY_DAYS);
+  return c.toISOString().slice(0,10);
+}
+function fmtSignalDate(ds) {
+  return new Date(ds + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
 function filterSnaps() {
   const days = getActiveDays();
   if (!days) return ALL_SNAPS;
@@ -1102,6 +1125,18 @@ function drawChart(snaps, narrs, drawCandles) {
   const dateIdx = {};
   snaps.forEach((s,i) => { if (s.snapshot_date) dateIdx[s.snapshot_date.slice(0,10)] = i; });
 
+  // Where the 90-day signal coverage window starts inside this view.
+  //   0  → the whole window is covered, nothing to clip or annotate
+  //  >0  → signals start partway in; everything left of it has no history
+  //  -1  → no covered snapshot in this window at all
+  const SIG_CUT = signalCutoff();
+  let sigStartIdx = -1;
+  for (let i = 0; i < snaps.length; i++) {
+    const ds = snaps[i].snapshot_date?.slice(0,10);
+    if (ds && ds >= SIG_CUT) { sigStartIdx = i; break; }
+  }
+  const sigBoundaryX = () => sigStartIdx > 0 ? xOf(sigStartIdx) : (W - PAD.right);
+
   // Grid + Y axis
   ctx.font = '10px Inter, sans-serif';
   ctx.fillStyle = isLight() ? '#8B90A0' : '#8B97B8';
@@ -1125,6 +1160,17 @@ function drawChart(snaps, narrs, drawCandles) {
     ctx.fillText(d.toLocaleDateString('en-US', { month:'short', day:'numeric' }), xOf(i), H - PAD.bottom + 14);
     lastRenderedIdx = i;
   });
+
+  // Shade the stretch that predates signal coverage, so the gap in the
+  // Narrative Force / Risk Pressure lines reads as "no history" rather than
+  // "the signals were flat here".
+  if (sigStartIdx !== 0) {
+    const bx = sigBoundaryX();
+    ctx.save();
+    ctx.fillStyle = isLight() ? 'rgba(15,20,30,0.04)' : 'rgba(255,255,255,0.022)';
+    ctx.fillRect(PAD.left, PAD.top, Math.max(0, bx - PAD.left), CH);
+    ctx.restore();
+  }
 
   if (drawCandles) {
     // Real OHLC candlesticks from /api/price-history (Polygon daily aggs).
@@ -1174,7 +1220,7 @@ function drawChart(snaps, narrs, drawCandles) {
   const blueByDate = {}; ALL_DECAY.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) blueByDate[ds] = d.energy_remaining_pct ?? 0; });
   const yellowByDate = {}; ALL_PHYSICS.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && d.pe_rank_pct != null) yellowByDate[ds] = d.pe_rank_pct; });
   const allDates = {};
-  [ALL_DECAY, ALL_PHYSICS, ALL_PRESSURE].forEach(arr => arr.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && ds >= lo && ds <= hi) allDates[ds] = true; }));
+  [ALL_DECAY, ALL_PHYSICS, ALL_PRESSURE].forEach(arr => arr.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && ds >= lo && ds <= hi && ds >= SIG_CUT) allDates[ds] = true; }));
   let forceSeries = Object.keys(allDates).sort().map(ds => {
     const yel = yellowByDate[ds] != null ? yellowByDate[ds] : 0;
     const blu = blueByDate[ds] != null ? blueByDate[ds] : 0;
@@ -1197,7 +1243,7 @@ function drawChart(snaps, narrs, drawCandles) {
 
   // Risk Pressure line (orange-red, 0-100)
   if (VISIBLE_LINES['risk-pressure']) {
-    let prf = ALL_PRESSURE.filter(d => { const ds = d.snapshot_date?.slice(0,10); return ds && ds >= lo && ds <= hi; });
+    let prf = ALL_PRESSURE.filter(d => { const ds = d.snapshot_date?.slice(0,10); return ds && ds >= lo && ds <= hi && ds >= SIG_CUT; });
     if (VISIBLE_LINES['sma-smooth']) prf = sma3(prf, 'pressure');
     if (prf.length > 1) {
       ctx.save(); ctx.setLineDash([]); ctx.strokeStyle = '#FF6B4A'; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.6;
@@ -1209,6 +1255,37 @@ function drawChart(snaps, narrs, drawCandles) {
         if (!rs) { ctx.moveTo(x, y); rs = true; } else ctx.lineTo(x, y);
       });
       ctx.stroke(); ctx.restore();
+    }
+  }
+
+  // 90-day signal coverage boundary — dashed rule where the two signal lines
+  // begin, plus the matching note under the chart.
+  if (sigStartIdx !== 0) {
+    const bx = sigBoundaryX();
+    ctx.save();
+    ctx.setLineDash([3,3]);
+    ctx.strokeStyle = isLight() ? 'rgba(15,20,30,0.25)' : 'rgba(255,255,255,0.20)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(Math.round(bx) + 0.5, PAD.top);
+    ctx.lineTo(Math.round(bx) + 0.5, H - PAD.bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '11px Inter, sans-serif';
+    ctx.fillStyle = isLight() ? '#8B90A0' : '#8B97B8';
+    ctx.textAlign = 'right';
+    const noSigLabel = 'No signal history';
+    if (bx - PAD.left > ctx.measureText(noSigLabel).width + 14) ctx.fillText(noSigLabel, bx - 7, PAD.top + 13);
+    ctx.restore();
+  }
+  const sigNoteEl  = document.getElementById('chart-signal-note');
+  const sigNoteTxt = document.getElementById('chart-signal-note-text');
+  if (sigNoteEl && sigNoteTxt) {
+    if (sigStartIdx !== 0) {
+      sigNoteTxt.textContent = `Signal history is not available before ${fmtSignalDate(SIG_CUT)} — Narrative Force and Risk Pressure cover the last ${SIGNAL_HISTORY_DAYS} days only.`;
+      sigNoteEl.classList.add('show');
+    } else {
+      sigNoteEl.classList.remove('show');
     }
   }
 
@@ -1471,8 +1548,12 @@ async function interpretChart() {
   const yellowByDate = {}; ALL_PHYSICS.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && d.pe_rank_pct != null) yellowByDate[ds] = d.pe_rank_pct; });
   const pressureByDate = {}; ALL_PRESSURE.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) pressureByDate[ds] = d.pressure; });
 
+  // Clipped to the 90-day signal coverage window so the model never sees — or
+  // cites — force/risk values for dates the chart doesn't plot.
+  const I_SIG_CUT = signalCutoff();
+  const sigLo = lo > I_SIG_CUT ? lo : I_SIG_CUT;
   const allDates = {};
-  [ALL_DECAY, ALL_PHYSICS, ALL_PRESSURE].forEach(arr => arr.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && ds >= lo && ds <= hi) allDates[ds] = true; }));
+  [ALL_DECAY, ALL_PHYSICS, ALL_PRESSURE].forEach(arr => arr.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && ds >= sigLo && ds <= hi) allDates[ds] = true; }));
   const forceSeries = Object.keys(allDates).sort().map(ds => {
     const yel = yellowByDate[ds] != null ? yellowByDate[ds] : 0;
     const blu = blueByDate[ds] != null ? blueByDate[ds] : 0;
@@ -1498,6 +1579,7 @@ async function interpretChart() {
   const last5 = forceSeries.slice(-5);
   let signalData = 'Ticker: ' + CURRENT_TICKER + '\n';
   signalData += 'Timeframe: ' + days + ' days (' + lo + ' to ' + hi + ')\n';
+  signalData += 'Signal coverage: ' + sigLo + ' to ' + hi + (lo < I_SIG_CUT ? ' — Narrative Force and Risk Pressure history is NOT available before ' + I_SIG_CUT + ', and the chart draws no signal lines before that date. Do not describe or infer signal behaviour prior to it.' : '') + '\n';
   signalData += 'Price: $' + (priceStart?.toFixed(2) || '?') + ' -> $' + (priceEnd?.toFixed(2) || '?') + ' (' + priceChg + '%)\n';
   signalData += '\n--- PRICE (last 10 days) ---\n';
   signalData += snaps.slice(-10).map(s => s.snapshot_date.slice(0,10) + ': $' + (s.price_close != null ? s.price_close.toFixed(2) : '?')).join(', ') + '\n';
