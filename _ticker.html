@@ -9400,6 +9400,13 @@ async function loadLifecycle() {
     const energyLeft = (p.avg_energy_remaining != null && isFinite(Number(p.avg_energy_remaining)))
       ? Math.max(0, Math.min(100, Number(p.avg_energy_remaining)))
       : null;
+    // The decay engine pins avg_energy_remaining at exactly 100 when it can't
+    // fit a half-life curve for a narrative — happens sitewide regardless of
+    // verdict, decay rate, or narrative age (confirmed: narratives 50-900+
+    // days old still pinned at 100). That's a fallback artifact, not a real
+    // "fresh" reading, so route it to the no-data fallback below instead of
+    // rendering a false Birth-stage / elevated-energy claim.
+    const energyReliable = energyLeft != null && energyLeft < 99.5;
 
     if (!rows.length && energyLeft == null) {
       document.getElementById('lc-body').innerHTML = '<div class="no-data">No lifecycle data available.</div>';
@@ -9407,9 +9414,9 @@ async function loadLifecycle() {
     }
 
     const stages = ['Birth', 'Growth', 'Maturity', 'Decline', 'Death'];
-    let stageIdx, barPct, headlineRight, statLabel, statVal, statValCls;
+    let stageIdx, barPct, headlineRight, statLabel, statVal, statValCls, note = '';
 
-    if (energyLeft != null) {
+    if (energyReliable) {
       // Fuel gauge: the bar fills toward Death as energy depletes, so barPct is
       // exhaustion progress (100 − energy left). The lc-track gradient (green→red)
       // is built for exactly this — a fresh story shows only green, an exhausted
@@ -9427,8 +9434,10 @@ async function loadLifecycle() {
                  : energyLeft < 40 ? 'color:var(--mp-amber)'
                  : 'color:var(--accent-surging)';
     } else {
-      // Fallback: no ticker_pulse energy for this ticker — keep the old
-      // narrative_health bar so the panel degrades instead of going blank.
+      // Fallback: either no ticker_pulse energy for this ticker, or a pinned
+      // decay-engine fallback we don't trust (see energyReliable above) — keep
+      // the old narrative_health bar so the panel degrades instead of
+      // asserting a false reading, and say which case it is.
       const regimeToIdx = { EXPLOSIVE: 0, HIGH: 1, MODERATE: 2, LOW: 3, DORMANT: 4 };
       stageIdx = regimeToIdx[h.energy_regime] != null ? regimeToIdx[h.energy_regime] : 2;
       const pct = h.narrative_health != null ? Math.round(h.narrative_health) : null;
@@ -9437,6 +9446,9 @@ async function loadLifecycle() {
       statLabel  = 'Health';
       statVal    = pct != null ? pct + '%' : '—';
       statValCls = '';
+      note = energyLeft != null
+        ? 'Decay engine has no reliable energy read yet for this story — showing health/regime instead.'
+        : '';
     }
 
     const stage = stages[stageIdx];
@@ -9463,7 +9475,8 @@ async function loadLifecycle() {
           <div class="lc-stat-label">Trend</div>
           <div class="lc-stat-val" style="font-size:13px;">${esc(h.narrative_trend || '—')}</div>
         </div>
-      </div>`;
+      </div>
+      ${note ? `<div class="lc-note" style="font-size:11px;line-height:1.5;color:var(--text-tertiary);margin-top:10px;">${esc(note)}</div>` : ''}`;
     document.getElementById('lc-body').innerHTML = lcHTML;
     var lcTop = document.getElementById('lc-body-top');
     if(lcTop) lcTop.innerHTML = lcHTML;
