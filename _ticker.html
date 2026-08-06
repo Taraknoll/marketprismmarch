@@ -9442,13 +9442,18 @@ async function loadLifecycle() {
       stageIdx = regimeToIdx[h.energy_regime] != null ? regimeToIdx[h.energy_regime] : 2;
       const pct = h.narrative_health != null ? Math.round(h.narrative_health) : null;
       barPct = pct != null ? Math.max(2, pct) : 0;
-      headlineRight = pct != null ? pct + '% health' : '—';
       statLabel  = 'Health';
       statVal    = pct != null ? pct + '%' : '—';
       statValCls = '';
-      note = energyLeft != null
-        ? 'Decay engine has no reliable energy read yet for this story — showing health/regime instead.'
-        : '';
+      if (energyLeft != null) {
+        // Known-bad pinned reading (see energyReliable above), not simply
+        // absent data — say so where the energy % used to render.
+        headlineRight = 'Recalibrating';
+        note = 'Narrative energy is recalibrating for this story — showing health/regime until the decay engine locks a read.';
+      } else {
+        headlineRight = pct != null ? pct + '% health' : '—';
+        note = '';
+      }
     }
 
     const stage = stages[stageIdx];
