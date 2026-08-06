@@ -550,6 +550,22 @@
   .leg-line { width: 14px; height: 2px; border-radius: 1px; }
   .leg-dash { width: 14px; height: 0; border-top: 2px dashed var(--border-strong); }
   .leg-dot  { width: 7px; height: 7px; border-radius: 50%; }
+  /* Signal coverage horizon note — shown when the selected window reaches
+     back past the 90-day Narrative Force / Risk Pressure history. */
+  .signal-history-note {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 0 14px 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--mp-border);
+    border-left: 2px solid rgba(139,151,184,0.55);
+    border-radius: 10px;
+    background: rgba(139,151,184,0.05);
+    font-family: var(--font-body);
+    font-size: 12px; line-height: 1.5;
+    color: var(--text-tertiary);
+  }
+  .signal-history-note .shn-icon { flex: 0 0 auto; margin-top: 1px; opacity: 0.7; }
+  .signal-history-note strong { color: var(--text-secondary); font-weight: 600; }
   .chart-tip {
     position: absolute;
     background: var(--mp-surface);
@@ -5070,6 +5086,7 @@ body.mp-new-coverage .mp-new-banner{display:flex;}
                 <div class="legend-item" title="Dot size = narrative mass. Color = keyword sentiment (green=bullish, red=bearish)."><div class="leg-dot" style="background:linear-gradient(135deg,#00DE94,#A0A8B8,#FF4D4D);"></div> Mass Dots</div>
               </div>
             </div>
+            <div class="signal-history-note" id="signal-history-note" style="display:none;"></div>
             <div class="bear-stories-wrap" id="bear-stories-wrap" style="display:none;">
               <div class="bear-stories-header" id="bear-stories-header">
                 <div class="bear-stories-title">
@@ -8985,6 +9002,32 @@ function getActiveDays() {
   return active ? parseInt(active.dataset.days) : 90;
 }
 
+// ── Signal coverage horizon ─────────────────────────────────────────────────
+// Narrative Force and Risk Pressure are only published for the trailing 90
+// days. Anything earlier predates signal coverage, so the overlays are clipped
+// at the horizon instead of being drawn from data we don't have.
+const SIGNAL_HISTORY_DAYS = 90;
+
+function signalHistoryStart() {
+  const d = new Date();
+  d.setDate(d.getDate() - SIGNAL_HISTORY_DAYS);
+  return d.toISOString().slice(0, 10);
+}
+
+function fmtSignalDate(ds) {
+  return new Date(ds + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function updateSignalHistoryNote(hasGap, sigStart) {
+  const el = document.getElementById('signal-history-note');
+  if (!el) return;
+  if (!hasGap) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.innerHTML = '<svg class="shn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12" y2="16"/></svg>' +
+    '<span><strong>Signal history is not available before ' + esc(fmtSignalDate(sigStart)) + '.</strong> ' +
+    'Narrative Force and Risk Pressure only cover the trailing ' + SIGNAL_HISTORY_DAYS + ' days — the shaded stretch predates signal coverage.</span>';
+  el.style.display = 'flex';
+}
+
 function filterSnaps() {
   const days = getActiveDays();
   if (!days) return ALL_SNAPS;
@@ -9186,6 +9229,33 @@ function drawChart(snaps, narrs, drawCandles) {
   [0, 50, 100].forEach(v => { ctx.fillText(v, W - PAD.right + 4, yEnergy(v) + 3); });
   ctx.restore();
 
+  // Signal coverage horizon — Narrative Force / Risk Pressure stop at 90 days
+  // back. Clip both series there and mark the uncovered stretch on the chart.
+  const sigStart = signalHistoryStart();
+  const sigLo    = lo && lo > sigStart ? lo : sigStart;
+  const sigGap   = !!lo && lo < sigStart;
+  if (sigGap) {
+    let bIdx = snaps.findIndex(s => (s.snapshot_date || '').slice(0,10) >= sigStart);
+    if (bIdx < 0) bIdx = N - 1;
+    const bx = xOf(bIdx);
+    ctx.save();
+    ctx.fillStyle = isLight() ? 'rgba(11,15,26,0.05)' : 'rgba(255,255,255,0.03)';
+    ctx.fillRect(PAD.left, PAD.top, Math.max(0, bx - PAD.left), CH);
+    ctx.setLineDash([3,3]);
+    ctx.strokeStyle = isLight() ? 'rgba(11,15,26,0.22)' : 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(bx, PAD.top); ctx.lineTo(bx, H - PAD.bottom); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '11px Inter, sans-serif';
+    ctx.fillStyle = isLight() ? '#6E7687' : '#8B97B8';
+    const lbl  = 'No signal history before ' + fmtSignalDate(sigStart);
+    const lblW = ctx.measureText(lbl).width;
+    if ((bx - PAD.left) >= lblW + 16) { ctx.textAlign = 'right'; ctx.fillText(lbl, bx - 8, PAD.top + 13); }
+    else                              { ctx.textAlign = 'left';  ctx.fillText(lbl, bx + 8, PAD.top + 13); }
+    ctx.restore();
+  }
+  updateSignalHistoryNote(sigGap, sigStart);
+
   // Build Narrative Force: (Yellow × 0.6) + ((100 - Blue) × 0.4)
   const blueByDate = {}; ALL_DECAY.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) blueByDate[ds] = d.energy_remaining_pct ?? 0; });
   const yellowByDate = {}; ALL_PHYSICS.forEach(d => {
@@ -9199,7 +9269,7 @@ function drawChart(snaps, narrs, drawCandles) {
     ALL_PHYSICS.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds) yellowByDate[ds] = ((d.narrative_energy_absolute || 0) / maxAbs) * 100; });
   }
   const allDates = {};
-  [ALL_DECAY, ALL_PHYSICS, ALL_PRESSURE].forEach(arr => arr.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && ds >= lo && ds <= hi) allDates[ds] = true; }));
+  [ALL_DECAY, ALL_PHYSICS, ALL_PRESSURE].forEach(arr => arr.forEach(d => { const ds = d.snapshot_date?.slice(0,10); if (ds && ds >= sigLo && ds <= hi) allDates[ds] = true; }));
   let forceSeries = Object.keys(allDates).sort().map(ds => {
     const yel = yellowByDate[ds] != null ? yellowByDate[ds] : 0;
     const blu = blueByDate[ds] != null ? blueByDate[ds] : 0;
@@ -9220,7 +9290,7 @@ function drawChart(snaps, narrs, drawCandles) {
   }
 
   // Risk Pressure line (orange-red, 0-100)
-  let prf = ALL_PRESSURE.filter(d => { const ds = d.snapshot_date?.slice(0,10); return ds && ds >= lo && ds <= hi; });
+  let prf = ALL_PRESSURE.filter(d => { const ds = d.snapshot_date?.slice(0,10); return ds && ds >= sigLo && ds <= hi; });
   if (prf.length > 1) {
     ctx.save(); ctx.setLineDash([]); ctx.strokeStyle = '#FF6B4A'; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.6;
     ctx.beginPath();

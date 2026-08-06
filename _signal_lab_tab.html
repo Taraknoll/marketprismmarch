@@ -314,6 +314,18 @@
     margin: 0 14px 12px; padding: 11px 14px; border-radius: 10px; background: rgba(0,174,255,0.04);
     border: 1px solid rgba(0,174,255,0.12); font-size: 12px; line-height: 1.55; color: var(--mp-text-secondary); font-family: var(--font-body);
   }
+  /* Signal coverage horizon note — shown when the selected window reaches
+     back past the 90-day Narrative Force / Risk Pressure history. */
+  .sl-hist-note {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 0 14px 12px; padding: 10px 12px; border-radius: 10px;
+    background: rgba(139,151,184,0.05);
+    border: 1px solid var(--mp-border, rgba(255,255,255,0.06));
+    border-left: 2px solid rgba(139,151,184,0.55);
+    font-family: var(--font-body); font-size: 12px; line-height: 1.5; color: var(--text-tertiary);
+  }
+  .sl-hist-note .sl-hn-icon { flex: 0 0 auto; margin-top: 1px; opacity: 0.7; }
+  .sl-hist-note strong { color: var(--mp-text-secondary); font-weight: 600; }
   /* Mobile / narrow */
   @media (max-width: 680px) {
     .sl-chart-wrap { padding: 8px 8px 0; height: 320px !important; }
@@ -491,6 +503,7 @@
           <button class="sl-leg-info" id="sl-leg-info-btn" type="button" title="What do these signals mean?" aria-expanded="false">i</button>
         </div>
       </div>
+      <div class="sl-hist-note" id="sl-hist-note" style="display:none;"></div>
       <div class="sl-leg-explainer" id="sl-leg-explainer" style="display:none;">
         <strong>Narrative Force</strong> (teal) combines Physics Energy and Energy Remaining into one signal &mdash; when the line rises, narrative force is building (bullish). <strong>Risk Pressure</strong> (orange) is the NRS-weighted risk score &mdash; spikes above 20 signal bearish pressure. <strong>Mass Dots</strong> show institutional coverage (size) and keyword sentiment direction (color: green = bullish, red = bearish, gray = neutral). Lines default to 3-day SMA smoothing.
       </div>
@@ -588,6 +601,22 @@
   function slIsLight(){return document.documentElement.getAttribute('data-theme')==='light';}
 
   function slGetDays(){var a=document.querySelector('.sl-tf-btn.active');return a?parseInt(a.dataset.days):90;}
+
+  // ── Signal coverage horizon ───────────────────────────────────────────────
+  // Narrative Force and Risk Pressure are only published for the trailing 90
+  // days. Anything earlier predates signal coverage, so the overlays are
+  // clipped at the horizon instead of being drawn from data we don't have.
+  var SL_HISTORY_DAYS=90;
+  function slHistoryStart(){var d=new Date();d.setDate(d.getDate()-SL_HISTORY_DAYS);return d.toISOString().slice(0,10);}
+  function slFmtHistoryDate(ds){return new Date(ds+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+  function slUpdateHistoryNote(hasGap,sigStart){
+    var el=document.getElementById('sl-hist-note');if(!el)return;
+    if(!hasGap){el.style.display='none';el.innerHTML='';return;}
+    el.innerHTML='<svg class="sl-hn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12" y2="16"/></svg>'+
+      '<span><strong>Signal history is not available before '+slEsc(slFmtHistoryDate(sigStart))+'.</strong> '+
+      'Narrative Force and Risk Pressure only cover the trailing '+SL_HISTORY_DAYS+' days &mdash; the shaded stretch predates signal coverage.</span>';
+    el.style.display='flex';
+  }
 
   function slFilterSnaps(){
     var days=slGetDays();if(!days)return SL_SNAPS;
@@ -1010,11 +1039,39 @@
     [0,50,100].forEach(function(v){ctx.fillText(v,W-PAD.right+4,yE(v)+3);});
     ctx.restore();
 
+    // Signal coverage horizon — Narrative Force / Risk Pressure stop at 90 days
+    // back. Clip both series there and mark the uncovered stretch on the chart.
+    var sigStart=slHistoryStart();
+    var sigLo=(lo&&lo>sigStart)?lo:sigStart;
+    var sigGap=!!lo&&lo<sigStart;
+    if(sigGap){
+      var bIdx=-1;
+      for(var bi=0;bi<snaps.length;bi++){if((snaps[bi].snapshot_date||'').slice(0,10)>=sigStart){bIdx=bi;break;}}
+      if(bIdx<0)bIdx=N-1;
+      var bx=xOf(bIdx);
+      ctx.save();
+      ctx.fillStyle=slIsLight()?'rgba(11,15,26,0.05)':'rgba(255,255,255,0.03)';
+      ctx.fillRect(PAD.left,PAD.top,Math.max(0,bx-PAD.left),CH);
+      ctx.setLineDash([3,3]);
+      ctx.strokeStyle=slIsLight()?'rgba(11,15,26,0.22)':'rgba(255,255,255,0.22)';
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(bx,PAD.top);ctx.lineTo(bx,H-PAD.bottom);ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font='11px Inter, sans-serif';
+      ctx.fillStyle=slIsLight()?'#6E7687':'#8B97B8';
+      var sigLbl='No signal history before '+slFmtHistoryDate(sigStart);
+      var sigLblW=ctx.measureText(sigLbl).width;
+      if((bx-PAD.left)>=sigLblW+16){ctx.textAlign='right';ctx.fillText(sigLbl,bx-8,PAD.top+13);}
+      else{ctx.textAlign='left';ctx.fillText(sigLbl,bx+8,PAD.top+13);}
+      ctx.restore();
+    }
+    slUpdateHistoryNote(sigGap,sigStart);
+
     // Build Narrative Force: (Yellow × 0.6) + ((100 - Blue) × 0.4)
     // Yellow = pe_rank_pct from SL_PHYSICS, Blue = energy_remaining_pct from SL_DECAY
     var blueByDate={};SL_DECAY.forEach(function(d){var ds=d.snapshot_date?.slice(0,10);if(ds)blueByDate[ds]=d.energy_remaining_pct??0;});
     var yellowByDate={};SL_PHYSICS.forEach(function(d){var ds=d.snapshot_date?.slice(0,10);if(ds&&d.pe_rank_pct!=null)yellowByDate[ds]=d.pe_rank_pct;});
-    var allDates={};[SL_DECAY,SL_PHYSICS,SL_PRESSURE].forEach(function(arr){arr.forEach(function(d){var ds=d.snapshot_date?.slice(0,10);if(ds&&ds>=lo&&ds<=hi)allDates[ds]=true;});});
+    var allDates={};[SL_DECAY,SL_PHYSICS,SL_PRESSURE].forEach(function(arr){arr.forEach(function(d){var ds=d.snapshot_date?.slice(0,10);if(ds&&ds>=sigLo&&ds<=hi)allDates[ds]=true;});});
     var _lastYel=null,_lastBlu=null;
     var forceSeries=Object.keys(allDates).sort().map(function(ds){
       var yel=yellowByDate[ds]!=null?yellowByDate[ds]:_lastYel;
@@ -1037,7 +1094,7 @@
 
     // Risk Pressure line (orange-red, 0-100)
     if(SL_VIS['risk-pressure']){
-      var prf=SL_PRESSURE.filter(function(d){var ds=d.snapshot_date?.slice(0,10);return ds&&ds>=lo&&ds<=hi;});
+      var prf=SL_PRESSURE.filter(function(d){var ds=d.snapshot_date?.slice(0,10);return ds&&ds>=sigLo&&ds<=hi;});
       if(SL_VIS['sma-smooth'])prf=slSma3(prf,'pressure');
       if(prf.length>1){
         ctx.save();ctx.setLineDash([]);ctx.strokeStyle='#FF6B4A';ctx.lineWidth=1.4;ctx.globalAlpha=0.8;
@@ -1695,8 +1752,14 @@
     var yellowByDate={};SL_PHYSICS.forEach(function(d){var ds=d.snapshot_date?.slice(0,10);if(ds&&d.pe_rank_pct!=null)yellowByDate[ds]=d.pe_rank_pct;});
     var pressureByDate={};SL_PRESSURE.forEach(function(d){var ds=d.snapshot_date?.slice(0,10);if(ds)pressureByDate[ds]=d.pressure;});
 
+    // Clip to the same 90-day signal horizon the chart draws, so the model never
+    // describes force/pressure over a stretch the user can't see on the chart.
+    var iSigStart=slHistoryStart();
+    var iSigLo=(lo&&lo>iSigStart)?lo:iSigStart;
+    var iSigGap=!!lo&&lo<iSigStart;
+
     // Build force series (carry forward last known yellow/blue to avoid false zero drops)
-    var allDates={};[SL_DECAY,SL_PHYSICS,SL_PRESSURE].forEach(function(arr){arr.forEach(function(d){var ds=d.snapshot_date?.slice(0,10);if(ds&&ds>=lo&&ds<=hi)allDates[ds]=true;});});
+    var allDates={};[SL_DECAY,SL_PHYSICS,SL_PRESSURE].forEach(function(arr){arr.forEach(function(d){var ds=d.snapshot_date?.slice(0,10);if(ds&&ds>=iSigLo&&ds<=hi)allDates[ds]=true;});});
     var _iLastYel=null,_iLastBlu=null;
     var forceSeries=Object.keys(allDates).sort().map(function(ds){
       var yel=yellowByDate[ds]!=null?yellowByDate[ds]:_iLastYel;
@@ -1738,6 +1801,7 @@
     var sdParts=[
       'Ticker: '+SL_TICKER,
       'Timeframe: '+days+' days ('+lo+' to '+hi+')',
+      iSigGap?('NOTE: Signal history is not available before '+iSigStart+'. Narrative Force and Risk Pressure only cover the trailing '+SL_HISTORY_DAYS+' days and are not plotted before that date — never describe either signal earlier than '+iSigStart+'.'):'',
       'Price: $'+(pS?.toFixed(2)||'?')+' -> $'+(pE?.toFixed(2)||'?')+' ('+pC+'%)',
       '\n--- PRICE (last 10 days) ---',
       snaps.slice(-10).map(function(s){return s.snapshot_date.slice(0,10)+': $'+(s.price_close!=null?s.price_close.toFixed(2):'?');}).join(', '),
