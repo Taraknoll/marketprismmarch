@@ -14260,6 +14260,34 @@ function gcTierIcon(tier){
   if(t==='surprise')return'\u26A1';
   return'\u25CF';
 }
+/* Resolve the confidence to display on a card.
+
+   trade_cards_live carries the scoring pipeline's confidence at three stages of
+   refinement, coarsest first:
+     confidence                   — base prior for the primary_label, clamped
+                                    upstream at a 0.79 ceiling
+     regime_adjusted_confidence   — the prior adjusted for market regime
+     keyword_adjusted_confidence  — further adjusted for the ticker's keyword
+                                    signal; the only stage that is genuinely
+                                    per-ticker
+
+   The gallery previously rendered the FIRST stage, which is why nearly every
+   card read 79%: that value saturates at its ceiling, and the >0.65 conviction
+   floor below selects precisely the saturated top of the distribution. (Across
+   the 43 MOMENTUM_CONFIRMED rows, `confidence` holds 15 distinct values while
+   `keyword_adjusted_confidence` holds 31.) Walk the chain newest-first so the
+   card shows the most refined number the pipeline actually produced — matching
+   what mod-trading-cards.js and tcBuildFromData already do. */
+function gcResolveConfidence(d){
+  if(!d) return null;
+  var chain=[d.keyword_adjusted_confidence,d.regime_adjusted_confidence,d.confidence];
+  for(var i=0;i<chain.length;i++){
+    if(chain[i]==null) continue;
+    var v=Number(chain[i]);
+    if(isFinite(v)&&v>0) return v;
+  }
+  return null;
+}
 function gcConfColor(conf){
   return'rgba(255,255,255,0.85)';
 }
@@ -14280,7 +14308,8 @@ var FLIP_ROTATE_ICON='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24
 function buildStratCard(d){
   var tier=gcTierClass(d.card_tier);
   var tierIcon=gcTierIcon(d.card_tier);
-  var confPct=d.confidence!=null?Math.round(Number(d.confidence)*100):50;
+  var confResolved=gcResolveConfidence(d);
+  var confPct=confResolved!=null?Math.round(confResolved*100):50;
   var confCol=gcConfColor(confPct);
   var dirClass=gcDirClass(d.direction);
   var phaseCol=gcPhaseColor(d.direction);
@@ -14424,6 +14453,12 @@ function buildStratCard(d){
   +'</div>';
 }
 
+/* Conviction floor, mirrored from the server-side filter in loadStrategyData().
+   That filter gates on the raw `confidence` prior, but the card renders the
+   refined value from gcResolveConfidence(); re-checking the resolved value here
+   keeps the two in agreement, so a card can never display a percentage that
+   falls below the floor the gallery claims to enforce. */
+var GC_CONFIDENCE_FLOOR=0.65;
 function renderStratCards(filter){
   var grid=document.getElementById('tcg-grid');
   if(!grid)return;
@@ -14431,6 +14466,8 @@ function renderStratCards(filter){
   var shown=0;
   STRAT_DATA.forEach(function(d){
     var show=true;
+    var conf=gcResolveConfidence(d);
+    if(conf==null||conf<=GC_CONFIDENCE_FLOOR)show=false;
     if(filter==='unicorn'&&(d.card_tier||'').toUpperCase()!=='UNICORN')show=false;
     if(filter==='platinum'&&(d.card_tier||'').toUpperCase()!=='PLATINUM')show=false;
     if(filter==='gold'&&(d.card_tier||'').toUpperCase()!=='GOLD')show=false;
@@ -14495,7 +14532,8 @@ async function loadStrategyData(){
   var hdrs={'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Accept':'application/json'};
   try{
     // Use trade_cards_live (pre-computed table) instead of v_trade_cards (slow view ~8s)
-    var cols='ticker,price,primary_label,direction,confidence,holding_days,entry_date,exit_date,'
+    var cols='ticker,price,primary_label,direction,confidence,'
+      +'regime_adjusted_confidence,keyword_adjusted_confidence,holding_days,entry_date,exit_date,'
       +'description,phase,status,card_tier,tier_label,trade_score,snapshot_date,sector_name,sector,industry,'
       +'story_claim,forensic_rebuttal,primary_driver,fair_value,pct_above_fair_value,pe_ratio,'
       +'energy,nrs,vms,coordination_class,dark_pool_signal,dark_pool_direction,narrative_tone,'
@@ -14505,18 +14543,15 @@ async function loadStrategyData(){
     // (low-conviction) cards into trade_cards_live, which the gallery has no
     // limit/floor to suppress — exclude them so the count reflects conviction
     // cards only. Remove this filter if upstream stops emitting STANDARD.
-    // Confidence floor: only surface cards the model is over 65% confident in.
-    // confidence is stored as a 0-1 fraction (rendered ×100 in buildStratCard),
-    // so 0.65 = 65%. gt excludes both the exactly-65% boundary and null-confidence
-    // rows, which would otherwise render as the 50% default and fall below the floor.
-    // KNOWN UPSTREAM DATA ISSUE (confirmed via direct query, 2026-08-17): the
-    // confidence column in trade_cards_live is stored as the literal value 0.79
-    // for most rows regardless of ticker — it's a real defect in whatever job
-    // populates this table, not a frontend rounding/display artifact. trade_score
-    // (used for sort order above) is unaffected and remains per-ticker differentiated.
-    // No code here can fix it — trade_cards_live has no view/trigger logic in this
-    // repo, so the write path lives entirely upstream. Flag to whoever owns that
-    // pipeline; do not "fix" by editing values in Supabase directly.
+    // Conviction floor: only surface cards the model is over 65% confident in.
+    // Gated on the base `confidence` prior (a 0-1 fraction, so 0.65 = 65%); gt
+    // excludes both the exactly-65% boundary and null-confidence rows. The number
+    // rendered on the card is the REFINED confidence resolved by
+    // gcResolveConfidence() — see that function for why the raw prior is not the
+    // right value to display. The floor stays on the raw prior so this filter keeps
+    // gating on the pipeline's own conviction gate; renderStratCards() re-applies
+    // the same floor to the resolved value so a card can never display a number
+    // that contradicts the floor.
     var cardUrl=SUPABASE_URL+'/rest/v1/trade_cards_live?select='+cols
       +'&card_tier=in.(UNICORN,PLATINUM,GOLD,SURPRISE)'
       +'&confidence=gt.0.65'
