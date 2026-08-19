@@ -14212,10 +14212,39 @@ var REGIME_DISPLAY={
   'YELLOW_COLLAPSE': {name:'Losing Steam',         acc:'52.3%'},
   'FRESH_ENERGY':    {name:'Building Momentum',    acc:'55.8%'}
 };
+/* Does the narrative regime point the opposite way to the trade itself?
+
+   signal_regime/regime_direction describe the NARRATIVE (is the story gaining or
+   losing energy); direction/primary_label describe the TRADE. They are separate
+   axes and routinely disagree — a name can keep its momentum setup while its
+   narrative cools. NEUTRAL on either axis is not a disagreement. */
+function gcRegimeDiverges(d){
+  var rd=(d.regime_direction||'').toUpperCase();
+  var td=(d.direction||'').toUpperCase();
+  if(!rd||!td) return false;
+  if(rd==='NEUTRAL'||td==='NEUTRAL') return false;
+  return rd!==td;
+}
+/* Headline for the front face.
+
+   The regime name reads as the card's thesis because it sits directly above the
+   action verb, but it is not one: trade_cards_live stamps every row
+   signal_tier_label='unvalidated signal' with
+   regime_note='Narrative context only · no backtest-validated edge'. When the
+   regime disagreed with the trade, that produced cards headlined "LOSING STEAM"
+   above a green "▲ BUY & HOLD" — three fields (signal_regime, primary_label,
+   direction) rendered as one call while pointing different ways.
+
+   So only let the regime supply the headline when it agrees with the trade;
+   otherwise headline the trade itself, via the same primary_label path that
+   already serves rows whose regime isn't in REGIME_DISPLAY. The regime is not
+   lost — gcWinRate() still surfaces it on the back face. Mirrors the existing
+   GC_OVERVALUED_PCT guard, which likewise reframes the front face when a
+   contradicting factor is present. */
 function gcMoveName(d){
   var regime=d.signal_regime||'';
   var rd=REGIME_DISPLAY[regime];
-  if(rd) return rd.name;
+  if(rd&&!gcRegimeDiverges(d)) return rd.name;
   return gcFmtLabel(d.primary_label);
 }
 function gcWinRate(d){
