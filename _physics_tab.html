@@ -227,6 +227,12 @@
   #tab-prism .bcyc-c .pxr{display:flex;align-items:baseline;gap:7px;margin:6px 0 0;min-height:19px;}
   #tab-prism .bcyc-c .px{font-size:16px;font-weight:800;color:var(--px-ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
   #tab-prism .bcyc-c .px:empty::after{content:'—';color:var(--px-ink3);font-weight:600;}
+  /* live day-change — same ▲/▼ + green/red convention as the .tc-change trading cards */
+  #tab-prism .bcyc-c .chg{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  #tab-prism .bcyc-c .chg:empty{display:none;}
+  #tab-prism .bcyc-c .chg.up{color:#00DE94;}
+  #tab-prism .bcyc-c .chg.dn{color:#FF4D4D;}
+  #tab-prism .bcyc-c .chg.flat{color:var(--px-ink3);}
   #tab-prism .bcyc-c .sub{font-size:11px;color:var(--px-ink3);margin:3px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   #tab-prism .bcyc-c .mini{margin:9px 0 8px;position:relative;height:6px;border-radius:4px;overflow:hidden;display:flex;}
   #tab-prism .bcyc-c .mini span{height:100%;}
@@ -1309,18 +1315,50 @@ function renderBeliefCycle(data){
     // Whole card links to the ticker's Stock Forensics deep-dive. The live price
     // fills from the parent template's shared /api/live-quotes-batch (Massive)
     // pass via the data-live-price hook (its MutationObserver catches the cell on
-    // render); the snapshot price seeds it so there's no empty flash. We do NOT
-    // emit data-live-change: _template_black.html's fast-retry is uncapped and
-    // keys off empty change spans, so permanently-unpriceable names (e.g. VEOEY)
-    // would spin it into a repaint loop.
+    // render); the snapshot price seeds it so there's no empty flash. Day-change
+    // uses its OWN attribute (data-bc-chg, filled by fetchBeliefLive below) rather
+    // than the shared data-live-change hook: _template_black.html's fast-retry
+    // keys off empty change spans with no retry cap, so permanently-unpriceable
+    // names (e.g. VEOEY) mixed into this board would spin it into a repaint loop.
     return '<a class="bcyc-c" href="/ticker/'+enc+'" style="--cc:'+st.hex+'">'+
       '<div class="r1"><span class="tk" style="color:'+col+'">'+uvEsc(r.t)+'</span><span class="db">'+dband+'</span></div>'+
-      '<div class="pxr"><span class="px" data-live-price="'+uvEsc(r.t)+'">'+fmtPx(r.price)+'</span></div>'+
+      '<div class="pxr"><span class="px" data-live-price="'+uvEsc(r.t)+'">'+fmtPx(r.price)+'</span>'+
+        '<span class="chg" data-bc-chg="'+uvEsc(r.t)+'"></span></div>'+
       '<div class="sub">'+uvEsc(r.sec||'—')+(r.v?' · '+uvEsc(r.v):'')+'</div>'+
       '<div class="mini">'+bands()+'<span class="pin" style="left:'+(r._pos*100).toFixed(1)+'%"></span></div>'+
       '<div class="r2"><span class="bg '+bgCls(r.fvd)+'">'+signed(r.fvd)+' <span class="k">belief</span></span>'+
         '<span class="rp">'+rp+'</span></div>'+
     '</a>';
+  }
+
+  // Live day-change, positive/negative — same ▲/▼ + green/red convention as the
+  // .tc-change trading cards elsewhere in the app. Deliberately self-contained
+  // (own fetch, own bounded retry) rather than piggybacking on the shared
+  // data-live-change hook — see the note in card() above for why.
+  function fetchBeliefLive(tickers,attempt){
+    attempt=attempt||0;
+    if(!tickers||!tickers.length) return;
+    fetch('/api/live-quotes-batch?tickers='+encodeURIComponent(tickers.join(',')))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(data){
+        var quotes=(data&&data.quotes)||{};
+        var retry=[];
+        board.querySelectorAll('[data-bc-chg]').forEach(function(el){
+          var t=el.getAttribute('data-bc-chg');
+          if(tickers.indexOf(t)<0) return;
+          var q=quotes[t];
+          if(!q||q.changePct==null){ retry.push(t); return; }
+          var pct=q.changePct;
+          el.textContent=(pct>=0?'▲':'▼')+' '+Math.abs(pct).toFixed(2)+'%';
+          el.className='chg '+(pct>0?'up':pct<0?'dn':'flat');
+          var pxEl=el.parentElement&&el.parentElement.querySelector('.px');
+          if(pxEl&&q.price!=null) pxEl.textContent=fmtPx(q.price);
+        });
+        // Bounded catch-up for stragglers (cold-start snapshot miss) — capped at
+        // 2 retries total so an unpriceable ticker can't loop this forever.
+        if(retry.length&&attempt<2) setTimeout(function(){ fetchBeliefLive(retry,attempt+1); },2500);
+      })
+      .catch(function(){ /* silent — cards keep their seeded price, change stays blank */ });
   }
 
   function renderFlow(){
@@ -1369,6 +1407,11 @@ function renderBeliefCycle(data){
     // kicking here fills prices without waiting for the scheduled tick).
     try{ if(typeof window._liveQuotesKick==='function') window._liveQuotesKick();
          else if(typeof window.liveQuotesRefreshDaily==='function') window.liveQuotesRefreshDaily(); }catch(_e){}
+    // Fill in live day-change (▲/▼ + green/red) for whatever's on the board now.
+    try{
+      var chgEls=board.querySelectorAll('[data-bc-chg]');
+      if(chgEls.length) fetchBeliefLive(Array.prototype.map.call(chgEls,function(el){ return el.getAttribute('data-bc-chg'); }));
+    }catch(_e){}
   }
 
   var clr=$id('bcyc-clear'); if(clr) clr.onclick=function(){ bc.phase=null; bc.node=null; draw(); };
