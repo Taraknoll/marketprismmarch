@@ -17181,10 +17181,6 @@ var LB_BOOTED=false;
 // "sector median P/E" is noise (e.g. an Energy/HIGH bucket of 2 names yields a
 // median of 105, making a 68x stock look cheap).
 var MIN_BENCHMARK_SAMPLE = 5;
-// FIX 2B — Narrative Traps: suspicion bands are NORMAL_ACTIVITY (0–35),
-// MODERATE_CONCERN (40–60), HIGH_MANIPULATION_RISK (80). "Elevated" = the
-// MODERATE_CONCERN floor. A Narrative Risk/Trap verdict alone is NOT a trap.
-var MIN_TRAP_SUSPICION = 40;
 // FIX 2A — Conviction List: a ticker may never display Long when its forensic
 // verdict is bearish OR its fair-value gap shows price above fair value
 // (fvd_pct > 0 = overvalued, per this dashboard's FVD convention).
@@ -17337,10 +17333,12 @@ var BOARDS=[
     }catch(e){window.__lbAiPicksError=String(e&&e.message||e);console.warn('[Leaderboard AI Picks] fetch failed:',e);return [];}
   }},
   {id:'manipulation',title:'NARRATIVE TRAPS',sub:'The story doesn’t match the filings',color:'#FF4D4D',bg:'rgba(255,77,77,0.12)',scoreLabel:'Confidence',
-  // FIX 2B: a trap/risk verdict alone is not a trap \u2014 require the suspicion
-  // signal to be elevated (>= MIN_TRAP_SUSPICION). This drops NORMAL_ACTIVITY
-  // (suspicion 0\u201335) names like BG that the verdict filter alone admitted.
-  fetch:function(){return scorecardFallback(function(s){return (s.verdict==='Narrative Trap'||s.verdict==='Narrative Risk') && s.suspicion_score!=null && Number(s.suspicion_score)>=MIN_TRAP_SUSPICION;},function(s){var isTrap=s.verdict==='Narrative Trap';return{name:s.ticker,link:'/ticker/'+s.ticker,meta:s.verdict+(s.suspicion_score?' \u00b7 Suspicion '+Math.round(Number(s.suspicion_score)):''),score:Number(s.verdict_confidence)||0,scoreDisplay:Math.round(Number(s.verdict_confidence)||0)+'%',_scoreColor:isTrap?'#FF4D4D':'#FFB800'};},function(a,b){var ao=a.verdict==='Narrative Trap'?0:1,bo=b.verdict==='Narrative Trap'?0:1;return ao!==bo?ao-bo:(Number(b.verdict_confidence)||0)-(Number(a.verdict_confidence)||0);},10);}},
+  // Every Narrative Trap / Narrative Risk verdict from today's scorecard,
+  // ranked by suspicion (highest first). A hard suspicion floor used to
+  // gate this list, which could leave it showing almost nothing on days
+  // when no name cleared the floor even though the scorecard carried a
+  // full set of Risk/Trap verdicts. Rank by suspicion instead of hiding rows.
+  fetch:function(){return scorecardFallback(function(s){return s.verdict==='Narrative Trap'||s.verdict==='Narrative Risk';},function(s){var isTrap=s.verdict==='Narrative Trap';return{name:s.ticker,link:'/ticker/'+s.ticker,meta:s.verdict+(s.suspicion_score!=null?' · Suspicion '+Math.round(Number(s.suspicion_score)):''),score:Number(s.verdict_confidence)||0,scoreDisplay:Math.round(Number(s.verdict_confidence)||0)+'%',_scoreColor:isTrap?'#FF4D4D':'#FFB800'};},function(a,b){var sa=a.suspicion_score!=null?Number(a.suspicion_score):-1,sb=b.suspicion_score!=null?Number(b.suspicion_score):-1;if(sa!==sb)return sb-sa;var ao=a.verdict==='Narrative Trap'?0:1,bo=b.verdict==='Narrative Trap'?0:1;return ao!==bo?ao-bo:(Number(b.verdict_confidence)||0)-(Number(a.verdict_confidence)||0);},10);}},
   {id:'dark-pool',title:'WHALE TRACKS',sub:'Highest dark-pool volume · where the institutions are moving',color:'#6366F1',bg:'rgba(99,102,241,0.12)',scoreLabel:'DP Vol %',
   fetch:async function(){
     try{
