@@ -14509,6 +14509,14 @@ async function loadStrategyData(){
     // confidence is stored as a 0-1 fraction (rendered ×100 in buildStratCard),
     // so 0.65 = 65%. gt excludes both the exactly-65% boundary and null-confidence
     // rows, which would otherwise render as the 50% default and fall below the floor.
+    // KNOWN UPSTREAM DATA ISSUE (confirmed via direct query, 2026-08-17): the
+    // confidence column in trade_cards_live is stored as the literal value 0.79
+    // for most rows regardless of ticker — it's a real defect in whatever job
+    // populates this table, not a frontend rounding/display artifact. trade_score
+    // (used for sort order above) is unaffected and remains per-ticker differentiated.
+    // No code here can fix it — trade_cards_live has no view/trigger logic in this
+    // repo, so the write path lives entirely upstream. Flag to whoever owns that
+    // pipeline; do not "fix" by editing values in Supabase directly.
     var cardUrl=SUPABASE_URL+'/rest/v1/trade_cards_live?select='+cols
       +'&card_tier=in.(UNICORN,PLATINUM,GOLD,SURPRISE)'
       +'&confidence=gt.0.65'
