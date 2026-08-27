@@ -8480,8 +8480,13 @@ async function loadData(){
         || (isTrap
           ? 'Coordinated narrative and valuation distortion detected. Historically leads to rapid downside unwind. Expected Move: ~2–3% downside'
           : 'Price is diverging from fundamentals. Mean reversion probability elevated. Expected Move: ~2–3% downside');
-      // Confidence as integer % (prefer regime-adjusted)
-      var adjConf = r.regime_adjusted_confidence != null ? Number(r.regime_adjusted_confidence) : (r.confidence != null ? Number(r.confidence) : null);
+      // Confidence as integer % — most refined stage available. The raw
+      // `confidence` prior saturates at a 0.79 ceiling, so it must not be read
+      // directly; see gcResolveConfidence. NOTE: the dashboard_bundle RPC does
+      // not currently select keyword_adjusted_confidence, so rows arriving via
+      // the bundle resolve to regime_adjusted_confidence. Adding that column to
+      // the RPC's tradeCards select upgrades this call site with no code change.
+      var adjConf = gcResolveConfidence(r);
       var confPct = adjConf != null ? Math.round(adjConf * 100) : null;
       // Merge with snapshot for sector fallback
       var snap = snapshotMap[r.ticker]||{};
@@ -15944,9 +15949,9 @@ function tcBuildFromData(){
         : (r.biasText ? r.biasText.toUpperCase() : 'HOLD STEADY');
     // Win rate from regime backtest
     var winRate = regimeInfo ? regimeInfo.acc : '';
-    // Confidence — prefer regime-adjusted
-    var confRaw = r.regime_adjusted_confidence != null ? Number(r.regime_adjusted_confidence)
-      : r.confidence != null ? Number(r.confidence) : 0.5;
+    // Confidence — most refined stage available (see gcResolveConfidence)
+    var confRaw = gcResolveConfidence(r);
+    if(confRaw == null) confRaw = 0.5;
     var confPct = Math.round(confRaw * 100);
     // Window
     var win = r._winOverride || (r.holding_days ? r.holding_days + (r.holding_days > 1 ? ' days' : ' day') : '3\u20137d');
