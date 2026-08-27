@@ -7600,6 +7600,18 @@ function enterLiteMode() {
 }
 
 // ── 1. Hero + Forensic ───────────────────────────────────────────────────────
+// Whole days between an ISO date (YYYY-MM-DD) and today, local time.
+// Positive = in the past. Null for missing/malformed input.
+function mpDaysSinceISO(iso) {
+  if (!iso) return null;
+  const p = String(iso).slice(0, 10).split('-');
+  if (p.length !== 3) return null;
+  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  if (isNaN(d.getTime())) return null;
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  return Math.round((now - d) / 86400000);
+}
+
 async function loadHero() {
   if (!TICKER) return null;
   try {
@@ -7659,7 +7671,11 @@ async function loadHero() {
       }).catch(function(){ return []; }),
       // Earnings context for the banner's lane classifier (drives "Earnings Play" lane assignment)
       sbFetch('earnings_context', {
-        select: 'ticker,days_to_earnings,earnings_surprise_pct,next_earnings_date',
+        // last_earnings_date is the only field that survives next_earnings_date
+        // rolling forward to the following quarter at the moment a company
+        // reports, so it — not the countdown — is what tells the page a print
+        // just landed. fiscal_period_actual names the quarter that reported.
+        select: 'ticker,days_to_earnings,earnings_surprise_pct,eps_surprise_pct,next_earnings_date,last_earnings_date,fiscal_period_actual,earnings_position',
         ticker: `eq.${TICKER}`,
         order:  'snapshot_date.desc',
         limit:  '1'
@@ -7845,7 +7861,10 @@ async function loadHero() {
     let earningsPill = '';
     {
       const earnCtx = (earnContextRows || [])[0] || {};
+      // NB: v_dash_daily_story has no next_earnings_date column, so the `r.`
+      // fallbacks here and below are inert — earnings_context is the only source.
       const nextDate = earnCtx.next_earnings_date || r.next_earnings_date;
+      const _sinceEarn = mpDaysSinceISO(earnCtx.last_earnings_date);
       let dte = null;
       if (nextDate) {
         // Parse YYYY-MM-DD as local date (avoid timezone shift)
@@ -7856,10 +7875,25 @@ async function loadHero() {
       } else if (r.days_to_earnings != null) {
         dte = Number(r.days_to_earnings);
       }
+      // A print inside the last few sessions takes priority over the countdown.
+      // next_earnings_date advances to the following quarter the moment a company
+      // reports, so dte jumps straight from 0 to ~90 and the badge would read
+      // "Earnings in 83d" the morning after the report — true of the next quarter,
+      // but it reads as though this one never happened. (It also means the dte < 0
+      // branch below is unreachable for any ticker whose calendar is maintained.)
+      // Neutral grey: the badge states that results are in, not that they were good.
+      if (_sinceEarn != null && _sinceEarn >= 0 && _sinceEarn <= 5) {
+        const _lp = String(earnCtx.last_earnings_date).slice(0, 10).split('-');
+        const _ld = new Date(Number(_lp[0]), Number(_lp[1]) - 1, Number(_lp[2]));
+        const _when = _sinceEarn === 0 ? 'today'
+          : _sinceEarn === 1 ? 'yesterday'
+          : _ld.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const _fp = earnCtx.fiscal_period_actual ? ' ' + esc(earnCtx.fiscal_period_actual) : '';
+        earningsPill = `<span class="hero-insight-badge" style="background:rgba(160,168,176,0.10);color:#A0A8B0;border:1px solid rgba(160,168,176,0.22);font-weight:600;">Reported${_fp} · ${_when}</span>`;
       // Earnings are quarterly (~90 days). A dte outside [-14, 95] indicates a
       // stale next_earnings_date that was never advanced after the last report —
       // suppress the pill rather than show e.g. "Earnings in 363d".
-      if (dte != null && dte >= -14 && dte <= 95) {
+      } else if (dte != null && dte >= -14 && dte <= 95) {
         let eColor, eBg, eBorder, eLabel;
         if (dte < 0) {
           eColor = '#A0A8B0'; eBg = 'rgba(160,168,176,0.08)'; eBorder = 'rgba(160,168,176,0.20)';
@@ -8002,8 +8036,24 @@ async function loadHero() {
     } else if (r.days_to_earnings != null) {
       _earnFwdDte = Number(r.days_to_earnings);
     }
-    // Raw days_to_earnings < 0 (and within ~5d) means the most recent print just landed.
-    const _earnRecent = r.days_to_earnings != null && Number(r.days_to_earnings) < 0 && Number(r.days_to_earnings) >= -5;
+    // Whether a print just landed. This has to come from earnings_context, not the
+    // story row: v_dash_daily_story is written by the narrative run, which can lag
+    // a day or skip the ticker entirely, so its days_to_earnings still read 0 the
+    // day after NVDA's 2026-08-26 report while earnings_context already had
+    // last_earnings_date set and days_to_earnings at -1.
+    const _earnCtx0 = (earnContextRows && earnContextRows[0]) || {};
+    const _sinceLastEarn = mpDaysSinceISO(_earnCtx0.last_earnings_date);
+    const _earnRecent = (_sinceLastEarn != null && _sinceLastEarn >= 0 && _sinceLastEarn <= 5)
+      || (_earnCtx0.days_to_earnings != null && Number(_earnCtx0.days_to_earnings) < 0 && Number(_earnCtx0.days_to_earnings) >= -5)
+      || (r.days_to_earnings != null && Number(r.days_to_earnings) < 0 && Number(r.days_to_earnings) >= -5);
+    // Calendar anchor for the "Reported" sub-label, so the "Earnings In 83d" value
+    // above it can't be misread as this quarter still being ahead.
+    let _earnLastLbl = '';
+    if (_earnRecent && _earnCtx0.last_earnings_date) {
+      const _llp = String(_earnCtx0.last_earnings_date).slice(0, 10).split('-');
+      const _lld = new Date(Number(_llp[0]), Number(_llp[1]) - 1, Number(_llp[2]));
+      if (!isNaN(_lld.getTime())) _earnLastLbl = _lld.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
 
     document.getElementById('metrics-strip').innerHTML = `
       <div class="metric-cell">
@@ -8029,7 +8079,7 @@ async function loadHero() {
       <div class="metric-cell">
         <div class="metric-label">Earnings In</div>
         <div class="metric-value">${_earnFwdDte != null && _earnFwdDte >= 0 && _earnFwdDte <= 95 ? _earnFwdDte + 'd' : '—'}</div>
-        <div class="metric-sub">${_earnRecent ? ('Reported' + (fiscalPeriod ? ' ' + esc(fiscalPeriod) : '')) : (r.earnings_window_flag && _earnFwdDte != null && _earnFwdDte <= 3 ? '⚠ Earnings window' : r.guidance_direction && r.guidance_direction !== 'Neutral' ? esc(r.guidance_direction) : 'Next report')}</div>
+        <div class="metric-sub">${_earnRecent ? ('Reported' + (fiscalPeriod ? ' ' + esc(fiscalPeriod) : '') + (_earnLastLbl ? ' · ' + _earnLastLbl : '')) : (r.earnings_window_flag && _earnFwdDte != null && _earnFwdDte <= 3 ? '⚠ Earnings window' : r.guidance_direction && r.guidance_direction !== 'Neutral' ? esc(r.guidance_direction) : 'Next report')}</div>
       </div>
       <div class="metric-cell">
         <div class="metric-label">P/E Ratio</div>

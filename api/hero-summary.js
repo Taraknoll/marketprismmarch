@@ -47,7 +47,15 @@ async function fetchSupabase(path) {
     var res = await fetch(url + '/rest/v1/' + path, {
       headers: { apikey: key, Authorization: 'Bearer ' + key, Accept: 'application/json' }
     });
-    if (!res.ok) return null;
+    // Log rather than silently degrade. A single unknown column in a select=
+    // makes PostgREST 400 the entire request, which used to strip the story row
+    // (price, narrative, earnings) out of the prompt with no visible symptom.
+    if (!res.ok) {
+      var body = await res.text().catch(function () { return ''; });
+      console.warn('[hero-summary] supabase ' + res.status + ' on '
+        + path.split('?')[0] + ' :: ' + body.slice(0, 200));
+      return null;
+    }
     return await res.json();
   } catch (e) {
     return null;
@@ -123,11 +131,12 @@ function synthesizedStateLabel(sc, priceChangePct) {
   return 'Mixed signals';
 }
 
-function compactState(story, scorecard, health, narratives, fairValue, articles) {
+function compactState(story, scorecard, health, narratives, fairValue, articles, earnCtx) {
   var s = story || {};
   var sc = scorecard || {};
   var h = health || {};
   var fv = fairValue || {};
+  var ec = earnCtx || {};
   var lines = [];
 
   // Header — ticker, sector, fundamentals.
@@ -151,10 +160,9 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
 
   // Valuation-temperature flag — controls hype-style word bans in the LLM
   // paragraph. TEMPERATE = stock is within VALUATION_PREMIUM_TEMPERATE_PCT of
-  // fundamental value AND pe_used < industry_pe_median (multiple below sector peers).
-  // Both conditions must be computable; when industry_pe_median is null (current
-  // state for most rows pending the upstream backfill of daily_fair_value),
-  // the flag is left absent rather than guessed.
+  // fundamental value AND pe_used < industry_pe_avg (multiple below sector peers).
+  // Both conditions must be computable; when industry_pe_avg is null (~half of
+  // daily_fair_value rows carry it), the flag is left absent rather than guessed.
   var VALUATION_PREMIUM_TEMPERATE_PCT = 20;
   var valuationFlag = null;
   var _premiumAbsPct = null;
@@ -163,9 +171,9 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
   } else if (fv.fair_value != null && s.price) {
     _premiumAbsPct = Math.abs((Number(s.price) - Number(fv.fair_value)) / Number(fv.fair_value) * 100);
   }
-  if (_premiumAbsPct != null && fv.pe_used != null && fv.industry_pe_median != null) {
+  if (_premiumAbsPct != null && fv.pe_used != null && fv.industry_pe_avg != null) {
     var _closeToFV = _premiumAbsPct <= VALUATION_PREMIUM_TEMPERATE_PCT;
-    var _underSectorPE = Number(fv.pe_used) < Number(fv.industry_pe_median);
+    var _underSectorPE = Number(fv.pe_used) < Number(fv.industry_pe_avg);
     valuationFlag = (_closeToFV && _underSectorPE) ? 'TEMPERATE' : 'ELEVATED';
   }
   if (valuationFlag) {
@@ -174,16 +182,16 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
       + ' (premium |' + _premiumAbsPct.toFixed(1) + '%| vs '
       + VALUATION_PREMIUM_TEMPERATE_PCT + '% threshold, P/E '
       + Number(fv.pe_used).toFixed(1) + 'x '
-      + (Number(fv.pe_used) < Number(fv.industry_pe_median) ? 'below' : 'at or above')
-      + ' industry median ' + Number(fv.industry_pe_median).toFixed(1) + 'x)');
+      + (Number(fv.pe_used) < Number(fv.industry_pe_avg) ? 'below' : 'at or above')
+      + ' industry average ' + Number(fv.industry_pe_avg).toFixed(1) + 'x)');
   }
 
-  // P/E context from daily_fair_value — gives the LLM the same valuation lenses
-  // that drive the visible "P/E vs Sector" badge so the paragraph can't
-  // contradict it. Emit each lens as an explicit comparison vs the current P/E
-  // so the model can't flip the direction. industry_pe_median is the canonical
-  // sector source on this table but is currently unpopulated for most rows;
-  // when null, the sector-comparison lens is simply absent from the prompt.
+  // P/E context from daily_fair_value. Emit each lens as an explicit comparison
+  // vs the current P/E so the model can't flip the direction; when a lens is null
+  // it is simply absent from the prompt. Note industry_pe_avg is NOT the number
+  // behind the visible "P/E vs Sector" badge — that badge reads sector_pe_benchmarks
+  // (or a live peer median off v_dash_daily_story), so the two can disagree and the
+  // prompt must not present this as the badge figure.
   if (fv.pe_used != null) {
     var peNow = Number(fv.pe_used);
     var peLines = ['Current P/E (model-used): ' + peNow.toFixed(1) + 'x'];
@@ -200,45 +208,88 @@ function compactState(story, scorecard, health, narratives, fairValue, articles)
       peLines.push('Implied P/E at fundamental value: ' + peImp.toFixed(1) + 'x (current is '
         + impDir + ' the implied multiple)');
     }
-    if (fv.industry_pe_median != null) {
-      var peInd = Number(fv.industry_pe_median);
+    if (fv.industry_pe_avg != null) {
+      var peInd = Number(fv.industry_pe_avg);
       var indDir = peNow >= peInd ? 'above' : 'below';
       var indGap = Math.abs((peNow - peInd) / peInd * 100);
-      peLines.push('Industry median P/E: ' + peInd.toFixed(1) + 'x (current is '
-        + indGap.toFixed(0) + '% ' + indDir + ' sector peers — THIS matches what the visible "vs Sector" badge displays)');
+      peLines.push('Industry average P/E: ' + peInd.toFixed(1) + 'x (current is '
+        + indGap.toFixed(0) + '% ' + indDir + ' sector peers)');
     }
     lines.push('');
     lines.push('Valuation multiples (use these alongside fundamental value for the disagreement rule):');
     peLines.forEach(function(l) { lines.push('- ' + l); });
   }
-  // Earnings timing — recompute days_to_earnings from next_earnings_date relative
-  // to TODAY (server clock), not from the snapshot row. Snapshots are generated
-  // pre-market and can be 1 day stale, which causes the LLM to say "earnings
-  // tomorrow" when the frontend badge correctly says "Earnings today".
-  var dteResolved = null;
-  var earnDateISO = s.next_earnings_date || null;
-  if (earnDateISO) {
-    var _ep = String(earnDateISO).split('-');
-    if (_ep.length === 3) {
-      var _earnDate = new Date(Number(_ep[0]), Number(_ep[1]) - 1, Number(_ep[2]));
-      var _now = new Date(); _now.setHours(0, 0, 0, 0);
-      dteResolved = Math.round((_earnDate - _now) / 86400000);
+  // Earnings timing — sourced from earnings_context, NOT the story row. The story
+  // row is written by the nightly narrative run, which can lag a day or skip the
+  // ticker entirely; its days_to_earnings still read 0 the morning after NVDA
+  // reported on 2026-08-26, so the prompt said "earnings TODAY" a day late.
+  // earnings_context is written by the earnings cron and carries both
+  // next_earnings_date and last_earnings_date. Day counts are recomputed against
+  // the server clock so the copy can't drift from the on-page badge.
+  var _midnight = new Date(); _midnight.setHours(0, 0, 0, 0);
+  var daysFromISO = function (iso) {
+    if (!iso) return null;
+    var p = String(iso).slice(0, 10).split('-');
+    if (p.length !== 3) return null;
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    if (isNaN(d.getTime())) return null;
+    return Math.round((d - _midnight) / 86400000);
+  };
+  var nextEarnISO = ec.next_earnings_date || null;
+  var lastEarnISO = ec.last_earnings_date || null;
+  var dteResolved = daysFromISO(nextEarnISO);
+  if (dteResolved == null) {
+    dteResolved = ec.days_to_earnings != null ? Number(ec.days_to_earnings)
+      : s.days_to_earnings != null ? Number(s.days_to_earnings) : null;
+  }
+  // A print inside the last week is the most important fact about the ticker that
+  // day, so it leads and pre-earnings framing is forbidden outright. Necessary
+  // because next_earnings_date rolls to the following quarter the moment a company
+  // reports — the countdown alone (e.g. "in 83 days") reads as though the quarter
+  // never happened.
+  var _dLast = daysFromISO(lastEarnISO);
+  var sinceLastEarn = _dLast == null ? null : -_dLast;
+  if (sinceLastEarn != null && sinceLastEarn >= 0 && sinceLastEarn <= 7) {
+    var whenLast = sinceLastEarn === 0 ? 'TODAY'
+      : sinceLastEarn === 1 ? 'YESTERDAY'
+      : sinceLastEarn + ' days ago';
+    var qLabel = ec.fiscal_period_actual
+      ? ec.fiscal_period_actual + (ec.fiscal_year_actual ? ' FY' + ec.fiscal_year_actual : '')
+      : 'The latest quarter';
+    lines.push('EARNINGS ALREADY REPORTED: ' + qLabel + ' results came out ' + whenLast
+      + ' [' + String(lastEarnISO).slice(0, 10) + ']. This ticker is POST-earnings. Do NOT'
+      + ' describe it as heading into, awaiting, or positioned ahead of earnings.');
+    if (ec.eps_actual != null) {
+      lines.push('- Reported EPS: $' + Number(ec.eps_actual).toFixed(2));
     }
-  }
-  if (dteResolved == null && s.days_to_earnings != null) {
-    dteResolved = Number(s.days_to_earnings);
-  }
-  if (dteResolved != null && isFinite(dteResolved)) {
+    // eps/revenue surprise columns store decimal fractions (0.0622 = 6.22%).
+    if (ec.eps_surprise_pct != null) {
+      lines.push('- EPS surprise: ' + (Number(ec.eps_surprise_pct) * 100).toFixed(1) + '% vs consensus');
+    }
+    if (ec.revenue_surprise_pct != null) {
+      lines.push('- Revenue surprise: ' + (Number(ec.revenue_surprise_pct) * 100).toFixed(1) + '% vs consensus');
+    }
+    if (dteResolved != null && isFinite(dteResolved) && dteResolved > 0) {
+      lines.push('- Next report: in ' + dteResolved + ' days'
+        + (nextEarnISO ? ' [' + nextEarnISO + ']' : '') + ' — background only, not the story.');
+    }
+  } else if (dteResolved != null && isFinite(dteResolved)) {
     var earnPhrase;
     if (dteResolved === 0) earnPhrase = 'TODAY (after-hours or scheduled today — do NOT say "tomorrow")';
     else if (dteResolved === 1) earnPhrase = 'tomorrow (in 1 day)';
     else if (dteResolved === -1) earnPhrase = 'yesterday (1 day ago, post-earnings)';
     else if (dteResolved > 0) earnPhrase = 'in ' + dteResolved + ' days';
     else earnPhrase = Math.abs(dteResolved) + ' days ago (post-earnings)';
-    lines.push('Earnings: ' + earnPhrase + (earnDateISO ? ' [' + earnDateISO + ']' : ''));
+    lines.push('Earnings: ' + earnPhrase + (nextEarnISO ? ' [' + nextEarnISO + ']' : ''));
+    // Trailing surprise is context only ahead of a print. Decimal fraction -> percent.
+    var trailSurp = ec.eps_surprise_pct != null ? ec.eps_surprise_pct : s.eps_surprise_pct;
+    if (trailSurp != null) {
+      lines.push('Last earnings surprise: ' + (Number(trailSurp) * 100).toFixed(1) + '%');
+    }
   }
-  if (s.earnings_surprise_pct != null) lines.push('Last earnings surprise: ' + Number(s.earnings_surprise_pct).toFixed(1) + '%');
-  if (s.guidance_direction) lines.push('Guidance: ' + s.guidance_direction);
+  if (ec.guidance_direction || s.guidance_direction) {
+    lines.push('Guidance: ' + (ec.guidance_direction || s.guidance_direction));
+  }
 
   // Narrative signals.
   lines.push('');
@@ -362,13 +413,24 @@ module.exports = async (req, res) => {
   // which is the per-article scrape date. Empty result is fine; compactState
   // falls back to the deduped scorecard narratives view.
   var sinceISO = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
-  var [storyRows, scoreRows, healthRows, narrativeRows, fvRows, articleRows] = await Promise.all([
-    fetchSupabase('v_dash_daily_story?select=ticker,sector_name,price,price_change_pct,narrative_state,prism_verdict,story_claim,forensic_rebuttal,days_to_earnings,next_earnings_date,guidance_direction,earnings_surprise_pct,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
+  var [storyRows, scoreRows, healthRows, narrativeRows, fvRows, articleRows, earnRows] = await Promise.all([
+    // Every column below must exist on v_dash_daily_story. PostgREST 400s the
+    // whole request on one unknown name and fetchSupabase() returns null, so a
+    // typo here silently empties the prompt instead of failing loudly. This
+    // select carried next_earnings_date (never a column on this view) and
+    // earnings_surprise_pct (the column is eps_surprise_pct) from 2026-05-27
+    // until this fix, dropping price/story/earnings context from every ticker's
+    // summary. Earnings timing now comes from earnings_context below.
+    fetchSupabase('v_dash_daily_story?select=ticker,sector_name,price,price_change_pct,narrative_state,prism_verdict,story_claim,forensic_rebuttal,days_to_earnings,guidance_direction,eps_surprise_pct,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('narrative_scorecard?select=ticker,verdict,narrative_state,coordination_score,walsh_regime,narrative_energy_regime,narrative_energy_absolute,current_sentiment,fvd_pct,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('v_dash_narrative_health?select=ticker,narrative_health,narrative_trend,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1'),
     fetchSupabase('v_narrative_scorecard_deduped?select=narrative,propagation_pressure,narrative_energy_regime,snapshot_date&' + tFilter + '&order=snapshot_date.desc,propagation_pressure.desc.nullslast&limit=8'),
-    fetchSupabase('daily_fair_value?select=fair_value,fv_low,fv_high,verdict,premium_pct,pe_used,pe_5y_median,pe_implied,industry_pe_median,snapshot_date&' + tFilter + '&fair_value=not.is.null&order=snapshot_date.desc&limit=1'),
-    fetchSupabase('narrative_analyses?select=narrative_text,source_outlet,sentiment_score,snapshot_date&' + tFilter + '&snapshot_date=gte.' + sinceISO + '&order=snapshot_date.desc&limit=10')
+    fetchSupabase('daily_fair_value?select=fair_value,fv_low,fv_high,verdict,premium_pct,pe_used,pe_5y_median,pe_implied,industry_pe_avg,snapshot_date&' + tFilter + '&fair_value=not.is.null&order=snapshot_date.desc&limit=1'),
+    fetchSupabase('narrative_analyses?select=narrative_text,source_outlet,sentiment_score,snapshot_date&' + tFilter + '&snapshot_date=gte.' + sinceISO + '&order=snapshot_date.desc&limit=10'),
+    // Earnings timing + the reported quarter's actuals. Written by the earnings
+    // cron, so it stays correct on days the narrative run lags or skips the
+    // ticker — which is exactly when the story row's days_to_earnings goes stale.
+    fetchSupabase('earnings_context?select=days_to_earnings,next_earnings_date,last_earnings_date,eps_actual,eps_surprise_pct,revenue_surprise_pct,fiscal_period_actual,fiscal_year_actual,guidance_direction,snapshot_date&' + tFilter + '&order=snapshot_date.desc&limit=1')
   ]);
 
   var story = (storyRows && storyRows[0]) || null;
@@ -377,12 +439,13 @@ module.exports = async (req, res) => {
   var narratives = narrativeRows || [];
   var fairValue = (fvRows && fvRows[0]) || null;
   var articles = articleRows || [];
+  var earnCtx = (earnRows && earnRows[0]) || null;
 
   if (!story && !scorecard && !narratives.length && !articles.length) {
     return res.status(404).json({ error: 'no data for ticker', ticker: ticker });
   }
 
-  var stateBlock = compactState(story, scorecard, health, narratives, fairValue, articles);
+  var stateBlock = compactState(story, scorecard, health, narratives, fairValue, articles, earnCtx);
   // Hard-rule reinforcement: if neither daily_fair_value nor scorecard fvd_pct
   // provided a valuation gap, forbid the LLM from inventing one. System prompt
   // already says this, but a per-request rule next to the data is harder to miss.
