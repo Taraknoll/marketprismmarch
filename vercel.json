@@ -269,6 +269,14 @@
       "destination": "/api/quant"
     },
     {
+      "source": "/present",
+      "destination": "/api/present"
+    },
+    {
+      "source": "/institutional/presentation",
+      "destination": "/api/present"
+    },
+    {
       "source": "/api/signature-data",
       "destination": "/api/signature-data"
     },
@@ -425,6 +433,9 @@
     },
     "api/quant.js": {
       "includeFiles": "{_quant.html,_quant_field.html}"
+    },
+    "api/present.js": {
+      "includeFiles": "_present.html"
     },
     "api/forensic-data.js": {
       "maxDuration": 30

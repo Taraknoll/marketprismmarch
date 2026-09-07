@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Institutional Presentation — Market Prism™</title>
+<meta name="description" content="Market Prism institutional presentation mode — read-only guided briefing for quantitative evaluation meetings.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --mp-obsidian:#080B11;
+  --mp-surface:#0C1018;
+  --mp-surface2:#111927;
+  --mp-border:rgba(255,255,255,0.06);
+  --mp-border-mid:rgba(255,255,255,0.10);
+  --mp-border-hover:rgba(255,255,255,0.14);
+  --mp-cyan:#00AEFF;
+  --mp-accent:#4DC8F0;
+  --mp-teal:#38C8B8;
+  --mp-green:#00DE94;
+  --mp-red:#FF4D4D;
+  --mp-amber:#FFB800;
+  --mp-violet:#7B61FF;
+  --mp-text-primary:#FFFFFF;
+  --mp-text-secondary:rgba(255,255,255,0.72);
+  --mp-text-tertiary:#A0A8B0;
+  --mp-text-muted:rgba(255,255,255,0.34);
+  --font-display:'Inter','DM Sans',system-ui,sans-serif;
+  --font-body:'Inter','DM Sans',system-ui,sans-serif;
+  --top-h:64px;
+  --bot-h:72px;
+}
+html{background:var(--mp-obsidian);}
+body{background:var(--mp-obsidian);color:var(--mp-text-primary);font-family:var(--font-body);
+  min-height:100vh;-webkit-font-smoothing:antialiased;overflow:hidden;font-variant-numeric:tabular-nums;}
+a{color:var(--mp-cyan);}
+::selection{background:rgba(0,174,255,0.30);}
+button{font-family:var(--font-body);}
+
+/* ══════════════ access gate (mirrors /quant) ══════════════ */
+#mq-gate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:var(--mp-obsidian);opacity:1;visibility:visible;
+  transition:opacity .45s ease,visibility 0s linear 0s;}
+#mq-gate::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 70% 55% at 50% 40%,black 20%,transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 40%,black 20%,transparent 100%);}
+body.mq-open #mq-gate{opacity:0;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .45s;}
+.mq-card{position:relative;z-index:2;width:min(440px,100%);background:var(--mp-surface);
+  border:1px solid var(--mp-border);border-radius:16px;padding:36px 34px 28px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));overflow:hidden;}
+.mq-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,#00AEFF,#7B61FF);}
+.mq-card img{height:30px;width:auto;display:block;margin-bottom:22px;}
+.mq-eyebrow{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--mp-accent);margin-bottom:8px;}
+.mq-card h1{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:-0.025em;margin-bottom:10px;}
+.mq-card .sub{font-size:13px;line-height:1.6;color:var(--mp-text-tertiary);margin-bottom:24px;}
+.mq-field{display:flex;gap:8px;}
+#mq-code{flex:1;min-width:0;height:44px;font-family:var(--font-body);font-size:16px;font-weight:600;
+  letter-spacing:.08em;color:var(--mp-text-primary);background:var(--mp-obsidian);
+  border:1px solid var(--mp-border-mid);border-radius:10px;padding:0 14px;outline:none;text-transform:uppercase;}
+#mq-code::placeholder{color:var(--mp-text-muted);font-weight:400;letter-spacing:.02em;text-transform:none;}
+#mq-code:focus-visible{border-color:var(--mp-cyan);box-shadow:0 0 0 1px var(--mp-cyan);}
+#mq-enter{cursor:pointer;height:44px;font-size:13px;font-weight:700;letter-spacing:.04em;color:#04121C;
+  background:var(--mp-cyan);border:none;border-radius:10px;padding:0 20px;transition:filter .15s;}
+#mq-enter:hover{filter:brightness(1.12);}
+#mq-enter:disabled{opacity:.55;cursor:wait;filter:none;}
+#mq-err{min-height:20px;margin-top:12px;font-size:13px;font-weight:500;color:var(--mp-red);}
+.mq-note{margin-top:18px;padding-top:16px;border-top:1px solid var(--mp-border);font-size:11px;line-height:1.6;color:var(--mp-text-muted);}
+.mq-note a{color:var(--mp-text-tertiary);text-decoration:none;}
+.mq-shake{animation:mq-shake .4s ease;}
+@keyframes mq-shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+
+/* ══════════════ chrome ══════════════ */
+.pr-top{position:fixed;top:0;left:0;right:0;height:var(--top-h);z-index:20;display:flex;align-items:center;gap:14px;
+  padding:0 28px;border-bottom:1px solid var(--mp-border);background:rgba(8,11,17,0.88);backdrop-filter:blur(8px);}
+.pr-brand{display:flex;align-items:center;gap:12px;}
+.pr-brand img{height:24px;width:auto;display:block;}
+.pr-brand .div{width:1px;height:20px;background:var(--mp-border-mid);}
+.pr-brand .nm{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-primary);}
+.pr-mode{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mp-text-tertiary);border:1px solid var(--mp-border-mid);border-radius:20px;padding:5px 11px;}
+.pr-mode i{width:6px;height:6px;border-radius:50%;background:var(--mp-accent);box-shadow:0 0 8px rgba(77,200,240,.7);animation:pr-pulse 2.4s ease-in-out infinite;}
+@keyframes pr-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.pr-dots{display:flex;gap:8px;margin-left:8px;}
+.pr-dots button{width:26px;height:26px;border-radius:50%;border:1px solid var(--mp-border-mid);background:transparent;color:var(--mp-text-tertiary);
+  font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.pr-dots button.on{background:var(--mp-cyan);color:#04121C;border-color:var(--mp-cyan);}
+.pr-dots button:hover:not(.on){border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.pr-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.pr-sel{display:flex;align-items:center;gap:8px;}
+.pr-sel label{font-size:11px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-muted);}
+#pr-ticker{font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--mp-text-primary);background:var(--mp-surface);
+  border:1px solid var(--mp-border-mid);border-radius:10px;padding:8px 12px;min-width:220px;outline:none;cursor:pointer;}
+#pr-ticker:focus-visible{border-color:var(--mp-cyan);}
+.pr-btn{cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-tertiary);
+  background:none;border:1px solid var(--mp-border);border-radius:10px;padding:9px 14px;transition:border-color .15s,color .15s,background .15s;}
+.pr-btn:hover{border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.pr-btn.on{border-color:var(--mp-cyan);color:var(--mp-cyan);background:rgba(0,174,255,0.08);}
+.pr-btn.lock:hover{border-color:var(--mp-red);color:var(--mp-red);}
+.pr-btn b{display:inline-block;margin-left:6px;font-weight:700;}
+
+/* ══════════════ stage ══════════════ */
+.pr-stage{position:fixed;top:var(--top-h);bottom:var(--bot-h);left:0;right:0;overflow:hidden;}
+.pr-screen{position:absolute;inset:0;display:none;padding:28px 56px 20px;overflow:auto;}
+.pr-screen.active{display:flex;flex-direction:column;animation:pr-in .4s ease both;}
+body.pr-cues-on .pr-screen{padding-bottom:118px;}
+@keyframes pr-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.pr-wrap{width:100%;max-width:1520px;margin:0 auto;flex:1;display:flex;flex-direction:column;}
+.pr-eyebrow{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--mp-accent);margin-bottom:10px;}
+.pr-h1{font-family:var(--font-display);font-size:clamp(32px,3.4vw,52px);font-weight:700;letter-spacing:-0.025em;line-height:1.08;max-width:1100px;}
+.pr-sub{margin-top:12px;font-size:clamp(16px,1.25vw,21px);line-height:1.5;color:var(--mp-text-secondary);max-width:980px;}
+.pr-body{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;padding:18px 0 8px;}
+.pr-foot-line{font-size:14px;color:var(--mp-text-tertiary);letter-spacing:.02em;padding-top:12px;border-top:1px solid var(--mp-border);}
+.pr-foot-line b{color:var(--mp-text-secondary);font-weight:600;}
+
+/* ══════════════ screen 1 ══════════════ */
+.s1-thesis{margin:22px 0 8px;font-size:clamp(20px,1.7vw,28px);font-weight:600;letter-spacing:-0.015em;line-height:1.35;max-width:1180px;color:var(--mp-text-primary);}
+.s1-thesis span{color:var(--mp-accent);}
+.s1-life{width:100%;max-width:1400px;margin:8px auto 0;}
+.s1-life svg{width:100%;height:auto;display:block;}
+.s1-fams{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-top:8px;}
+.s1-fam{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s1-fam::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--mp-cyan));}
+.s1-fam .t{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px;}
+.s1-fam .f{font-size:12px;color:var(--mp-text-tertiary);line-height:1.5;word-break:break-word;}
+.s1-not{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;margin-top:14px;}
+.s1-not .lbl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-muted);}
+.s1-not .x{font-size:13px;color:var(--mp-text-tertiary);text-decoration:line-through;text-decoration-color:rgba(255,77,77,.6);}
+.s1-not .is{font-size:13px;color:var(--mp-green);font-weight:600;}
+
+/* ══════════════ timeline (screen 2 + mini on 3) ══════════════ */
+.tl-wrap{position:relative;width:100%;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:16px 16px 10px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.tl-wrap svg{width:100%;display:block;overflow:visible;}
+.tl-svg text{font-family:var(--font-body);}
+.tl-read{position:absolute;top:12px;right:16px;display:flex;gap:18px;align-items:baseline;pointer-events:none;
+  background:rgba(8,11,17,0.85);border:1px solid var(--mp-border);border-radius:10px;padding:8px 12px;opacity:0;transition:opacity .12s;}
+.tl-read.on{opacity:1;}
+.tl-read .d{font-size:13px;font-weight:700;color:var(--mp-text-primary);}
+.tl-read .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-muted);display:block;}
+.tl-read .v{font-size:16px;font-weight:600;color:var(--mp-text-primary);}
+.tl-legend{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;margin-top:10px;font-size:12px;color:var(--mp-text-tertiary);}
+.tl-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px;}
+.tl-legend .hint{margin-left:auto;color:var(--mp-text-muted);}
+.s2-top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;}
+.s2-id{display:flex;align-items:baseline;gap:14px;}
+.s2-id .tk{font-size:clamp(26px,2.2vw,34px);font-weight:800;letter-spacing:-0.02em;}
+.s2-id .nm{font-size:15px;color:var(--mp-text-tertiary);}
+.s2-id .win{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);border:1px solid var(--mp-border);border-radius:20px;padding:5px 11px;}
+
+/* ══════════════ screen 3 ══════════════ */
+.s3-grid{display:grid;grid-template-columns:1.05fr 230px 1.15fr;gap:22px;align-items:stretch;}
+.s3-left{display:flex;flex-direction:column;gap:10px;}
+.s3-cap{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-text-muted);font-weight:600;}
+.s3-flow{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;}
+.s3-flow .n{width:100%;text-align:center;border:1px solid var(--mp-border-mid);border-radius:12px;padding:16px 10px;font-size:13px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-secondary);background:var(--mp-surface);}
+.s3-flow .n.hi{border-color:rgba(0,174,255,.5);color:var(--mp-accent);}
+.s3-flow .a{font-size:22px;color:var(--mp-text-muted);line-height:1;}
+.s3-table{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));position:relative;}
+.s3-table::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mp-cyan);}
+.s3-table .hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px;border-bottom:1px solid var(--mp-border);}
+.s3-table .hd .t{font-size:13px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-secondary);}
+.s3-table .hd .s{font-size:11px;letter-spacing:.06em;color:var(--mp-text-muted);}
+.s3-table table{width:100%;border-collapse:collapse;}
+.s3-table td{padding:8px 18px;border-bottom:1px solid var(--mp-border);vertical-align:middle;}
+.s3-table tr:last-child td{border-bottom:none;}
+.s3-table td.k{font-size:13px;font-weight:600;color:var(--mp-text-tertiary);width:52%;letter-spacing:.01em;}
+.s3-table td.v{font-size:16px;font-weight:600;color:var(--mp-text-primary);text-align:right;white-space:nowrap;}
+.s3-table td.v.hi{color:var(--mp-accent);}
+.s3-table td.v small{display:block;font-size:11px;font-weight:500;color:var(--mp-text-muted);letter-spacing:.02em;}
+
+/* ══════════════ screen 4 ══════════════ */
+.s4-seq{display:grid;grid-template-columns:repeat(5,1fr);gap:0;align-items:stretch;margin-top:6px;}
+.s4-node{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:20px 20px 18px;margin-right:34px;min-height:196px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));display:flex;flex-direction:column;}
+.s4-node:last-child{margin-right:0;}
+.s4-node::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--mp-border-hover));border-radius:16px 16px 0 0;}
+.s4-node::after{content:'→';position:absolute;right:-30px;top:50%;transform:translateY(-50%);font-size:22px;color:var(--mp-text-muted);}
+.s4-node:last-child::after{content:none;}
+.s4-node .st{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:10px;}
+.s4-node .t{font-size:15px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;line-height:1.3;margin-bottom:12px;}
+.s4-node .v{font-size:18px;font-weight:700;letter-spacing:-0.01em;line-height:1.3;word-break:break-word;}
+.s4-node .v.big{font-size:22px;color:var(--mp-accent);}
+.s4-node .m{margin-top:8px;font-size:12px;line-height:1.5;color:var(--mp-text-tertiary);}
+.s4-node .m b{color:var(--mp-text-secondary);font-weight:600;}
+.s4-node.hi{border-color:rgba(77,200,240,.45);box-shadow:0 0 0 1px rgba(77,200,240,.18),0 0 40px rgba(0,174,255,.10);}
+.s4-node.out{border-style:dashed;border-color:rgba(255,184,0,.45);}
+.s4-node.out .st{color:var(--mp-amber);}
+.s4-line{margin-top:18px;font-size:16px;line-height:1.55;color:var(--mp-text-secondary);max-width:1200px;}
+.s4-line b{color:var(--mp-text-primary);font-weight:600;}
+.s4-regimes{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:18px;}
+.s4-reg{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:18px 22px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s4-reg::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c);}
+.s4-reg .t{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;}
+.s4-reg .r{font-size:22px;font-weight:700;letter-spacing:-0.015em;margin-bottom:8px;}
+.s4-reg .k{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13px;color:var(--mp-text-tertiary);}
+.s4-reg .k b{color:var(--mp-text-secondary);font-weight:600;}
+.s4-reg .n{margin-top:8px;font-size:13px;line-height:1.5;color:var(--mp-text-tertiary);}
+.s4-tz{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:14px;font-size:13px;color:var(--mp-text-tertiary);}
+.s4-tz b{color:var(--mp-text-secondary);font-weight:600;}
+
+/* ══════════════ screen 5 ══════════════ */
+.s5-q{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:6px;}
+.s5-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:20px 20px 18px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));min-height:170px;}
+.s5-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--mp-cyan));}
+.s5-card .n{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:6px;}
+.s5-card .t{font-size:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;}
+.s5-card .q{font-size:15px;line-height:1.55;color:var(--mp-text-secondary);}
+.s5-ev{margin-top:18px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:16px 20px 14px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s5-ev .hd{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:8px;}
+.s5-ev .hd .t{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-secondary);}
+.s5-ev .hd .s{font-size:12px;color:var(--mp-text-muted);}
+.s5-ev table{width:100%;border-collapse:collapse;}
+.s5-ev th{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);text-align:right;padding:6px 10px;border-bottom:1px solid var(--mp-border);}
+.s5-ev th:first-child,.s5-ev td:first-child{text-align:left;}
+.s5-ev td{font-size:16px;font-weight:600;padding:7px 10px;text-align:right;border-bottom:1px solid var(--mp-border);white-space:nowrap;}
+.s5-ev tr:last-child td{border-bottom:none;}
+.s5-ev td:first-child{font-size:14px;color:var(--mp-text-secondary);font-weight:600;}
+.s5-ev .note{margin-top:8px;font-size:12px;line-height:1.5;color:var(--mp-text-muted);}
+.s5-close{margin-top:18px;font-family:var(--font-display);font-size:clamp(26px,2.6vw,40px);font-weight:700;letter-spacing:-0.025em;line-height:1.2;}
+.s5-close span{color:var(--mp-accent);}
+
+/* ══════════════ final overlay ══════════════ */
+.s6-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px;}
+.s6-item{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:22px 22px 20px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s6-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mp-cyan);}
+.s6-item .t{font-size:18px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px;}
+.s6-item .d{font-size:13px;line-height:1.55;color:var(--mp-text-tertiary);}
+.s6-rec{margin-top:22px;padding:22px 26px;border:1px solid rgba(0,222,148,.35);border-radius:16px;background:rgba(0,222,148,.05);}
+.s6-rec .l{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-green);margin-bottom:6px;}
+.s6-rec .v{font-size:clamp(22px,2vw,30px);font-weight:700;letter-spacing:-0.02em;}
+
+/* ══════════════ bottom bar / nav / cues ══════════════ */
+.pr-bottom{position:fixed;left:0;right:0;bottom:0;height:var(--bot-h);z-index:20;display:flex;align-items:center;gap:16px;padding:0 28px;
+  border-top:1px solid var(--mp-border);background:rgba(8,11,17,0.88);backdrop-filter:blur(8px);}
+.pr-nav{display:flex;align-items:center;gap:8px;}
+.pr-nav button{cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-tertiary);
+  background:none;border:1px solid var(--mp-border);border-radius:10px;padding:9px 14px;transition:all .15s;}
+.pr-nav button:hover{border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.pr-nav button:disabled{opacity:.35;cursor:default;}
+.pr-nav .cnt{font-size:12px;letter-spacing:.10em;color:var(--mp-text-muted);padding:0 8px;}
+.pr-keys{font-size:11px;letter-spacing:.04em;color:var(--mp-text-muted);}
+.pr-keys b{display:inline-block;border:1px solid var(--mp-border-mid);border-radius:5px;padding:1px 6px;color:var(--mp-text-tertiary);font-weight:600;margin:0 2px;}
+.pr-status{margin-left:auto;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-muted);}
+.pr-status b{color:var(--mp-text-tertiary);font-weight:600;}
+
+#pr-cue{position:fixed;left:50%;bottom:calc(var(--bot-h) + 14px);transform:translate(-50%,12px);z-index:25;width:min(1080px,calc(100% - 56px));
+  display:grid;grid-template-columns:1.5fr 1.2fr .9fr;gap:0;background:rgba(12,16,24,0.96);border:1px solid var(--mp-border-mid);border-radius:14px;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));opacity:0;visibility:hidden;transition:opacity .2s,transform .2s,visibility 0s linear .2s;}
+#pr-cue.on{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .2s,transform .2s,visibility 0s;}
+#pr-cue>div{padding:12px 16px;border-right:1px solid var(--mp-border);}
+#pr-cue>div:last-child{border-right:none;}
+#pr-cue .l{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:5px;}
+#pr-cue .main .l{color:var(--mp-accent);}
+#pr-cue .opt .l{color:var(--mp-text-tertiary);}
+#pr-cue .stop .l{color:var(--mp-red);}
+#pr-cue p{font-size:13px;line-height:1.5;color:var(--mp-text-secondary);}
+#pr-cue .stop p{color:var(--mp-text-tertiary);}
+
+/* ══════════════ research drawer ══════════════ */
+#pr-drawer{position:fixed;top:var(--top-h);right:0;bottom:var(--bot-h);width:min(560px,92vw);z-index:30;background:var(--mp-surface);
+  border-left:1px solid var(--mp-border-mid);transform:translateX(102%);transition:transform .25s ease;display:flex;flex-direction:column;
+  filter:drop-shadow(-8px 0 24px rgba(0,0,0,0.5));}
+#pr-drawer.on{transform:translateX(0);}
+.dr-hd{display:flex;align-items:center;gap:12px;padding:16px 20px 12px;border-bottom:1px solid var(--mp-border);}
+.dr-hd .t{font-size:16px;font-weight:700;letter-spacing:-0.01em;}
+.dr-hd .s{font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-muted);}
+.dr-hd button{margin-left:auto;}
+.dr-tabs{display:flex;gap:4px;padding:10px 14px 0;border-bottom:1px solid var(--mp-border);}
+.dr-tabs button{cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);background:none;border:none;
+  border-bottom:2px solid transparent;padding:8px 10px 10px;transition:color .15s;}
+.dr-tabs button.on{color:var(--mp-accent);border-bottom-color:var(--mp-accent);}
+.dr-body{flex:1;overflow:auto;padding:16px 20px 24px;}
+.dr-sec{margin-bottom:22px;}
+.dr-sec h4{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-tertiary);margin-bottom:8px;}
+.dr-sec p{font-size:13px;line-height:1.55;color:var(--mp-text-secondary);}
+.dr-sec p.mut{color:var(--mp-text-muted);}
+.dr-kv{width:100%;border-collapse:collapse;}
+.dr-kv td{padding:7px 0;border-bottom:1px solid var(--mp-border);vertical-align:top;font-size:13px;line-height:1.45;}
+.dr-kv td.k{color:var(--mp-text-tertiary);font-weight:600;width:44%;padding-right:12px;word-break:break-word;}
+.dr-kv td.v{color:var(--mp-text-primary);}
+.dr-kv td.v.num{font-size:16px;font-weight:600;}
+.dr-kv td.v small{display:block;font-size:11px;color:var(--mp-text-muted);margin-top:2px;line-height:1.4;}
+.dr-def{border:1px solid var(--mp-border);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--mp-obsidian);}
+.dr-def .f{font-size:14px;font-weight:700;color:var(--mp-text-primary);margin-bottom:4px;word-break:break-word;}
+.dr-def .fam{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-accent);margin-left:8px;}
+.dr-def .d{font-size:13px;line-height:1.5;color:var(--mp-text-secondary);}
+.dr-def .src{margin-top:5px;font-size:11px;color:var(--mp-text-muted);}
+.dr-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.dr-tbl th{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);text-align:right;padding:6px 6px;border-bottom:1px solid var(--mp-border);white-space:nowrap;}
+.dr-tbl td{padding:6px 6px;text-align:right;border-bottom:1px solid var(--mp-border);color:var(--mp-text-secondary);white-space:nowrap;font-size:13px;}
+.dr-tbl th:first-child,.dr-tbl td:first-child{text-align:left;}
+.dr-tbl td:first-child{color:var(--mp-text-primary);font-weight:600;}
+.dr-tbl-wrap{overflow-x:auto;}
+.dr-empty{font-size:13px;color:var(--mp-text-muted);padding:10px 0;}
+
+/* ══════════════ loading / error ══════════════ */
+#pr-load{position:fixed;top:var(--top-h);left:0;right:0;bottom:var(--bot-h);z-index:15;display:none;align-items:center;justify-content:center;background:rgba(8,11,17,.6);}
+#pr-load.on{display:flex;}
+#pr-load .b{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-text-tertiary);border:1px solid var(--mp-border-mid);border-radius:12px;padding:12px 18px;background:var(--mp-surface);}
+#pr-load .b.err{color:var(--mp-red);border-color:rgba(255,77,77,.4);text-transform:none;letter-spacing:.02em;max-width:600px;line-height:1.5;}
+
+@media(max-width:1100px){
+  .pr-screen{padding:20px 24px 16px;}
+  .s1-fams{grid-template-columns:repeat(3,1fr);}
+  .s3-grid{grid-template-columns:1fr;}
+  .s3-flow{flex-direction:row;}
+  .s3-flow .a{transform:rotate(-90deg);}
+  .s4-seq{grid-template-columns:1fr 1fr;gap:16px;}
+  .s4-node{margin-right:0;}
+  .s4-node::after{content:none;}
+  .s5-q{grid-template-columns:1fr 1fr;}
+  .s6-grid{grid-template-columns:1fr 1fr;}
+  #pr-cue{grid-template-columns:1fr;}
+  .pr-keys{display:none;}
+}
+@media (prefers-reduced-motion:reduce){
+  .pr-screen.active{animation:none;}
+  .pr-mode i{animation:none;}
+  .mq-shake{animation:none;}
+}
+</style>
+<script>
+window.__MQ = { authed: false };
+</script>
+</head>
+<body>
+
+<!-- ── access gate ── -->
+<div id="mq-gate" role="dialog" aria-modal="true" aria-label="Password required">
+  <div class="mq-card" id="mq-card">
+    <img src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+    <div class="mq-eyebrow">Institutional Briefing</div>
+    <h1>Presentation Mode</h1>
+    <p class="sub">A read-only, five-screen guided briefing on the Market Prism measurement layer,
+      built on the live institutional feed. Enter the presentation password to continue.</p>
+    <div class="mq-field">
+      <input id="mq-code" type="password" placeholder="Password" autocomplete="off" spellcheck="false" aria-label="Password">
+      <button id="mq-enter" type="button">Unlock</button>
+    </div>
+    <div id="mq-err" aria-live="polite"></div>
+    <div class="mq-note">Provided solely for evaluation under the terms of your agreement.
+      Forensic measurement layer — narrative structure, not investment advice.<br>
+      Questions · <a href="mailto:founder@marketprism.co">founder@marketprism.co</a></div>
+  </div>
+</div>
+
+<!-- ── top chrome ── -->
+<header class="pr-top">
+  <span class="pr-brand">
+    <img src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+    <span class="div"></span>
+    <span class="nm">Institutional Briefing</span>
+  </span>
+  <span class="pr-mode" title="Read-only presentation view"><i></i>Presentation Mode</span>
+  <nav class="pr-dots" id="pr-dots" aria-label="Screens"></nav>
+  <div class="pr-right">
+    <div class="pr-sel" id="pr-sel">
+      <label for="pr-ticker">Security</label>
+      <select id="pr-ticker" aria-label="Select security"><option>Loading…</option></select>
+    </div>
+    <button class="pr-btn" id="pr-cues" type="button" aria-pressed="false">Presenter Cues<b id="pr-cues-state">Off</b></button>
+    <button class="pr-btn" id="pr-details" type="button" aria-pressed="false">Research Details</button>
+    <button class="pr-btn lock" id="mq-lock" type="button" title="End this session">Lock</button>
+  </div>
+</header>
+
+<!-- ── stage ── -->
+<main class="pr-stage" id="pr-stage">
+
+  <!-- ═══ SCREEN 1 — THE IDEA ═══ -->
+  <section class="pr-screen" data-s="1">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">1 · The idea</div>
+      <h1 class="pr-h1">Measuring the State of Market Information</h1>
+      <p class="pr-sub">Market Prism converts continuously changing market narratives into quantitative state variables.</p>
+      <div class="pr-body">
+        <p class="s1-thesis">Market Prism measures how narratives <span>form, strengthen, persist, decay and break</span> —
+          and converts those states into point-in-time quantitative features.</p>
+        <div class="s1-life" id="s1-life"></div>
+        <div class="s1-fams" id="s1-fams"></div>
+        <div class="s1-not">
+          <span class="lbl">Not</span>
+          <span class="x">sentiment scoring</span>
+          <span class="x">an LLM stock picker</span>
+          <span class="x">a trading bot</span>
+          <span class="x">news classification</span>
+          <span class="x">technical analysis</span>
+          <span class="lbl" style="margin-left:6px">Is</span>
+          <span class="is">a measurement layer for the information state around each security</span>
+        </div>
+      </div>
+      <div class="pr-foot-line"><b>Not a trading strategy.</b> A measurement layer.</div>
+    </div>
+  </section>
+
+  <!-- ═══ SCREEN 2 — ONE SECURITY THROUGH TIME ═══ -->
+  <section class="pr-screen" data-s="2">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">2 · One security through time</div>
+      <div class="s2-top">
+        <div>
+          <h1 class="pr-h1">Information Has a Lifecycle</h1>
+          <p class="pr-sub">The same security, measured every trading session. State regions are the feed's own <b>decay_state</b>; the strip beneath is <b>walsh_regime</b>.</p>
+        </div>
+        <div class="s2-id">
+          <span class="tk" id="s2-tk">—</span>
+          <span class="nm" id="s2-nm"></span>
+          <span class="win" id="s2-win">—</span>
+        </div>
+      </div>
+      <div class="pr-body">
+        <div class="tl-wrap" id="tl-main-wrap">
+          <div class="tl-read" id="tl-main-read"></div>
+          <div id="tl-main"></div>
+          <div class="tl-legend" id="tl-main-legend"></div>
+        </div>
+      </div>
+      <div class="pr-foot-line">Price is a thin context line only. Everything after the selected observation is <b>realized outcome — not model input</b>. Click a session to select it.</div>
+    </div>
+  </section>
+
+  <!-- ═══ SCREEN 3 — FROM SYSTEM TO DATA ═══ -->
+  <section class="pr-screen" data-s="3">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">3 · From system to data</div>
+      <h1 class="pr-h1">The Interface Is Only a Human View of the Dataset</h1>
+      <p class="pr-sub">Each session's information state resolves into one timestamped row of the institutional feed. These are the delivered field names.</p>
+      <div class="pr-body">
+        <div class="s3-grid">
+          <div class="s3-left">
+            <div class="s3-cap" id="s3-cap">Human view · —</div>
+            <div class="tl-wrap" style="padding:12px 12px 6px"><div id="tl-mini"></div></div>
+            <div class="s3-cap" style="margin-top:4px">Selected observation highlighted · same row shown at right</div>
+          </div>
+          <div class="s3-flow">
+            <div class="n">Market state</div>
+            <div class="a">↓</div>
+            <div class="n">Deterministic measurements</div>
+            <div class="a">↓</div>
+            <div class="n hi">Machine-readable features</div>
+          </div>
+          <div class="s3-table">
+            <div class="hd"><span class="t">Feed row</span><span class="s" id="s3-src">v_market_prism_citadel_feed_v5</span></div>
+            <table><tbody id="s3-rows"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="pr-foot-line"><b>Researchers receive the measurements, not the interface.</b></div>
+    </div>
+  </section>
+
+  <!-- ═══ SCREEN 4 — POINT-IN-TIME PROVENANCE ═══ -->
+  <section class="pr-screen" data-s="4">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">4 · Point-in-time provenance</div>
+      <h1 class="pr-h1">Designed to Be Independently Auditable</h1>
+      <p class="pr-sub">One actual observation from the feed, with the timestamps a researcher would use to verify when it existed.</p>
+      <div class="pr-body">
+        <div class="s4-seq" id="s4-seq"></div>
+        <p class="s4-line"><b>first_written_at</b> records when the observation first entered the system and is used to establish temporal provenance.</p>
+        <div class="s4-regimes" id="s4-regimes"></div>
+        <div class="s4-tz" id="s4-tz"></div>
+      </div>
+      <div class="pr-foot-line"><b>For strict predictive evaluation, use the March 2, 2026+ PIT sample.</b></div>
+    </div>
+  </section>
+
+  <!-- ═══ SCREEN 5 — WHAT A QUANT RESEARCHER CAN TEST ═══ -->
+  <section class="pr-screen" data-s="5">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">5 · What a quant researcher can test</div>
+      <h1 class="pr-h1">Designed for Independent Alpha Research</h1>
+      <p class="pr-sub">Market Prism supplies candidate information. Whether it carries incremental alpha is a question for your research framework.</p>
+      <div class="pr-body">
+        <div class="s5-q">
+          <div class="s5-card" style="--c:#00AEFF"><div class="n">1</div><div class="t">Cross-sectional information</div><div class="q">Do stronger Market Prism measurements predict different future return distributions?</div></div>
+          <div class="s5-card" style="--c:#38C8B8"><div class="n">2</div><div class="t">Horizon</div><div class="q">At what horizons does the information persist or decay?</div></div>
+          <div class="s5-card" style="--c:#7B61FF"><div class="n">3</div><div class="t">Orthogonality</div><div class="q">Does Market Prism add information beyond conventional market, fundamental and alternative factors?</div></div>
+          <div class="s5-card" style="--c:#FFB800"><div class="n">4</div><div class="t">Interactions</div><div class="q">Do combinations of state, velocity, persistence and exhaustion identify nonlinear behavior?</div></div>
+        </div>
+        <div class="s5-ev" id="s5-ev"></div>
+        <p class="s5-close">Market Prism provides the measurements.<br><span>Your researchers determine the alpha.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FINAL OVERLAY ═══ -->
+  <section class="pr-screen" data-s="6">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">Evaluation package</div>
+      <h1 class="pr-h1">What We Can Provide for Evaluation</h1>
+      <div class="pr-body">
+        <div class="s6-grid">
+          <div class="s6-item"><div class="t">Clean PIT sample</div><div class="d">The live point-in-time regime, delivered as the feed writes it — no restated history mixed in.</div></div>
+          <div class="s6-item"><div class="t">Data dictionary</div><div class="d">Every delivered field, its type, scale, coverage window and known caveats.</div></div>
+          <div class="s6-item"><div class="t">Timestamp lineage</div><div class="d">first_written_at, last-write watermark, and the revision companion marking any restatement.</div></div>
+          <div class="s6-item"><div class="t">Field methodology</div><div class="d">Definitions and formulas for each measurement family, on request.</div></div>
+          <div class="s6-item"><div class="t">Historical observations</div><div class="d">Pre-live reconstructed context, clearly labeled as such, for coverage and continuity work.</div></div>
+          <div class="s6-item"><div class="t">Production delivery path</div><div class="d">The same keyed feed the platform runs on, delivered to your environment.</div></div>
+        </div>
+        <div class="s6-rec">
+          <div class="l">Recommended evaluation universe</div>
+          <div class="v">LIVE PIT — March 2, 2026 onward</div>
+        </div>
+      </div>
+      <div class="pr-foot-line">Questions · <b>founder@marketprism.co</b></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="pr-load"><div class="b" id="pr-load-b">Connecting to feed…</div></div>
+
+<!-- ── presenter cue card ── -->
+<div id="pr-cue" aria-live="polite">
+  <div class="main"><div class="l">Main point</div><p id="cue-main"></p></div>
+  <div class="opt"><div class="l">Optional</div><p id="cue-opt"></p></div>
+  <div class="stop"><div class="l">Stop here</div><p id="cue-stop"></p></div>
+</div>
+
+<!-- ── research details drawer ── -->
+<aside id="pr-drawer" aria-label="Research details">
+  <div class="dr-hd">
+    <div><div class="t">Research Details</div><div class="s" id="dr-ctx">Depth on demand</div></div>
+    <button class="pr-btn" id="dr-close" type="button">Close</button>
+  </div>
+  <div class="dr-tabs" id="dr-tabs">
+    <button data-t="fields" class="on">Fields</button>
+    <button data-t="observation">Observation</button>
+    <button data-t="coverage">Coverage</button>
+    <button data-t="evidence">Evidence</button>
+    <button data-t="sample">Sample</button>
+  </div>
+  <div class="dr-body" id="dr-body"></div>
+</aside>
+
+<!-- ── bottom bar ── -->
+<footer class="pr-bottom">
+  <div class="pr-nav">
+    <button id="pr-prev" type="button">← Previous</button>
+    <span class="cnt" id="pr-cnt">1 / 5</span>
+    <button id="pr-next" type="button">Next →</button>
+  </div>
+  <span class="pr-keys"><b>←</b><b>→</b> navigate · <b>Space</b> next · <b>D</b> details · <b>C</b> cues</span>
+  <span class="pr-status" id="pr-status">Read-only · institutional feed</span>
+</footer>
+
+<script>
+(function(){
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════ */
+var S = {
+  screen: 1,
+  meta: null, universe: [], evidence: null,
+  ticker: null, rows: [], window: null,
+  prices: null,          // [{snapshot_date, price_close}] from /api/price-history (Polygon daily closes)
+  priceSource: null,     // 'price-history' | 'feed' | null
+  sel: -1,               // selected observation index within rows
+  cues: false, drawer: false, drawerTab: 'fields'
+};
+var TOTAL = 6; // 5 screens + final overlay
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS — formatting. Missing → "—". Never fills.
+   ═══════════════════════════════════════════════════════════════ */
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function fmt(v, dp){ if (v == null || !isFinite(v)) return '—'; return Number(v).toLocaleString('en-US', {minimumFractionDigits: dp == null ? 2 : dp, maximumFractionDigits: dp == null ? 2 : dp}); }
+function fmtInt(v){ if (v == null || !isFinite(v)) return '—'; return Number(v).toLocaleString('en-US'); }
+function fmtPct(v, dp){ if (v == null || !isFinite(v)) return '—'; var s = Number(v).toFixed(dp == null ? 2 : dp); return (v > 0 ? '+' : '') + s + '%'; }
+function fmtIc(v){ if (v == null || !isFinite(v)) return '—'; return (v > 0 ? '+' : '') + Number(v).toFixed(3); }
+function txt(v){ return v == null || v === '' ? '—' : String(v); }
+function pad2(n){ return (n < 10 ? '0' : '') + n; }
+function fmtUtc(iso){
+  if (!iso) return '—';
+  var d = new Date(iso); if (isNaN(d)) return String(iso);
+  return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth()+1) + '-' + pad2(d.getUTCDate()) + ' ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds()) + ' UTC';
+}
+// Same instant rendered in America/New_York — the calendar the production
+// system uses for trading dates. A rendering of the stored timestamp, not a
+// different value.
+function fmtEt(iso){
+  if (!iso) return '—';
+  var d = new Date(iso); if (isNaN(d)) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZoneName:'short'}).format(d);
+  } catch(_e){ return '—'; }
+}
+function fmtDateLong(ymd){
+  if (!ymd) return '—';
+  var p = String(ymd).split('-'); if (p.length < 3) return ymd;
+  var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return M[Number(p[1])-1] + ' ' + Number(p[2]) + ', ' + p[0];
+}
+function fmtDateShort(ymd){
+  if (!ymd) return '';
+  var p = String(ymd).split('-'); var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return M[Number(p[1])-1] + ' ' + Number(p[2]);
+}
+function el(id){ return document.getElementById(id); }
+function selRow(){ return (S.sel >= 0 && S.rows[S.sel]) ? S.rows[S.sel] : null; }
+function tickerName(t){ for (var i = 0; i < S.universe.length; i++) if (S.universe[i].t === t) return S.universe[i].nm || ''; return ''; }
+
+var STATE_COLOR = { STRENGTHENING:'#00DE94', STABLE:'#00AEFF', DECAYING:'#FF4D4D', UNKNOWN:'#A0A8B0', NO_DATA:'#A0A8B0' };
+var REGIME_COLOR = { CLEAR_PATH:'#38C8B8', PERSISTENT:'#7B61FF', NEUTRAL:'#A0A8B0', EXHAUSTING:'#FFB800' };
+
+/* ═══════════════════════════════════════════════════════════════
+   FIELD DICTIONARY — definitions shown in the drawer.
+   Text marked "column comment" is the production column comment on
+   market_prism_scorecard_institutional_v5 / narrative_scorecard /
+   v_market_prism_citadel_feed_v5, lightly trimmed. Others are short
+   descriptions; no formula is stated unless it comes from a comment.
+   ═══════════════════════════════════════════════════════════════ */
+var FIELDS = [
+  {f:'ticker', fam:'identity', d:'Security symbol.', src:'feed'},
+  {f:'snapshot_date', fam:'identity', d:'New York trading date of the observation. NYSE sessions only (is_trading_session).', src:'feed'},
+  {f:'first_written_at', fam:'provenance', d:'UTC time the row was first written to narrative_scorecard (server default now() at insert; never rewritten). This is the knowledge timestamp for LIVE_PIT rows. updated_at is the last-write watermark. For HISTORICAL_BACKFILL rows first_written_at is the reconstruction time, not a knowledge date.', src:'column comment · v_market_prism_citadel_feed_v5'},
+  {f:'updated_at', fam:'provenance', d:'Last-write watermark: greatest of source created_at and updated_at.', src:'view comment · v_market_prism_citadel_feed_v5'},
+  {f:'decay_provenance / decay_is_pit', fam:'provenance', d:'LIVE_PIT when snapshot_date ≥ 2026-03-01 and the decay fit is point-in-time; otherwise HISTORICAL_BACKFILL. NULL when there is no fit. March 1, 2026 was a Sunday, so the first live session is March 2.', src:'view definition'},
+  {f:'values_as_of / revision_at / is_restatement', fam:'provenance', d:'Revision companion (v_market_prism_citadel_feed_v5_lineage): values_as_of is the original scorecard write, revision_at the latest operational mutation, is_restatement marks revisions more than 24 hours later.', src:'view comment · lineage view'},
+  {f:'narrative_energy_absolute', fam:'narrative energy', d:'E0 — absolute narrative energy (0.60·M + 0.25·V·(1+F) + 0.15·Z, mass-dominant linear). The initial-energy stock the decay chain is derived from: narrative_energy_t = E(t), energy_remaining_dynamic = E(t)/E0, exhaustion_days_dynamic.', src:'column comment · market_prism_scorecard_institutional_v5'},
+  {f:'narrative_energy_t', fam:'narrative energy', d:'E(t) — current narrative energy on the decay chain seeded by narrative_energy_absolute.', src:'derived from the narrative_energy_absolute comment'},
+  {f:'energy_remaining_dynamic', fam:'narrative energy', d:'E(t) / E0 — share of the initial energy stock still present, as delivered.', src:'derived from the narrative_energy_absolute comment'},
+  {f:'narrative_velocity_score', fam:'velocity', d:'Rate-of-change of narrative activity — the V term in the narrative-energy model.', src:'description'},
+  {f:'narrative_pressure', fam:'narrative energy', d:'Legacy energy-dashboard composite (since 2024-01): 100·(0.4·NRS/100 + 0.4·min(overreaction_ratio,50)/50 + 0.2·coordination_score/100). Not the influence-weighted publication pressure. History contains extreme corrupt outliers from early overreaction_ratio bugs; the feed withholds negatives.', src:'column comment · narrative_scorecard'},
+  {f:'decay_state', fam:'persistence / decay', d:'Canonical fit state (narrative_decay.py): DECAYING | STRENGTHENING | STABLE | UNKNOWN | NO_DATA. Classify on this before reading any horizon field.', src:'column comment · narrative_scorecard'},
+  {f:'fitted_half_life', fam:'persistence / decay', d:'Uncapped mathematical half-life ln(2)/λ — DECAYING rows only. The operational 90-day cap lives in effective_narrative_horizon, flagged by is_horizon_capped. Never holds a doubling time.', src:'column comment · narrative_scorecard'},
+  {f:'half_life', fam:'persistence / decay', d:'Legacy. Since 2026-07-22 populated only for positive-lambda fits (capped 90d); NULL for negative-lambda / no-fit / baseline rows. Rows before 2026-07-22 may hold the literal sentinel 90.0 (data_quality_flags HALF_LIFE_SENTINEL). Prefer decay_state + fitted_half_life.', src:'column comment · narrative_scorecard'},
+  {f:'fit_status', fam:'persistence / decay', d:'Decay-fit provenance, era-aware since 2026-08-13. Rows ≥ 2026-03-01: OK / OK_NOT_SIGNIFICANT (live fits), MAGNITUDE_BAND_PIT, FLAT_WITHIN_EPS / TOO_FEW_OBSERVATIONS / INVALID_INPUT / NO_NARRATIVE_SERIES. Rows < 2026-03-01 carry BACKFILL_* labels.', src:'column comment · v_scorecard_feed_v1'},
+  {f:'srs', fam:'structural support', d:'Structural Reality Score (0–100): the degree to which verifiable structure — filings, fundamentals, sector data — supports the narrative. Validation family: verification.', src:'description'},
+  {f:'exhaustion_days_dynamic', fam:'exhaustion', d:'Projected sessions until the current narrative energy is exhausted, from the dynamic decay chain.', src:'derived from the narrative_energy_absolute comment'},
+  {f:'walsh_regime', fam:'exhaustion', d:'Simplified regime from validated metrics (half_life + NRS): CLEAR_PATH / PERSISTENT / NEUTRAL / EXHAUSTING.', src:'column comment · narrative_scorecard (directional rates omitted)'},
+  {f:'signal_regime', fam:'higher-order state', d:'Signal regime: SATURATION / HOLLOW / TRIPLE_THREAT / YELLOW_COLLAPSE / FRESH_ENERGY / NEUTRAL. Written by step5.', src:'column comment · narrative_scorecard'},
+  {f:'coordination_score / coordination_class', fam:'coordination', d:'0–100 degree to which independent sources converge on the same thesis inside a narrow window, and its class (e.g. ORGANIC_SPREAD, SUSPICIOUS_PATTERN).', src:'description'},
+  {f:'data_quality_flags', fam:'provenance', d:'Comma-separated engine flags delivered with the row (never imputed away). Includes era markers such as HALF_LIFE_SENTINEL, ROW_RESTATED_AFTER_24H, WKS_VINTAGE_UNPROVEN.', src:'feed'},
+  {f:'is_trading_session', fam:'identity', d:'NYSE session flag from pandas_market_calendars, persisted by the scorecard writer; historical rows initially backfilled from priced ticker_snapshots.', src:'column comment · narrative_scorecard'}
+];
+
+// The 12 fields shown as the machine-readable row on Screen 3.
+var ROW_FIELDS = [
+  ['ticker', function(r){ return txt(r.ticker); }],
+  ['snapshot_date', function(r){ return txt(r.snapshot_date); }],
+  ['first_written_at', function(r){ return fmtUtc(r.first_written_at); }, true],
+  ['narrative_energy_t', function(r){ return fmt(r.narrative_energy_t, 2); }],
+  ['narrative_velocity_score', function(r){ return fmt(r.narrative_velocity_score, 4); }],
+  ['fitted_half_life', function(r){ return r.fitted_half_life == null ? '—' : fmt(r.fitted_half_life, 2) + ' d'; }],
+  ['decay_state', function(r){ return txt(r.decay_state); }],
+  ['srs', function(r){ return fmt(r.srs, 1); }],
+  ['exhaustion_days_dynamic', function(r){ return r.exhaustion_days_dynamic == null ? '—' : fmt(r.exhaustion_days_dynamic, 1) + ' d'; }],
+  ['walsh_regime', function(r){ return txt(r.walsh_regime); }],
+  ['coordination_score', function(r){ return fmt(r.coordination_score, 1); }],
+  ['decay_provenance', function(r){ return txt(r.decay_provenance); }]
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   PRESENTER CUES — one per screen
+   ═══════════════════════════════════════════════════════════════ */
+var CUES = {
+  1: { main: 'Market Prism started with a simple question: can we measure how information around a stock is behaving, rather than merely whether news is positive or negative? These are measurements of the information state around each security.',
+       opt: 'The higher-order states are combinations of otherwise independent measurements.',
+       stop: 'Do not explain individual formulas unless asked. These are measurements, not trading recommendations.' },
+  2: { main: 'Instead of a single bullish or bearish score, Market Prism follows how the information state evolves. A security can accumulate energy, accelerate, become structurally supported, exhaust, and eventually decay or reset.',
+       opt: 'Point at one state transition and name it. Price is deliberately faint — it is context, not the measurement.',
+       stop: 'Do not narrate every lane. One transition is enough. Do not interpret the price move.' },
+  3: { main: 'What you are seeing in the platform is not the product a quant desk would consume. The interface is simply a human-readable representation of the underlying measurement engine. These states resolve into timestamped quantitative fields.',
+       opt: 'These are the delivered field names — the same row you would receive.',
+       stop: 'Do not walk through the full data dictionary. Open Research Details only if asked.' },
+  4: { main: 'This is the distinction I would want you to use in testing. March 2 forward is the clean live PIT regime. Rather than asking you to trust that characterization, the feed includes temporal provenance so your researchers can verify it themselves.',
+       opt: 'first_written_at is a server-default insert timestamp that is never rewritten; updated_at and the lineage view record anything that changed later.',
+       stop: 'Do not defend the backfilled history. It is labeled, not hidden. Move on.' },
+  5: { main: 'I do not want you to accept our trading rules or performance claims. The more interesting question is whether these measurements contain incremental information when tested inside your own research framework.',
+       opt: 'The small evidence panel is from our own validation run; treat it as a starting point for replication, not a result.',
+       stop: 'Do not quote Sharpe ratios or win rates. Do not promise results. Ask what they would test first.' },
+  6: { main: 'What we can hand over for evaluation, and the sample we recommend you use.',
+       opt: 'A clean PIT extract, the data dictionary and timestamp lineage can be delivered to your environment.',
+       stop: 'Do not discuss commercial terms here unless they raise them.' }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════════════════ */
+function go(n){
+  n = Math.max(1, Math.min(TOTAL, n));
+  S.screen = n;
+  var secs = document.querySelectorAll('.pr-screen');
+  for (var i = 0; i < secs.length; i++) secs[i].classList.toggle('active', Number(secs[i].getAttribute('data-s')) === n);
+  var dots = el('pr-dots').children;
+  for (var j = 0; j < dots.length; j++) dots[j].classList.toggle('on', Number(dots[j].getAttribute('data-n')) === n);
+  el('pr-cnt').textContent = (n <= 5 ? n + ' / 5' : 'Evaluation package');
+  el('pr-prev').disabled = n === 1;
+  el('pr-next').textContent = n === 5 ? 'Evaluation package →' : (n === TOTAL ? 'End' : 'Next →');
+  el('pr-next').disabled = n === TOTAL;
+  el('pr-sel').style.visibility = (n >= 2 && n <= 4) ? 'visible' : 'hidden';
+  renderCue();
+  if (S.drawer) renderDrawer();
+  if (n === 2) setTimeout(renderMain, 30);
+  if (n === 3) setTimeout(renderMini, 30);
+  syncUrl();
+}
+function buildDots(){
+  var h = '';
+  for (var i = 1; i <= 5; i++) h += '<button type="button" data-n="' + i + '" aria-label="Screen ' + i + '">' + i + '</button>';
+  h += '<button type="button" data-n="6" aria-label="Evaluation package" title="Evaluation package">+</button>';
+  el('pr-dots').innerHTML = h;
+  el('pr-dots').addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) go(Number(b.getAttribute('data-n'))); });
+}
+function syncUrl(){
+  try {
+    var u = new URL(location.href);
+    u.searchParams.set('s', String(S.screen));
+    if (S.ticker) u.searchParams.set('ticker', S.ticker);
+    history.replaceState(null, '', u.toString());
+  } catch(_e){}
+}
+document.addEventListener('keydown', function(e){
+  if (!document.body.classList.contains('mq-open')) return;
+  var t = e.target; var tag = t && t.tagName ? t.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(S.screen + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(S.screen - 1); }
+  else if (e.key === 'Escape') { if (S.drawer) toggleDrawer(false); }
+  else if (e.key === 'd' || e.key === 'D') { toggleDrawer(); }
+  else if (e.key === 'c' || e.key === 'C') { toggleCues(); }
+  else if (e.key === 'Home') { go(1); }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   CUES
+   ═══════════════════════════════════════════════════════════════ */
+function toggleCues(force){
+  S.cues = typeof force === 'boolean' ? force : !S.cues;
+  el('pr-cues').classList.toggle('on', S.cues);
+  el('pr-cues').setAttribute('aria-pressed', S.cues ? 'true' : 'false');
+  el('pr-cues-state').textContent = S.cues ? 'On' : 'Off';
+  document.body.classList.toggle('pr-cues-on', S.cues);
+  try { localStorage.setItem('mp_present_cues', S.cues ? '1' : '0'); } catch(_e){}
+  renderCue();
+  renderMain();
+}
+function renderCue(){
+  var c = CUES[S.screen] || CUES[1];
+  el('cue-main').textContent = c.main; el('cue-opt').textContent = c.opt; el('cue-stop').textContent = c.stop;
+  el('pr-cue').classList.toggle('on', S.cues);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCREEN 1 — lifecycle + families (static, conceptual)
+   ═══════════════════════════════════════════════════════════════ */
+function renderScreen1(){
+  var W = 1400, H = 250;
+  var stages = [
+    {t:'Formation',   s:'decay_state · STRENGTHENING', c:'#00DE94'},
+    {t:'Calibration', s:'walsh_regime · NEUTRAL',       c:'#00AEFF'},
+    {t:'Drift',       s:'walsh_regime · PERSISTENT',    c:'#7B61FF'},
+    {t:'Exhaustion',  s:'walsh_regime · EXHAUSTING',    c:'#FFB800'},
+    {t:'Compression / Reset', s:'decay_state · DECAYING', c:'#FF4D4D'}
+  ];
+  var n = stages.length, left = 150, right = W - 170, gap = (right - left) / (n - 1);
+  // arc: energy rises through formation/drift, peaks at exhaustion, falls to reset
+  var ys = [178, 128, 92, 78, 160];
+  var path = '';
+  for (var i = 0; i < n; i++){
+    var x = left + i * gap;
+    if (i === 0) path += 'M' + x + ' ' + ys[i];
+    else { var px = left + (i-1) * gap; var cx = (px + x) / 2; path += ' C' + cx + ' ' + ys[i-1] + ' ' + cx + ' ' + ys[i] + ' ' + x + ' ' + ys[i]; }
+  }
+  var h = '<svg class="tl-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Conceptual narrative lifecycle">';
+  h += '<defs><linearGradient id="lg1" x1="0" x2="1"><stop offset="0" stop-color="#00DE94"/><stop offset=".5" stop-color="#00AEFF"/><stop offset=".78" stop-color="#FFB800"/><stop offset="1" stop-color="#FF4D4D"/></linearGradient></defs>';
+  h += '<path d="' + path + '" fill="none" stroke="url(#lg1)" stroke-width="3" opacity=".85"/>';
+  for (var k = 0; k < n; k++){
+    var xx = left + k * gap;
+    h += '<circle cx="' + xx + '" cy="' + ys[k] + '" r="9" fill="#0C1018" stroke="' + stages[k].c + '" stroke-width="3"/>';
+    h += '<text x="' + xx + '" y="' + (ys[k] - 24) + '" text-anchor="middle" font-size="20" font-weight="700" fill="#FFFFFF" letter-spacing="-0.01em">' + esc(stages[k].t) + '</text>';
+    h += '<text x="' + xx + '" y="' + (H - 18) + '" text-anchor="middle" font-size="12" font-weight="600" fill="#A0A8B0" letter-spacing=".06em">' + esc(stages[k].s) + '</text>';
+    if (k < n - 1) h += '<text x="' + (xx + gap/2) + '" y="' + (H - 18) + '" text-anchor="middle" font-size="14" fill="rgba(255,255,255,.3)">→</text>';
+  }
+  h += '<text x="' + left + '" y="22" font-size="12" font-weight="600" fill="rgba(255,255,255,.34)" letter-spacing=".14em">CONCEPTUAL LIFECYCLE · LABELS BENEATH ARE THE DELIVERED STATE FIELDS</text>';
+  h += '</svg>';
+  el('s1-life').innerHTML = h;
+
+  var fams = [
+    {t:'Narrative Energy', f:'narrative_energy_t · energy_remaining_dynamic', c:'#00AEFF'},
+    {t:'Velocity', f:'narrative_velocity_score', c:'#38C8B8'},
+    {t:'Persistence / Decay', f:'decay_state · fitted_half_life', c:'#00DE94'},
+    {t:'Structural Support', f:'srs', c:'#7B61FF'},
+    {t:'Exhaustion', f:'exhaustion_days_dynamic · walsh_regime', c:'#FFB800'},
+    {t:'Coordination', f:'coordination_score · coordination_class', c:'#FF4D4D'}
+  ];
+  var fh = '';
+  for (var m = 0; m < fams.length; m++) fh += '<div class="s1-fam" style="--c:' + fams[m].c + '"><div class="t">' + esc(fams[m].t) + '</div><div class="f">' + esc(fams[m].f) + '</div></div>';
+  el('s1-fams').innerHTML = fh;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TIMELINE RENDERER — one synchronized set of lanes
+   ═══════════════════════════════════════════════════════════════ */
+var LANES = [
+  {k:'narrative_energy_t',       t:'Narrative Energy',    f:'narrative_energy_t',       c:'#00AEFF', dp:2},
+  {k:'narrative_velocity_score', t:'Velocity',            f:'narrative_velocity_score', c:'#38C8B8', dp:4},
+  {k:'fitted_half_life',         t:'Persistence / Decay', f:'fitted_half_life (days)',  c:'#00DE94', dp:2, dots:true},
+  {k:'srs',                      t:'Structural Support',  f:'srs',                      c:'#7B61FF', dp:1},
+  {k:'exhaustion_days_dynamic',  t:'Exhaustion',          f:'exhaustion_days_dynamic (days)', c:'#FFB800', dp:1}
+];
+
+function priceMap(){
+  var m = {};
+  if (S.prices) for (var i = 0; i < S.prices.length; i++) m[S.prices[i].snapshot_date] = S.prices[i].price_close;
+  return m;
+}
+
+function renderTimeline(container, opts){
+  var rows = S.rows; var n = rows.length;
+  if (!n) { container.innerHTML = '<div class="dr-empty">No feed rows for this security.</div>'; return; }
+  var mini = !!opts.mini;
+  var lanes = mini ? LANES.slice(0, 2) : LANES;
+  var W = Math.max(600, container.clientWidth || 1200);
+  var left = mini ? 120 : 170, right = 30, top = mini ? 26 : 52;
+  var laneGap = 6;
+  var priceH = mini ? 0 : 56, stripH = mini ? 14 : 18, axisH = 30;
+  // Lane height adapts to the room left on screen (cue card, small laptops)
+  // so the whole timeline is visible without scrolling.
+  var laneH = mini ? 74 : 78;
+  if (!mini) {
+    try {
+      var rectTop = container.getBoundingClientRect().top;
+      var limit = window.innerHeight - 72 - (S.cues ? 118 : 0) - 78;
+      var room = limit - rectTop - top - priceH - 10 - stripH - axisH - 8;
+      laneH = Math.max(44, Math.min(78, Math.floor(room / lanes.length) - laneGap));
+    } catch(_e){}
+  }
+  var plotW = W - left - right;
+  var H = top + lanes.length * (laneH + laneGap) + (mini ? 0 : priceH + 10) + stripH + axisH + 8;
+  var dx = n > 1 ? plotW / (n - 1) : plotW;
+  var x = function(i){ return left + (n > 1 ? i * dx : plotW / 2); };
+  var pm = priceMap();
+  var sel = S.sel;
+
+  var h = '<svg class="tl-svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+
+  // ── decay_state regions (behind everything) ──
+  var bandTop = top - 6, bandBot = top + lanes.length * (laneH + laneGap) - laneGap + (mini ? 0 : priceH + 10);
+  var i0 = 0;
+  for (var i = 1; i <= n; i++){
+    if (i === n || rows[i].decay_state !== rows[i0].decay_state){
+      var st = rows[i0].decay_state || 'UNKNOWN';
+      var xa = x(i0) - dx/2, xb = x(i-1) + dx/2;
+      var col = STATE_COLOR[st] || '#A0A8B0';
+      h += '<rect x="' + xa + '" y="' + bandTop + '" width="' + (xb - xa) + '" height="' + (bandBot - bandTop) + '" fill="' + col + '" opacity="' + (st === 'STABLE' ? 0.045 : 0.075) + '"/>';
+      if (xb - xa > (mini ? 54 : 70)) h += '<text x="' + ((xa + xb)/2) + '" y="' + (bandTop - 6) + '" text-anchor="middle" font-size="11" font-weight="700" fill="' + col + '" letter-spacing=".10em" opacity=".9">' + esc(st) + '</text>';
+      if (i < n) h += '<line x1="' + xb + '" y1="' + bandTop + '" x2="' + xb + '" y2="' + bandBot + '" stroke="rgba(255,255,255,.10)" stroke-dasharray="3 4"/>';
+      i0 = i;
+    }
+  }
+
+  // ── realized-outcome region after the selected observation ──
+  if (!mini && sel >= 0 && sel < n - 1){
+    var xs = x(sel);
+    h += '<rect x="' + xs + '" y="' + bandTop + '" width="' + (x(n-1) + dx/2 - xs) + '" height="' + (bandBot - bandTop) + '" fill="rgba(255,184,0,0.05)"/>';
+    h += '<text x="' + (x(n-1) + dx/2 - 4) + '" y="' + (bandTop - 26) + '" text-anchor="end" font-size="11" font-weight="700" fill="#FFB800" letter-spacing=".12em">REALIZED OUTCOME — NOT MODEL INPUT</text>';
+  }
+
+  // ── lanes ──
+  var y0 = top;
+  for (var L = 0; L < lanes.length; L++){
+    var ln = lanes[L]; var vals = rows.map(function(r){ return r[ln.k]; });
+    var mx = -Infinity, mn = Infinity, cnt = 0;
+    for (var a = 0; a < n; a++) if (vals[a] != null && isFinite(vals[a])) { mx = Math.max(mx, vals[a]); mn = Math.min(mn, vals[a]); cnt++; }
+    var lo = 0, hi = cnt ? Math.max(mx, 0) : 1; if (hi === lo) hi = lo + 1;
+    var yv = function(v){ return y0 + laneH - 12 - ((v - lo) / (hi - lo)) * (laneH - 24); };
+    h += '<line x1="' + left + '" y1="' + (y0 + laneH - 12) + '" x2="' + (left + plotW) + '" y2="' + (y0 + laneH - 12) + '" stroke="rgba(255,255,255,.08)"/>';
+    h += '<text x="' + (left - 14) + '" y="' + (y0 + laneH/2 - 4) + '" text-anchor="end" font-size="' + (mini ? 12 : 14) + '" font-weight="700" fill="#FFFFFF">' + esc(ln.t) + '</text>';
+    h += '<text x="' + (left - 14) + '" y="' + (y0 + laneH/2 + 12) + '" text-anchor="end" font-size="11" fill="#A0A8B0">' + esc(ln.f) + '</text>';
+    if (!cnt){
+      h += '<text x="' + (left + plotW/2) + '" y="' + (y0 + laneH/2) + '" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.34)">— not delivered in this window —</text>';
+    } else {
+      var seg = '', open = false;
+      for (var b = 0; b < n; b++){
+        var v = vals[b];
+        if (v == null || !isFinite(v)) { open = false; continue; }
+        if (ln.dots){ h += '<circle cx="' + x(b) + '" cy="' + yv(v) + '" r="3.5" fill="' + ln.c + '"/>'; continue; }
+        seg += (open ? ' L' : ' M') + x(b) + ' ' + yv(v); open = true;
+      }
+      if (seg) h += '<path d="' + seg + '" fill="none" stroke="' + ln.c + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+      if (!ln.dots) for (var c2 = 0; c2 < n; c2++){ var vv = vals[c2]; if (vv != null && isFinite(vv)) h += '<circle cx="' + x(c2) + '" cy="' + yv(vv) + '" r="2.2" fill="' + ln.c + '" opacity=".9"/>'; }
+      h += '<text x="' + (left + plotW + 4) + '" y="' + (y0 + 12) + '" font-size="11" fill="rgba(255,255,255,.34)">' + esc(fmt(hi, ln.dp > 2 ? 2 : ln.dp)) + '</text>';
+      h += '<text x="' + (left + plotW + 4) + '" y="' + (y0 + laneH - 10) + '" font-size="11" fill="rgba(255,255,255,.34)">' + esc(fmt(lo, 0)) + '</text>';
+    }
+    y0 += laneH + laneGap;
+  }
+
+  // ── price context lane (thin, secondary) ──
+  if (!mini){
+    var py0 = y0 + 4;
+    var pv = rows.map(function(r){ var p = pm[r.snapshot_date]; return (p != null && isFinite(p)) ? p : (S.priceSource === 'feed' ? r.current_price : null); });
+    var pmx = -Infinity, pmn = Infinity, pc = 0;
+    for (var d = 0; d < n; d++) if (pv[d] != null) { pmx = Math.max(pmx, pv[d]); pmn = Math.min(pmn, pv[d]); pc++; }
+    h += '<text x="' + (left - 14) + '" y="' + (py0 + priceH/2 - 2) + '" text-anchor="end" font-size="12" font-weight="600" fill="#A0A8B0">Price (context)</text>';
+    h += '<text x="' + (left - 14) + '" y="' + (py0 + priceH/2 + 13) + '" text-anchor="end" font-size="11" fill="rgba(255,255,255,.34)">' + (S.priceSource === 'price-history' ? 'daily close' : (S.priceSource === 'feed' ? 'current_price at scoring' : 'unavailable')) + '</text>';
+    if (pc > 1){
+      var pad = (pmx - pmn) || 1;
+      var yp = function(v){ return py0 + priceH - 8 - ((v - pmn) / pad) * (priceH - 16); };
+      var pre = '', post = '', op = false, op2 = false;
+      for (var e = 0; e < n; e++){
+        if (pv[e] == null) { op = false; op2 = false; continue; }
+        if (sel < 0 || e <= sel) { pre += (op ? ' L' : ' M') + x(e) + ' ' + yp(pv[e]); op = true; }
+        if (sel >= 0 && e >= sel) { post += (op2 ? ' L' : ' M') + x(e) + ' ' + yp(pv[e]); op2 = true; }
+      }
+      if (pre) h += '<path d="' + pre + '" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.4"/>';
+      if (post) h += '<path d="' + post + '" fill="none" stroke="#FFB800" stroke-width="1.4" stroke-dasharray="4 4" opacity=".85"/>';
+      h += '<text x="' + (left + plotW + 4) + '" y="' + (py0 + 10) + '" font-size="11" fill="rgba(255,255,255,.34)">' + esc(fmt(pmx, 0)) + '</text>';
+      h += '<text x="' + (left + plotW + 4) + '" y="' + (py0 + priceH - 4) + '" font-size="11" fill="rgba(255,255,255,.34)">' + esc(fmt(pmn, 0)) + '</text>';
+    } else {
+      h += '<text x="' + (left + plotW/2) + '" y="' + (py0 + priceH/2 + 4) + '" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.34)">— price series unavailable —</text>';
+    }
+    y0 = py0 + priceH + 6;
+  }
+
+  // ── walsh_regime strip ──
+  var sy = y0 + 2;
+  h += '<text x="' + (left - 14) + '" y="' + (sy + stripH - 4) + '" text-anchor="end" font-size="11" fill="#A0A8B0">walsh_regime</text>';
+  var j0 = 0;
+  for (var j = 1; j <= n; j++){
+    if (j === n || rows[j].walsh_regime !== rows[j0].walsh_regime){
+      var rg = rows[j0].walsh_regime || '—'; var rc = REGIME_COLOR[rg] || '#A0A8B0';
+      var ra = x(j0) - dx/2, rb = x(j-1) + dx/2;
+      h += '<rect x="' + (ra + 1) + '" y="' + sy + '" width="' + Math.max(1, rb - ra - 2) + '" height="' + stripH + '" rx="3" fill="' + rc + '" opacity=".55"/>';
+      if (rb - ra > (mini ? 60 : 78)) h += '<text x="' + ((ra + rb)/2) + '" y="' + (sy + stripH - 5) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#04121C" letter-spacing=".06em">' + esc(rg) + '</text>';
+      j0 = j;
+    }
+  }
+  y0 = sy + stripH + 6;
+
+  // ── date axis ──
+  var step = n > 30 ? 5 : (n > 16 ? 3 : 2);
+  for (var q = 0; q < n; q++){
+    if (q % step === 0 || q === n - 1) h += '<text x="' + x(q) + '" y="' + (y0 + 16) + '" text-anchor="middle" font-size="11" fill="#A0A8B0">' + esc(fmtDateShort(rows[q].snapshot_date)) + '</text>';
+  }
+
+  // ── selection marker ──
+  if (sel >= 0 && sel < n){
+    h += '<line x1="' + x(sel) + '" y1="' + (bandTop - 2) + '" x2="' + x(sel) + '" y2="' + (y0 + 2) + '" stroke="#4DC8F0" stroke-width="1.5"/>';
+    h += '<rect x="' + (x(sel) - 4) + '" y="' + (bandTop - 2) + '" width="8" height="8" rx="2" fill="#4DC8F0"/>';
+    if (!mini) h += '<text x="' + (x(sel) - 8) + '" y="' + (bandTop - 26) + '" text-anchor="end" font-size="11" font-weight="700" fill="#4DC8F0" letter-spacing=".10em">SELECTED OBSERVATION · ' + esc(rows[sel].snapshot_date) + '</text>';
+  }
+
+  // ── hover / click hit zones ──
+  h += '<g class="tl-hit">';
+  for (var z = 0; z < n; z++) h += '<rect data-i="' + z + '" x="' + (x(z) - dx/2) + '" y="' + (bandTop - 2) + '" width="' + dx + '" height="' + (y0 - bandTop + 4) + '" fill="transparent" style="cursor:pointer"/>';
+  h += '</g></svg>';
+  container.innerHTML = h;
+
+  var svg = container.querySelector('svg');
+  var read = opts.read ? el(opts.read) : null;
+  svg.addEventListener('mousemove', function(ev){
+    var t = ev.target; if (!t || !t.getAttribute) return; var ii = t.getAttribute('data-i'); if (ii == null) return;
+    if (read) { read.innerHTML = readoutHtml(rows[Number(ii)], pm); read.classList.add('on'); }
+  });
+  svg.addEventListener('mouseleave', function(){ if (read) read.classList.remove('on'); });
+  svg.addEventListener('click', function(ev){
+    var t = ev.target; if (!t || !t.getAttribute) return; var ii = t.getAttribute('data-i'); if (ii == null) return;
+    setSelected(Number(ii));
+  });
+}
+
+function readoutHtml(r, pm){
+  var p = pm[r.snapshot_date];
+  return '<span class="d">' + esc(fmtDateLong(r.snapshot_date)) + '</span>' +
+    '<span><span class="k">energy</span><span class="v">' + esc(fmt(r.narrative_energy_t, 1)) + '</span></span>' +
+    '<span><span class="k">velocity</span><span class="v">' + esc(fmt(r.narrative_velocity_score, 3)) + '</span></span>' +
+    '<span><span class="k">half-life</span><span class="v">' + esc(r.fitted_half_life == null ? '—' : fmt(r.fitted_half_life, 1)) + '</span></span>' +
+    '<span><span class="k">srs</span><span class="v">' + esc(fmt(r.srs, 1)) + '</span></span>' +
+    '<span><span class="k">exhaustion d</span><span class="v">' + esc(fmt(r.exhaustion_days_dynamic, 1)) + '</span></span>' +
+    '<span><span class="k">state</span><span class="v">' + esc(txt(r.decay_state)) + '</span></span>' +
+    '<span><span class="k">price</span><span class="v">' + esc(p != null ? fmt(p, 2) : '—') + '</span></span>';
+}
+
+function renderMain(){
+  var c = el('tl-main'); if (!c || S.screen !== 2) return;
+  renderTimeline(c, {read:'tl-main-read'});
+  var lg = '';
+  for (var k in STATE_COLOR) if (k !== 'NO_DATA') lg += '<span><i style="background:' + STATE_COLOR[k] + ';opacity:.6"></i>' + esc(k) + '</span>';
+  lg += '<span style="margin-left:8px;color:var(--mp-text-muted)">decay_state regions</span>';
+  for (var r in REGIME_COLOR) lg += '<span><i style="background:' + REGIME_COLOR[r] + ';opacity:.7;border-radius:6px"></i>' + esc(r) + '</span>';
+  lg += '<span class="hint">' + S.rows.length + ' trading sessions · ' + (S.priceSource === 'price-history' ? 'price: daily close (context only)' : (S.priceSource === 'feed' ? 'price: current_price at scoring (context only)' : 'price unavailable')) + '</span>';
+  el('tl-main-legend').innerHTML = lg;
+}
+function renderMini(){
+  var c = el('tl-mini'); if (!c || S.screen !== 3) return;
+  renderTimeline(c, {mini:true});
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SELECTION → screens 3 & 4
+   ═══════════════════════════════════════════════════════════════ */
+function setSelected(i){
+  if (i < 0 || i >= S.rows.length) return;
+  S.sel = i;
+  renderMain(); renderMini(); renderScreen3(); renderScreen4();
+  if (S.drawer) renderDrawer();
+}
+
+function renderScreen2Head(){
+  el('s2-tk').textContent = S.ticker || '—';
+  el('s2-nm').textContent = tickerName(S.ticker);
+  el('s2-win').textContent = S.window && S.window.from ? (fmtDateShort(S.window.from) + ' → ' + fmtDateShort(S.window.to) + ' · ' + S.window.returned_sessions + ' sessions') : '—';
+}
+
+function renderScreen3(){
+  var r = selRow();
+  el('s3-cap').textContent = 'Human view · ' + (S.ticker || '—') + (r ? ' · ' + fmtDateLong(r.snapshot_date) : '');
+  var h = '';
+  for (var i = 0; i < ROW_FIELDS.length; i++){
+    var f = ROW_FIELDS[i];
+    var v = r ? f[1](r) : '—';
+    h += '<tr><td class="k">' + esc(f[0]) + '</td><td class="v' + (f[2] ? ' hi' : '') + '">' + esc(v) + '</td></tr>';
+  }
+  el('s3-rows').innerHTML = h;
+}
+
+// Realized close-to-close change k trading days after the selected session,
+// from the price series (trading-day list is the series itself). Arithmetic on
+// two delivered prices — no modeling.
+function realizedAfter(r, k){
+  if (!r || !S.prices || !S.prices.length) return null;
+  var idx = -1;
+  for (var i = 0; i < S.prices.length; i++) if (S.prices[i].snapshot_date === r.snapshot_date) { idx = i; break; }
+  if (idx < 0 || idx + k >= S.prices.length) return null;
+  var p0 = S.prices[idx].price_close, p1 = S.prices[idx + k].price_close;
+  if (p0 == null || p1 == null || !p0) return null;
+  return { pct: (p1 / p0 - 1) * 100, date: S.prices[idx + k].snapshot_date, p0: p0, p1: p1 };
+}
+
+function renderScreen4(){
+  var r = selRow(); var m = S.meta || {};
+  var flags = r && r.data_quality_flags ? String(r.data_quality_flags).split(',').filter(Boolean) : [];
+  var o5 = realizedAfter(r, 5), o10 = realizedAfter(r, 10);
+  var lin = r && r.lineage ? r.lineage : null;
+  var h = '';
+  h += '<div class="s4-node" style="--c:#A0A8B0"><div class="st">1 · Market data available</div><div class="t">Trading session</div>' +
+       '<div class="v">' + esc(r ? fmtDateLong(r.snapshot_date) : '—') + '</div>' +
+       '<div class="m">snapshot_date · New York trading date<br>is_trading_session · <b>' + esc(r ? (r.is_trading_session === true ? 'true' : r.is_trading_session === false ? 'false' : '—') : '—') + '</b></div></div>';
+  h += '<div class="s4-node" style="--c:#7B61FF"><div class="st">2 · System run</div><div class="t">Engine scores the session</div>' +
+       '<div class="v">' + esc(r ? txt(r.decay_provenance) : '—') + '</div>' +
+       '<div class="m">decay_provenance · fit_status <b>' + esc(r ? txt(r.fit_status) : '—') + '</b><br>' + (flags.length ? flags.length + ' data_quality_flags delivered' : 'no data_quality_flags') + '</div></div>';
+  h += '<div class="s4-node hi" style="--c:#4DC8F0"><div class="st">3 · First written</div><div class="t">first_written_at</div>' +
+       '<div class="v big">' + esc(r ? fmtUtc(r.first_written_at) : '—') + '</div>' +
+       '<div class="m">' + esc(r ? fmtEt(r.first_written_at) : '—') + ' · America/New_York<br>immutable insert timestamp</div></div>';
+  h += '<div class="s4-node" style="--c:#00AEFF"><div class="st">4 · Snapshot</div><div class="t">Measurement values</div>' +
+       '<div class="m" style="margin-top:0;font-size:13px;line-height:1.7">' +
+       'narrative_energy_t <b>' + esc(r ? fmt(r.narrative_energy_t, 2) : '—') + '</b><br>' +
+       'narrative_velocity_score <b>' + esc(r ? fmt(r.narrative_velocity_score, 4) : '—') + '</b><br>' +
+       'decay_state <b>' + esc(r ? txt(r.decay_state) : '—') + '</b><br>' +
+       'srs <b>' + esc(r ? fmt(r.srs, 1) : '—') + '</b><br>' +
+       'walsh_regime <b>' + esc(r ? txt(r.walsh_regime) : '—') + '</b><br>' +
+       'updated_at <b>' + esc(r ? fmtUtc(r.updated_at) : '—') + '</b>' + (lin && lin.is_restatement ? '<br><span style="color:#FFB800">is_restatement · true</span>' : '') +
+       '</div></div>';
+  h += '<div class="s4-node out" style="--c:#FFB800"><div class="st">5 · Subsequent market outcome</div><div class="t">Realized — not model input</div>' +
+       '<div class="m" style="margin-top:0;font-size:13px;line-height:1.7">' +
+       '+5 sessions <b>' + esc(o5 ? fmtPct(o5.pct, 2) : '—') + '</b>' + (o5 ? ' <span style="color:var(--mp-text-muted)">to ' + esc(fmtDateShort(o5.date)) + '</span>' : '') + '<br>' +
+       '+10 sessions <b>' + esc(o10 ? fmtPct(o10.pct, 2) : '—') + '</b>' + (o10 ? ' <span style="color:var(--mp-text-muted)">to ' + esc(fmtDateShort(o10.date)) + '</span>' : '') + '<br>' +
+       '<span style="color:var(--mp-text-muted)">' + (S.priceSource === 'price-history' ? 'close-to-close, daily closes' : 'price series unavailable') + '</span></div></div>';
+  el('s4-seq').innerHTML = h;
+
+  var pitFrom = m.first_pit_written;
+  var rh = '';
+  rh += '<div class="s4-reg" style="--c:#00DE94"><div class="t" style="color:#00DE94">Strict live PIT</div><div class="r">March 2, 2026 → present</div>' +
+        '<div class="k"><span>rows <b>' + esc(fmtInt(m.rows_pit)) + '</b></span><span>latest session <b>' + esc(m.last_snapshot_date ? fmtDateLong(m.last_snapshot_date) : '—') + '</b></span>' +
+        '<span>first live write <b>' + esc(pitFrom ? fmtUtc(pitFrom.first_written_at) : '—') + '</b></span></div>' +
+        '<div class="n">first_written_at is the knowledge timestamp. decay_provenance = LIVE_PIT.</div></div>';
+  rh += '<div class="s4-reg" style="--c:#A0A8B0"><div class="t" style="color:#A0A8B0">Historical / backfilled context</div><div class="r">Before March 2, 2026</div>' +
+        '<div class="k"><span>rows <b>' + esc(fmtInt(m.rows_backfill)) + '</b></span><span>earliest session <b>' + esc(m.first_snapshot_date ? fmtDateLong(m.first_snapshot_date) : '—') + '</b></span></div>' +
+        '<div class="n">Reconstructed after the fact. first_written_at is the reconstruction time, not a knowledge date. decay_provenance = HISTORICAL_BACKFILL. Useful for context, not for strict predictive tests.</div></div>';
+  el('s4-regimes').innerHTML = rh;
+
+  el('s4-tz').innerHTML = '<span><b>snapshot_date</b> = New York trading date</span><span><b>first_written_at</b> = stored timestamp (timestamptz, UTC)</span><span><b>updated_at</b> = last-write watermark</span><span><b>lineage</b> = values_as_of · revision_at · is_restatement</span>';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCREEN 5 — evidence panel (only what the validation run stored)
+   ═══════════════════════════════════════════════════════════════ */
+function renderScreen5(){
+  var ev = S.evidence; var box = el('s5-ev');
+  if (!ev || !ev.run || !ev.scorecard || !ev.scorecard.length){
+    box.innerHTML = '<div class="hd"><span class="t">Existing evidence — independent replication encouraged</span></div><div class="dr-empty">No stored validation results available for this feed.</div>';
+    return;
+  }
+  // Choose up to three features by the run's own composite score at the longest
+  // horizon present — a display ordering, not a new statistic.
+  var byF = {};
+  ev.scorecard.forEach(function(s){ (byF[s.feature] = byF[s.feature] || []).push(s); });
+  var feats = Object.keys(byF).map(function(f){
+    var rows = byF[f]; var best = null;
+    rows.forEach(function(s){ if (!best || (s.composite_score != null && s.composite_score > (best.composite_score == null ? -1e9 : best.composite_score))) best = s; });
+    return { f: f, score: best ? best.composite_score : null };
+  }).filter(function(x){ return x.score != null; }).sort(function(a, b){ return b.score - a.score; }).slice(0, 3);
+
+  var horizons = [5, 10];
+  var target = null, pitq = null, resid10 = {};
+  (ev.incremental || []).forEach(function(r){ if (r.horizon === 10) resid10[r.feature] = r; });
+  var h = '<div class="hd"><span class="t">Existing evidence — independent replication encouraged</span>' +
+          '<span class="s">validation run ' + esc(ev.run.run_date) + ' · config ' + esc(txt(ev.run.config_version)) + (ev.run.git_commit_sha ? ' · ' + esc(ev.run.git_commit_sha) : '') + '</span></div>';
+  h += '<table><thead><tr><th>Feature</th>';
+  horizons.forEach(function(hz){ h += '<th>IC · ' + hz + 'd</th>'; });
+  h += '<th>Residual IC · 10d</th><th>Q5−Q1 · 10d</th><th>n dates</th></tr></thead><tbody>';
+  feats.forEach(function(x){
+    var rows = byF[x.f]; var at = {}; rows.forEach(function(s){ at[s.horizon] = s; });
+    h += '<tr><td>' + esc(x.f) + '</td>';
+    horizons.forEach(function(hz){ var s = at[hz]; h += '<td>' + esc(s ? fmtIc(s.mean_ic) : '—') + '</td>'; if (s && !target) target = s.target; if (s && !pitq) pitq = s.pit_quality; });
+    var s10 = at[10]; var ri = resid10[x.f];
+    h += '<td>' + esc(ri ? fmtIc(ri.residual_ic) : (s10 ? fmtIc(s10.residual_ic) : '—')) + '</td>';
+    h += '<td>' + esc(s10 ? fmtIc(s10.q5_q1) : '—') + '</td>';
+    h += '<td>' + esc(s10 ? fmtInt(s10.n_dates) : '—') + '</td></tr>';
+  });
+  h += '</tbody></table>';
+  var anyRi = null; for (var k in resid10) { anyRi = resid10[k]; break; }
+  h += '<div class="note">Target: ' + (target === 'abs' ? 'absolute forward return (magnitude), as stored by the validation run' : target === 'signed' ? 'signed forward return, as stored by the validation run' : 'as stored by the validation run') +
+       '. Residual IC is after ' + (anyRi && anyRi.n_baseline_cols_used != null ? anyRi.n_baseline_cols_used + ' baseline factor columns' : 'the run\'s baseline factor set') + (anyRi && anyRi.sector_fe ? ' with sector fixed effects' : '') +
+       '. Sample: ' + (pitq ? 'pit_quality ' + esc(pitq) + ' — includes reconstructed pre-March-2 history' : 'as stored') + '. Values are the run\'s own outputs; nothing is recomputed here.</div>';
+  box.innerHTML = h;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DRAWER — depth on demand
+   ═══════════════════════════════════════════════════════════════ */
+function toggleDrawer(force){
+  S.drawer = typeof force === 'boolean' ? force : !S.drawer;
+  el('pr-drawer').classList.toggle('on', S.drawer);
+  el('pr-details').classList.toggle('on', S.drawer);
+  el('pr-details').setAttribute('aria-pressed', S.drawer ? 'true' : 'false');
+  if (S.drawer) renderDrawer();
+}
+function renderDrawer(){
+  var tabs = el('dr-tabs').children;
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-t') === S.drawerTab);
+  el('dr-ctx').textContent = 'Screen ' + (S.screen <= 5 ? S.screen : '—') + (S.ticker ? ' · ' + S.ticker : '');
+  var b = el('dr-body'); var t = S.drawerTab;
+  if (t === 'fields') b.innerHTML = drawerFields();
+  else if (t === 'observation') b.innerHTML = drawerObservation();
+  else if (t === 'coverage') b.innerHTML = drawerCoverage();
+  else if (t === 'evidence') b.innerHTML = drawerEvidence();
+  else b.innerHTML = drawerSample();
+}
+function drawerFields(){
+  var h = '<div class="dr-sec"><h4>Delivered field definitions</h4><p class="mut" style="margin-bottom:10px">Text marked "column comment" is the production column comment. Fields without one carry a short description and no formula.</p>';
+  FIELDS.forEach(function(f){ h += '<div class="dr-def"><div class="f">' + esc(f.f) + '<span class="fam">' + esc(f.fam) + '</span></div><div class="d">' + esc(f.d) + '</div><div class="src">Source: ' + esc(f.src) + '</div></div>'; });
+  return h + '</div>';
+}
+function drawerObservation(){
+  var r = selRow(); if (!r) return '<div class="dr-empty">Select an observation on Screen 2.</div>';
+  var lin = r.lineage || {};
+  var o5 = realizedAfter(r, 5), o10 = realizedAfter(r, 10);
+  var kv = [
+    ['ticker', txt(r.ticker)], ['snapshot_date', txt(r.snapshot_date)], ['is_trading_session', r.is_trading_session == null ? '—' : String(r.is_trading_session)],
+    ['first_written_at', fmtUtc(r.first_written_at) + '<small>' + esc(fmtEt(r.first_written_at)) + ' · America/New_York</small>'],
+    ['updated_at', fmtUtc(r.updated_at)],
+    ['values_as_of (lineage)', fmtUtc(lin.values_as_of)], ['revision_at (lineage)', fmtUtc(lin.revision_at)], ['is_restatement (lineage)', lin.is_restatement == null ? '—' : String(lin.is_restatement)],
+    ['decay_provenance', txt(r.decay_provenance)], ['decay_is_pit', r.decay_is_pit == null ? '—' : String(r.decay_is_pit)], ['fit_status', txt(r.fit_status)],
+    ['narrative_energy_absolute', fmt(r.narrative_energy_absolute, 2)], ['narrative_energy_t', fmt(r.narrative_energy_t, 2)], ['energy_remaining_dynamic', fmt(r.energy_remaining_dynamic, 2)],
+    ['narrative_velocity_score', fmt(r.narrative_velocity_score, 4)], ['narrative_pressure', fmt(r.narrative_pressure, 2)], ['narrative_mass', fmt(r.narrative_mass, 3)],
+    ['decay_state', txt(r.decay_state)], ['fitted_half_life', r.fitted_half_life == null ? '—' : fmt(r.fitted_half_life, 2) + ' d'], ['fitted_lambda', r.fitted_lambda == null ? '—' : fmt(r.fitted_lambda, 6)],
+    ['half_life (legacy)', r.half_life == null ? '—' : fmt(r.half_life, 2) + ' d'], ['lambda_decay (legacy)', r.lambda_decay == null ? '—' : fmt(r.lambda_decay, 6)],
+    ['srs', fmt(r.srs, 1)], ['exhaustion_days_dynamic', r.exhaustion_days_dynamic == null ? '—' : fmt(r.exhaustion_days_dynamic, 1) + ' d'],
+    ['walsh_regime', txt(r.walsh_regime)], ['signal_regime', txt(r.signal_regime)], ['regime_direction', txt(r.regime_direction)],
+    ['coordination_score', fmt(r.coordination_score, 1)], ['coordination_class', txt(r.coordination_class)], ['mass_streak_days', fmtInt(r.mass_streak_days)],
+    ['current_price (at scoring)', fmt(r.current_price, 2)], ['macro_theme', txt(r.macro_theme)],
+    ['data_quality_flags', r.data_quality_flags ? esc(String(r.data_quality_flags).split(',').join(', ')) : '—']
+  ];
+  var h = '<div class="dr-sec"><h4>Selected observation · as delivered</h4><table class="dr-kv">';
+  kv.forEach(function(p){ h += '<tr><td class="k">' + esc(p[0]) + '</td><td class="v">' + p[1] + '</td></tr>'; });
+  h += '</table></div>';
+  h += '<div class="dr-sec"><h4>Realized outcome — not model input</h4><table class="dr-kv">' +
+       '<tr><td class="k">+5 sessions</td><td class="v num">' + esc(o5 ? fmtPct(o5.pct, 2) : '—') + (o5 ? '<small>' + esc(fmt(o5.p0, 2)) + ' → ' + esc(fmt(o5.p1, 2)) + ' close, to ' + esc(o5.date) + '</small>' : '') + '</td></tr>' +
+       '<tr><td class="k">+10 sessions</td><td class="v num">' + esc(o10 ? fmtPct(o10.pct, 2) : '—') + (o10 ? '<small>' + esc(fmt(o10.p0, 2)) + ' → ' + esc(fmt(o10.p1, 2)) + ' close, to ' + esc(o10.date) + '</small>' : '') + '</td></tr>' +
+       '</table><p class="mut" style="margin-top:8px">Source: ' + (S.priceSource === 'price-history' ? 'daily closes via /api/price-history' : 'unavailable') + '. Shown only after the observation\'s own timestamp.</p></div>';
+  return h;
+}
+function drawerCoverage(){
+  var rows = S.rows; var n = rows.length;
+  var keys = ['narrative_energy_t','narrative_velocity_score','fitted_half_life','half_life','decay_state','srs','exhaustion_days_dynamic','walsh_regime','signal_regime','coordination_score','narrative_pressure','current_price'];
+  var h = '<div class="dr-sec"><h4>Null rate in the displayed window · ' + esc(S.ticker || '—') + ' · ' + n + ' sessions</h4>';
+  if (!n) return h + '<div class="dr-empty">No rows.</div></div>';
+  h += '<table class="dr-kv">';
+  keys.forEach(function(k){ var nul = 0; for (var i = 0; i < n; i++) if (rows[i][k] == null) nul++; h += '<tr><td class="k">' + esc(k) + '</td><td class="v num">' + esc(fmt(100 * nul / n, 1)) + '%<small>' + (n - nul) + ' of ' + n + ' delivered</small></td></tr>'; });
+  h += '</table><p class="mut" style="margin-top:8px">A simple count of delivered cells. fitted_half_life is populated for DECAYING rows only, by design.</p></div>';
+  var cs = S.evidence && S.evidence.cohorts ? S.evidence.cohorts : [];
+  h += '<div class="dr-sec"><h4>Feature eras (validation cohort ledger)</h4>';
+  if (!cs.length) h += '<div class="dr-empty">Not available.</div>';
+  else {
+    h += '<div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th>Generation</th><th>Start</th><th>End</th><th>Rows</th><th>Tickers</th></tr></thead><tbody>';
+    cs.forEach(function(c){ h += '<tr><td>' + esc(c.generation) + '<small style="display:block;font-weight:400;color:var(--mp-text-muted);white-space:normal">' + esc(c.description || '') + '</small></td><td>' + esc(txt(c.start)) + '</td><td>' + esc(txt(c.end)) + '</td><td>' + esc(fmtInt(c.n_rows)) + '</td><td>' + esc(fmtInt(c.n_tickers)) + '</td></tr>'; });
+    h += '</tbody></table></div><p class="mut" style="margin-top:8px">Not every field existed for the whole history. Era boundaries above come from the validation run\'s own cohort ledger; half_life semantics changed 2026-07-22 and fit_status became era-aware 2026-08-13 (column comments).</p>';
+  }
+  return h + '</div>';
+}
+function drawerEvidence(){
+  var ev = S.evidence; if (!ev || !ev.run) return '<div class="dr-empty">No stored validation results.</div>';
+  var h = '<div class="dr-sec"><h4>Validation run</h4><table class="dr-kv">' +
+    '<tr><td class="k">run_date</td><td class="v">' + esc(txt(ev.run.run_date)) + '</td></tr>' +
+    '<tr><td class="k">finished_at</td><td class="v">' + esc(fmtUtc(ev.run.finished_at)) + '</td></tr>' +
+    '<tr><td class="k">config_version</td><td class="v">' + esc(txt(ev.run.config_version)) + '</td></tr>' +
+    '<tr><td class="k">n_features_scored</td><td class="v">' + esc(fmtInt(ev.run.n_features_scored)) + '</td></tr>' +
+    '<tr><td class="k">git_commit_sha</td><td class="v">' + esc(txt(ev.run.git_commit_sha)) + '</td></tr></table></div>';
+  h += '<div class="dr-sec"><h4>Feature scorecard · all stored horizons</h4>';
+  if (!ev.scorecard.length) h += '<div class="dr-empty">None for the selected feature set.</div>';
+  else {
+    h += '<div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th>Feature</th><th>h</th><th>Target</th><th>IC</th><th>IC IR</th><th>HAC t</th><th>Resid IC</th><th>Q5−Q1</th><th>n dates</th><th>PIT</th><th>Class</th></tr></thead><tbody>';
+    ev.scorecard.forEach(function(s){ h += '<tr><td>' + esc(s.feature) + '</td><td>' + esc(s.horizon) + '</td><td>' + esc(txt(s.target)) + '</td><td>' + esc(fmtIc(s.mean_ic)) + '</td><td>' + esc(s.ic_ir == null ? '—' : fmt(s.ic_ir, 2)) + '</td><td>' + esc(s.ic_hac_t == null ? '—' : fmt(s.ic_hac_t, 2)) + '</td><td>' + esc(fmtIc(s.residual_ic)) + '</td><td>' + esc(fmtIc(s.q5_q1)) + '</td><td>' + esc(fmtInt(s.n_dates)) + '</td><td>' + esc(txt(s.pit_quality)) + '</td><td>' + esc(txt(s.classification)) + '</td></tr>'; });
+    h += '</tbody></table></div>';
+  }
+  h += '</div>';
+  h += '<div class="dr-sec"><h4>Incremental battery · residual after baseline factors</h4>';
+  if (!ev.incremental || !ev.incremental.length) h += '<div class="dr-empty">None stored for the selected feature set.</div>';
+  else {
+    h += '<div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th>Feature</th><th>h</th><th>Raw IC</th><th>Raw HAC t</th><th>Resid IC</th><th>Resid HAC t</th><th>Baseline cols</th><th>Sector FE</th><th>n dates</th></tr></thead><tbody>';
+    ev.incremental.forEach(function(r){ h += '<tr><td>' + esc(r.feature) + '</td><td>' + esc(r.horizon) + '</td><td>' + esc(fmtIc(r.raw_ic)) + '</td><td>' + esc(r.raw_ic_hac_t == null ? '—' : fmt(r.raw_ic_hac_t, 2)) + '</td><td>' + esc(fmtIc(r.residual_ic)) + '</td><td>' + esc(r.residual_ic_hac_t == null ? '—' : fmt(r.residual_ic_hac_t, 2)) + '</td><td>' + esc(fmtInt(r.n_baseline_cols_used)) + '</td><td>' + esc(r.sector_fe == null ? '—' : String(r.sector_fe)) + '</td><td>' + esc(fmtInt(r.residual_ic_n_dates)) + '</td></tr>'; });
+    h += '</tbody></table></div>';
+  }
+  h += '<p class="mut" style="margin-top:8px">All values are stored outputs of the internal validation run (institutional_feature_scorecard, institutional_validation_results). Nothing is recomputed in this view. Independent replication is the point.</p></div>';
+  return h;
+}
+function drawerSample(){
+  var m = S.meta || {};
+  var h = '<div class="dr-sec"><h4>Feed extent</h4><table class="dr-kv">' +
+    '<tr><td class="k">delivery view</td><td class="v">' + esc(txt(m.feed)) + '</td></tr>' +
+    '<tr><td class="k">lineage view</td><td class="v">' + esc(txt(m.lineage)) + '</td></tr>' +
+    '<tr><td class="k">earliest snapshot_date</td><td class="v">' + esc(txt(m.first_snapshot_date)) + '</td></tr>' +
+    '<tr><td class="k">latest snapshot_date</td><td class="v">' + esc(txt(m.last_snapshot_date)) + '</td></tr>' +
+    '<tr><td class="k">rows · total</td><td class="v num">' + esc(fmtInt(m.rows_total)) + '</td></tr>' +
+    '<tr><td class="k">rows · LIVE PIT (≥ ' + esc(txt(m.pit_start)) + ')</td><td class="v num">' + esc(fmtInt(m.rows_pit)) + '</td></tr>' +
+    '<tr><td class="k">rows · historical / backfilled</td><td class="v num">' + esc(fmtInt(m.rows_backfill)) + '</td></tr>' +
+    '<tr><td class="k">securities · recent window</td><td class="v num">' + esc(fmtInt(m.tickers_recent)) + '</td></tr>' +
+    '<tr><td class="k">first live write</td><td class="v">' + esc(m.first_pit_written ? fmtUtc(m.first_pit_written.first_written_at) : '—') + (m.first_pit_written ? '<small>' + esc(m.first_pit_written.ticker) + ' · ' + esc(m.first_pit_written.snapshot_date) + '</small>' : '') + '</td></tr>' +
+    '<tr><td class="k">counts generated</td><td class="v">' + esc(fmtUtc(m.generated_at)) + '</td></tr></table>' +
+    '<p class="mut" style="margin-top:8px">Counts are exact row counts over the delivery view at generation time. The view\'s own provenance flag keys on snapshot_date ≥ 2026-03-01; March 1 was a Sunday, so March 2 is the first live session.</p></div>';
+  h += '<div class="dr-sec"><h4>Security picker</h4><p class="mut">' + esc(fmtInt(S.universe.length)) + ' securities with feed rows in the recent window. The default is the security with the most decay_state transitions and full recent coverage — a display choice, not a ranking.</p></div>';
+  return h;
+}
+el('dr-tabs').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; S.drawerTab = b.getAttribute('data-t'); renderDrawer(); });
+el('dr-close').onclick = function(){ toggleDrawer(false); };
+el('pr-details').onclick = function(){ toggleDrawer(); };
+el('pr-cues').onclick = function(){ toggleCues(); };
+el('pr-prev').onclick = function(){ go(S.screen - 1); };
+el('pr-next').onclick = function(){ go(S.screen + 1); };
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════════════════════ */
+function showLoad(msg, err){ var b = el('pr-load-b'); b.textContent = msg; b.classList.toggle('err', !!err); el('pr-load').classList.add('on'); }
+function hideLoad(){ el('pr-load').classList.remove('on'); }
+
+function api(url){
+  return fetch(url, {cache:'no-store'}).then(function(r){
+    if (r.status === 401) { if (typeof window.__mqRelock === 'function') window.__mqRelock('expired'); throw new Error('access_code_required'); }
+    return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j && j.error ? j.error + (j.detail ? ' — ' + j.detail : '') : 'HTTP ' + r.status); return j; });
+  });
+}
+
+function loadMeta(){
+  showLoad('Connecting to feed…');
+  return api('/api/present-data').then(function(j){
+    S.meta = j.meta || null; S.universe = j.universe || []; S.evidence = j.evidence || null;
+    var sel = el('pr-ticker'); var h = '';
+    S.universe.forEach(function(u){ h += '<option value="' + esc(u.t) + '">' + esc(u.t) + (u.nm ? ' — ' + esc(u.nm) : '') + '</option>'; });
+    sel.innerHTML = h || '<option>No securities</option>';
+    var want = null;
+    try { want = new URL(location.href).searchParams.get('ticker'); } catch(_e){}
+    want = want ? String(want).toUpperCase() : null;
+    var has = S.universe.some(function(u){ return u.t === want; });
+    S.ticker = has ? want : (j.defaultTicker || (S.universe[0] && S.universe[0].t) || null);
+    if (S.ticker) sel.value = S.ticker;
+    el('pr-status').innerHTML = 'Read-only · ' + esc(txt(S.meta && S.meta.feed)) + ' · latest session <b>' + esc(S.meta && S.meta.last_snapshot_date ? S.meta.last_snapshot_date : '—') + '</b>';
+    renderScreen5();
+    return loadTicker(S.ticker);
+  });
+}
+
+function loadTicker(t){
+  if (!t) { hideLoad(); return Promise.resolve(); }
+  showLoad('Loading ' + t + '…');
+  S.ticker = t; S.rows = []; S.prices = null; S.priceSource = null; S.sel = -1;
+  var pSeries = api('/api/present-data?ticker=' + encodeURIComponent(t) + '&days=40');
+  var pPrice = fetch('/api/price-history?ticker=' + encodeURIComponent(t) + '&days=150', {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+  return Promise.all([pSeries, pPrice]).then(function(res){
+    var j = res[0], p = res[1];
+    S.rows = j.rows || []; S.window = j.window || null;
+    if (p && Array.isArray(p.series) && p.series.length) { S.prices = p.series; S.priceSource = 'price-history'; }
+    else if (S.rows.some(function(r){ return r.current_price != null; })) { S.prices = S.rows.map(function(r){ return {snapshot_date: r.snapshot_date, price_close: r.current_price}; }); S.priceSource = 'feed'; }
+    // Default observation: ten sessions before the last one, so a completed
+    // subsequent window exists. Prefer a LIVE_PIT row.
+    var n = S.rows.length; var idx = Math.max(0, n - 11);
+    while (idx > 0 && S.rows[idx].decay_provenance && S.rows[idx].decay_provenance !== 'LIVE_PIT') idx--;
+    S.sel = n ? idx : -1;
+    renderScreen2Head(); renderMain(); renderMini(); renderScreen3(); renderScreen4();
+    if (S.drawer) renderDrawer();
+    hideLoad(); syncUrl();
+  }).catch(function(e){
+    if (e && e.message === 'access_code_required') { hideLoad(); return; }
+    showLoad('Could not load ' + t + ': ' + (e && e.message ? e.message : 'unknown error'), true);
+  });
+}
+el('pr-ticker').addEventListener('change', function(){ loadTicker(this.value); });
+window.addEventListener('resize', function(){ renderMain(); renderMini(); });
+
+/* ═══════════════════════════════════════════════════════════════
+   GATE (mirrors /quant)
+   ═══════════════════════════════════════════════════════════════ */
+var booted = false;
+function boot(){
+  document.body.classList.add('mq-open');
+  if (!booted){
+    booted = true;
+    loadMeta().catch(function(e){ if (!(e && e.message === 'access_code_required')) showLoad('Could not connect: ' + (e && e.message ? e.message : 'unknown error'), true); });
+  } else {
+    loadMeta().catch(function(){});
+  }
+}
+window.__mqRelock = function(reason){
+  window.__MQ.authed = false;
+  document.body.classList.remove('mq-open');
+  var err = el('mq-err');
+  if (err) err.textContent = reason === 'expired' ? 'Session expired — enter the password again.' : '';
+  setTimeout(function(){ var i = el('mq-code'); if (i) i.focus(); }, 250);
+};
+function unlock(){
+  var inp = el('mq-code'), btn = el('mq-enter'), err = el('mq-err');
+  var code = (inp.value || '').trim(); if (!code) { inp.focus(); return; }
+  btn.disabled = true; err.textContent = '';
+  fetch('/api/present-session', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({code: code})})
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {status: r.status, body: j}; }); })
+    .then(function(res){
+      btn.disabled = false;
+      if (res.status === 200 && res.body && res.body.ok){ window.__MQ.authed = true; inp.value = ''; boot(); return; }
+      var card = el('mq-card'); card.classList.remove('mq-shake'); void card.offsetWidth; card.classList.add('mq-shake');
+      if (res.status === 503) err.textContent = 'Access is not configured yet — contact founder@marketprism.co.';
+      else if (res.status === 429) err.textContent = 'Too many attempts — wait a moment and try again.';
+      else err.textContent = 'That password was not recognized.';
+      inp.focus(); inp.select();
+    }).catch(function(){ btn.disabled = false; err.textContent = 'Network error — try again.'; });
+}
+el('mq-enter').onclick = unlock;
+el('mq-code').addEventListener('keydown', function(e){ if (e.key === 'Enter') unlock(); });
+el('mq-lock').onclick = function(){ fetch('/api/present-session', {method:'DELETE'}).catch(function(){}).then(function(){ location.reload(); }); };
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════ */
+buildDots();
+renderScreen1();
+renderScreen3(); renderScreen4(); renderScreen5();
+try { if (localStorage.getItem('mp_present_cues') === '1') S.cues = true; } catch(_e){}
+toggleCues(S.cues);
+var startScreen = 1;
+try { var qs = new URL(location.href).searchParams.get('s'); if (qs && Number(qs) >= 1 && Number(qs) <= TOTAL) startScreen = Number(qs); } catch(_e){}
+go(startScreen);
+if (window.__MQ.authed) boot();
+else setTimeout(function(){ var i = el('mq-code'); if (i) i.focus(); }, 300);
+})();
+</script>
+</body>
+</html>
