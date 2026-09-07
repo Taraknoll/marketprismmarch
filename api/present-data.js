@@ -7,10 +7,10 @@
 // counts (rows, tickers, null cells in a window).
 //
 // Sources (all read-only):
-//   v_market_prism_citadel_feed_v5          — the institutional feed itself
+//   FEED (institutional feed view v5)     — the institutional feed itself
 //                                             (service-role only; carries
 //                                             first_written_at + decay_provenance)
-//   v_market_prism_citadel_feed_v5_lineage  — revision companion (values_as_of,
+//   LINEAGE (its lineage companion)       — revision companion (values_as_of,
 //                                             revision_at, is_restatement)
 //   institutional_validation_runs           — latest finished validation run
 //   institutional_feature_scorecard         — per-feature IC panel for that run
@@ -38,8 +38,11 @@ const dropTicker = (t) => isHidden(t) || EXCLUDED.has(String(t || '').toUpperCas
 // the first live first_written_at — is 2026-03-02. Presented as March 2.
 const PIT_START = '2026-03-02';
 
+// Physical database view name — the one place it appears. It is never sent to
+// the client; the page and API label it "institutional feed v5".
 const FEED = 'v_market_prism_citadel_feed_v5';
-const LINEAGE = 'v_market_prism_citadel_feed_v5_lineage';
+const LINEAGE = FEED + '_lineage';
+const FEED_LABEL = 'institutional feed v5';
 
 // Feed columns the presentation reads for one security through time. Names are
 // the delivered feed names — the page shows them verbatim on Screen 3.
@@ -195,8 +198,8 @@ async function buildMeta(rest, headers) {
 
   return {
     meta: {
-      feed: FEED,
-      lineage: LINEAGE,
+      feed: FEED_LABEL,
+      lineage: FEED_LABEL + ' · lineage view',
       pit_start: PIT_START,
       first_snapshot_date: firstDate || null,
       last_snapshot_date: lastDate,

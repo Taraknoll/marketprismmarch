@@ -450,7 +450,7 @@ window.__MQ = { authed: false };
             <div class="n hi">Machine-readable features</div>
           </div>
           <div class="s3-table">
-            <div class="hd"><span class="t">Feed row</span><span class="s" id="s3-src">v_market_prism_citadel_feed_v5</span></div>
+            <div class="hd"><span class="t">Feed row</span><span class="s" id="s3-src">institutional feed v5</span></div>
             <table><tbody id="s3-rows"></tbody></table>
           </div>
         </div>
@@ -620,16 +620,16 @@ var REGIME_COLOR = { CLEAR_PATH:'#38C8B8', PERSISTENT:'#7B61FF', NEUTRAL:'#A0A8B
    FIELD DICTIONARY — definitions shown in the drawer.
    Text marked "column comment" is the production column comment on
    market_prism_scorecard_institutional_v5 / narrative_scorecard /
-   v_market_prism_citadel_feed_v5, lightly trimmed. Others are short
+   the institutional feed view, lightly trimmed. Others are short
    descriptions; no formula is stated unless it comes from a comment.
    ═══════════════════════════════════════════════════════════════ */
 var FIELDS = [
   {f:'ticker', fam:'identity', d:'Security symbol.', src:'feed'},
   {f:'snapshot_date', fam:'identity', d:'New York trading date of the observation. NYSE sessions only (is_trading_session).', src:'feed'},
-  {f:'first_written_at', fam:'provenance', d:'UTC time the row was first written to narrative_scorecard (server default now() at insert; never rewritten). This is the knowledge timestamp for LIVE_PIT rows. updated_at is the last-write watermark. For HISTORICAL_BACKFILL rows first_written_at is the reconstruction time, not a knowledge date.', src:'column comment · v_market_prism_citadel_feed_v5'},
-  {f:'updated_at', fam:'provenance', d:'Last-write watermark: greatest of source created_at and updated_at.', src:'view comment · v_market_prism_citadel_feed_v5'},
+  {f:'first_written_at', fam:'provenance', d:'UTC time the row was first written to narrative_scorecard (server default now() at insert; never rewritten). This is the knowledge timestamp for LIVE_PIT rows. updated_at is the last-write watermark. For HISTORICAL_BACKFILL rows first_written_at is the reconstruction time, not a knowledge date.', src:'column comment · institutional feed v5'},
+  {f:'updated_at', fam:'provenance', d:'Last-write watermark: greatest of source created_at and updated_at.', src:'view comment · institutional feed v5'},
   {f:'decay_provenance / decay_is_pit', fam:'provenance', d:'LIVE_PIT when snapshot_date ≥ 2026-03-01 and the decay fit is point-in-time; otherwise HISTORICAL_BACKFILL. NULL when there is no fit. March 1, 2026 was a Sunday, so the first live session is March 2.', src:'view definition'},
-  {f:'values_as_of / revision_at / is_restatement', fam:'provenance', d:'Revision companion (v_market_prism_citadel_feed_v5_lineage): values_as_of is the original scorecard write, revision_at the latest operational mutation, is_restatement marks revisions more than 24 hours later.', src:'view comment · lineage view'},
+  {f:'values_as_of / revision_at / is_restatement', fam:'provenance', d:'Revision companion (institutional feed v5 · lineage view): values_as_of is the original scorecard write, revision_at the latest operational mutation, is_restatement marks revisions more than 24 hours later.', src:'view comment · lineage view'},
   {f:'narrative_energy_absolute', fam:'narrative energy', d:'E0 — absolute narrative energy (0.60·M + 0.25·V·(1+F) + 0.15·Z, mass-dominant linear). The initial-energy stock the decay chain is derived from: narrative_energy_t = E(t), energy_remaining_dynamic = E(t)/E0, exhaustion_days_dynamic.', src:'column comment · market_prism_scorecard_institutional_v5'},
   {f:'narrative_energy_t', fam:'narrative energy', d:'E(t) — current narrative energy on the decay chain seeded by narrative_energy_absolute.', src:'derived from the narrative_energy_absolute comment'},
   {f:'energy_remaining_dynamic', fam:'narrative energy', d:'E(t) / E0 — share of the initial energy stock still present, as delivered.', src:'derived from the narrative_energy_absolute comment'},
