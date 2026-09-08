@@ -48,13 +48,17 @@ const FEED_LABEL = 'institutional feed v5';
 // the delivered feed names — the page shows them verbatim on Screen 3.
 const SERIES_COLS = [
   'ticker', 'snapshot_date', 'first_written_at', 'updated_at', 'is_trading_session',
+  'narrative_hash', 'genesis_date', 'days_elapsed', 'macro_theme',
   'decay_provenance', 'decay_is_pit', 'data_quality_flags',
   'narrative_energy_t', 'narrative_energy_absolute', 'energy_remaining_dynamic',
   'narrative_velocity_score', 'narrative_pressure', 'narrative_mass',
   'half_life', 'fitted_half_life', 'lambda_decay', 'fitted_lambda', 'decay_state', 'fit_status',
-  'srs', 'exhaustion_days_dynamic', 'walsh_regime', 'signal_regime', 'regime_direction',
+  'vms', 'srs', 'nrs', 'npi', 'suspicion_score', 'suspicion_class', 'verdict', 'verdict_confidence', 'advanced_verdict',
+  'fvd_pct', 'distance_from_max_pain_pct', 'put_call_skew', 'wks_score', 'fomo_score', 'fomo_band',
+  'doubling_time', 'effective_narrative_horizon', 'horizon_source',
+  'exhaustion_days_dynamic', 'walsh_regime', 'signal_regime', 'regime_direction',
   'coordination_score', 'coordination_class', 'mass_streak_days',
-  'current_price', 'macro_theme'
+  'current_price'
 ];
 
 // Scorecard features surfaced on Screen 5 / the drawer — the same measurement
@@ -63,7 +67,7 @@ const SERIES_COLS = [
 const EVIDENCE_FEATURES = [
   'narrative_energy_t', 'narrative_velocity_score', 'narrative_pressure',
   'energy_remaining_dynamic', 'fitted_half_life', 'fitted_lambda',
-  'srs', 'coordination_score', 'mass_streak_days'
+  'vms', 'srs', 'coordination_score', 'mass_streak_days', 'suspicion_score', 'wks_score'
 ];
 
 function sendJson(res, status, obj) {
@@ -307,7 +311,27 @@ async function buildSeries(rest, headers, ticker, days) {
     fitted_lambda: num(r.fitted_lambda, 6),
     decay_state: r.decay_state || null,
     fit_status: r.fit_status || null,
+    narrative_hash: r.narrative_hash || null,
+    genesis_date: r.genesis_date || null,
+    days_elapsed: r.days_elapsed == null ? null : Number(r.days_elapsed),
+    vms: num(r.vms),
     srs: num(r.srs),
+    nrs: num(r.nrs),
+    npi: num(r.npi),
+    suspicion_score: num(r.suspicion_score),
+    suspicion_class: r.suspicion_class || null,
+    verdict: r.verdict || null,
+    verdict_confidence: num(r.verdict_confidence),
+    advanced_verdict: r.advanced_verdict || null,
+    fvd_pct: num(r.fvd_pct),
+    distance_from_max_pain_pct: num(r.distance_from_max_pain_pct),
+    put_call_skew: num(r.put_call_skew),
+    wks_score: num(r.wks_score),
+    fomo_score: num(r.fomo_score),
+    fomo_band: r.fomo_band || null,
+    doubling_time: num(r.doubling_time),
+    effective_narrative_horizon: num(r.effective_narrative_horizon),
+    horizon_source: r.horizon_source || null,
     exhaustion_days_dynamic: num(r.exhaustion_days_dynamic),
     walsh_regime: r.walsh_regime || null,
     signal_regime: r.signal_regime || null,
