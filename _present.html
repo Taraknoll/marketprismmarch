@@ -303,7 +303,7 @@ body.pr-cues-on .pr-screen{padding-bottom:118px;}
 .pr-status b{color:var(--mp-text-tertiary);font-weight:600;}
 
 #pr-cue{position:fixed;left:50%;bottom:calc(var(--bot-h) + 14px);transform:translate(-50%,12px);z-index:25;width:min(1360px,calc(100% - 56px));
-  display:grid;grid-template-columns:1.5fr 1.1fr .8fr 1.1fr;gap:0;background:rgba(12,16,24,0.96);border:1px solid var(--mp-border-mid);border-radius:14px;
+  display:grid;grid-template-columns:1.6fr 1.2fr 1fr;gap:0;background:rgba(12,16,24,0.96);border:1px solid var(--mp-border-mid);border-radius:14px;
   filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));opacity:0;visibility:hidden;transition:opacity .2s,transform .2s,visibility 0s linear .2s;}
 #pr-cue.on{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .2s,transform .2s,visibility 0s;}
 #pr-cue>div{padding:12px 16px;border-right:1px solid var(--mp-border);}
@@ -311,12 +311,12 @@ body.pr-cues-on .pr-screen{padding-bottom:118px;}
 #pr-cue .l{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:5px;}
 #pr-cue .main .l{color:var(--mp-accent);}
 #pr-cue .opt .l{color:var(--mp-text-tertiary);}
-#pr-cue .stop .l{color:var(--mp-red);}
+
 #pr-cue .def .l{color:var(--mp-teal);}
 #pr-cue .def p{display:flex;flex-wrap:wrap;gap:4px 10px;}
 #pr-cue .def .fld{font-size:12px;font-weight:600;color:var(--mp-text-secondary);}
 #pr-cue p{font-size:13px;line-height:1.5;color:var(--mp-text-secondary);}
-#pr-cue .stop p{color:var(--mp-text-tertiary);}
+
 
 /* ══════════════ research drawer ══════════════ */
 #pr-drawer{position:fixed;top:var(--top-h);right:0;bottom:var(--bot-h);width:min(560px,92vw);z-index:30;background:var(--mp-surface);
@@ -454,7 +454,7 @@ window.__MQ = { authed: false };
       <label for="pr-ticker">Security</label>
       <select id="pr-ticker" aria-label="Select security"><option>Loading…</option></select>
     </div>
-    <button class="pr-btn" id="pr-cues" type="button" aria-pressed="false">Presenter Cues<b id="pr-cues-state">Off</b></button>
+    <button class="pr-btn" id="pr-cues" type="button" aria-pressed="false">Talking points<b id="pr-cues-state">Off</b></button>
     <button class="pr-btn" id="pr-details" type="button" aria-pressed="false">Research Details</button>
     <button class="pr-btn lock" id="mq-lock" type="button" title="End this session">Lock</button>
   </div>
@@ -640,12 +640,11 @@ window.__MQ = { authed: false };
 
 <div id="pr-load"><div class="b" id="pr-load-b">Connecting to feed…</div></div>
 
-<!-- ── presenter cue card ── -->
+<!-- ── talking points (audience-facing; safe on a shared screen) ── -->
 <div id="pr-cue" aria-live="polite">
-  <div class="main"><div class="l">Main point</div><p id="cue-main"></p></div>
-  <div class="opt"><div class="l">Optional</div><p id="cue-opt"></p></div>
-  <div class="stop"><div class="l">Stop here</div><p id="cue-stop"></p></div>
-  <div class="def"><div class="l">Define if asked · click a name</div><p id="cue-def"></p></div>
+  <div class="main"><div class="l">Key point</div><p id="cue-main"></p></div>
+  <div class="opt"><div class="l">Also worth noting</div><p id="cue-opt"></p></div>
+  <div class="def"><div class="l">Fields on this screen · click to define</div><p id="cue-def"></p></div>
 </div>
 
 <!-- ── research details drawer ── -->
@@ -672,7 +671,7 @@ window.__MQ = { authed: false };
     <span class="cnt" id="pr-cnt">1 / 5</span>
     <button id="pr-next" type="button">Next →</button>
   </div>
-  <span class="pr-keys"><b>←</b><b>→</b> navigate · <b>Space</b> next · <b>D</b> details · <b>G</b> glossary · <b>T</b> trading · <b>C</b> cues · click any field name to define it</span>
+  <span class="pr-keys"><b>←</b><b>→</b> navigate · <b>Space</b> next · <b>D</b> details · <b>G</b> glossary · <b>T</b> trading · <b>C</b> talking points · click any field name to define it</span>
   <span class="pr-status" id="pr-status">Read-only · institutional feed</span>
 </footer>
 
@@ -740,9 +739,9 @@ var REGIME_COLOR = { CLEAR_PATH:'#38C8B8', PERSISTENT:'#7B61FF', NEUTRAL:'#A0A8B
 /* ═══════════════════════════════════════════════════════════════
    GLOSSARY — every field the deck can name, in walk-through order.
    `def` is the delivered Data Dictionary v1.6 contract text (30 Aug 2026),
-   lightly trimmed. `say` is the plain-English line for the presenter.
+   lightly trimmed. `say` is the same idea in plain English.
    `read` says what high and low mean. `cav` carries a caveat worth knowing
-   before an evaluator finds it. Nothing here states a formula the
+   about the field. Nothing here states a formula the
    dictionary does not state.
    ═══════════════════════════════════════════════════════════════ */
 var GLOSSARY_GROUPS = [
@@ -763,20 +762,20 @@ var GLOSSARY = [
   {g:'id', f:'narrative', say:'The one representative story the engine scored for this ticker on this day.', def:'Representative narrative for the ticker on the scoring date.', read:'"Representative" is doing real work: the engine scores ONE narrative per ticker-day, so the representative can change from day to day.', unit:'text'},
   {g:'id', f:'narrative_hash', say:'A stable ID for the same story across days. Use it, not the age field, to see whether the story changed.', def:'Stable deterministic identifier used to link the same narrative across dates.', read:'Same hash on consecutive days = same story being tracked. A new hash = the representative narrative switched.', unit:'text'},
   {g:'id', f:'genesis_date', say:'When the story was first seen in the source corpus.', def:'Date the narrative was first observed in the source corpus; it may pre-date the delivered panel.', unit:'date'},
-  {g:'id', f:'days_elapsed', say:'How old the story is, in calendar days.', def:'Calendar-day age of the narrative as of snapshot_date.', cav:'Jumps of 300+ days between adjacent sessions are the representative narrative switching (see narrative_hash), not corruption. Say it before they ask.', unit:'calendar days'},
+  {g:'id', f:'days_elapsed', say:'How old the story is, in calendar days.', def:'Calendar-day age of the narrative as of snapshot_date.', cav:'Jumps of 300+ days between adjacent sessions are the representative narrative switching (see narrative_hash), not corruption.', unit:'calendar days'},
   {g:'id', f:'cluster_id', say:'Which story cluster or theme the narrative belongs to.', def:'Story-cluster or semantic-theme identifier. It may contain semantic labels or legacy opaque identifiers; treat as open text.', unit:'text · ~51% null'},
   {g:'id', f:'macro_theme', say:'The high-level theme: company-specific, AI infrastructure, earnings season, and so on.', def:'High-level macro or company-specific theme assigned to the narrative; treat labels case-insensitively.', unit:'text'},
   {g:'id', f:'primary_publication_name', say:'The publication the representative narrative came from.', def:'Primary publication associated with the representative narrative.', unit:'text'},
 
   /* provenance */
-  {g:'prov', f:'first_written_at', say:'The moment this row first entered our database. It is never rewritten. This is how you verify we knew it when we say we did.', def:'UTC time the row was first written to narrative_scorecard (server default now() at insert; never rewritten). The knowledge timestamp for LIVE_PIT rows. For HISTORICAL_BACKFILL rows it is the reconstruction time, not a knowledge date.', read:'Compare it with snapshot_date: a live row is written on or shortly after its session.', cav:'Not yet in the 88-field v1.6 dictionary (it is the 89th column of the live view). Add it to v1.7 before relying on it in front of an evaluator.', src:'column comment on the delivery view', unit:'timestamptz · UTC'},
+  {g:'prov', f:'first_written_at', say:'The moment this row first entered the database. It is never rewritten, which is what allows an evaluator to verify when each value was known.', def:'UTC time the row was first written to narrative_scorecard (server default now() at insert; never rewritten). The knowledge timestamp for LIVE_PIT rows. For HISTORICAL_BACKFILL rows it is the reconstruction time, not a knowledge date.', read:'Compare it with snapshot_date: a live row is written on or shortly after its session.', cav:'Not yet in the 88-field v1.6 dictionary (it is the 89th column of the live view). Scheduled for inclusion in the next dictionary revision.', src:'column comment on the delivery view', unit:'timestamptz · UTC'},
   {g:'prov', f:'updated_at', say:'The last time anything on the row was touched. It is a housekeeping watermark, not a knowledge timestamp.', def:'Last-write timestamp for the delivered row, equal to the greater of the source row\'s created_at and updated_at. It is not a point-in-time availability timestamp.', unit:'timestamptz · UTC'},
   {g:'prov', f:'decay_provenance', say:'Which regime the row belongs to: live point-in-time, or reconstructed history.', def:'Per-row decay provenance. All rows on or after 2 March 2026 are LIVE_PIT in this delivery. Allowed: LIVE_PIT, HISTORICAL_BACKFILL.', read:'For strict predictive tests use LIVE_PIT only.', unit:'text'},
   {g:'prov', f:'decay_is_pit', say:'The same thing as a true/false flag.', def:'TRUE exactly where decay_provenance is LIVE_PIT; FALSE for HISTORICAL_BACKFILL.', unit:'boolean'},
   {g:'prov', f:'values_as_of / revision_at / is_restatement', say:'The lineage companion: when the values were first written, when they were last revised, and whether that revision came more than a day later.', def:'Revision companion view: values_as_of is the original scorecard write, revision_at is the latest operational mutation, and is_restatement marks revisions more than 24 hours later.', src:'view comment on the lineage companion view', unit:'timestamptz · boolean'},
   {g:'prov', f:'data_quality_flags', say:'Machine-readable caveats delivered with the row, never silently cleaned away.', def:'Open-vocabulary machine-readable provenance and data-quality indicators. Multiple flags may be separated by comma or semicolon; split on either delimiter.', read:'Common tokens: HALF_LIFE_SENTINEL, ROW_RESTATED_AFTER_24H, WKS_VINTAGE_UNPROVEN, EXTREME_OR.', unit:'text'},
   {g:'prov', f:'is_trading_session', say:'True on every delivered row. It is a contract assertion that non-session days are withheld.', def:'TRUE where snapshot_date is a US equity trading session. Every row in this delivery is TRUE; non-session rows are withheld from V5.', unit:'boolean'},
-  {g:'prov', f:'fit_status', say:'Whether a decay fit was attempted, whether it was significant, and whether it is live or backfilled.', def:'Fit status and provenance. Allowed: OK, OK_NOT_SIGNIFICANT, FLAT_WITHIN_EPS, MAGNITUDE_BAND_PIT, INVALID_INPUT, TOO_FEW_OBSERVATIONS, and the BACKFILL_* variants. OK means live and significant.', read:'Only OK and BACKFILL_FIT_OK carry a significant fit; the timing fields publish only then.', cav:'Live significant fits (OK) begin 2026-07-22 — about seven weeks of history. Say "newly live", not "two years".', unit:'text'},
+  {g:'prov', f:'fit_status', say:'Whether a decay fit was attempted, whether it was significant, and whether it is live or backfilled.', def:'Fit status and provenance. Allowed: OK, OK_NOT_SIGNIFICANT, FLAT_WITHIN_EPS, MAGNITUDE_BAND_PIT, INVALID_INPUT, TOO_FEW_OBSERVATIONS, and the BACKFILL_* variants. OK means live and significant.', read:'Only OK and BACKFILL_FIT_OK carry a significant fit; the timing fields publish only then.', cav:'Live significant fits (OK) begin 2026-07-22, so the fitted decay layer is newly live rather than two years deep.', unit:'text'},
 
   /* forensic */
   {g:'for', f:'vms', say:'Verification Match Score: do the story\'s factual claims match what the company actually filed? Higher = the story checks out against filings.', def:'Verification Match Score. Measures alignment between factual narrative claims and available public company filings; higher means stronger match.', read:'High = claims corroborated by filings; low = claims the filings do not support. This is the "structural support" measure.', cav:'Not a speed measure. The velocity field is narrative_velocity_score.', unit:'0–100'},
@@ -793,7 +792,7 @@ var GLOSSARY = [
   {g:'for', f:'omission_gap_score', say:'How much material filing information the story leaves out.', def:'Selective-omission measure; higher values indicate more material filing information absent from the narrative.', unit:'0–100 ordinal'},
   {g:'for', f:'coordination_score', say:'Are many sources converging on the same thesis in a narrow window? Higher = more coordinated.', def:'Cross-source coordination intensity; higher values indicate greater modeled coordination.', read:'Most rows sit at 0; the top 5% reach about 60.', unit:'0–100 ordinal'},
   {g:'for', f:'coordination_class', say:'The same thing as a label.', def:'Categorical coordination classification. Allowed: ORGANIC_SPREAD, SUSPICIOUS_PATTERN, LIKELY_COORDINATED.', unit:'text'},
-  {g:'for', f:'suspicion_score', say:'How anomalous the market activity around the story is. It says how far a name is likely to move, not which way.', def:'Market-activity anomaly intensity associated with the narrative; higher means greater anomaly intensity.', read:'The strongest single magnitude coordinate in the delivered validation report. Same score can precede a large move in either direction.', unit:'0–100 ordinal'},
+  {g:'for', f:'suspicion_score', say:'How anomalous the market activity around the story is. It says how far a name is likely to move, not which way.', def:'Market-activity anomaly intensity associated with the narrative; higher means greater anomaly intensity.', read:'The strongest single magnitude coordinate in the delivered validation report. The same score can precede a large move in either direction.', unit:'0–100 ordinal'},
   {g:'for', f:'suspicion_class', say:'The same thing as a label.', def:'Categorical market-activity anomaly classification. Allowed: NORMAL_ACTIVITY, MODERATE_CONCERN, HIGH_MANIPULATION_RISK, MACRO_OVERRIDE.', unit:'text'},
   {g:'for', f:'verdict', say:'The engine\'s daily one-line classification of the narrative, from 15 allowed labels.', def:'Daily forensic classification. Allowed: Narrative Trap, Narrative Risk, Structurally Supported, Drift Compression Short, Air Pocket Short, Omission Cascade, High Conviction Continuation, Accumulate, Near-Trap Watch, Coordinated Watch, Exhausted Narrative, Regime Uncertainty, Overvalued Stable, Monitoring, Unverified Premium.', read:'A state label, not a trade call.', unit:'text'},
   {g:'for', f:'verdict_confidence', say:'How confident the engine is in that verdict.', def:'Confidence attached to the daily verdict.', unit:'0–100'},
@@ -819,7 +818,7 @@ var GLOSSARY = [
   {g:'phy', f:'lambda_decay', say:'The operational decay rate. Positive = fading, negative = strengthening.', def:'Signed fitted narrative-decay rate. Positive values indicate fading; negative values indicate strengthening.', read:'The median narrative is very slightly strengthening; do not assume "decay" means everything fades.', unit:'rate per day'},
   {g:'phy', f:'half_life', say:'The operational half-life, capped at 90 days. Prefer decay_state plus fitted_half_life.', def:'Operational decay half-life estimate. The delivered value is capped at 90; consult quality flags and the value itself for sentinel use.', cav:'Rows before 2026-07-22 may hold a literal 90 sentinel (flag HALF_LIFE_SENTINEL). Do not treat NULL or 90 as measured persistence.', unit:'days'},
   {g:'phy', f:'decay_state', say:'Is the story strengthening, stable, or decaying? Read this before any of the timing fields.', def:'Canonical decay classification. Allowed: STABLE, STRENGTHENING, DECAYING, UNKNOWN.', read:'The lifecycle label. STRENGTHENING is formation; DECAYING is compression or reset.', unit:'text'},
-  {g:'phy', f:'fitted_lambda', say:'The raw regression estimate of the decay rate, where a fit exists.', def:'Raw fitted decay estimate where a regression fit is available.', cav:'Runs apart from lambda_decay more often than not; be ready to explain the operational adjustment between them.', unit:'rate per day · ~57% null'},
+  {g:'phy', f:'fitted_lambda', say:'The raw regression estimate of the decay rate, where a fit exists.', def:'Raw fitted decay estimate where a regression fit is available.', cav:'Differs from lambda_decay on most rows: lambda_decay carries an operational adjustment on top of the raw fit.', unit:'rate per day · ~57% null'},
   {g:'phy', f:'fitted_lambda_se', say:'The standard error on that fit. The timing fields publish only when the fit is significant.', def:'Standard error associated with fitted_lambda where published. Gate directly on non-NULL availability.', read:'Timing fields require |fitted_lambda / fitted_lambda_se| ≥ 2.', unit:'rate per day'},
   {g:'phy', f:'fitted_half_life', say:'The uncapped half-life, for decaying stories only.', def:'Uncapped half-life estimate for decaying narratives where available.', read:'Mutually exclusive with doubling_time: a row gets one or the other. About 10% of rows carry a significant fit, so it is sparse by design.', unit:'days · ~96% null'},
   {g:'phy', f:'doubling_time', say:'How long the story takes to double in energy, for strengthening stories only.', def:'Estimated doubling time for strengthening narratives where available.', unit:'days · ~94% null'},
@@ -836,19 +835,19 @@ var GLOSSARY = [
   {g:'reg', f:'regime_direction_score', say:'Whether the evidence confirms or contradicts that direction. It is confirmation, not direction — easy to misread.', def:'Signed directional confirmation measure; positive values indicate confirmation and negative values contradiction.', unit:'−100 to +100'},
   {g:'reg', f:'regime_strength', say:'How much conviction the engine has in the regime.', def:'Composite regime conviction; higher values indicate stronger modeled conviction.', unit:'0–1'},
   {g:'reg', f:'mass_streak_days', say:'How many consecutive days narrative mass has pushed in one direction. Sign is the direction.', def:'Signed consecutive-day streak of directional narrative mass. Positive is bullish, negative bearish; values are clipped at ±10.', read:'Mostly zero; the top 5% reach about 6. Its meaning changes with regime — inside EXHAUSTING it behaves differently from universe-wide.', unit:'signed days'},
-  {g:'reg', f:'market_regime_class / sector_regime_class', say:'The market and sector backdrop: bull, bear, choppy, or unknown.', def:'Market-level and sector-level regime context. Allowed: BULL, BEAR, CHOPPY, UNKNOWN.', cav:'Reads UNKNOWN on roughly 38–40% of live rows. A fair question; know it.', unit:'text'},
+  {g:'reg', f:'market_regime_class / sector_regime_class', say:'The market and sector backdrop: bull, bear, choppy, or unknown.', def:'Market-level and sector-level regime context. Allowed: BULL, BEAR, CHOPPY, UNKNOWN.', cav:'Reads UNKNOWN on roughly 38–40% of live rows.', unit:'text'},
   {g:'reg', f:'amihud_conviction_decay', say:'How fast conviction per dollar traded is decaying, from price impact and liquidity.', def:'Conviction-per-dollar decay indicator based on price-impact and liquidity dynamics.', unit:'0–1'},
 
   /* earnings */
   {g:'earn', f:'days_to_earnings', say:'Days until the next relevant earnings event.', def:'Forward days to the relevant earnings event. Implausible or stale historical horizons are withheld rather than emitted as extreme values.', unit:'calendar days · ~41% null'},
-  {g:'earn', f:'earnings_date_status', say:'How sure we are of that date. Unverifiable dates are never promoted to confirmed — it fails closed.', def:'Point-in-time provenance of the earnings date. UNKNOWN or ESTIMATED is retained instead of promoting unverifiable dates to CONFIRMED. Allowed: CONFIRMED, ESTIMATED, UNKNOWN, STALE, INFERRED.', read:'Present the fail-closed behaviour as a strength.', unit:'text'},
+  {g:'earn', f:'earnings_date_status', say:'How sure we are of that date. Unverifiable dates are never promoted to confirmed — it fails closed.', def:'Point-in-time provenance of the earnings date. UNKNOWN or ESTIMATED is retained instead of promoting unverifiable dates to CONFIRMED. Allowed: CONFIRMED, ESTIMATED, UNKNOWN, STALE, INFERRED.', read:'Fail-closed by design: an unverifiable date is never promoted to CONFIRMED.', unit:'text'},
   {g:'earn', f:'eps_surprise_pct / revenue_surprise_pct', say:'The latest EPS and revenue surprise versus consensus, stored as fractions: 0.05 means +5%.', def:'Most recent surprise versus consensus, in fraction units (0.05 = +5%). Extreme values can arise when the consensus denominator is near zero; unverifiable values are withheld.', cav:'Fractions, not percents. Do not multiply or divide by 100.', unit:'decimal fraction'},
   {g:'earn', f:'guidance_direction', say:'What management last did with guidance.', def:'Latest verifiable management guidance action. Allowed: MAINTAINED, RAISED, LOWERED, WITHDRAWN (contractual, not observed in this delivery).', unit:'text · ~70% null'},
   {g:'earn', f:'earnings_credibility_score', say:'How credible management\'s earnings and guidance have been, as a percentile. Low credibility tends to go with larger moves.', def:'Management earnings and guidance credibility percentile. Historical score values are preserved; delivery repairs do not recompute this score.', read:'Inverted as a magnitude coordinate in the delivered report: low credibility, bigger moves. Event-dependent — it needs earnings history to populate.', unit:'0–100'},
 
   /* options */
   {g:'opt', f:'max_pain', say:'The nearest-expiry strike where option holders would lose the most.', def:'Nearest-expiry max-pain strike from the available options snapshot.', unit:'USD strike'},
-  {g:'opt', f:'distance_from_max_pain_pct', say:'How far the price sits from that strike, in percent. The strongest standalone directional field in the delivered report — and one they can compute themselves. Concede that openly.', def:'Percentage distance between the split-basis-coherent score-time price and nearest-expiry max-pain strike.', read:'Far below max pain has preceded rises; far above has preceded falls, monotonically across deciles.', cav:'Options fields begin 9 June 2026. Roughly three months of history — the sample-length question lives here.', unit:'percent'},
+  {g:'opt', f:'distance_from_max_pain_pct', say:'How far the price sits from that strike, in percent. The strongest standalone directional field in the delivered report, and one that can be computed from public options data.', def:'Percentage distance between the split-basis-coherent score-time price and nearest-expiry max-pain strike.', read:'Far below max pain has preceded rises; far above has preceded falls, monotonically across deciles.', cav:'Options fields begin 9 June 2026, so this family carries roughly three months of history.', unit:'percent'},
   {g:'opt', f:'put_call_skew', say:'Near-the-money put versus call open interest. Above 1 = heavier put positioning.', def:'Near-the-money put/call open-interest skew. Values above 1 indicate heavier put positioning.', unit:'ratio'},
   {g:'opt', f:'gex_estimate', say:'Net dealer gamma. Positive tends to dampen moves; negative tends to amplify them.', def:'Net dealer gamma-exposure estimate. Positive values are generally associated with dampening positioning and negative values with amplifying positioning.', unit:'contracts × gamma'},
   {g:'opt', f:'total_call_oi / total_put_oi', say:'Open interest across the tracked contracts.', def:'Total call and put open interest across tracked contracts.', unit:'contracts'},
@@ -884,44 +883,37 @@ var ROW_FIELDS = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════
-   PRESENTER CUES — one per screen
+   TALKING POINTS — one per screen. Every line is written for the
+   audience and is safe on a shared screen; the presenter can read it
+   verbatim. No private instructions live in this file.
    ═══════════════════════════════════════════════════════════════ */
 var CUES = {
-  1: { main: 'Market Prism started with a simple question: can we measure how information around a stock is behaving, rather than merely whether news is positive or negative? These are measurements of the information state around each security.',
-       opt: 'The higher-order states are combinations of otherwise independent measurements.',
-       stop: 'Do not explain individual formulas unless asked. These are measurements, not trading recommendations.',
+  1: { main: 'Market Prism started with a simple question: can the information around a stock be measured as a state, rather than merely classified as positive or negative news?',
+       opt: 'The higher-order states are combinations of otherwise independent measurements. These are measurements, not trading recommendations.',
        def: ['narrative_energy_t','narrative_velocity_score','decay_state','vms','exhaustion_days_dynamic','coordination_score'] },
-  2: { main: 'Ten scores are enough to follow the whole deck. The left column is physics: how the story is behaving. The right column is forensics: whether the story holds up and who is behind it. Each is a measurement of the information state, delivered as a numeric field.',
-       opt: 'Point at one physics score and one forensic score. Everything else is in the data dictionary they already have.',
-       stop: 'Do not read all ten aloud. Do not give formulas. Let them ask.',
+  2: { main: 'Ten scores are enough to follow the whole deck. The physics scores describe how a story is behaving; the forensic scores describe whether it holds up and who is behind it. Each is delivered as a numeric field.',
+       opt: 'Every field here has a contract definition in the delivered data dictionary; the plain-English line is the same idea in one sentence.',
        def: ['narrative_energy_t','narrative_velocity_score','decay_state','vms','drift_score','suspicion_score'] },
   3: { main: 'Instead of a single bullish or bearish score, Market Prism follows how the information state evolves. A security can accumulate energy, accelerate, become structurally supported, exhaust, and eventually decay or reset.',
-       opt: 'Point at one state transition and name it. The small triangles mark days the representative narrative switched — energy re-seeds there by design, it is not corruption. Price is deliberately faint.',
-       stop: 'Do not narrate every lane. One transition is enough. Do not interpret the price move.',
+       opt: 'The small triangles mark sessions where the representative narrative switched; energy re-seeds there by design. Price is shown faint because it is context, not the measurement.',
        def: ['decay_state','walsh_regime','fitted_half_life','narrative_hash','exhaustion_days_dynamic','vms'] },
-  4: { main: 'What you are seeing in the platform is not the product a quant desk would consume. The interface is simply a human-readable representation of the underlying measurement engine. These states resolve into timestamped quantitative fields.',
-       opt: 'These are the delivered field names — the same row you would receive.',
-       stop: 'Do not walk through the full data dictionary. Open the glossary only if asked.',
+  4: { main: 'The platform interface is only a human-readable view. The product a research desk consumes is the row on the right: the same states, resolved into timestamped quantitative fields.',
+       opt: 'These are the delivered field names, exactly as they appear in the feed.',
        def: ['first_written_at','decay_provenance','vms','walsh_regime','coordination_score'] },
-  5: { main: 'This is the distinction I would want you to use in testing. March 2 forward is the clean live PIT regime. Rather than asking you to trust that characterization, the feed includes temporal provenance so your researchers can verify it themselves.',
-       opt: 'first_written_at is a server-default insert timestamp that is never rewritten; updated_at and the lineage view record anything that changed later.',
-       stop: 'Do not defend the backfilled history. It is labeled, not hidden. Move on.',
+  5: { main: 'March 2, 2026 forward is the clean live point-in-time regime. Rather than asking anyone to trust that characterization, the feed carries temporal provenance so it can be verified independently.',
+       opt: 'first_written_at is a server-default insert timestamp that is never rewritten; updated_at and the lineage view record anything that changed later. Pre-March history is labeled as reconstructed, not hidden.',
        def: ['first_written_at','updated_at','decay_provenance','fit_status','data_quality_flags'] },
-  6: { main: 'I do not want you to accept our trading rules or performance claims. The more interesting question is whether these measurements contain incremental information when tested inside your own research framework.',
-       opt: 'The panel quotes the report they already hold. Trading setups and registry states are one key away (T) — give them with the caveats attached: gross, retrospective, not a track record.',
-       stop: 'Do not quote Sharpe ratios or win rates. Do not promise results. Ask what they would test first.',
+  6: { main: 'The coordinates rank how far a name is likely to move; direction appears where narrative states intersect positioning. Whether that is incremental alpha is a question for an independent research framework.',
+       opt: 'The evidence panel quotes the delivered validation report. Trading setups and registry states are available in Research Details with their caveats: gross, retrospective, not a track record.',
        def: ['suspicion_score','earnings_credibility_score','distance_from_max_pain_pct','fomo_score','fvd_pct'] },
-  7: { main: 'These are the paper books the engine runs on itself: every row is a mark-to-market snapshot with the time it was written and the time it was last touched. They are gross, with modeled fills, and they are here so you can see the machinery run — not as a track record.',
-       opt: 'Switch tabs to show the v6 book, the v5 book, and the two statistics tables. Point at created_at and updated_at.',
-       stop: 'Do not sell the return. If they ask about drawdown, say it exists in the table and you withheld the column from the slide.',
+  7: { main: 'These are the paper books the engine runs on itself. Every row is a mark-to-market snapshot with the time it was written and the time it was last touched. They are gross, with modeled fills, and are shown so the machinery can be seen running, not as a track record.',
+       opt: 'The v6 book, the v5 book and the two statistics tables are separate operational tables. Drawdown columns exist in the tables and are withheld from this view.',
        def: ['snapshot_date','updated_at'] },
-  8: { main: 'Under the hood the engine keeps a learned signature per ticker — how much fuel a narrative adds, how fast it decays, how much noise the name tolerates — and it calibrates every prediction it makes against what actually happened. The forecast ticket and the raw observations are the same rows the product reads.',
-       opt: 'Show the calibration tab: predicted versus actual hit rate and the scaling the engine applies to itself. Then one or two dots with realized returns.',
-       stop: 'Do not explain the model architecture. Do not promise per-ticker accuracy. These are internals, shown because he asked to see the machinery.',
+  8: { main: 'Under the hood the engine keeps a learned signature per ticker: how much fuel a narrative adds, how fast it decays, how much noise the name tolerates. It calibrates every prediction against what actually happened.',
+       opt: 'The calibration tab shows predicted versus actual hit rate and the scaling the engine applies to itself. The dots tab shows the raw observations, including realized returns once resolved.',
        def: ['narrative_hash','decay_state','narrative_energy_t','vms'] },
-  9: { main: 'What we can hand over for evaluation, and the sample we recommend you use.',
-       opt: 'A clean PIT extract, the data dictionary and timestamp lineage can be delivered to your environment.',
-       stop: 'Do not discuss commercial terms here unless they raise them.',
+  9: { main: 'What can be provided for evaluation, and the recommended sample: the live point-in-time regime from March 2, 2026 onward.',
+       opt: 'A clean PIT extract, the data dictionary and the timestamp lineage can be delivered to an evaluator\'s own environment.',
        def: ['decay_provenance','first_written_at'] }
 };
 
@@ -992,7 +984,7 @@ function toggleCues(force){
 }
 function renderCue(){
   var c = CUES[S.screen] || CUES[1];
-  el('cue-main').textContent = c.main; el('cue-opt').textContent = c.opt; el('cue-stop').textContent = c.stop;
+  el('cue-main').textContent = c.main; el('cue-opt').textContent = c.opt;
   el('cue-def').innerHTML = (c.def || []).map(function(f){ return '<span class="fld" data-field="' + esc(f) + '">' + esc(f) + '</span>'; }).join('');
   el('pr-cue').classList.toggle('on', S.cues);
 }
@@ -1057,7 +1049,7 @@ var S2M = [
     { f: 'exhaustion_days_dynamic', u: 'days', say: 'How many days until the story is projected to run out of energy.', rd: 'Small = close to exhaustion. 120 = the projection reached the operating horizon.' },
     { f: 'narrative_mass', u: '0–1', say: 'How big or heavy the story is.', rd: 'Compressed near the top of the scale; context rather than a headline predictor.' } ] },
   { col: 'Forensics & direction — does it hold up, who is pushing it', c: '#7B61FF', fields: [
-    { f: 'vms', u: 'Verification Match Score · 0–100', say: 'Do the story\'s factual claims match what the company actually filed? Higher = the story checks out.', rd: 'The structural-support measure. Not a speed measure.' },
+    { f: 'vms', u: 'Verification Match Score · 0–100', say: 'Do the story\'s factual claims match what the company actually filed? Higher = the story checks out.', rd: 'The structural-support measure; speed is a separate field.' },
     { f: 'drift_score', u: '0–100', say: 'How far the story has drifted from what the filings support.', rd: '<b>0</b> = measured and aligned. <b>Blank</b> = could not be judged. Never the same thing.' },
     { f: 'coordination_score', u: '0–100', say: 'Are many sources converging on the same thesis inside a narrow window?', rd: 'Most rows sit at 0. Classes: ORGANIC_SPREAD → SUSPICIOUS_PATTERN → LIKELY_COORDINATED.' },
     { f: 'suspicion_score', u: '0–100', say: 'How anomalous the market activity around the story is.', rd: 'Says how <b>far</b> a name may move, not which way. The strongest single magnitude coordinate in the delivered report.' },
@@ -1381,7 +1373,7 @@ function renderScreen4(){
    Data-Verified Results" (frozen 2026-08-26, presentation revised
    2026-08-29), the document the evaluator already holds. Nothing is
    recomputed here; the page reference is kept with each figure so the
-   presenter can point to it. The internal nightly run (different
+   figure can be traced to the document. The internal nightly run (different
    convention) is shown only in the drawer, labelled as such.
    ═══════════════════════════════════════════════════════════════ */
 var REPORT = {
@@ -1428,7 +1420,7 @@ function renderScreen5(){
   h += '<div class="s5-two"><div class="s5-mini">';
   R.coords.rows.slice(0, 5).forEach(function(c){ h += '<div class="row"><span><span class="fld" data-field="' + esc(c.f) + '">' + esc(c.f) + '</span> <span style="color:var(--mp-text-muted)">n ' + esc(fmtInt(c.n)) + '</span></span><span>' + esc(fmtIc(c.ic)) + '</span></div>'; });
   h += '</div><div class="s5-mini">' +
-    '<div class="row"><span><b>Direction</b> · inverted <span class="fld" data-field="distance_from_max_pain_pct">distance_from_max_pain_pct</span>, 20d signed IC (they can compute this themselves)</span><span>' + esc(fmtIc(R.maxpain.ic20)) + '</span></div>' +
+    '<div class="row"><span><b>Direction</b> · inverted <span class="fld" data-field="distance_from_max_pain_pct">distance_from_max_pain_pct</span>, 20d signed IC (computable from public options data)</span><span>' + esc(fmtIc(R.maxpain.ic20)) + '</span></div>' +
     '<div class="row"><span><b>State path</b> · ' + esc(R.transition.from) + ' → ' + esc(R.transition.a.to) + ' vs → ' + esc(R.transition.b.to) + ', 20d excess</span><span>' + esc(fmtPp(R.transition.a.excess)) + ' / ' + esc(fmtPp(R.transition.b.excess)) + '</span></div>' +
     '<div class="row"><span><b>State gate</b> · composite Q5−Q1 |5d move| inside high vs low <span class="fld" data-field="narrative_energy_t">narrative_energy_t</span></span><span>' + esc(fmtPp(R.energyGate.rows[2].spread)) + ' vs ' + esc(fmtPp(R.energyGate.rows[0].spread)) + '</span></div>' +
     '<div class="note" style="margin-top:6px">Left: 5-day magnitude IC per coordinate, PIT sample, T+1, gross. Transcribed from the report, not recomputed — full protocol and page references in Research Details.</div>' +
@@ -1529,7 +1521,7 @@ function drawerTrading(){
 
   h += '<div class="dr-sec"><h4>Signal-state registry · full history vs recent window</h4><p class="mut" style="margin-bottom:6px">' + esc(T.registry.source) + '. ' + esc(T.registry.note) + '</p><div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th>State</th><th>Dir</th><th>Status</th><th>Full N</th><th>Recent N</th><th>Full close</th><th>Recent close</th><th>Full hit</th><th>Recent hit</th></tr></thead><tbody>';
   T.registry.rows.forEach(function(r){ var thin = r.preN < 200; h += '<tr><td>' + esc(r.s) + (thin ? '<small style="display:block;font-weight:400;color:var(--mp-amber)">pre-window N ' + r.preN + ' — windows nearly identical</small>' : '') + '</td><td>' + esc(r.dir) + '</td><td>' + esc(r.st) + '</td><td>' + esc(fmtInt(r.fullN)) + '</td><td>' + esc(fmtInt(r.recN)) + '</td><td>' + esc(fmtSignedPct(r.fullR)) + '</td><td>' + esc(fmtSignedPct(r.recR)) + '</td><td>' + esc(fmt(r.fullH, 1)) + '%</td><td>' + esc(fmt(r.recH, 1)) + '%</td></tr>'; });
-  h += '</tbody></table></div><p class="mut" style="margin-top:6px">Registry status (CONFIRMED / PARTIAL) is a codebase lifecycle label, not a significance classification. The exhaustion and continuation family holds or improves in the recent window; the two highest-frequency screening states, LOW_MASS and ACS_LOW, weaken materially and fire far less often. Say that before they find it.</p></div>';
+  h += '</tbody></table></div><p class="mut" style="margin-top:6px">Registry status (CONFIRMED / PARTIAL) is a codebase lifecycle label, not a significance classification. The exhaustion and continuation family holds or improves in the recent window; the two highest-frequency screening states, LOW_MASS and ACS_LOW, weaken materially and fire far less often.</p></div>';
   return h;
 }
 
@@ -1726,7 +1718,7 @@ var GL_QUERY = '';
 function glossaryCard(g){
   return '<div class="gl-card" id="fld-' + esc(g.f.replace(/[^A-Za-z0-9_]/g, '_')) + '">' +
     '<div class="f">' + esc(g.f) + (g.unit ? '<small>' + esc(g.unit) + '</small>' : '') + '</div>' +
-    '<div class="say"><b>Say it as</b>' + esc(g.say) + '</div>' +
+    '<div class="say"><b>In plain terms</b>' + esc(g.say) + '</div>' +
     '<div class="def">' + esc(g.def) + '</div>' +
     (g.read ? '<div class="read"><b>Reading it:</b> ' + esc(g.read) + '</div>' : '') +
     (g.cav ? '<div class="cav">' + esc(g.cav) + '</div>' : '') +
@@ -1735,7 +1727,7 @@ function glossaryCard(g){
 function drawerFields(){
   var q = GL_QUERY.trim().toLowerCase();
   var h = '<input class="gl-search" id="gl-search" type="search" placeholder="Search a field or a word (e.g. exhaustion, max pain, srs)" value="' + esc(GL_QUERY) + '" aria-label="Search glossary">';
-  h += '<div class="gl-order">Walk a row in this order: <b>Identity</b> (which narrative, how old) → <b>Forensic</b> (do the claims hold up, who is pushing them) → <b>Physics</b> (building or burning out, how fast) → <b>Anchors</b> (what value and options say) → <b>Output</b> (what the engine concludes). Definitions are the delivered Data Dictionary v1.6; the "say it as" line is the plain-English version.</div>';
+  h += '<div class="gl-order">Walk a row in this order: <b>Identity</b> (which narrative, how old) → <b>Forensic</b> (do the claims hold up, who is pushing them) → <b>Physics</b> (building or burning out, how fast) → <b>Anchors</b> (what value and options say) → <b>Output</b> (what the engine concludes). Definitions are the delivered Data Dictionary v1.6; the plain-terms line restates each in one sentence.</div>';
   var any = false;
   GLOSSARY_GROUPS.forEach(function(gr){
     var items = GLOSSARY.filter(function(g){ return g.g === gr.k && (!q || (g.f + ' ' + g.say + ' ' + g.def + ' ' + (g.read || '') + ' ' + gr.t).toLowerCase().indexOf(q) >= 0); });
