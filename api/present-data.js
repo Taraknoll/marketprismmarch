@@ -26,6 +26,7 @@
 //   GET /api/present-data?ticker=DIS      → { ticker, rows, lineage, window }
 //   GET /api/present-data?part=paper      → the four paper-book tables (no max_drawdown)
 //   GET /api/present-data?part=engine&ticker=DIS → signature, calibration, forecast, dots sample
+//   GET /api/present-data?part=featured   → tickers passing the stated "strongest bookkeeping" rule
 
 const rateLimit = require('./_rate-limit');
 const gate = require('./_require-present');
@@ -437,6 +438,31 @@ async function sigUniverse(rest, headers) {
   return body;
 }
 
+// Featured examples for the under-the-hood screen: tickers where the engine's
+// own bookkeeping currently looks strongest. The rule is stated on screen.
+const FEATURED_RULE = { minAcc: 0.65, minPred: 15, minHit: 0.6, minResolved: 4 };
+let FEATURED_CACHE = { at: 0, body: null };
+async function buildFeatured(rest, headers) {
+  if (FEATURED_CACHE.body && Date.now() - FEATURED_CACHE.at < 15 * 60 * 1000) return FEATURED_CACHE.body;
+  const [sigs, fcs] = await Promise.all([
+    fetchAll(rest + 'ticker_signatures?select=ticker,sector,current_accuracy_rate,total_predictions,brier_score_overall', headers, 2000),
+    fetchAll(rest + 'ticker_forecast?select=ticker,directional_verdict,rolling_30_hit_rate,rolling_30_total,rolling_30_avg_edge_pct', headers, 2000)
+  ]);
+  const fcOf = {}; for (const f of fcs) fcOf[f.ticker] = f;
+  const out = [];
+  for (const sg of sigs) {
+    if (!sg.ticker || dropTicker(sg.ticker)) continue;
+    const f = fcOf[sg.ticker]; if (!f) continue;
+    const acc = Number(sg.current_accuracy_rate), n = Number(sg.total_predictions), hit = Number(f.rolling_30_hit_rate), rn = Number(f.rolling_30_total), edge = Number(f.rolling_30_avg_edge_pct);
+    if (!(acc >= FEATURED_RULE.minAcc && n >= FEATURED_RULE.minPred && hit >= FEATURED_RULE.minHit && rn >= FEATURED_RULE.minResolved && edge > 0)) continue;
+    out.push({ t: sg.ticker, sector: sg.sector || null, acc: num(acc, 3), n, hit: num(hit, 3), rn, edge: num(edge, 2), brier: num(sg.brier_score_overall, 3), verdict: f.directional_verdict || null });
+  }
+  out.sort((a, b) => (b.acc - a.acc) || (b.hit - a.hit));
+  const body = { rule: FEATURED_RULE, examples: out.slice(0, 8), generated_at: new Date().toISOString() };
+  FEATURED_CACHE = { at: Date.now(), body };
+  return body;
+}
+
 async function buildEngine(rest, headers, ticker) {
   const t = encodeURIComponent(ticker);
   const [sig, cal, fc, dotsRecent, dotsResolved, uni] = await Promise.all([
@@ -515,6 +541,7 @@ module.exports = async (req, res) => {
     const ticker = (url.searchParams.get('ticker') || '').replace(/[^A-Za-z0-9.\-]/g, '').toUpperCase().slice(0, 12);
     const part = url.searchParams.get('part') || '';
     if (part === 'paper') return sendJson(res, 200, await buildPaper(rest, headers));
+    if (part === 'featured') return sendJson(res, 200, await buildFeatured(rest, headers));
     if (part === 'engine') {
       if (!ticker || dropTicker(ticker)) return sendJson(res, 404, { error: 'ticker_not_available' });
       return sendJson(res, 200, await buildEngine(rest, headers, ticker));

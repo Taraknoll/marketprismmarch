@@ -278,6 +278,16 @@ body.pr-cues-on .pr-screen{padding-bottom:118px;}
 .s8-dots-h{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-accent);margin:8px 0 6px;}
 @media(max-width:1100px){.s7-tiles{grid-template-columns:1fr;}.s8-grid{grid-template-columns:1fr 1fr;}.s8-fc{grid-template-columns:1fr;}}
 
+.s8-feat{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-height:44px;}
+.s8-feat .lbl{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-muted);white-space:nowrap;}
+.s8-feat .arr{cursor:pointer;width:34px;height:34px;border-radius:50%;border:1px solid var(--mp-border-mid);background:var(--mp-surface);color:var(--mp-text-secondary);font-size:16px;font-weight:700;line-height:1;}
+.s8-feat .arr:hover{border-color:var(--mp-accent);color:var(--mp-accent);}
+.s8-feat .chips{display:flex;gap:8px;flex-wrap:wrap;}
+.s8-feat .chip{cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:700;color:var(--mp-text-secondary);background:var(--mp-surface);border:1px solid var(--mp-border-mid);border-radius:20px;padding:7px 12px;transition:all .15s;}
+.s8-feat .chip small{display:block;font-size:10px;font-weight:600;color:var(--mp-text-muted);letter-spacing:.04em;margin-top:2px;}
+.s8-feat .chip.on{border-color:var(--mp-cyan);color:var(--mp-accent);background:rgba(0,174,255,0.08);}
+.s8-feat .rule{font-size:11px;line-height:1.4;color:var(--mp-text-muted);max-width:340px;margin-left:auto;}
+
 /* ══════════════ final overlay ══════════════ */
 .s6-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px;}
 .s6-item{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:22px 22px 20px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
@@ -620,7 +630,7 @@ window.__MQ = { authed: false };
       <div class="pr-eyebrow">8 · Under the hood</div>
       <h1 class="pr-h1" style="font-size:clamp(28px,2.6vw,40px)">What the Engine Learns Per Ticker</h1>
       <p class="pr-sub">Four internal tables most people never see: the per-ticker personality signature, the calibration loop on every prediction, the daily forecast ticket, and the observations themselves.</p>
-      <div class="pr-body"><div id="s8-body"></div></div>
+      <div class="pr-body"><div class="s8-feat" id="s8-feat"></div><div id="s8-body"></div></div>
       <div class="pr-foot-line">All values are the current production rows for the selected security. <b>Click any field name</b> for its definition where one exists.</div>
     </div>
   </section>
@@ -922,7 +932,7 @@ var CUES = {
        opt: 'The v6 book, the v5 book and the two statistics tables are separate operational tables. Drawdown columns exist in the tables and are withheld from this view.',
        def: ['snapshot_date','updated_at'] },
   8: { main: 'Under the hood the engine keeps a learned signature per ticker: how much fuel a narrative adds, how fast it decays, how much noise the name tolerates. It calibrates every prediction against what actually happened.',
-       opt: 'The calibration tab shows predicted versus actual hit rate and the scaling the engine applies to itself. The dots tab shows the raw observations, including realized returns once resolved.',
+       opt: 'The example chips are chosen by a stated rule from the live tables, not by hand; the dropdown reaches any security. The calibration tab shows predicted versus actual hit rate; the dots tab shows raw observations with realized returns once resolved.',
        def: ['narrative_hash','decay_state','narrative_energy_t','vms'] },
   9: { main: 'What can be provided for evaluation, and the recommended sample: the live point-in-time regime from March 2, 2026 onward.',
        opt: 'A clean PIT extract, the data dictionary and the timestamp lineage can be delivered to an evaluator\'s own environment.',
@@ -1544,7 +1554,7 @@ function drawerTrading(){
    SCREEN 8 — under the hood (signature · calibration · forecast · dots)
    Both are plain reads of production tables via /api/present-data.
    ═══════════════════════════════════════════════════════════════ */
-S.paper = null; S.paperTab = 'v6'; S.engine = null; S.engineTab = 'signature';
+S.paper = null; S.paperTab = 'v6'; S.engine = null; S.engineTab = 'signature'; S.featured = null;
 
 function fmtMoney(v){ if (v == null || !isFinite(v)) return '—'; var a = Math.abs(v); var s = a >= 1000 ? a.toLocaleString('en-US', {maximumFractionDigits: 0}) : a.toFixed(2); return (v < 0 ? '−$' : '$') + s; }
 function fmtTs(iso){ if (!iso) return '—'; var d = new Date(iso); if (isNaN(d)) return String(iso); return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth()+1) + '-' + pad2(d.getUTCDate()) + ' ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + 'Z'; }
@@ -1558,7 +1568,29 @@ function loadPaper(){
   api('/api/present-data?part=paper').then(function(j){ S.paper = j; renderScreen7(); })
     .catch(function(e){ if (box) box.innerHTML = '<div class="dr-empty">Could not load: ' + esc(e && e.message ? e.message : 'error') + '</div>'; });
 }
+function loadFeatured(){
+  if (S.featured) { renderFeatured(); return; }
+  api('/api/present-data?part=featured').then(function(j){ S.featured = j; renderFeatured(); }).catch(function(){ S.featured = { examples: [], rule: null }; renderFeatured(); });
+}
+function renderFeatured(){
+  var box = el('s8-feat'); if (!box || !S.featured) return;
+  var ex = S.featured.examples || [], R = S.featured.rule;
+  if (!ex.length) { box.innerHTML = '<span class="lbl">Examples</span><span class="rule">No security currently passes the example rule.</span>'; return; }
+  var h = '<span class="lbl">Examples</span><button class="arr" type="button" data-dir="-1" aria-label="Previous example">‹</button><div class="chips">';
+  ex.forEach(function(x){ h += '<button type="button" class="chip' + (x.t === S.ticker ? ' on' : '') + '" data-t="' + esc(x.t) + '" title="' + esc(x.sector || '') + '">' + esc(x.t) + '<small>' + esc(fmt(x.acc * 100, 0)) + '% on ' + esc(fmtInt(x.n)) + ' · 30-session hit ' + esc(fmt(x.hit * 100, 0)) + '%</small></button>'; });
+  h += '</div><button class="arr" type="button" data-dir="1" aria-label="Next example">›</button>';
+  if (R) h += '<span class="rule">Selected by rule: signature accuracy ≥ ' + esc(fmt(R.minAcc * 100, 0)) + '% on ≥ ' + R.minPred + ' predictions, 30-session forecast hit rate ≥ ' + esc(fmt(R.minHit * 100, 0)) + '% on ≥ ' + R.minResolved + ' resolved, positive average edge. Recomputed from the live tables.</span>';
+  box.innerHTML = h;
+  box.querySelectorAll('.chip').forEach(function(c){ c.onclick = function(){ pickTicker(c.getAttribute('data-t')); }; });
+  box.querySelectorAll('.arr').forEach(function(a){ a.onclick = function(){
+    var list = ex.map(function(x){ return x.t; }); var i = list.indexOf(S.ticker); var d = Number(a.getAttribute('data-dir'));
+    var next = i < 0 ? (d > 0 ? list[0] : list[list.length - 1]) : list[(i + d + list.length) % list.length];
+    pickTicker(next);
+  }; });
+}
+function pickTicker(t){ if (!t || t === S.ticker) return; var sel = el('pr-ticker'); if (sel) sel.value = t; loadTicker(t); }
 function loadEngine(){
+  loadFeatured();
   if (S.engine && S.engine.ticker === S.ticker) { renderScreen8(); return; }
   var box = el('s8-body'); if (box) box.innerHTML = '<div class="dr-empty">Loading ' + esc(S.ticker || '') + '…</div>';
   if (!S.ticker) return;
@@ -1704,6 +1736,7 @@ function renderScreen8(){
   }
   box.innerHTML = h;
   wireTabs('s8-tabs', function(k){ S.engineTab = k; renderScreen8(); });
+  document.querySelectorAll('#s8-feat .chip').forEach(function(c){ c.classList.toggle('on', c.getAttribute('data-t') === S.ticker); });
 }
 
 /* ═══════════════════════════════════════════════════════════════
