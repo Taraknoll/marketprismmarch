@@ -357,6 +357,17 @@ body.pr-cues-on .pr-screen{padding-bottom:118px;}
 
 /* ══════════════ glossary / click-to-define ══════════════ */
 .fld{cursor:pointer;border-bottom:1px dotted rgba(77,200,240,.55);transition:color .12s;}
+.fld::after{content:'i';display:inline-block;margin-left:4px;width:12px;height:12px;line-height:12px;border-radius:50%;font-size:9px;font-weight:700;text-align:center;
+  color:var(--mp-accent);border:1px solid rgba(77,200,240,.55);vertical-align:2px;font-style:normal;letter-spacing:0;}
+.tl-svg .fld::after{content:none;}
+#fld-tip{position:fixed;z-index:60;max-width:360px;background:rgba(12,16,24,0.98);border:1px solid rgba(77,200,240,.45);border-radius:12px;padding:10px 12px 9px;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.55));opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .12s,transform .12s,visibility 0s linear .12s;pointer-events:none;}
+#fld-tip.on{opacity:1;visibility:visible;transform:translateY(0);transition:opacity .12s,transform .12s,visibility 0s;pointer-events:auto;}
+#fld-tip .f{font-size:13px;font-weight:700;color:var(--mp-text-primary);word-break:break-word;}
+#fld-tip .f small{margin-left:6px;font-size:10px;font-weight:600;color:var(--mp-text-muted);letter-spacing:.04em;}
+#fld-tip .d{margin-top:4px;font-size:13px;line-height:1.45;color:var(--mp-text-secondary);}
+#fld-tip .more{margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-accent);cursor:pointer;}
+#fld-tip .more:hover{text-decoration:underline;}
 .fld:hover{color:var(--mp-accent);border-bottom-color:var(--mp-accent);}
 .tl-svg text.fld{cursor:pointer;}
 .gl-search{width:100%;font-family:var(--font-body);font-size:14px;color:var(--mp-text-primary);background:var(--mp-obsidian);border:1px solid var(--mp-border-mid);
@@ -639,6 +650,7 @@ window.__MQ = { authed: false };
 </main>
 
 <div id="pr-load"><div class="b" id="pr-load-b">Connecting to feed…</div></div>
+<div id="fld-tip" role="tooltip"><div class="f" id="fld-tip-f"></div><div class="d" id="fld-tip-d"></div><div class="more" id="fld-tip-more">Full definition</div></div>
 
 <!-- ── talking points (audience-facing; safe on a shared screen) ── -->
 <div id="pr-cue" aria-live="polite">
@@ -671,7 +683,7 @@ window.__MQ = { authed: false };
     <span class="cnt" id="pr-cnt">1 / 5</span>
     <button id="pr-next" type="button">Next →</button>
   </div>
-  <span class="pr-keys"><b>←</b><b>→</b> navigate · <b>Space</b> next · <b>D</b> details · <b>G</b> glossary · <b>T</b> trading · <b>C</b> talking points · click any field name to define it</span>
+  <span class="pr-keys"><b>←</b><b>→</b> navigate · <b>Space</b> next · <b>D</b> details · <b>G</b> glossary · <b>T</b> trading · <b>C</b> talking points · hover a field name to define it</span>
   <span class="pr-status" id="pr-status">Read-only · institutional feed</span>
 </footer>
 
@@ -961,7 +973,7 @@ document.addEventListener('keydown', function(e){
   if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
   if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(S.screen + 1); }
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(S.screen - 1); }
-  else if (e.key === 'Escape') { if (S.drawer) toggleDrawer(false); }
+  else if (e.key === 'Escape') { if (TIP.pinned || el('fld-tip').classList.contains('on')) hideTip(true); else if (S.drawer) toggleDrawer(false); }
   else if (e.key === 'd' || e.key === 'D') { toggleDrawer(); }
   else if (e.key === 'g' || e.key === 'G') { S.drawerTab = 'fields'; toggleDrawer(true); }
   else if (e.key === 't' || e.key === 'T') { S.drawerTab = 'trading'; toggleDrawer(true); }
@@ -1017,7 +1029,8 @@ function renderScreen1(){
     var xx = left + k * gap;
     h += '<circle cx="' + xx + '" cy="' + ys[k] + '" r="9" fill="#0C1018" stroke="' + stages[k].c + '" stroke-width="3"/>';
     h += '<text x="' + xx + '" y="' + (ys[k] - 24) + '" text-anchor="middle" font-size="20" font-weight="700" fill="#FFFFFF" letter-spacing="-0.01em">' + esc(stages[k].t) + '</text>';
-    h += '<text x="' + xx + '" y="' + (H - 18) + '" text-anchor="middle" font-size="12" font-weight="600" fill="#A0A8B0" letter-spacing=".06em">' + esc(stages[k].s) + '</text>';
+    var capField = stages[k].s.split(' · ')[0];
+    h += '<text class="fld" data-field="' + esc(capField) + '" x="' + xx + '" y="' + (H - 18) + '" text-anchor="middle" font-size="12" font-weight="600" fill="#A0A8B0" letter-spacing=".06em">' + esc(stages[k].s) + '</text>';
     if (k < n - 1) h += '<text x="' + (xx + gap/2) + '" y="' + (H - 18) + '" text-anchor="middle" font-size="14" fill="rgba(255,255,255,.3)">→</text>';
   }
   h += '<text x="' + left + '" y="22" font-size="12" font-weight="600" fill="rgba(255,255,255,.34)" letter-spacing=".14em">CONCEPTUAL LIFECYCLE · LABELS BENEATH ARE THE DELIVERED STATE FIELDS</text>';
@@ -1033,7 +1046,8 @@ function renderScreen1(){
     {t:'Coordination', f:'coordination_score · coordination_class', c:'#FF4D4D'}
   ];
   var fh = '';
-  for (var m = 0; m < fams.length; m++) fh += '<div class="s1-fam" style="--c:' + fams[m].c + '"><div class="t">' + esc(fams[m].t) + '</div><div class="f">' + esc(fams[m].f) + '</div></div>';
+  var fieldLinks = function(str){ return String(str).split(' · ').map(function(tok){ return /^[a-z][a-z0-9_]*$/.test(tok) ? '<span class="fld" data-field="' + esc(tok) + '">' + esc(tok) + '</span>' : esc(tok); }).join(' · '); };
+  for (var m = 0; m < fams.length; m++) fh += '<div class="s1-fam" style="--c:' + fams[m].c + '"><div class="t">' + esc(fams[m].t) + '</div><div class="f">' + fieldLinks(fams[m].f) + '</div></div>';
   el('s1-fams').innerHTML = fh;
 }
 
@@ -1754,13 +1768,52 @@ function openField(name){
     card.scrollIntoView({block:'start', behavior:'smooth'});
   }, 30);
 }
-document.addEventListener('click', function(e){
+// ── short-definition bubble ──
+function glossaryFor(name){
+  var n = String(name || '');
+  for (var i = 0; i < GLOSSARY.length; i++) if (GLOSSARY[i].f === n) return GLOSSARY[i];
+  for (var j = 0; j < GLOSSARY.length; j++){ var parts = GLOSSARY[j].f.split(' / '); if (parts.indexOf(n) >= 0) return GLOSSARY[j]; }
+  return null;
+}
+var TIP = { pinned: false, field: null, anchor: null };
+function showTip(elm, field, pin){
+  var g = glossaryFor(field);
+  var tip = el('fld-tip');
+  el('fld-tip-f').innerHTML = esc(field) + (g && g.unit ? '<small>' + esc(g.unit) + '</small>' : '');
+  el('fld-tip-d').textContent = g ? g.say : 'No short definition on file.';
+  el('fld-tip-more').style.display = g ? '' : 'none';
+  TIP.field = field; TIP.anchor = elm; TIP.pinned = !!pin;
+  tip.classList.add('on');
+  // position: above the element, else below; keep inside the viewport
+  var r = elm.getBoundingClientRect(); var tw = tip.offsetWidth || 320, th = tip.offsetHeight || 80;
+  var left = Math.max(8, Math.min(window.innerWidth - tw - 8, r.left));
+  var top = r.top - th - 8; if (top < 8) top = r.bottom + 8;
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}
+function hideTip(force){ if (TIP.pinned && !force) return; el('fld-tip').classList.remove('on'); TIP.pinned = false; TIP.field = null; TIP.anchor = null; }
+document.addEventListener('mouseover', function(e){
   var t = e.target && e.target.closest ? e.target.closest('.fld') : null;
-  if (!t) return;
+  if (!t || TIP.pinned) return;
+  var f = t.getAttribute('data-field'); if (f) showTip(t, f, false);
+});
+document.addEventListener('mouseout', function(e){
+  var t = e.target && e.target.closest ? e.target.closest('.fld') : null;
+  if (!t || TIP.pinned) return;
+  var to = e.relatedTarget; if (to && to.closest && to.closest('#fld-tip')) return;
+  hideTip(false);
+});
+document.addEventListener('click', function(e){
+  var more = e.target && e.target.closest ? e.target.closest('#fld-tip-more') : null;
+  if (more){ e.preventDefault(); var f0 = TIP.field; hideTip(true); if (f0) openField(f0); return; }
+  if (e.target && e.target.closest && e.target.closest('#fld-tip')) return;
+  var t = e.target && e.target.closest ? e.target.closest('.fld') : null;
+  if (!t){ if (TIP.pinned) hideTip(true); return; }
   var f = t.getAttribute('data-field'); if (!f) return;
   e.preventDefault(); e.stopPropagation();
-  openField(f);
+  if (TIP.pinned && TIP.field === f) { hideTip(true); return; }
+  showTip(t, f, true);
 }, true);
+document.addEventListener('scroll', function(){ if (!TIP.pinned) hideTip(false); }, true);
 el('dr-body').addEventListener('input', function(e){
   if (e.target && e.target.id === 'gl-search'){ GL_QUERY = e.target.value; var pos = e.target.selectionStart; renderDrawer(); var i = el('gl-search'); if (i){ i.focus(); try { i.setSelectionRange(pos, pos); } catch(_e){} } }
 });
