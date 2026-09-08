@@ -24,6 +24,8 @@
 // Modes:
 //   GET /api/present-data                 → { meta, universe, defaultTicker, evidence }
 //   GET /api/present-data?ticker=DIS      → { ticker, rows, lineage, window }
+//   GET /api/present-data?part=paper      → the four paper-book tables (no max_drawdown)
+//   GET /api/present-data?part=engine&ticker=DIS → signature, calibration, forecast, dots sample
 
 const rateLimit = require('./_rate-limit');
 const gate = require('./_require-present');
@@ -356,6 +358,146 @@ async function buildSeries(rest, headers, ticker, days) {
   };
 }
 
+
+// ── Simulated books (paper portfolios) ─────────────────────────────────────
+// Four operational tables, read as-is. Display baseline 2026-04-30 follows the
+// Track Record convention (pre-baseline rows reflect the pre-rewrite
+// simulator). max_drawdown is deliberately not selected.
+const PAPER_BASELINE = '2026-04-30';
+const PAPER_DAILY_COLS = 'snapshot_date,cash,open_count,open_exposure,mtm_value,unrealized_pnl,realized_pnl_cumulative,portfolio_value,daily_pnl,daily_return_pct,created_at,updated_at';
+const PAPER_STATS_COLS = 'stat_date,total_trades,win_rate,avg_return_pct,total_pnl,sharpe_ratio,profit_factor,short_win_rate,long_win_rate,created_at';
+
+function shapeDaily(rows) {
+  return rows.map((r) => ({
+    snapshot_date: r.snapshot_date, cash: num(r.cash, 2), open_count: r.open_count == null ? null : Number(r.open_count),
+    open_exposure: num(r.open_exposure, 2), mtm_value: num(r.mtm_value, 2), unrealized_pnl: num(r.unrealized_pnl, 2),
+    realized_pnl_cumulative: num(r.realized_pnl_cumulative, 2), portfolio_value: num(r.portfolio_value, 2),
+    daily_pnl: num(r.daily_pnl, 2), daily_return_pct: num(r.daily_return_pct, 4), created_at: r.created_at || null, updated_at: r.updated_at || null
+  }));
+}
+function shapeStats(rows) {
+  return rows.map((r) => ({
+    stat_date: r.stat_date, total_trades: r.total_trades == null ? null : Number(r.total_trades), win_rate: num(r.win_rate, 2),
+    avg_return_pct: num(r.avg_return_pct, 3), total_pnl: num(r.total_pnl, 2), sharpe_ratio: num(r.sharpe_ratio, 3), profit_factor: num(r.profit_factor, 3),
+    short_win_rate: num(r.short_win_rate, 2), long_win_rate: num(r.long_win_rate, 2), created_at: r.created_at || null
+  }));
+}
+
+let PAPER_CACHE = { at: 0, body: null };
+async function buildPaper(rest, headers) {
+  if (PAPER_CACHE.body && Date.now() - PAPER_CACHE.at < 5 * 60 * 1000) return PAPER_CACHE.body;
+  const q = (t, cols, order) => fetchAll(rest + `${t}?select=${cols}&order=${order}`, headers, 3000);
+  const [v6, v5, stV6, st] = await Promise.all([
+    q('paper_portfolio_daily_v6', PAPER_DAILY_COLS, 'snapshot_date.asc'),
+    q('paper_portfolio_daily', PAPER_DAILY_COLS, 'snapshot_date.asc'),
+    q('paper_portfolio_stats_v6', PAPER_STATS_COLS, 'stat_date.asc'),
+    q('paper_portfolio_stats', PAPER_STATS_COLS, 'stat_date.asc')
+  ]);
+  const body = {
+    baseline: PAPER_BASELINE,
+    books: [
+      { key: 'v6', table: 'paper_portfolio_daily_v6', title: 'Daily plays · v6 book', kind: 'daily', base: 300000,
+        note: 'USD 300k paper book driven by the daily plays engine. Rebuilt every 15 minutes in market hours and hourly overnight; each row is a mark-to-market snapshot.',
+        rows: shapeDaily(v6.filter((r) => r.snapshot_date >= PAPER_BASELINE)) },
+      { key: 'v5', table: 'paper_portfolio_daily', title: 'Daily plays · v5 book', kind: 'daily', base: 50000,
+        note: 'USD 50k paper book (v5.0), daily mark-to-market snapshots from 2026-04-14. Shown from the 2026-04-30 launch baseline.',
+        rows: shapeDaily(v5.filter((r) => r.snapshot_date >= PAPER_BASELINE)) },
+      { key: 'stats_v6', table: 'paper_portfolio_stats_v6', title: 'Trade statistics · v6', kind: 'stats',
+        note: 'Cumulative trade statistics for the v6 book, one row per statistics run. Gross, modeled fills.',
+        rows: shapeStats(stV6) },
+      { key: 'stats', table: 'paper_portfolio_stats', title: 'Trade statistics · all paper trades', kind: 'stats',
+        note: 'Cumulative statistics over the full paper-trade ledger, one row per statistics run. Gross, modeled fills.',
+        rows: shapeStats(st) }
+    ],
+    generated_at: new Date().toISOString()
+  };
+  PAPER_CACHE = { at: Date.now(), body };
+  return body;
+}
+
+// ── Under the hood: per-ticker learning ────────────────────────────────────
+const SIG_COLS = 'ticker,sector,industry,fuel_octane_rating,decay_speed_multiplier,noise_tolerance,price_sensitivity_multiplier,gap_fill_tendency,catalyst_avg_move,catalyst_avg_duration,headwind_avg_move,headwind_avg_duration,brier_score_overall,brier_score_30d,current_accuracy_rate,total_predictions,accurate_predictions,confidence_score,calibration_bias,max_simultaneous_narratives,last_calibration_date,updated_at';
+const CAL_COLS = 'cell_dim,cell_value,horizon_days,n_resolved,bias_signed,mae,rmse,median_signed_error,in_iqr_rate,predicted_hit_rate_mean,actual_hit_rate,hit_rate_scaling,calibration_confidence,aggregation_window_days,computed_at,aggregator_version';
+const FC_COLS = 'ticker,directional_verdict,bias,primary_horizon,severity_label,classification_label,driving_signal,one_line_headline,predicted_1d_pct,predicted_3d_pct,predicted_5d_pct,predicted_10d_pct,predicted_1d_price,predicted_3d_price,predicted_5d_price,predicted_10d_price,predicted_5d_low,predicted_5d_high,predicted_10d_low,predicted_10d_high,conviction_1d,conviction_3d,conviction_5d,conviction_10d,predicted_alpha_5d_vs_spy,predicted_alpha_10d_vs_spy,current_price,fair_value,fvd_pct,invalidation_price,rolling_30_directional,rolling_30_total,rolling_30_hit_rate,rolling_30_avg_edge_pct,scorecard_snapshot_date,forecast_snapshot_date,fair_value_snapshot_date,refresh_mode,heavy_refreshed_at,light_refreshed_at,updated_at';
+const DOT_COLS = 'dot_hash,dot_kind,observed_at,cycle_phase,speaker_type,speaker_authority,narrative_text,narrative_direction,market_regime,price_at_observation,return_5d,return_10d,bullshit_probability,ground_truth_label,resolved_at,is_chain_tip,embedding_model,computed_at';
+
+// Universe distribution of the three headline signature traits (min / median /
+// max over all tickers) so one ticker's values can be placed. Descriptive only.
+let SIG_UNIVERSE_CACHE = { at: 0, body: null };
+async function sigUniverse(rest, headers) {
+  if (SIG_UNIVERSE_CACHE.body && Date.now() - SIG_UNIVERSE_CACHE.at < 30 * 60 * 1000) return SIG_UNIVERSE_CACHE.body;
+  const rows = await fetchAll(rest + 'ticker_signatures?select=fuel_octane_rating,decay_speed_multiplier,noise_tolerance,price_sensitivity_multiplier,brier_score_overall,current_accuracy_rate', headers, 2000);
+  const dist = (k) => {
+    const v = rows.map((r) => Number(r[k])).filter((x) => Number.isFinite(x)).sort((a, b) => a - b);
+    if (!v.length) return null;
+    return { n: v.length, min: num(v[0], 3), p50: num(v[Math.floor(v.length / 2)], 3), max: num(v[v.length - 1], 3) };
+  };
+  const body = { tickers: rows.length, fuel_octane_rating: dist('fuel_octane_rating'), decay_speed_multiplier: dist('decay_speed_multiplier'), noise_tolerance: dist('noise_tolerance'), price_sensitivity_multiplier: dist('price_sensitivity_multiplier'), brier_score_overall: dist('brier_score_overall'), current_accuracy_rate: dist('current_accuracy_rate') };
+  SIG_UNIVERSE_CACHE = { at: Date.now(), body };
+  return body;
+}
+
+async function buildEngine(rest, headers, ticker) {
+  const t = encodeURIComponent(ticker);
+  const [sig, cal, fc, dotsRecent, dotsResolved, uni] = await Promise.all([
+    getJson(rest + `ticker_signatures?select=${SIG_COLS}&ticker=eq.${t}&limit=1`, headers).catch(() => []),
+    getJson(rest + `dot_prediction_calibration?select=${CAL_COLS}&or=(cell_dim.eq.global,and(cell_dim.eq.ticker,cell_value.eq.${t}))&order=computed_at.desc,cell_dim.asc,horizon_days.asc&limit=40`, headers).catch(() => []),
+    getJson(rest + `ticker_forecast?select=${FC_COLS}&ticker=eq.${t}&limit=1`, headers).catch(() => []),
+    getJson(rest + `narrative_dots?select=${DOT_COLS}&ticker=eq.${t}&narrative_text=not.is.null&order=observed_at.desc&limit=4`, headers).catch(() => []),
+    getJson(rest + `narrative_dots?select=${DOT_COLS}&ticker=eq.${t}&narrative_text=not.is.null&resolved_at=not.is.null&order=observed_at.desc&limit=4`, headers).catch(() => []),
+    sigUniverse(rest, headers).catch(() => null)
+  ]);
+  // Keep only the latest computed_at batch of calibration rows.
+  const latestCal = cal.length ? cal[0].computed_at : null;
+  const calRows = cal.filter((r) => r.computed_at === latestCal).map((r) => ({
+    cell_dim: r.cell_dim, cell_value: r.cell_value, horizon_days: r.horizon_days, n_resolved: r.n_resolved == null ? null : Number(r.n_resolved),
+    bias_signed: num(r.bias_signed), mae: num(r.mae), rmse: num(r.rmse), median_signed_error: num(r.median_signed_error), in_iqr_rate: num(r.in_iqr_rate),
+    predicted_hit_rate_mean: num(r.predicted_hit_rate_mean), actual_hit_rate: num(r.actual_hit_rate), hit_rate_scaling: num(r.hit_rate_scaling),
+    calibration_confidence: num(r.calibration_confidence), aggregation_window_days: r.aggregation_window_days, computed_at: r.computed_at, aggregator_version: r.aggregator_version
+  }));
+  const s = sig[0] || null;
+  const f = fc[0] || null;
+  const shapeDot = (d) => ({
+    dot_hash: d.dot_hash ? String(d.dot_hash).slice(0, 20) : null, dot_kind: d.dot_kind, observed_at: d.observed_at, cycle_phase: d.cycle_phase,
+    speaker_type: d.speaker_type, speaker_authority: num(d.speaker_authority, 1), narrative_text: d.narrative_text ? String(d.narrative_text).slice(0, 220) : null,
+    narrative_direction: d.narrative_direction, market_regime: d.market_regime, price_at_observation: num(d.price_at_observation, 2),
+    return_5d: num(d.return_5d), return_10d: num(d.return_10d), bullshit_probability: num(d.bullshit_probability, 3),
+    ground_truth_label: d.ground_truth_label == null ? null : !!d.ground_truth_label, resolved_at: d.resolved_at || null,
+    is_chain_tip: d.is_chain_tip == null ? null : !!d.is_chain_tip, embedding_model: d.embedding_model || null, computed_at: d.computed_at || null
+  });
+  return {
+    ticker,
+    signature: s ? {
+      ticker: s.ticker, sector: s.sector, industry: s.industry,
+      fuel_octane_rating: num(s.fuel_octane_rating, 3), decay_speed_multiplier: num(s.decay_speed_multiplier, 3), noise_tolerance: num(s.noise_tolerance, 3),
+      price_sensitivity_multiplier: num(s.price_sensitivity_multiplier, 3), gap_fill_tendency: num(s.gap_fill_tendency, 3),
+      catalyst_avg_move: num(s.catalyst_avg_move, 2), catalyst_avg_duration: num(s.catalyst_avg_duration, 2), headwind_avg_move: num(s.headwind_avg_move, 2), headwind_avg_duration: num(s.headwind_avg_duration, 2),
+      brier_score_overall: num(s.brier_score_overall, 3), brier_score_30d: num(s.brier_score_30d, 3), current_accuracy_rate: num(s.current_accuracy_rate, 3),
+      total_predictions: s.total_predictions == null ? null : Number(s.total_predictions), accurate_predictions: s.accurate_predictions == null ? null : Number(s.accurate_predictions),
+      confidence_score: num(s.confidence_score, 3), calibration_bias: num(s.calibration_bias, 3), max_simultaneous_narratives: s.max_simultaneous_narratives == null ? null : Number(s.max_simultaneous_narratives),
+      last_calibration_date: s.last_calibration_date || null, updated_at: s.updated_at || null
+    } : null,
+    signature_universe: uni,
+    calibration: calRows,
+    forecast: f ? {
+      ticker: f.ticker, directional_verdict: f.directional_verdict, bias: f.bias, primary_horizon: f.primary_horizon, severity_label: f.severity_label, classification_label: f.classification_label,
+      driving_signal: f.driving_signal, one_line_headline: f.one_line_headline ? String(f.one_line_headline).slice(0, 400) : null,
+      predicted_1d_pct: num(f.predicted_1d_pct, 3), predicted_3d_pct: num(f.predicted_3d_pct, 3), predicted_5d_pct: num(f.predicted_5d_pct, 3), predicted_10d_pct: num(f.predicted_10d_pct, 3),
+      predicted_1d_price: num(f.predicted_1d_price, 2), predicted_3d_price: num(f.predicted_3d_price, 2), predicted_5d_price: num(f.predicted_5d_price, 2), predicted_10d_price: num(f.predicted_10d_price, 2),
+      predicted_5d_low: num(f.predicted_5d_low, 2), predicted_5d_high: num(f.predicted_5d_high, 2), predicted_10d_low: num(f.predicted_10d_low, 2), predicted_10d_high: num(f.predicted_10d_high, 2),
+      conviction_1d: num(f.conviction_1d, 0), conviction_3d: num(f.conviction_3d, 0), conviction_5d: num(f.conviction_5d, 0), conviction_10d: num(f.conviction_10d, 0),
+      predicted_alpha_5d_vs_spy: num(f.predicted_alpha_5d_vs_spy, 3), predicted_alpha_10d_vs_spy: num(f.predicted_alpha_10d_vs_spy, 3),
+      current_price: num(f.current_price, 2), fair_value: num(f.fair_value, 2), fvd_pct: num(f.fvd_pct, 2), invalidation_price: num(f.invalidation_price, 2),
+      rolling_30_directional: f.rolling_30_directional == null ? null : Number(f.rolling_30_directional), rolling_30_total: f.rolling_30_total == null ? null : Number(f.rolling_30_total),
+      rolling_30_hit_rate: num(f.rolling_30_hit_rate, 3), rolling_30_avg_edge_pct: num(f.rolling_30_avg_edge_pct, 3),
+      scorecard_snapshot_date: f.scorecard_snapshot_date || null, forecast_snapshot_date: f.forecast_snapshot_date || null, fair_value_snapshot_date: f.fair_value_snapshot_date || null,
+      refresh_mode: f.refresh_mode || null, heavy_refreshed_at: f.heavy_refreshed_at || null, light_refreshed_at: f.light_refreshed_at || null, updated_at: f.updated_at || null
+    } : null,
+    dots: { recent: dotsRecent.map(shapeDot), resolved: dotsResolved.map(shapeDot) },
+    generated_at: new Date().toISOString()
+  };
+}
+
 module.exports = async (req, res) => {
   if (!rateLimit(req, res, 'present-data', 60)) return;
   if (!gate.isAuthed(req)) return sendJson(res, 401, { error: 'access_code_required' });
@@ -371,6 +513,12 @@ module.exports = async (req, res) => {
     const rest = supabaseUrl + '/rest/v1/';
 
     const ticker = (url.searchParams.get('ticker') || '').replace(/[^A-Za-z0-9.\-]/g, '').toUpperCase().slice(0, 12);
+    const part = url.searchParams.get('part') || '';
+    if (part === 'paper') return sendJson(res, 200, await buildPaper(rest, headers));
+    if (part === 'engine') {
+      if (!ticker || dropTicker(ticker)) return sendJson(res, 404, { error: 'ticker_not_available' });
+      return sendJson(res, 200, await buildEngine(rest, headers, ticker));
+    }
     if (ticker) {
       if (dropTicker(ticker)) return sendJson(res, 404, { error: 'ticker_not_available' });
       const days = Math.min(Math.max(parseInt(url.searchParams.get('days') || '40', 10) || 40, 20), 60);

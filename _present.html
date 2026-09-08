@@ -242,6 +242,42 @@ body.pr-cues-on .pr-screen{padding-bottom:118px;}
 .s5-close{margin-top:12px;font-family:var(--font-display);font-size:clamp(20px,2vw,30px);font-weight:700;letter-spacing:-0.025em;line-height:1.2;}
 .s5-close span{color:var(--mp-accent);}
 
+/* ══════════════ screens 7 & 8 ══════════════ */
+.pr-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.pr-tabs button{cursor:pointer;font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-tertiary);
+  background:var(--mp-surface);border:1px solid var(--mp-border-mid);border-radius:10px;padding:9px 14px;transition:all .15s;}
+.pr-tabs button.on{color:#04121C;background:var(--mp-cyan);border-color:var(--mp-cyan);}
+.pr-tabs button:hover:not(.on){border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.s7-meta{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:12px;line-height:1.5;color:var(--mp-text-tertiary);margin-bottom:10px;}
+.s7-meta b{color:var(--mp-text-secondary);font-weight:700;}
+.s7-tiles{display:grid;grid-template-columns:260px 1fr 260px;gap:12px;align-items:stretch;margin-bottom:10px;}
+.s7-spark{background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:12px;padding:6px 8px 0;}
+.s7-spark svg{width:100%;height:auto;}
+.s7-tbl td.pos{color:var(--mp-green);}
+.s7-tbl td.neg{color:var(--mp-red);}
+.s7-tbl th,.s7-tbl td{padding:5px 8px;}
+.s8-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:10px;}
+.s8-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;padding:12px 14px 10px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s8-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mp-violet);}
+.s8-card .k{font-size:13px;font-weight:700;color:var(--mp-text-primary);}
+.s8-card .v{font-size:26px;font-weight:700;letter-spacing:-0.02em;margin:2px 0;}
+.s8-card .say{font-size:12px;line-height:1.45;color:var(--mp-text-tertiary);min-height:34px;}
+.s8-bar{position:relative;height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:8px;}
+.s8-bar i{position:absolute;top:-4px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--mp-accent);box-shadow:0 0 10px rgba(77,200,240,.6);}
+.s8-bar em{position:absolute;top:-2px;width:2px;height:10px;margin-left:-1px;background:rgba(255,255,255,.4);}
+.s8-bar-l{display:flex;justify-content:space-between;font-size:10px;color:var(--mp-text-muted);margin-top:6px;letter-spacing:.04em;}
+.s8-row{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13px;color:var(--mp-text-tertiary);padding:10px 0 0;border-top:1px solid var(--mp-border);}
+.s8-row b{color:var(--mp-text-primary);font-weight:700;}
+.s8-note{margin-top:8px;font-size:12px;line-height:1.5;color:var(--mp-text-muted);}
+.s8-fc{display:grid;grid-template-columns:1fr 1.2fr;gap:16px;align-items:start;}
+.s8-fc-l{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;padding:14px 16px;}
+.s8-fc-l .k{font-size:11px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-muted);}
+.s8-fc-l .v{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin:2px 0 6px;color:var(--mp-accent);}
+.s8-fc-l .m{font-size:13px;line-height:1.7;color:var(--mp-text-tertiary);}
+.s8-fc-l .m b{color:var(--mp-text-primary);font-weight:600;}
+.s8-dots-h{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-accent);margin:8px 0 6px;}
+@media(max-width:1100px){.s7-tiles{grid-template-columns:1fr;}.s8-grid{grid-template-columns:1fr 1fr;}.s8-fc{grid-template-columns:1fr;}}
+
 /* ══════════════ final overlay ══════════════ */
 .s6-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px;}
 .s6-item{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:22px 22px 20px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
@@ -560,6 +596,26 @@ window.__MQ = { authed: false };
   <!-- ═══ FINAL OVERLAY ═══ -->
   <section class="pr-screen" data-s="7">
     <div class="pr-wrap">
+      <div class="pr-eyebrow">7 · Simulated books</div>
+      <h1 class="pr-h1" style="font-size:clamp(28px,2.6vw,40px)">Paper Books, Timestamped</h1>
+      <p class="pr-sub">Four operational tables, read as they are written. Every row carries the time it was created and last updated. Gross returns, modeled fills, no execution costs. Not a live-executed track record.</p>
+      <div class="pr-body"><div id="s7-body"></div></div>
+      <div class="pr-foot-line">Drawdown columns are withheld from this view. Statistics tables run over the full paper-trade ledger, so their trade counts exceed the open positions of any one book.</div>
+    </div>
+  </section>
+
+  <section class="pr-screen" data-s="8">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">8 · Under the hood</div>
+      <h1 class="pr-h1" style="font-size:clamp(28px,2.6vw,40px)">What the Engine Learns Per Ticker</h1>
+      <p class="pr-sub">Four internal tables most people never see: the per-ticker personality signature, the calibration loop on every prediction, the daily forecast ticket, and the observations themselves.</p>
+      <div class="pr-body"><div id="s8-body"></div></div>
+      <div class="pr-foot-line">All values are the current production rows for the selected security. <b>Click any field name</b> for its definition where one exists.</div>
+    </div>
+  </section>
+
+  <section class="pr-screen" data-s="9">
+    <div class="pr-wrap">
       <div class="pr-eyebrow">Evaluation package</div>
       <h1 class="pr-h1">What We Can Provide for Evaluation</h1>
       <div class="pr-body">
@@ -636,7 +692,7 @@ var S = {
   sel: -1,               // selected observation index within rows
   cues: false, drawer: false, drawerTab: 'fields'
 };
-var TOTAL = 7; // 6 screens + final overlay
+var TOTAL = 9; // 8 screens + final overlay
 
 /* ═══════════════════════════════════════════════════════════════
    HELPERS — formatting. Missing → "—". Never fills.
@@ -798,6 +854,13 @@ var GLOSSARY = [
   {g:'opt', f:'total_call_oi / total_put_oi', say:'Open interest across the tracked contracts.', def:'Total call and put open interest across tracked contracts.', unit:'contracts'},
   {g:'opt', f:'days_to_nearest_opex / nearest_opex_date', say:'Days to, and date of, the nearest tracked expiration.', def:'Days to the nearest tracked options expiration, and its date.', unit:'calendar days · date'},
 
+  /* engine internals */
+  {g:'beh', f:'fuel_octane_rating', say:'How much energy a fresh narrative injects into this particular name.', def:'Per-ticker learned trait in ticker_signatures: narrative fuel rating. Higher = a new story moves the name harder.', src:'internal table ticker_signatures (not in the delivered feed)', unit:'learned score'},
+  {g:'beh', f:'decay_speed_multiplier', say:'How fast this name burns narrative energy relative to the universe. 1.0 is average.', def:'Per-ticker learned trait: multiplier applied to the decay rate for this name.', src:'internal table ticker_signatures (not in the delivered feed)', unit:'multiplier'},
+  {g:'beh', f:'noise_tolerance', say:'How much narrative noise the name absorbs before its state changes.', def:'Per-ticker learned trait: noise tolerance.', src:'internal table ticker_signatures (not in the delivered feed)', unit:'0–1'},
+  {g:'beh', f:'price_sensitivity_multiplier', say:'How strongly price responds to narrative energy for this name.', def:'Per-ticker learned trait: price-sensitivity multiplier.', src:'internal table ticker_signatures (not in the delivered feed)', unit:'multiplier'},
+  {g:'beh', f:'gap_fill_tendency', say:'Tendency to fill a gap after a narrative shock.', def:'Per-ticker learned trait: gap-fill tendency.', src:'internal table ticker_signatures (not in the delivered feed)', unit:'0–1'},
+  {g:'beh', f:'brier_score_overall', say:'Probability-calibration error of this name\'s own predictions. Lower is better; 0.25 is a coin flip.', def:'Brier score of the engine\'s resolved predictions for this ticker, all history.', src:'internal table ticker_signatures (not in the delivered feed)', unit:'0–1'},
   /* behavioural */
   {g:'beh', f:'fomo_score', say:'A crowd-chase gauge: how much the crowd is piling in. Descriptive and contextual.', def:'Proprietary crowd-chase gauge; higher values indicate greater crowding or FOMO intensity. Descriptive and contextual.', read:'On its own it is context. Combined with a valuation premium it is the cleanest interaction in the delivered report.', unit:'0–100 · from 2026-06-09'},
   {g:'beh', f:'fomo_band', say:'The same gauge as a label, from Calm to Blow-Off.', def:'Categorical interpretation of fomo_score. Current and legacy labels coexist across history. Allowed: Calm, Warming, Hot, Overheated, Blow-Off / Extreme.', unit:'text'},
@@ -848,7 +911,15 @@ var CUES = {
        opt: 'The panel quotes the report they already hold. Trading setups and registry states are one key away (T) — give them with the caveats attached: gross, retrospective, not a track record.',
        stop: 'Do not quote Sharpe ratios or win rates. Do not promise results. Ask what they would test first.',
        def: ['suspicion_score','earnings_credibility_score','distance_from_max_pain_pct','fomo_score','fvd_pct'] },
-  7: { main: 'What we can hand over for evaluation, and the sample we recommend you use.',
+  7: { main: 'These are the paper books the engine runs on itself: every row is a mark-to-market snapshot with the time it was written and the time it was last touched. They are gross, with modeled fills, and they are here so you can see the machinery run — not as a track record.',
+       opt: 'Switch tabs to show the v6 book, the v5 book, and the two statistics tables. Point at created_at and updated_at.',
+       stop: 'Do not sell the return. If they ask about drawdown, say it exists in the table and you withheld the column from the slide.',
+       def: ['snapshot_date','updated_at'] },
+  8: { main: 'Under the hood the engine keeps a learned signature per ticker — how much fuel a narrative adds, how fast it decays, how much noise the name tolerates — and it calibrates every prediction it makes against what actually happened. The forecast ticket and the raw observations are the same rows the product reads.',
+       opt: 'Show the calibration tab: predicted versus actual hit rate and the scaling the engine applies to itself. Then one or two dots with realized returns.',
+       stop: 'Do not explain the model architecture. Do not promise per-ticker accuracy. These are internals, shown because he asked to see the machinery.',
+       def: ['narrative_hash','decay_state','narrative_energy_t','vms'] },
+  9: { main: 'What we can hand over for evaluation, and the sample we recommend you use.',
        opt: 'A clean PIT extract, the data dictionary and timestamp lineage can be delivered to your environment.',
        stop: 'Do not discuss commercial terms here unless they raise them.',
        def: ['decay_provenance','first_written_at'] }
@@ -864,21 +935,23 @@ function go(n){
   for (var i = 0; i < secs.length; i++) secs[i].classList.toggle('active', Number(secs[i].getAttribute('data-s')) === n);
   var dots = el('pr-dots').children;
   for (var j = 0; j < dots.length; j++) dots[j].classList.toggle('on', Number(dots[j].getAttribute('data-n')) === n);
-  el('pr-cnt').textContent = (n <= 6 ? n + ' / 6' : 'Evaluation package');
+  el('pr-cnt').textContent = (n <= 8 ? n + ' / 8' : 'Evaluation package');
   el('pr-prev').disabled = n === 1;
-  el('pr-next').textContent = n === 6 ? 'Evaluation package →' : (n === TOTAL ? 'End' : 'Next →');
+  el('pr-next').textContent = n === 8 ? 'Evaluation package →' : (n === TOTAL ? 'End' : 'Next →');
   el('pr-next').disabled = n === TOTAL;
-  el('pr-sel').style.visibility = (n >= 3 && n <= 5) ? 'visible' : 'hidden';
+  el('pr-sel').style.visibility = ((n >= 3 && n <= 5) || n === 8) ? 'visible' : 'hidden';
   renderCue();
   if (S.drawer) renderDrawer();
   if (n === 3) setTimeout(renderMain, 30);
   if (n === 4) setTimeout(renderMini, 30);
+  if (n === 7) setTimeout(loadPaper, 30);
+  if (n === 8) setTimeout(loadEngine, 30);
   syncUrl();
 }
 function buildDots(){
   var h = '';
-  for (var i = 1; i <= 6; i++) h += '<button type="button" data-n="' + i + '" aria-label="Screen ' + i + '">' + i + '</button>';
-  h += '<button type="button" data-n="7" aria-label="Evaluation package" title="Evaluation package">+</button>';
+  for (var i = 1; i <= 8; i++) h += '<button type="button" data-n="' + i + '" aria-label="Screen ' + i + '">' + i + '</button>';
+  h += '<button type="button" data-n="9" aria-label="Evaluation package" title="Evaluation package">+</button>';
   el('pr-dots').innerHTML = h;
   el('pr-dots').addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) go(Number(b.getAttribute('data-n'))); });
 }
@@ -1461,6 +1534,173 @@ function drawerTrading(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   SCREEN 7 — simulated books (four operational tables, timestamped)
+   SCREEN 8 — under the hood (signature · calibration · forecast · dots)
+   Both are plain reads of production tables via /api/present-data.
+   ═══════════════════════════════════════════════════════════════ */
+S.paper = null; S.paperTab = 'v6'; S.engine = null; S.engineTab = 'signature';
+
+function fmtMoney(v){ if (v == null || !isFinite(v)) return '—'; var a = Math.abs(v); var s = a >= 1000 ? a.toLocaleString('en-US', {maximumFractionDigits: 0}) : a.toFixed(2); return (v < 0 ? '−$' : '$') + s; }
+function fmtTs(iso){ if (!iso) return '—'; var d = new Date(iso); if (isNaN(d)) return String(iso); return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth()+1) + '-' + pad2(d.getUTCDate()) + ' ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + 'Z'; }
+function fmtSigned(v, dp){ return v == null || !isFinite(v) ? '—' : (v > 0 ? '+' : '') + Number(v).toFixed(dp == null ? 2 : dp); }
+function pnlCls(v){ return v == null ? '' : (v > 0 ? ' pos' : v < 0 ? ' neg' : ''); }
+
+/* ── loaders ── */
+function loadPaper(){
+  if (S.paper) { renderScreen7(); return; }
+  var box = el('s7-body'); if (box) box.innerHTML = '<div class="dr-empty">Loading paper books…</div>';
+  api('/api/present-data?part=paper').then(function(j){ S.paper = j; renderScreen7(); })
+    .catch(function(e){ if (box) box.innerHTML = '<div class="dr-empty">Could not load: ' + esc(e && e.message ? e.message : 'error') + '</div>'; });
+}
+function loadEngine(){
+  if (S.engine && S.engine.ticker === S.ticker) { renderScreen8(); return; }
+  var box = el('s8-body'); if (box) box.innerHTML = '<div class="dr-empty">Loading ' + esc(S.ticker || '') + '…</div>';
+  if (!S.ticker) return;
+  api('/api/present-data?part=engine&ticker=' + encodeURIComponent(S.ticker)).then(function(j){ S.engine = j; renderScreen8(); })
+    .catch(function(e){ if (box) box.innerHTML = '<div class="dr-empty">Could not load: ' + esc(e && e.message ? e.message : 'error') + '</div>'; });
+}
+
+/* ── shared tab bar ── */
+function tabBar(id, tabs, active){
+  return '<div class="pr-tabs" id="' + id + '">' + tabs.map(function(t){ return '<button type="button" data-k="' + esc(t.k) + '" class="' + (t.k === active ? 'on' : '') + '">' + esc(t.t) + '</button>'; }).join('') + '</div>';
+}
+
+/* ── equity sparkline (SVG) ── */
+function sparkline(rows, key, W, H){
+  var v = rows.map(function(r){ return r[key]; });
+  var pts = []; for (var i = 0; i < v.length; i++) if (v[i] != null && isFinite(v[i])) pts.push([i, v[i]]);
+  if (pts.length < 2) return '<div class="dr-empty">Not enough rows to draw.</div>';
+  var mn = Infinity, mx = -Infinity; pts.forEach(function(p){ mn = Math.min(mn, p[1]); mx = Math.max(mx, p[1]); });
+  var pad = (mx - mn) || 1, L = 70, R = 16, T = 14, B = 26, n = v.length;
+  var x = function(i){ return L + (n > 1 ? i * (W - L - R) / (n - 1) : 0); };
+  var y = function(val){ return T + (H - T - B) - ((val - mn) / pad) * (H - T - B); };
+  var d = ''; pts.forEach(function(p, k){ d += (k ? ' L' : 'M') + x(p[0]) + ' ' + y(p[1]); });
+  var first = pts[0][1], last = pts[pts.length - 1][1];
+  var h = '<svg class="tl-svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+  h += '<line x1="' + L + '" y1="' + y(first) + '" x2="' + (W - R) + '" y2="' + y(first) + '" stroke="rgba(255,255,255,.12)" stroke-dasharray="3 4"/>';
+  h += '<path d="' + d + '" fill="none" stroke="' + (last >= first ? '#00DE94' : '#FF4D4D') + '" stroke-width="2"/>';
+  h += '<text x="' + (L - 10) + '" y="' + (y(mx) + 4) + '" text-anchor="end" font-size="11" fill="#A0A8B0">' + esc(fmtMoney(mx)) + '</text>';
+  h += '<text x="' + (L - 10) + '" y="' + (y(mn) + 4) + '" text-anchor="end" font-size="11" fill="#A0A8B0">' + esc(fmtMoney(mn)) + '</text>';
+  var step = Math.max(1, Math.round(n / 8));
+  for (var q = 0; q < n; q += step) h += '<text x="' + x(q) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#A0A8B0">' + esc(fmtDateShort(rows[q].snapshot_date || rows[q].stat_date)) + '</text>';
+  h += '</svg>';
+  return h;
+}
+
+/* ── screen 7 ── */
+function renderScreen7(){
+  var box = el('s7-body'); if (!box) return;
+  var P = S.paper; if (!P) return;
+  var tabs = P.books.map(function(b){ return { k: b.key, t: b.title }; });
+  var book = P.books.filter(function(b){ return b.key === S.paperTab; })[0] || P.books[0];
+  var h = tabBar('s7-tabs', tabs, book.key);
+  h += '<div class="s7-meta"><span><b>' + esc(book.table) + '</b></span><span>' + esc(book.note) + '</span>' + (book.kind === 'daily' ? '<span>Rows from the ' + esc(P.baseline) + ' launch baseline · ' + book.rows.length + ' sessions</span>' : '<span>' + book.rows.length + ' statistics runs</span>') + '</div>';
+  var rows = book.rows;
+  if (!rows.length) { box.innerHTML = h + '<div class="dr-empty">No rows.</div>'; wireTabs('s7-tabs', function(k){ S.paperTab = k; renderScreen7(); }); return; }
+  var last = rows[rows.length - 1], first = rows[0];
+  if (book.kind === 'daily'){
+    var ret = (first.portfolio_value && last.portfolio_value) ? (last.portfolio_value / first.portfolio_value - 1) * 100 : null;
+    h += '<div class="s7-tiles">' +
+      '<div class="s5-tile"><div class="k">Portfolio value · ' + esc(last.snapshot_date) + '</div><div class="v">' + esc(fmtMoney(last.portfolio_value)) + '</div><div class="m">from ' + esc(fmtMoney(first.portfolio_value)) + ' on ' + esc(first.snapshot_date) + ' · ' + esc(ret == null ? '—' : fmtSigned(ret, 2) + '%') + ' since baseline</div></div>' +
+      '<div class="s7-spark">' + sparkline(rows, 'portfolio_value', 900, 120) + '</div>' +
+      '<div class="s5-tile"><div class="k">Realized · unrealized</div><div class="v">' + esc(fmtMoney(last.realized_pnl_cumulative)) + '</div><div class="m">unrealized ' + esc(fmtMoney(last.unrealized_pnl)) + ' · ' + esc(fmtInt(last.open_count)) + ' open · cash ' + esc(fmtMoney(last.cash)) + '</div></div>' +
+    '</div>';
+    var show = rows.slice(-10).reverse();
+    h += '<div class="dr-tbl-wrap"><table class="dr-tbl s7-tbl"><thead><tr><th>snapshot_date</th><th>portfolio_value</th><th>daily_pnl</th><th>daily_return_pct</th><th>open_count</th><th>open_exposure</th><th>unrealized_pnl</th><th>realized_pnl_cumulative</th><th>cash</th><th>created_at</th><th>updated_at</th></tr></thead><tbody>';
+    show.forEach(function(r){ h += '<tr><td>' + esc(r.snapshot_date) + '</td><td>' + esc(fmtMoney(r.portfolio_value)) + '</td><td class="' + pnlCls(r.daily_pnl) + '">' + esc(fmtMoney(r.daily_pnl)) + '</td><td class="' + pnlCls(r.daily_return_pct) + '">' + esc(r.daily_return_pct == null ? '—' : fmtSigned(r.daily_return_pct, 2) + '%') + '</td><td>' + esc(fmtInt(r.open_count)) + '</td><td>' + esc(fmtMoney(r.open_exposure)) + '</td><td class="' + pnlCls(r.unrealized_pnl) + '">' + esc(fmtMoney(r.unrealized_pnl)) + '</td><td class="' + pnlCls(r.realized_pnl_cumulative) + '">' + esc(fmtMoney(r.realized_pnl_cumulative)) + '</td><td>' + esc(fmtMoney(r.cash)) + '</td><td>' + esc(fmtTs(r.created_at)) + '</td><td>' + esc(fmtTs(r.updated_at)) + '</td></tr>'; });
+    h += '</tbody></table></div>';
+  } else {
+    h += '<div class="s7-tiles">' +
+      '<div class="s5-tile"><div class="k">Latest run · ' + esc(last.stat_date) + '</div><div class="v">' + esc(fmtInt(last.total_trades)) + ' trades</div><div class="m">win rate ' + esc(fmt(last.win_rate, 1)) + '% · long ' + esc(fmt(last.long_win_rate, 1)) + '% · short ' + esc(fmt(last.short_win_rate, 1)) + '%</div></div>' +
+      '<div class="s7-spark">' + sparkline(rows, 'total_pnl', 900, 120) + '</div>' +
+      '<div class="s5-tile"><div class="k">Cumulative P&amp;L · avg return</div><div class="v">' + esc(fmtMoney(last.total_pnl)) + '</div><div class="m">avg ' + esc(fmtSigned(last.avg_return_pct, 2)) + '% per trade · profit factor ' + esc(fmt(last.profit_factor, 2)) + ' · Sharpe ' + esc(fmt(last.sharpe_ratio, 2)) + '</div></div>' +
+    '</div>';
+    var show2 = rows.slice(-10).reverse();
+    h += '<div class="dr-tbl-wrap"><table class="dr-tbl s7-tbl"><thead><tr><th>stat_date</th><th>total_trades</th><th>win_rate</th><th>long_win_rate</th><th>short_win_rate</th><th>avg_return_pct</th><th>total_pnl</th><th>profit_factor</th><th>sharpe_ratio</th><th>created_at</th></tr></thead><tbody>';
+    show2.forEach(function(r){ h += '<tr><td>' + esc(r.stat_date) + '</td><td>' + esc(fmtInt(r.total_trades)) + '</td><td>' + esc(fmt(r.win_rate, 1)) + '%</td><td>' + esc(fmt(r.long_win_rate, 1)) + '%</td><td>' + esc(fmt(r.short_win_rate, 1)) + '%</td><td class="' + pnlCls(r.avg_return_pct) + '">' + esc(fmtSigned(r.avg_return_pct, 2)) + '%</td><td class="' + pnlCls(r.total_pnl) + '">' + esc(fmtMoney(r.total_pnl)) + '</td><td>' + esc(fmt(r.profit_factor, 2)) + '</td><td>' + esc(fmt(r.sharpe_ratio, 2)) + '</td><td>' + esc(fmtTs(r.created_at)) + '</td></tr>'; });
+    h += '</tbody></table></div>';
+  }
+  box.innerHTML = h;
+  wireTabs('s7-tabs', function(k){ S.paperTab = k; renderScreen7(); });
+}
+function wireTabs(id, fn){
+  var bar = el(id); if (!bar) return;
+  bar.addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; fn(b.getAttribute('data-k')); });
+}
+
+/* ── screen 8 ── */
+var SIG_TRAITS = [
+  { k: 'fuel_octane_rating', t: 'Fuel octane', say: 'How much energy a fresh narrative injects into this name.' },
+  { k: 'decay_speed_multiplier', t: 'Decay speed', say: 'How fast this name burns narrative energy relative to the universe (1.0 = average).' },
+  { k: 'noise_tolerance', t: 'Noise tolerance', say: 'How much narrative noise the name absorbs before the state changes.' },
+  { k: 'price_sensitivity_multiplier', t: 'Price sensitivity', say: 'How strongly price responds to narrative energy.' },
+  { k: 'gap_fill_tendency', t: 'Gap fill', say: 'Tendency to fill a gap after a narrative shock.' },
+  { k: 'brier_score_overall', t: 'Brier score', say: 'Probability-calibration error of this name\'s own predictions (lower is better).' }
+];
+function placeBar(val, dist){
+  if (val == null || !dist || dist.max === dist.min) return '';
+  var p = Math.max(0, Math.min(1, (val - dist.min) / (dist.max - dist.min)));
+  return '<div class="s8-bar"><i style="left:' + (p * 100).toFixed(1) + '%"></i><em style="left:' + (((dist.p50 - dist.min) / (dist.max - dist.min)) * 100).toFixed(1) + '%"></em></div><div class="s8-bar-l"><span>' + esc(fmt(dist.min, 2)) + '</span><span>universe median ' + esc(fmt(dist.p50, 2)) + '</span><span>' + esc(fmt(dist.max, 2)) + '</span></div>';
+}
+function renderScreen8(){
+  var box = el('s8-body'); if (!box) return;
+  var E = S.engine; if (!E) return;
+  var tabs = [ { k: 'signature', t: 'Ticker signature' }, { k: 'calibration', t: 'Dot calibration' }, { k: 'forecast', t: 'Daily forecast' }, { k: 'dots', t: 'Dots · observations' } ];
+  var h = tabBar('s8-tabs', tabs, S.engineTab);
+  var t = S.engineTab;
+  if (t === 'signature'){
+    var s = E.signature, U = E.signature_universe;
+    if (!s) h += '<div class="dr-empty">No signature row for ' + esc(E.ticker) + '.</div>';
+    else {
+      h += '<div class="s7-meta"><span><b>ticker_signatures</b> · ' + esc(s.ticker) + ' · ' + esc(txt(s.sector)) + '</span><span>Per-ticker personality profile, learned nightly from how this name has historically responded to narratives. Bar shows where the name sits across ' + esc(U ? fmtInt(U.tickers) : '—') + ' tickers.</span><span>last_calibration_date ' + esc(fmtTs(s.last_calibration_date)) + ' · updated_at ' + esc(fmtTs(s.updated_at)) + '</span></div>';
+      h += '<div class="s8-grid">';
+      SIG_TRAITS.forEach(function(tr){ h += '<div class="s8-card"><div class="k"><span class="fld" data-field="' + esc(tr.k) + '">' + esc(tr.k) + '</span></div><div class="v">' + esc(fmt(s[tr.k], 3)) + '</div><div class="say">' + esc(tr.say) + '</div>' + placeBar(s[tr.k], U ? U[tr.k] : null) + '</div>'; });
+      h += '</div>';
+      h += '<div class="s8-row"><span>catalyst_avg_move <b>' + esc(fmt(s.catalyst_avg_move, 2)) + '%</b> over <b>' + esc(fmt(s.catalyst_avg_duration, 1)) + 'd</b></span><span>headwind_avg_move <b>' + esc(fmt(s.headwind_avg_move, 2)) + '%</b> over <b>' + esc(fmt(s.headwind_avg_duration, 1)) + 'd</b></span><span>current_accuracy_rate <b>' + esc(s.current_accuracy_rate == null ? '—' : fmt(s.current_accuracy_rate * 100, 1) + '%') + '</b> on <b>' + esc(fmtInt(s.total_predictions)) + '</b> predictions</span><span>brier_score_30d <b>' + esc(fmt(s.brier_score_30d, 3)) + '</b></span><span>calibration_bias <b>' + esc(fmtSigned(s.calibration_bias, 3)) + '</b></span><span>confidence_score <b>' + esc(fmt(s.confidence_score, 3)) + '</b></span></div>';
+    }
+  } else if (t === 'calibration'){
+    var C = E.calibration || [];
+    h += '<div class="s7-meta"><span><b>dot_prediction_calibration</b></span><span>Every narrative observation ("dot") carries a prediction; when the horizon resolves, the error is aggregated per cell and fed back as a bias correction. Global cells and this ticker\'s cells, latest nightly run.</span><span>' + (C.length ? 'computed_at ' + esc(fmtTs(C[0].computed_at)) + ' · ' + esc(txt(C[0].aggregator_version)) + ' · ' + esc(C[0].aggregation_window_days) + '-day window' : '') + '</span></div>';
+    if (!C.length) h += '<div class="dr-empty">No calibration rows.</div>';
+    else {
+      h += '<div class="dr-tbl-wrap"><table class="dr-tbl s7-tbl"><thead><tr><th>cell</th><th>horizon</th><th>n_resolved</th><th>bias_signed</th><th>mae</th><th>rmse</th><th>in_iqr_rate</th><th>predicted hit</th><th>actual hit</th><th>hit_rate_scaling</th><th>calibration_confidence</th></tr></thead><tbody>';
+      C.forEach(function(r){ h += '<tr><td>' + esc(r.cell_dim) + ' · ' + esc(r.cell_value) + '</td><td>' + esc(r.horizon_days) + 'd</td><td>' + esc(fmtInt(r.n_resolved)) + '</td><td class="' + pnlCls(r.bias_signed) + '">' + esc(fmtSigned(r.bias_signed, 3)) + '</td><td>' + esc(fmt(r.mae, 3)) + '</td><td>' + esc(fmt(r.rmse, 3)) + '</td><td>' + esc(fmt(r.in_iqr_rate, 3)) + '</td><td>' + esc(fmt(r.predicted_hit_rate_mean, 3)) + '</td><td>' + esc(fmt(r.actual_hit_rate, 3)) + '</td><td>' + esc(fmt(r.hit_rate_scaling, 3)) + '</td><td>' + esc(fmt(r.calibration_confidence, 3)) + '</td></tr>'; });
+      h += '</tbody></table></div><p class="s8-note">bias_signed and mae are in return units (0.05 = 5 points). Hit-rate fields populate for the 5-day horizon; scaling below 1 means the engine was over-confident on this cell and is being pulled down.</p>';
+    }
+  } else if (t === 'forecast'){
+    var f = E.forecast;
+    if (!f) h += '<div class="dr-empty">No forecast row for ' + esc(E.ticker) + '.</div>';
+    else {
+      h += '<div class="s7-meta"><span><b>ticker_forecast</b> · ' + esc(f.ticker) + '</span><span>The per-ticker forecast ticket, rebuilt twice a day after the pipeline and refreshed every 15 minutes in market hours. Joined from the scorecard, fair value and the price-forecast model.</span><span>forecast_snapshot_date ' + esc(txt(f.forecast_snapshot_date)) + ' · scorecard_snapshot_date ' + esc(txt(f.scorecard_snapshot_date)) + ' · heavy_refreshed_at ' + esc(fmtTs(f.heavy_refreshed_at)) + ' · light_refreshed_at ' + esc(fmtTs(f.light_refreshed_at)) + '</span></div>';
+      h += '<div class="s8-fc">';
+      h += '<div class="s8-fc-l"><div class="k">directional_verdict</div><div class="v">' + esc(txt(f.directional_verdict)) + '</div><div class="m">bias <b>' + esc(txt(f.bias)) + '</b> · primary_horizon <b>' + esc(txt(f.primary_horizon)) + '</b> · severity <b>' + esc(txt(f.severity_label)) + '</b><br>driving_signal <b>' + esc(txt(f.driving_signal)) + '</b><br>current_price <b>' + esc(fmtMoney(f.current_price)) + '</b> · fair_value <b>' + esc(fmtMoney(f.fair_value)) + '</b> · fvd_pct <b>' + esc(f.fvd_pct == null ? '—' : fmtSigned(f.fvd_pct, 1) + '%') + '</b><br>invalidation_price <b>' + esc(fmtMoney(f.invalidation_price)) + '</b><br>rolling 30-session hit rate <b>' + esc(f.rolling_30_hit_rate == null ? '—' : fmt(f.rolling_30_hit_rate * 100, 0) + '%') + '</b> (' + esc(fmtInt(f.rolling_30_directional)) + ' of ' + esc(fmtInt(f.rolling_30_total)) + ') · avg edge <b>' + esc(fmtSigned(f.rolling_30_avg_edge_pct, 2)) + '%</b></div></div>';
+      h += '<div class="dr-tbl-wrap"><table class="dr-tbl s7-tbl"><thead><tr><th>horizon</th><th>predicted move</th><th>predicted price</th><th>range low</th><th>range high</th><th>conviction</th><th>alpha vs SPY</th></tr></thead><tbody>';
+      [['1d', f.predicted_1d_pct, f.predicted_1d_price, null, null, f.conviction_1d, null], ['3d', f.predicted_3d_pct, f.predicted_3d_price, null, null, f.conviction_3d, null], ['5d', f.predicted_5d_pct, f.predicted_5d_price, f.predicted_5d_low, f.predicted_5d_high, f.conviction_5d, f.predicted_alpha_5d_vs_spy], ['10d', f.predicted_10d_pct, f.predicted_10d_price, f.predicted_10d_low, f.predicted_10d_high, f.conviction_10d, f.predicted_alpha_10d_vs_spy]].forEach(function(r){
+        h += '<tr><td>' + r[0] + '</td><td class="' + pnlCls(r[1]) + '">' + esc(r[1] == null ? '—' : fmtSigned(r[1], 2) + '%') + '</td><td>' + esc(fmtMoney(r[2])) + '</td><td>' + esc(fmtMoney(r[3])) + '</td><td>' + esc(fmtMoney(r[4])) + '</td><td>' + esc(fmtInt(r[5])) + '</td><td class="' + pnlCls(r[6]) + '">' + esc(r[6] == null ? '—' : fmtSigned(r[6], 2) + '%') + '</td></tr>';
+      });
+      h += '</tbody></table></div></div>';
+      if (f.one_line_headline) h += '<p class="s8-note">' + esc(f.one_line_headline) + '</p>';
+    }
+  } else {
+    var D = E.dots || { recent: [], resolved: [] };
+    h += '<div class="s7-meta"><span><b>narrative_dots</b> · ' + esc(E.ticker) + '</span><span>Each dot is one narrative observation, hashed and chained so the same story can be followed as prices reveal whether it was true. Dots carry a sentence embedding and a bullshit probability; resolved dots carry the realized returns.</span></div>';
+    var dotTable = function(title, rows){
+      var x = '<div class="s8-dots-h">' + esc(title) + '</div>';
+      if (!rows.length) return x + '<div class="dr-empty">None.</div>';
+      x += '<div class="dr-tbl-wrap"><table class="dr-tbl s7-tbl"><thead><tr><th>observed_at</th><th>kind · phase</th><th>speaker</th><th>narrative_text</th><th>direction</th><th>bs prob</th><th>return_5d</th><th>return_10d</th><th>truth</th><th>resolved_at</th></tr></thead><tbody>';
+      rows.forEach(function(d){ x += '<tr><td>' + esc(fmtTs(d.observed_at)) + '</td><td>' + esc(txt(d.dot_kind)) + ' · ' + esc(txt(d.cycle_phase)) + '</td><td>' + esc(txt(d.speaker_type)) + (d.speaker_authority != null ? ' ' + esc(fmt(d.speaker_authority, 0)) : '') + '</td><td style="white-space:normal;min-width:320px;font-weight:400">' + esc(txt(d.narrative_text)) + '</td><td>' + esc(txt(d.narrative_direction)) + '</td><td>' + esc(fmt(d.bullshit_probability, 2)) + '</td><td class="' + pnlCls(d.return_5d) + '">' + esc(d.return_5d == null ? '—' : fmtSigned(d.return_5d * 100, 2) + '%') + '</td><td class="' + pnlCls(d.return_10d) + '">' + esc(d.return_10d == null ? '—' : fmtSigned(d.return_10d * 100, 2) + '%') + '</td><td>' + esc(d.ground_truth_label == null ? '—' : String(d.ground_truth_label)) + '</td><td>' + esc(fmtTs(d.resolved_at)) + '</td></tr>'; });
+      return x + '</tbody></table></div>';
+    };
+    h += dotTable('Most recent observations', D.recent);
+    h += dotTable('Most recent resolved observations (realized returns known)', D.resolved);
+    var em = (D.recent.concat(D.resolved)).map(function(d){ return d.embedding_model; }).filter(Boolean)[0];
+    if (em) h += '<p class="s8-note">Embedding model on these dots: ' + esc(em) + '. Vectors are stored per dot and used for retrieval of similar narratives at prediction time.</p>';
+  }
+  box.innerHTML = h;
+  wireTabs('s8-tabs', function(k){ S.engineTab = k; renderScreen8(); });
+}
+
+/* ═══════════════════════════════════════════════════════════════
    DRAWER — depth on demand
    ═══════════════════════════════════════════════════════════════ */
 function toggleDrawer(force){
@@ -1473,7 +1713,7 @@ function toggleDrawer(force){
 function renderDrawer(){
   var tabs = el('dr-tabs').children;
   for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-t') === S.drawerTab);
-  el('dr-ctx').textContent = 'Screen ' + (S.screen <= 6 ? S.screen : '—') + (S.ticker ? ' · ' + S.ticker : '');
+  el('dr-ctx').textContent = 'Screen ' + (S.screen <= 8 ? S.screen : '—') + (S.ticker ? ' · ' + S.ticker : '');
   var b = el('dr-body'); var t = S.drawerTab;
   if (t === 'fields') b.innerHTML = drawerFields();
   else if (t === 'observation') b.innerHTML = drawerObservation();
@@ -1670,7 +1910,7 @@ function loadMeta(){
 function loadTicker(t){
   if (!t) { hideLoad(); return Promise.resolve(); }
   showLoad('Loading ' + t + '…');
-  S.ticker = t; S.rows = []; S.prices = null; S.priceSource = null; S.sel = -1;
+  S.ticker = t; S.rows = []; S.prices = null; S.priceSource = null; S.sel = -1; S.engine = null;
   var pSeries = api('/api/present-data?ticker=' + encodeURIComponent(t) + '&days=40');
   var pPrice = fetch('/api/price-history?ticker=' + encodeURIComponent(t) + '&days=150', {cache:'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
@@ -1685,6 +1925,7 @@ function loadTicker(t){
     while (idx > 0 && S.rows[idx].decay_provenance && S.rows[idx].decay_provenance !== 'LIVE_PIT') idx--;
     S.sel = n ? idx : -1;
     renderScreen2Head(); renderMain(); renderMini(); renderScreen3(); renderScreen4();
+    if (S.screen === 8) loadEngine();
     if (S.drawer) renderDrawer();
     hideLoad(); syncUrl();
   }).catch(function(e){
