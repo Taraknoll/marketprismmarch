@@ -137,7 +137,20 @@ body.pr-cues-on .pr-screen{padding-bottom:118px;}
 .s1-not .x{font-size:13px;color:var(--mp-text-tertiary);text-decoration:line-through;text-decoration-color:rgba(255,77,77,.6);}
 .s1-not .is{font-size:13px;color:var(--mp-green);font-weight:600;}
 
-/* ══════════════ timeline (screen 2 + mini on 3) ══════════════ */
+/* ══════════════ screen 2 — the measurements ══════════════ */
+.s2m-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 22px;}
+.s2m-col{display:flex;flex-direction:column;gap:9px;}
+.s2m-col .hd{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--c,var(--mp-accent));padding-bottom:6px;border-bottom:1px solid var(--mp-border);}
+.s2m-card{display:grid;grid-template-columns:230px 1fr;gap:4px 18px;align-items:start;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;padding:11px 16px 10px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s2m-card::before{content:'';position:absolute;top:0;bottom:0;left:0;width:3px;background:var(--c,var(--mp-cyan));}
+.s2m-card .nm{font-size:17px;font-weight:700;letter-spacing:-0.01em;color:var(--mp-text-primary);word-break:break-word;line-height:1.25;grid-row:span 2;}
+.s2m-card .nm small{display:block;font-size:11px;font-weight:600;color:var(--mp-text-muted);letter-spacing:.06em;margin-top:3px;}
+.s2m-card .say{font-size:14px;line-height:1.45;color:var(--mp-text-primary);}
+.s2m-card .rd{font-size:12px;line-height:1.4;color:var(--mp-text-tertiary);}
+.s2m-card .rd b{color:var(--mp-text-secondary);font-weight:600;}
+@media(max-width:1100px){.s2m-grid{grid-template-columns:1fr;}.s2m-card{grid-template-columns:1fr;}.s2m-card .nm{grid-row:auto;}}
+
+/* ══════════════ timeline (screen 3 + mini on 4) ══════════════ */
 .tl-wrap{position:relative;width:100%;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:16px 16px 10px;
   filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
 .tl-wrap svg{width:100%;display:block;overflow:visible;}
@@ -440,10 +453,23 @@ window.__MQ = { authed: false };
     </div>
   </section>
 
-  <!-- ═══ SCREEN 2 — ONE SECURITY THROUGH TIME ═══ -->
+  <!-- ═══ SCREEN 2 — THE MEASUREMENTS ═══ -->
   <section class="pr-screen" data-s="2">
     <div class="pr-wrap">
-      <div class="pr-eyebrow">2 · One security through time</div>
+      <div class="pr-eyebrow">2 · The measurements</div>
+      <h1 class="pr-h1">What Each Score Measures</h1>
+      <p class="pr-sub">The physics scores describe how a story is behaving. The forensic scores describe whether it holds up and who is pushing it. Names are the delivered field names.</p>
+      <div class="pr-body">
+        <div class="s2m-grid" id="s2m-grid"></div>
+      </div>
+      <div class="pr-foot-line">Scales are as delivered. <b>Click any name</b> for the contract definition and caveats.</div>
+    </div>
+  </section>
+
+  <!-- ═══ SCREEN 3 — ONE SECURITY THROUGH TIME ═══ -->
+  <section class="pr-screen" data-s="3">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">3 · One security through time</div>
       <div class="s2-top">
         <div>
           <h1 class="pr-h1">Information Has a Lifecycle</h1>
@@ -467,9 +493,9 @@ window.__MQ = { authed: false };
   </section>
 
   <!-- ═══ SCREEN 3 — FROM SYSTEM TO DATA ═══ -->
-  <section class="pr-screen" data-s="3">
+  <section class="pr-screen" data-s="4">
     <div class="pr-wrap">
-      <div class="pr-eyebrow">3 · From system to data</div>
+      <div class="pr-eyebrow">4 · From system to data</div>
       <h1 class="pr-h1">The Interface Is Only a Human View of the Dataset</h1>
       <p class="pr-sub">Each session's information state resolves into one timestamped row of the institutional feed. These are the delivered field names.</p>
       <div class="pr-body">
@@ -497,9 +523,9 @@ window.__MQ = { authed: false };
   </section>
 
   <!-- ═══ SCREEN 4 — POINT-IN-TIME PROVENANCE ═══ -->
-  <section class="pr-screen" data-s="4">
+  <section class="pr-screen" data-s="5">
     <div class="pr-wrap">
-      <div class="pr-eyebrow">4 · Point-in-time provenance</div>
+      <div class="pr-eyebrow">5 · Point-in-time provenance</div>
       <h1 class="pr-h1">Designed to Be Independently Auditable</h1>
       <p class="pr-sub">One actual observation from the feed, with the timestamps a researcher would use to verify when it existed.</p>
       <div class="pr-body">
@@ -513,9 +539,9 @@ window.__MQ = { authed: false };
   </section>
 
   <!-- ═══ SCREEN 5 — WHAT A QUANT RESEARCHER CAN TEST ═══ -->
-  <section class="pr-screen" data-s="5">
+  <section class="pr-screen" data-s="6">
     <div class="pr-wrap">
-      <div class="pr-eyebrow">5 · What a quant researcher can test</div>
+      <div class="pr-eyebrow">6 · What a quant researcher can test</div>
       <h1 class="pr-h1" style="font-size:clamp(28px,2.6vw,40px)">Designed for Independent Alpha Research</h1>
       <p class="pr-sub">The coordinates rank how far a name is likely to move; direction appears where narrative states intersect positioning. Whether that is incremental alpha is a question for your research framework.</p>
       <div class="pr-body">
@@ -532,7 +558,7 @@ window.__MQ = { authed: false };
   </section>
 
   <!-- ═══ FINAL OVERLAY ═══ -->
-  <section class="pr-screen" data-s="6">
+  <section class="pr-screen" data-s="7">
     <div class="pr-wrap">
       <div class="pr-eyebrow">Evaluation package</div>
       <h1 class="pr-h1">What We Can Provide for Evaluation</h1>
@@ -577,6 +603,7 @@ window.__MQ = { authed: false };
     <button data-t="observation">Observation</button>
     <button data-t="coverage">Coverage</button>
     <button data-t="evidence">Evidence</button>
+    <button data-t="trading">Trading</button>
     <button data-t="sample">Sample</button>
   </div>
   <div class="dr-body" id="dr-body"></div>
@@ -589,7 +616,7 @@ window.__MQ = { authed: false };
     <span class="cnt" id="pr-cnt">1 / 5</span>
     <button id="pr-next" type="button">Next →</button>
   </div>
-  <span class="pr-keys"><b>←</b><b>→</b> navigate · <b>Space</b> next · <b>D</b> details · <b>G</b> glossary · <b>C</b> cues · click any field name to define it</span>
+  <span class="pr-keys"><b>←</b><b>→</b> navigate · <b>Space</b> next · <b>D</b> details · <b>G</b> glossary · <b>T</b> trading · <b>C</b> cues · click any field name to define it</span>
   <span class="pr-status" id="pr-status">Read-only · institutional feed</span>
 </footer>
 
@@ -609,7 +636,7 @@ var S = {
   sel: -1,               // selected observation index within rows
   cues: false, drawer: false, drawerTab: 'fields'
 };
-var TOTAL = 6; // 5 screens + final overlay
+var TOTAL = 7; // 6 screens + final overlay
 
 /* ═══════════════════════════════════════════════════════════════
    HELPERS — formatting. Missing → "—". Never fills.
@@ -801,23 +828,27 @@ var CUES = {
        opt: 'The higher-order states are combinations of otherwise independent measurements.',
        stop: 'Do not explain individual formulas unless asked. These are measurements, not trading recommendations.',
        def: ['narrative_energy_t','narrative_velocity_score','decay_state','vms','exhaustion_days_dynamic','coordination_score'] },
-  2: { main: 'Instead of a single bullish or bearish score, Market Prism follows how the information state evolves. A security can accumulate energy, accelerate, become structurally supported, exhaust, and eventually decay or reset.',
+  2: { main: 'Ten scores are enough to follow the whole deck. The left column is physics: how the story is behaving. The right column is forensics: whether the story holds up and who is behind it. Each is a measurement of the information state, delivered as a numeric field.',
+       opt: 'Point at one physics score and one forensic score. Everything else is in the data dictionary they already have.',
+       stop: 'Do not read all ten aloud. Do not give formulas. Let them ask.',
+       def: ['narrative_energy_t','narrative_velocity_score','decay_state','vms','drift_score','suspicion_score'] },
+  3: { main: 'Instead of a single bullish or bearish score, Market Prism follows how the information state evolves. A security can accumulate energy, accelerate, become structurally supported, exhaust, and eventually decay or reset.',
        opt: 'Point at one state transition and name it. The small triangles mark days the representative narrative switched — energy re-seeds there by design, it is not corruption. Price is deliberately faint.',
        stop: 'Do not narrate every lane. One transition is enough. Do not interpret the price move.',
        def: ['decay_state','walsh_regime','fitted_half_life','narrative_hash','exhaustion_days_dynamic','vms'] },
-  3: { main: 'What you are seeing in the platform is not the product a quant desk would consume. The interface is simply a human-readable representation of the underlying measurement engine. These states resolve into timestamped quantitative fields.',
+  4: { main: 'What you are seeing in the platform is not the product a quant desk would consume. The interface is simply a human-readable representation of the underlying measurement engine. These states resolve into timestamped quantitative fields.',
        opt: 'These are the delivered field names — the same row you would receive.',
        stop: 'Do not walk through the full data dictionary. Open the glossary only if asked.',
        def: ['first_written_at','decay_provenance','vms','walsh_regime','coordination_score'] },
-  4: { main: 'This is the distinction I would want you to use in testing. March 2 forward is the clean live PIT regime. Rather than asking you to trust that characterization, the feed includes temporal provenance so your researchers can verify it themselves.',
+  5: { main: 'This is the distinction I would want you to use in testing. March 2 forward is the clean live PIT regime. Rather than asking you to trust that characterization, the feed includes temporal provenance so your researchers can verify it themselves.',
        opt: 'first_written_at is a server-default insert timestamp that is never rewritten; updated_at and the lineage view record anything that changed later.',
        stop: 'Do not defend the backfilled history. It is labeled, not hidden. Move on.',
        def: ['first_written_at','updated_at','decay_provenance','fit_status','data_quality_flags'] },
-  5: { main: 'I do not want you to accept our trading rules or performance claims. The more interesting question is whether these measurements contain incremental information when tested inside your own research framework.',
-       opt: 'The small evidence panel is from our own validation run; treat it as a starting point for replication, not a result.',
+  6: { main: 'I do not want you to accept our trading rules or performance claims. The more interesting question is whether these measurements contain incremental information when tested inside your own research framework.',
+       opt: 'The panel quotes the report they already hold. Trading setups and registry states are one key away (T) — give them with the caveats attached: gross, retrospective, not a track record.',
        stop: 'Do not quote Sharpe ratios or win rates. Do not promise results. Ask what they would test first.',
        def: ['suspicion_score','earnings_credibility_score','distance_from_max_pain_pct','fomo_score','fvd_pct'] },
-  6: { main: 'What we can hand over for evaluation, and the sample we recommend you use.',
+  7: { main: 'What we can hand over for evaluation, and the sample we recommend you use.',
        opt: 'A clean PIT extract, the data dictionary and timestamp lineage can be delivered to your environment.',
        stop: 'Do not discuss commercial terms here unless they raise them.',
        def: ['decay_provenance','first_written_at'] }
@@ -833,21 +864,21 @@ function go(n){
   for (var i = 0; i < secs.length; i++) secs[i].classList.toggle('active', Number(secs[i].getAttribute('data-s')) === n);
   var dots = el('pr-dots').children;
   for (var j = 0; j < dots.length; j++) dots[j].classList.toggle('on', Number(dots[j].getAttribute('data-n')) === n);
-  el('pr-cnt').textContent = (n <= 5 ? n + ' / 5' : 'Evaluation package');
+  el('pr-cnt').textContent = (n <= 6 ? n + ' / 6' : 'Evaluation package');
   el('pr-prev').disabled = n === 1;
-  el('pr-next').textContent = n === 5 ? 'Evaluation package →' : (n === TOTAL ? 'End' : 'Next →');
+  el('pr-next').textContent = n === 6 ? 'Evaluation package →' : (n === TOTAL ? 'End' : 'Next →');
   el('pr-next').disabled = n === TOTAL;
-  el('pr-sel').style.visibility = (n >= 2 && n <= 4) ? 'visible' : 'hidden';
+  el('pr-sel').style.visibility = (n >= 3 && n <= 5) ? 'visible' : 'hidden';
   renderCue();
   if (S.drawer) renderDrawer();
-  if (n === 2) setTimeout(renderMain, 30);
-  if (n === 3) setTimeout(renderMini, 30);
+  if (n === 3) setTimeout(renderMain, 30);
+  if (n === 4) setTimeout(renderMini, 30);
   syncUrl();
 }
 function buildDots(){
   var h = '';
-  for (var i = 1; i <= 5; i++) h += '<button type="button" data-n="' + i + '" aria-label="Screen ' + i + '">' + i + '</button>';
-  h += '<button type="button" data-n="6" aria-label="Evaluation package" title="Evaluation package">+</button>';
+  for (var i = 1; i <= 6; i++) h += '<button type="button" data-n="' + i + '" aria-label="Screen ' + i + '">' + i + '</button>';
+  h += '<button type="button" data-n="7" aria-label="Evaluation package" title="Evaluation package">+</button>';
   el('pr-dots').innerHTML = h;
   el('pr-dots').addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) go(Number(b.getAttribute('data-n'))); });
 }
@@ -868,6 +899,7 @@ document.addEventListener('keydown', function(e){
   else if (e.key === 'Escape') { if (S.drawer) toggleDrawer(false); }
   else if (e.key === 'd' || e.key === 'D') { toggleDrawer(); }
   else if (e.key === 'g' || e.key === 'G') { S.drawerTab = 'fields'; toggleDrawer(true); }
+  else if (e.key === 't' || e.key === 'T') { S.drawerTab = 'trading'; toggleDrawer(true); }
   else if (e.key === 'c' || e.key === 'C') { toggleCues(); }
   else if (e.key === 'Home') { go(1); }
 });
@@ -938,6 +970,36 @@ function renderScreen1(){
   var fh = '';
   for (var m = 0; m < fams.length; m++) fh += '<div class="s1-fam" style="--c:' + fams[m].c + '"><div class="t">' + esc(fams[m].t) + '</div><div class="f">' + esc(fams[m].f) + '</div></div>';
   el('s1-fams').innerHTML = fh;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCREEN 2 — the measurements (the key definitions, in the deck itself)
+   Plain-English lines mirror the glossary; click a name for the v1.6 text.
+   ═══════════════════════════════════════════════════════════════ */
+var S2M = [
+  { col: 'Physics — how the story is behaving', c: '#00AEFF', fields: [
+    { f: 'narrative_energy_t', u: 'current energy · score', say: 'The story\'s current energy. It rises as a narrative builds and falls as it burns out.', rd: 'Re-seeds to 0 on days the representative narrative switches.' },
+    { f: 'narrative_velocity_score', u: 'speed of spread · score', say: 'How fast the story is spreading, or attention is changing.', rd: 'Ranks how far a name is likely to move, not which way.' },
+    { f: 'decay_state', u: 'STRENGTHENING · STABLE · DECAYING', say: 'Is the story strengthening, holding, or decaying? Read this before any timing field.', rd: 'With <b>fitted_half_life</b> (days) for decaying stories and <b>doubling_time</b> for strengthening ones.' },
+    { f: 'exhaustion_days_dynamic', u: 'days', say: 'How many days until the story is projected to run out of energy.', rd: 'Small = close to exhaustion. 120 = the projection reached the operating horizon.' },
+    { f: 'narrative_mass', u: '0–1', say: 'How big or heavy the story is.', rd: 'Compressed near the top of the scale; context rather than a headline predictor.' } ] },
+  { col: 'Forensics & direction — does it hold up, who is pushing it', c: '#7B61FF', fields: [
+    { f: 'vms', u: 'Verification Match Score · 0–100', say: 'Do the story\'s factual claims match what the company actually filed? Higher = the story checks out.', rd: 'The structural-support measure. Not a speed measure.' },
+    { f: 'drift_score', u: '0–100', say: 'How far the story has drifted from what the filings support.', rd: '<b>0</b> = measured and aligned. <b>Blank</b> = could not be judged. Never the same thing.' },
+    { f: 'coordination_score', u: '0–100', say: 'Are many sources converging on the same thesis inside a narrow window?', rd: 'Most rows sit at 0. Classes: ORGANIC_SPREAD → SUSPICIOUS_PATTERN → LIKELY_COORDINATED.' },
+    { f: 'suspicion_score', u: '0–100', say: 'How anomalous the market activity around the story is.', rd: 'Says how <b>far</b> a name may move, not which way. The strongest single magnitude coordinate in the delivered report.' },
+    { f: 'wks_score', u: 'Walsh Keyword Score · −100 to +100', say: 'The directional read from the text evidence. Positive = bullish evidence, negative = bearish.', rd: 'The regime label <b>walsh_regime</b> sits beside it: CLEAR_PATH · PERSISTENT · NEUTRAL · EXHAUSTING.' } ] }
+];
+function renderScreen2m(){
+  var h = '';
+  S2M.forEach(function(col){
+    h += '<div class="s2m-col" style="--c:' + col.c + '"><div class="hd">' + esc(col.col) + '</div>';
+    col.fields.forEach(function(x){
+      h += '<div class="s2m-card" style="--c:' + col.c + '"><div class="nm"><span class="fld" data-field="' + esc(x.f) + '">' + esc(x.f) + '</span><small>' + esc(x.u) + '</small></div><div class="say">' + esc(x.say) + '</div><div class="rd">' + x.rd + '</div></div>';
+    });
+    h += '</div>';
+  });
+  el('s2m-grid').innerHTML = h;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1136,7 +1198,7 @@ function readoutHtml(r, pm){
 }
 
 function renderMain(){
-  var c = el('tl-main'); if (!c || S.screen !== 2) return;
+  var c = el('tl-main'); if (!c || S.screen !== 3) return;
   renderTimeline(c, {read:'tl-main-read'});
   var lg = '';
   for (var k in STATE_COLOR) if (k !== 'NO_DATA') lg += '<span><i style="background:' + STATE_COLOR[k] + ';opacity:.6"></i>' + esc(k) + '</span>';
@@ -1147,7 +1209,7 @@ function renderMain(){
   el('tl-main-legend').innerHTML = lg;
 }
 function renderMini(){
-  var c = el('tl-mini'); if (!c || S.screen !== 3) return;
+  var c = el('tl-mini'); if (!c || S.screen !== 4) return;
   renderTimeline(c, {mini:true});
 }
 
@@ -1283,7 +1345,7 @@ function shortSha(){ return REPORT.sha.slice(0, 8) + '…' + REPORT.sha.slice(-3
 function renderScreen5(){
   var R = REPORT; var box = el('s5-ev');
   var h = '<div class="hd"><span class="t">Existing evidence — independent replication encouraged</span>' +
-          '<span class="s">quoted from the delivered report · data-verified ' + esc(R.freeze) + ' · package SHA ' + esc(shortSha()) + '</span></div>';
+          '<span class="s">quoted from the delivered report · data-verified ' + esc(R.freeze) + ' · package SHA ' + esc(shortSha()) + ' · <a href="#" id="s5-trading" style="color:var(--mp-accent);text-decoration:none;font-weight:600">trading setups →</a></span></div>';
   h += '<div class="s5-tiles">' +
     '<div class="s5-tile"><div class="k">Composite · 5d magnitude IC</div><div class="v">' + esc(fmtIc(R.composite.ic5)) + '</div><div class="m">t ' + esc(fmt(R.composite.t, 2)) + ' · ' + esc(fmtInt(R.composite.rows)) + ' rows / ' + esc(R.composite.dates) + ' dates · signed IC ' + esc(fmtIc(R.composite.signed5)) + '</div></div>' +
     '<div class="s5-tile"><div class="k">Decile spread · |5d move|</div><div class="v">' + esc(fmt(R.composite.d1, 2)) + '% → ' + esc(fmt(R.composite.d10, 2)) + '%</div><div class="m">lowest to highest composite decile · ' + esc(fmtPp(R.composite.spread)) + '</div></div>' +
@@ -1299,6 +1361,7 @@ function renderScreen5(){
     '<div class="note" style="margin-top:6px">Left: 5-day magnitude IC per coordinate, PIT sample, T+1, gross. Transcribed from the report, not recomputed — full protocol and page references in Research Details.</div>' +
   '</div></div>';
   box.innerHTML = h;
+  var tl = el('s5-trading'); if (tl) tl.onclick = function(e){ e.preventDefault(); S.drawerTab = 'trading'; toggleDrawer(true); };
 }
 
 // Drawer version of the same report, with page references.
@@ -1330,6 +1393,74 @@ function reportDrawerHtml(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   TRADING — quoted from the two delivered documents. Gross returns,
+   retrospective, no execution assumptions. Every caveat the documents
+   attach is carried with the figures.
+   Sources: Evaluation Feed Validation report (freeze 2026-08-26) §8, §12,
+   §14; Supplemental Signal-State Validation sheet (frozen 2026-08-28).
+   ═══════════════════════════════════════════════════════════════ */
+var TRADING = {
+  rules: { page: 9, note: 'Feed-only conditional directional rules, fully reconstructible from delivered v5 fields. 10-day excess over the same-date PIT universe mean, direction-adjusted for SHORT rules; T+1 open entry; gross. 45-date rules span 2026-06-09 to 2026-08-12.', rows: [
+    { rule: 'LONG · fvd_pct ≤ −4.71% and put_call_skew ≤ 0.642', n: 1022, dates: 45, excess: 2.18, t: 6.74, hac: 2.92, legA: 0.20, legB: 0.59 },
+    { rule: 'LONG · fvd ≤ −$3.00 and put_call_skew ≤ 0.642', n: 962, dates: 45, excess: 2.12, t: 6.10, hac: 2.72 },
+    { rule: 'LONG · vms ≥ 89.8 and distance_from_max_pain_pct ≤ −1.41%', n: 1140, dates: 42, excess: 2.44, t: 8.45, hac: 5.92, legA: 0.92, legB: 1.82 },
+    { rule: 'SHORT · walsh_regime PERSISTENT and distance_from_max_pain_pct ≥ 9.22%', n: 1340, dates: 45, excess: 2.71, t: 7.94, hac: 6.18, legA: 0.01, legB: 1.93 },
+    { rule: 'SHORT · decay_state STRENGTHENING and distance_from_max_pain_pct ≥ 9.22%', n: 800, dates: 45, excess: 2.76, t: 6.97, hac: 5.90, legA: -0.09, legB: 1.93 } ] },
+  setups: { page: 15, note: 'Five multi-field Boolean gates re-tested against the delivered panel. Win rate is the share of trades with positive direction-adjusted excess; mean excess is the date-neutral average. Gross; the 46-trade gate is reported as a measured state, not a capacity claim.', rows: [
+    { name: 'Illiquidity Decay & Negative Sentiment', gate: 'amihud_conviction_decay > 0.70 and sentiment < −40', dir: 'SHORT', h: 5, n: 117, dates: 49, win: 66.7, excess: 2.43, t: 4.01 },
+    { name: 'Fundamental Discount & Drift', gate: 'drift_score > 70 and fvd_pct > +50%', dir: 'LONG', h: 10, n: 629, dates: 84, win: 54.5, excess: 1.99, t: 5.16 },
+    { name: 'Persistent Regime Narrative Drift', gate: 'drift_score > 70 in walsh_regime PERSISTENT', dir: 'LONG', h: 10, n: 1039, dates: 90, win: 52.7, excess: 0.92, t: 3.62 },
+    { name: 'Overreaction & Max Pain Collapse', gate: 'overreaction_ratio > 5.0 and max-pain distance < −5.0%', dir: 'SHORT', h: 20, n: 46, dates: 33, win: 80.4, excess: 9.16, t: 5.24 },
+    { name: 'Overreaction & Max Pain Collapse', gate: 'same gate', dir: 'SHORT', h: 10, n: 59, dates: 42, win: 66.1, excess: 3.21, t: 2.55 } ] },
+  regimes: { page: 13, note: 'Recent resolved alignment of the verdict field: 20-day forward excess for signal dates 2026-06-01 through 2026-07-29 (last fully resolved date under the freeze). Period-specific by design; earlier periods show different ordering.', rows: [
+    { v: 'Narrative Trap', excess: -4.84, t: -5.25, read: 'aligned' },
+    { v: 'Near-Trap Watch', excess: -4.37, t: -2.23, read: 'aligned' },
+    { v: 'Narrative Risk', excess: -3.23, t: -8.69, read: 'aligned' },
+    { v: 'Drift Compression Short', excess: -2.57, t: -2.40, read: 'aligned' },
+    { v: 'Coordinated Watch', excess: -1.60, t: -1.73, read: 'directionally aligned' },
+    { v: 'Monitoring', excess: 0.02, t: 0.07, read: 'neutral' },
+    { v: 'Exhausted Narrative', excess: 1.06, t: 3.17, read: 'aligned' },
+    { v: 'Accumulate', excess: 1.42, t: 2.80, read: 'aligned' },
+    { v: 'Structurally Supported', excess: 1.59, t: 5.81, read: 'aligned' },
+    { v: 'Air Pocket Short', excess: 2.13, t: 1.85, read: 'not aligned · under review' } ] },
+  registry: { source: 'Supplemental Signal-State Validation sheet, frozen 2026-08-28', note: 'Current registry definitions applied retrospectively over the full scorecard history (144,550 rows) and over the recent window from 2026-03-01 (24,403 rows). Direction-adjusted close return and hit rate, so higher is better in every row. The recent window is a nested subset, not an independent sample, and is not characterised as PIT. No dispersion statistics are reported in the sheet. Not a live-executed track record.', rows: [
+    { s: 'FRESH_ENERGY_BULL', dir: 'LONG', st: 'CONFIRMED', fullN: 2443, recN: 1718, preN: 725, fullR: 1.39, recR: 1.87, fullH: 53.4, recH: 53.6 },
+    { s: 'LOW_MASS', dir: 'SHORT', st: 'CONFIRMED', fullN: 92915, recN: 2031, preN: 90884, fullR: 0.22, recR: -2.24, fullH: 53.7, recH: 41.8 },
+    { s: 'BOTH_MAXED_LONG', dir: 'LONG', st: 'PARTIAL', fullN: 138, recN: 135, preN: 3, fullR: 3.29, recR: 3.29, fullH: 65.2, recH: 65.2 },
+    { s: 'WKS_EXHAUST_CONFLUENCE', dir: 'LONG', st: 'PARTIAL', fullN: 2026, recN: 1840, preN: 186, fullR: 2.69, recR: 2.87, fullH: 54.2, recH: 54.2 },
+    { s: 'FVD_DISCOUNT', dir: 'LONG', st: 'PARTIAL', fullN: 101, recN: 98, preN: 3, fullR: 2.61, recR: 2.63, fullH: 51.5, recH: 51.0 },
+    { s: 'EXHAUST_RELATIVE', dir: 'LONG', st: 'PARTIAL', fullN: 1040, recN: 739, preN: 301, fullR: 2.27, recR: 2.72, fullH: 60.6, recH: 62.5 },
+    { s: 'EXHAUST_HIGHCONF', dir: 'LONG', st: 'PARTIAL', fullN: 1731, recN: 1196, preN: 535, fullR: 2.15, recR: 3.06, fullH: 55.3, recH: 56.9 },
+    { s: 'CLEAR_PATH', dir: 'LONG', st: 'PARTIAL', fullN: 1371, recN: 1245, preN: 126, fullR: 1.24, recR: 1.28, fullH: 52.8, recH: 52.4 },
+    { s: 'WKS_MOMENTUM_LONG_V2', dir: 'LONG', st: 'PARTIAL', fullN: 3020, recN: 2046, preN: 974, fullR: 0.80, recR: 0.60, fullH: 53.1, recH: 49.7 },
+    { s: 'EXHAUSTING', dir: 'LONG', st: 'PARTIAL', fullN: 1677, recN: 1110, preN: 567, fullR: 0.72, recR: 1.03, fullH: 52.1, recH: 52.0 },
+    { s: 'ACS_LOW', dir: 'SHORT', st: 'PARTIAL', fullN: 99669, recN: 2066, preN: 97603, fullR: 0.28, recR: -1.68, fullH: 53.9, recH: 44.9 },
+    { s: 'FWOR_VMS', dir: 'SHORT', st: 'PARTIAL', fullN: 1140, recN: 151, preN: 989, fullR: -1.29, recR: -0.49, fullH: 51.1, recH: 37.1 } ] }
+};
+function fmtSignedPct(v, dp){ return v == null ? '—' : (v > 0 ? '+' : '') + Number(v).toFixed(dp == null ? 2 : dp) + '%'; }
+function drawerTrading(){
+  var T = TRADING;
+  var h = '<div class="dr-sec"><p class="mut">All figures below are transcribed from the delivered documents. They are gross, retrospective evaluations with no slippage, borrow, financing, capacity or execution overlay, and none is a live-executed track record. The report itself treats the coordinate evidence on Screen 5 as the stable cross-period result and this layer as supplemental.</p></div>';
+
+  h += '<div class="dr-sec"><h4>Feed-only conditional directional rules · 10d · report p.' + T.rules.page + '</h4><p class="mut" style="margin-bottom:6px">' + esc(T.rules.note) + '</p><div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th>Rule</th><th>n</th><th>Dates</th><th>10d excess</th><th>Day t</th><th>HAC t</th></tr></thead><tbody>';
+  T.rules.rows.forEach(function(r){ h += '<tr><td style="white-space:normal">' + esc(r.rule) + (r.legA != null ? '<small style="display:block;font-weight:400;color:var(--mp-text-muted)">legs alone: state ' + esc(fmtPp(r.legA)) + ' · positioning ' + esc(fmtPp(r.legB)) + '</small>' : '') + '</td><td>' + esc(fmtInt(r.n)) + '</td><td>' + r.dates + '</td><td>' + esc(fmtPp(r.excess)) + '</td><td>' + esc(fmt(r.t, 2)) + '</td><td>' + esc(fmt(r.hac, 2)) + '</td></tr>'; });
+  h += '</tbody></table></div><p class="mut" style="margin-top:6px">The report\'s reading: narrative state alone is close to null on a signed basis in three of the four rows; the intersection with positioning carries the effect. Thresholds degrade smoothly across the tested range (p.10).</p></div>';
+
+  h += '<div class="dr-sec"><h4>Verified tactical setups · report p.' + T.setups.page + '</h4><p class="mut" style="margin-bottom:6px">' + esc(T.setups.note) + '</p><div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th>Setup · gate</th><th>Dir</th><th>h</th><th>n</th><th>Dates</th><th>Win</th><th>Mean excess</th><th>t</th></tr></thead><tbody>';
+  T.setups.rows.forEach(function(r){ h += '<tr><td style="white-space:normal">' + esc(r.name) + '<small style="display:block;font-weight:400;color:var(--mp-text-muted)">' + esc(r.gate) + '</small></td><td>' + esc(r.dir) + '</td><td>' + r.h + 'd</td><td>' + esc(fmtInt(r.n)) + '</td><td>' + r.dates + '</td><td>' + esc(fmt(r.win, 1)) + '%</td><td>' + esc(fmtPp(r.excess)) + '</td><td>' + esc(fmt(r.t, 2)) + '</td></tr>'; });
+  h += '</tbody></table></div></div>';
+
+  h += '<div class="dr-sec"><h4>Verdict regimes · recent resolved 20d alignment · report p.' + T.regimes.page + '</h4><p class="mut" style="margin-bottom:6px">' + esc(T.regimes.note) + '</p><div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th><span class="fld" data-field="verdict">verdict</span></th><th>20d excess</th><th>t</th><th>Read</th></tr></thead><tbody>';
+  T.regimes.rows.forEach(function(r){ h += '<tr><td>' + esc(r.v) + '</td><td>' + esc(fmtPp(r.excess)) + '</td><td>' + esc(fmt(r.t, 2)) + '</td><td style="white-space:normal;color:' + (r.read.indexOf('not') === 0 ? 'var(--mp-amber)' : 'var(--mp-text-tertiary)') + '">' + esc(r.read) + '</td></tr>'; });
+  h += '</tbody></table></div><p class="mut" style="margin-top:6px">Nine of ten regimes carry the sign their semantics imply or are neutral where expected; Air Pocket Short is disclosed as a live exception rather than excluded. State labels are positioning regimes, not standing buy/sell calls.</p></div>';
+
+  h += '<div class="dr-sec"><h4>Signal-state registry · full history vs recent window</h4><p class="mut" style="margin-bottom:6px">' + esc(T.registry.source) + '. ' + esc(T.registry.note) + '</p><div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th>State</th><th>Dir</th><th>Status</th><th>Full N</th><th>Recent N</th><th>Full close</th><th>Recent close</th><th>Full hit</th><th>Recent hit</th></tr></thead><tbody>';
+  T.registry.rows.forEach(function(r){ var thin = r.preN < 200; h += '<tr><td>' + esc(r.s) + (thin ? '<small style="display:block;font-weight:400;color:var(--mp-amber)">pre-window N ' + r.preN + ' — windows nearly identical</small>' : '') + '</td><td>' + esc(r.dir) + '</td><td>' + esc(r.st) + '</td><td>' + esc(fmtInt(r.fullN)) + '</td><td>' + esc(fmtInt(r.recN)) + '</td><td>' + esc(fmtSignedPct(r.fullR)) + '</td><td>' + esc(fmtSignedPct(r.recR)) + '</td><td>' + esc(fmt(r.fullH, 1)) + '%</td><td>' + esc(fmt(r.recH, 1)) + '%</td></tr>'; });
+  h += '</tbody></table></div><p class="mut" style="margin-top:6px">Registry status (CONFIRMED / PARTIAL) is a codebase lifecycle label, not a significance classification. The exhaustion and continuation family holds or improves in the recent window; the two highest-frequency screening states, LOW_MASS and ACS_LOW, weaken materially and fire far less often. Say that before they find it.</p></div>';
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    DRAWER — depth on demand
    ═══════════════════════════════════════════════════════════════ */
 function toggleDrawer(force){
@@ -1342,12 +1473,13 @@ function toggleDrawer(force){
 function renderDrawer(){
   var tabs = el('dr-tabs').children;
   for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-t') === S.drawerTab);
-  el('dr-ctx').textContent = 'Screen ' + (S.screen <= 5 ? S.screen : '—') + (S.ticker ? ' · ' + S.ticker : '');
+  el('dr-ctx').textContent = 'Screen ' + (S.screen <= 6 ? S.screen : '—') + (S.ticker ? ' · ' + S.ticker : '');
   var b = el('dr-body'); var t = S.drawerTab;
   if (t === 'fields') b.innerHTML = drawerFields();
   else if (t === 'observation') b.innerHTML = drawerObservation();
   else if (t === 'coverage') b.innerHTML = drawerCoverage();
   else if (t === 'evidence') b.innerHTML = drawerEvidence();
+  else if (t === 'trading') b.innerHTML = drawerTrading();
   else b.innerHTML = drawerSample();
 }
 var GL_QUERY = '';
@@ -1608,6 +1740,7 @@ el('mq-lock').onclick = function(){ fetch('/api/present-session', {method:'DELET
    ═══════════════════════════════════════════════════════════════ */
 buildDots();
 renderScreen1();
+renderScreen2m();
 renderScreen3(); renderScreen4(); renderScreen5();
 try { if (localStorage.getItem('mp_present_cues') === '1') S.cues = true; } catch(_e){}
 toggleCues(S.cues);
