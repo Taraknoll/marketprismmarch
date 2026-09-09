@@ -427,20 +427,20 @@ const DOT_COLS = 'dot_hash,dot_kind,observed_at,cycle_phase,speaker_type,speaker
 let SIG_UNIVERSE_CACHE = { at: 0, body: null };
 async function sigUniverse(rest, headers) {
   if (SIG_UNIVERSE_CACHE.body && Date.now() - SIG_UNIVERSE_CACHE.at < 30 * 60 * 1000) return SIG_UNIVERSE_CACHE.body;
-  const rows = await fetchAll(rest + 'ticker_signatures?select=fuel_octane_rating,decay_speed_multiplier,noise_tolerance,price_sensitivity_multiplier,brier_score_overall,current_accuracy_rate', headers, 2000);
+  const rows = await fetchAll(rest + 'ticker_signatures?select=fuel_octane_rating,decay_speed_multiplier,noise_tolerance,price_sensitivity_multiplier,gap_fill_tendency,brier_score_overall,current_accuracy_rate', headers, 2000);
   const dist = (k) => {
     const v = rows.map((r) => Number(r[k])).filter((x) => Number.isFinite(x)).sort((a, b) => a - b);
     if (!v.length) return null;
     return { n: v.length, min: num(v[0], 3), p50: num(v[Math.floor(v.length / 2)], 3), max: num(v[v.length - 1], 3) };
   };
-  const body = { tickers: rows.length, fuel_octane_rating: dist('fuel_octane_rating'), decay_speed_multiplier: dist('decay_speed_multiplier'), noise_tolerance: dist('noise_tolerance'), price_sensitivity_multiplier: dist('price_sensitivity_multiplier'), brier_score_overall: dist('brier_score_overall'), current_accuracy_rate: dist('current_accuracy_rate') };
+  const body = { tickers: rows.length, fuel_octane_rating: dist('fuel_octane_rating'), decay_speed_multiplier: dist('decay_speed_multiplier'), noise_tolerance: dist('noise_tolerance'), price_sensitivity_multiplier: dist('price_sensitivity_multiplier'), gap_fill_tendency: dist('gap_fill_tendency'), brier_score_overall: dist('brier_score_overall'), current_accuracy_rate: dist('current_accuracy_rate') };
   SIG_UNIVERSE_CACHE = { at: Date.now(), body };
   return body;
 }
 
 // Featured examples for the under-the-hood screen: tickers where the engine's
 // own bookkeeping currently looks strongest. The rule is stated on screen.
-const FEATURED_RULE = { minAcc: 0.65, minPred: 15, minHit: 0.6, minResolved: 4 };
+const FEATURED_RULE = { maxBrier: 0.20, minAcc: 0.65, minPred: 15, minHit: 0.5, minResolved: 3 };
 let FEATURED_CACHE = { at: 0, body: null };
 async function buildFeatured(rest, headers) {
   if (FEATURED_CACHE.body && Date.now() - FEATURED_CACHE.at < 15 * 60 * 1000) return FEATURED_CACHE.body;
@@ -454,10 +454,11 @@ async function buildFeatured(rest, headers) {
     if (!sg.ticker || dropTicker(sg.ticker)) continue;
     const f = fcOf[sg.ticker]; if (!f) continue;
     const acc = Number(sg.current_accuracy_rate), n = Number(sg.total_predictions), hit = Number(f.rolling_30_hit_rate), rn = Number(f.rolling_30_total), edge = Number(f.rolling_30_avg_edge_pct);
-    if (!(acc >= FEATURED_RULE.minAcc && n >= FEATURED_RULE.minPred && hit >= FEATURED_RULE.minHit && rn >= FEATURED_RULE.minResolved && edge > 0)) continue;
+    const brier = sg.brier_score_overall == null ? NaN : Number(sg.brier_score_overall);
+    if (!(brier <= FEATURED_RULE.maxBrier && acc >= FEATURED_RULE.minAcc && n >= FEATURED_RULE.minPred && hit >= FEATURED_RULE.minHit && rn >= FEATURED_RULE.minResolved && edge > 0)) continue;
     out.push({ t: sg.ticker, sector: sg.sector || null, acc: num(acc, 3), n, hit: num(hit, 3), rn, edge: num(edge, 2), brier: num(sg.brier_score_overall, 3), verdict: f.directional_verdict || null });
   }
-  out.sort((a, b) => (b.acc - a.acc) || (b.hit - a.hit));
+  out.sort((a, b) => (a.brier - b.brier) || (b.acc - a.acc));   // best-calibrated first
   const body = { rule: FEATURED_RULE, examples: out.slice(0, 8), generated_at: new Date().toISOString() };
   FEATURED_CACHE = { at: Date.now(), body };
   return body;

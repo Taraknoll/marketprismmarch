@@ -1577,9 +1577,9 @@ function renderFeatured(){
   var ex = S.featured.examples || [], R = S.featured.rule;
   if (!ex.length) { box.innerHTML = '<span class="lbl">Examples</span><span class="rule">No security currently passes the example rule.</span>'; return; }
   var h = '<span class="lbl">Examples</span><button class="arr" type="button" data-dir="-1" aria-label="Previous example">‹</button><div class="chips">';
-  ex.forEach(function(x){ h += '<button type="button" class="chip' + (x.t === S.ticker ? ' on' : '') + '" data-t="' + esc(x.t) + '" title="' + esc(x.sector || '') + '">' + esc(x.t) + '<small>' + esc(fmt(x.acc * 100, 0)) + '% on ' + esc(fmtInt(x.n)) + ' · 30-session hit ' + esc(fmt(x.hit * 100, 0)) + '%</small></button>'; });
+  ex.forEach(function(x){ h += '<button type="button" class="chip' + (x.t === S.ticker ? ' on' : '') + '" data-t="' + esc(x.t) + '" title="' + esc(x.sector || '') + '">' + esc(x.t) + '<small>Brier ' + esc(fmt(x.brier, 3)) + ' · ' + esc(fmt(x.acc * 100, 0)) + '% on ' + esc(fmtInt(x.n)) + ' · hit ' + esc(fmt(x.hit * 100, 0)) + '%</small></button>'; });
   h += '</div><button class="arr" type="button" data-dir="1" aria-label="Next example">›</button>';
-  if (R) h += '<span class="rule">Selected by rule: signature accuracy ≥ ' + esc(fmt(R.minAcc * 100, 0)) + '% on ≥ ' + R.minPred + ' predictions, 30-session forecast hit rate ≥ ' + esc(fmt(R.minHit * 100, 0)) + '% on ≥ ' + R.minResolved + ' resolved, positive average edge. Recomputed from the live tables.</span>';
+  if (R) h += '<span class="rule">Selected by rule, best-calibrated first: Brier score ≤ ' + esc(fmt(R.maxBrier, 2)) + ' (0.25 is a coin flip), signature accuracy ≥ ' + esc(fmt(R.minAcc * 100, 0)) + '% on ≥ ' + R.minPred + ' predictions, 30-session forecast hit rate ≥ ' + esc(fmt(R.minHit * 100, 0)) + '% on ≥ ' + R.minResolved + ' resolved, positive average edge. Recomputed from the live tables.</span>';
   box.innerHTML = h;
   box.querySelectorAll('.chip').forEach(function(c){ c.onclick = function(){ pickTicker(c.getAttribute('data-t')); }; });
   box.querySelectorAll('.arr').forEach(function(a){ a.onclick = function(){
