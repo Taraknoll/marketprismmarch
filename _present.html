@@ -1431,6 +1431,39 @@ var REPORT = {
 function fmtPp(v, dp){ return v == null ? '—' : (v > 0 ? '+' : '') + Number(v).toFixed(dp == null ? 2 : dp) + 'pp'; }
 function shortSha(){ return REPORT.sha.slice(0, 8) + '…' + REPORT.sha.slice(-3); }
 
+/* Live-window factor validation — quoted from "Market Prism — Analytical
+   Review" (2026-09-09, live point-in-time data only) and the
+   narrative_velocity_score magnitude-factor note (2026-09-07); Newey-West
+   check run 2026-09-09. Nothing recomputed here. */
+var LIVE = {
+  window: 'live window 2026-02-12 → 2026-09-04 · 120 trading dates · 234 tickers · Spearman rank IC within each date, averaged; t from the daily IC series · backfilled rows before 2026-02-12 excluded',
+  velocity: [ // horizon, IC, t iid, t Newey-West (10 lags), days positive
+    ['1d raw', 0.0765, 9.41, 8.19, 78.5], ['3d raw', 0.0631, 8.28, 6.31, 76.9], ['5d raw', 0.0650, 7.85, 5.08, 77.7], ['10d raw', 0.0711, 9.08, 4.44, 79.3],
+    ['5d vol-controlled', 0.0370, 4.66, 3.40, 64.5], ['10d vol-controlled', 0.0433, 5.89, 3.34, 72.7] ],
+  velSigned: { ic: -0.003, t: -0.37 }, topDecile: { d5: 35, d10: 38 },
+  mass: { ic: 0.0542, t: 8.69, dsIc: 0.0564, buckets: '20 of 25' },
+  suspicion: { volFixedIc: 0.0498 }, daysElapsed: { t: 4.31 },
+  backfill: 'Reconstructed rows before 2026-02-12 measure an IC of about 0.149, roughly 2.25× the live figure; every figure here uses the live window only.'
+};
+S.evTab = 'live';
+function renderLiveHtml(){
+  var L = LIVE;
+  var h = '<div class="s5-tiles">' +
+    '<div class="s5-tile"><div class="k"><span class="fld" data-field="narrative_velocity_score">narrative_velocity_score</span> · 5d magnitude IC</div><div class="v">' + esc(fmtIc(L.velocity[2][1])) + '</div><div class="m">t ' + esc(fmt(L.velocity[2][2], 2)) + ' iid · t ' + esc(fmt(L.velocity[2][3], 2)) + ' Newey-West · positive on ' + esc(fmt(L.velocity[2][4], 1)) + '% of days</div></div>' +
+    '<div class="s5-tile"><div class="k">Top decile vs rest · |move|</div><div class="v">+' + L.topDecile.d5 + '% / +' + L.topDecile.d10 + '%</div><div class="m">5-day / 10-day; deciles 1–9 sit in a narrow band, decile 10 separates · signed IC ' + esc(fmtIc(L.velSigned.ic)) + ' (t ' + esc(fmt(L.velSigned.t, 2)) + '): magnitude, not direction</div></div>' +
+    '<div class="s5-tile"><div class="k"><span class="fld" data-field="narrative_mass">narrative_mass</span> · 5d signed IC</div><div class="v">' + esc(fmtIc(L.mass.ic)) + '</div><div class="m">t ' + esc(fmt(L.mass.t, 2)) + ' · rises to ' + esc(fmtIc(L.mass.dsIc)) + ' under a volatility × momentum double-sort · positive in ' + esc(L.mass.buckets) + ' buckets</div></div>' +
+    '<div class="s5-tile"><div class="k">After trailing-vol control</div><div class="v">' + esc(fmtIc(L.velocity[4][1])) + ' / ' + esc(fmtIc(L.velocity[5][1])) + '</div><div class="m">5d / 10d vol-controlled IC, t ' + esc(fmt(L.velocity[4][3], 2)) + ' and ' + esc(fmt(L.velocity[5][3], 2)) + ' Newey-West · ~55% of the raw signal survives · no decay to 10 days</div></div>' +
+  '</div>';
+  h += '<div class="s5-two"><div class="s5-mini"><div class="row" style="border-bottom:1px solid var(--mp-border)"><span><b>narrative_velocity_score</b> · horizon</span><span style="font-size:12px;color:var(--mp-text-muted);font-weight:600">IC · t iid · t NW · days +</span></div>';
+  L.velocity.forEach(function(r){ h += '<div class="row"><span>' + esc(r[0]) + '</span><span>' + esc(fmtIc(r[1])) + ' · ' + esc(fmt(r[2], 2)) + ' · ' + esc(fmt(r[3], 2)) + ' · ' + esc(fmt(r[4], 1)) + '%</span></div>'; });
+  h += '</div><div class="s5-mini">' +
+    '<div class="row"><span><b>Direction survives controls</b> · narrative_mass is not a momentum or volatility proxy</span><span>' + esc(L.mass.buckets) + '</span></div>' +
+    '<div class="row"><span><b>Incremental</b> · <span class="fld" data-field="suspicion_score">suspicion_score</span> IC holding volatility fixed, all ten deciles positive</span><span>' + esc(fmtIc(L.suspicion.volFixedIc)) + '</span></div>' +
+    '<div class="row"><span><b>Simplest claim</b> · <span class="fld" data-field="days_elapsed">days_elapsed</span> signed t, clears Bonferroni across 22 fields</span><span>' + esc(fmt(L.daysElapsed.t, 2)) + '</span></div>' +
+    '<div class="note" style="margin-top:8px">' + esc(L.window) + '. ' + esc(L.backfill) + ' Quoted from the Analytical Review (2026-09-09) and the Newey-West check (10 lags); not recomputed here.</div>' +
+  '</div></div>';
+  return h;
+}
 function renderScreen5(){
   var R = REPORT; var box = el('s5-ev');
   var h = '<div class="hd"><span class="t">Existing evidence — independent replication encouraged</span>' +
@@ -1449,7 +1482,11 @@ function renderScreen5(){
     '<div class="row"><span><b>State gate</b> · composite Q5−Q1 |5d move| inside high vs low <span class="fld" data-field="narrative_energy_t">narrative_energy_t</span></span><span>' + esc(fmtPp(R.energyGate.rows[2].spread)) + ' vs ' + esc(fmtPp(R.energyGate.rows[0].spread)) + '</span></div>' +
     '<div class="note" style="margin-top:6px">Left: 5-day magnitude IC per coordinate, PIT sample, T+1, gross. Transcribed from the report, not recomputed — full protocol and page references in Research Details.</div>' +
   '</div></div>';
+  var tabs = '<div class="pr-tabs" id="s5-tabs" style="margin:6px 0 8px"><button type="button" data-k="live" class="' + (S.evTab === 'live' ? 'on' : '') + '">Live-window validation · Sep 9</button><button type="button" data-k="report" class="' + (S.evTab === 'report' ? 'on' : '') + '">Delivered report · Aug 26</button></div>';
+  var hdEnd = h.indexOf('</div>') + 6; var header = h.slice(0, hdEnd), body = h.slice(hdEnd);
+  h = header + tabs + (S.evTab === 'live' ? renderLiveHtml() : body);
   box.innerHTML = h;
+  wireTabs('s5-tabs', function(k){ S.evTab = k; renderScreen5(); });
   var tl = el('s5-trading'); if (tl) tl.onclick = function(e){ e.preventDefault(); S.drawerTab = 'trading'; toggleDrawer(true); };
 }
 
