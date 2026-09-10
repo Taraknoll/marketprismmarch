@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Founder Briefing — Market Prism™</title>
+<meta name="description" content="Market Prism founder briefing — a read-only, five-slide presentation for a data-sourcing evaluation meeting.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="/assets/Market-Prism-Favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --mp-obsidian:#080B11;
+  --mp-surface:#0C1018;
+  --mp-surface2:#111927;
+  --mp-border:rgba(255,255,255,0.06);
+  --mp-border-mid:rgba(255,255,255,0.10);
+  --mp-border-hover:rgba(255,255,255,0.14);
+  --mp-cyan:#00AEFF;
+  --mp-accent:#4DC8F0;
+  --mp-teal:#38C8B8;
+  --mp-green:#00DE94;
+  --mp-red:#FF4D4D;
+  --mp-amber:#FFB800;
+  --mp-violet:#7B61FF;
+  --mp-text-primary:#FFFFFF;
+  --mp-text-secondary:rgba(255,255,255,0.72);
+  --mp-text-tertiary:#A0A8B0;
+  --mp-text-muted:rgba(255,255,255,0.34);
+  --font-display:'Inter','DM Sans',system-ui,sans-serif;
+  --font-body:'Inter','DM Sans',system-ui,sans-serif;
+  --top-h:64px;
+  --bot-h:72px;
+}
+html{background:var(--mp-obsidian);}
+body{background:var(--mp-obsidian);color:var(--mp-text-primary);font-family:var(--font-body);
+  min-height:100vh;-webkit-font-smoothing:antialiased;overflow:hidden;font-variant-numeric:tabular-nums;}
+a{color:var(--mp-cyan);}
+::selection{background:rgba(0,174,255,0.30);}
+button{font-family:var(--font-body);}
+
+/* ══════════════ access gate (mirrors /present) ══════════════ */
+#mq-gate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:var(--mp-obsidian);opacity:1;visibility:visible;
+  transition:opacity .45s ease,visibility 0s linear 0s;}
+#mq-gate::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 70% 55% at 50% 40%,black 20%,transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 40%,black 20%,transparent 100%);}
+body.mq-open #mq-gate{opacity:0;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .45s;}
+.mq-card{position:relative;z-index:2;width:min(460px,100%);background:var(--mp-surface);
+  border:1px solid var(--mp-border);border-radius:16px;padding:36px 34px 28px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));overflow:hidden;}
+.mq-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,#00AEFF,#7B61FF);}
+.mq-card img{height:30px;width:auto;display:block;margin-bottom:22px;}
+.mq-eyebrow{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--mp-accent);margin-bottom:8px;}
+.mq-card h1{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:-0.025em;margin-bottom:10px;}
+.mq-card .sub{font-size:13px;line-height:1.6;color:var(--mp-text-tertiary);margin-bottom:24px;}
+.mq-card .sub b{color:var(--mp-text-secondary);font-weight:600;}
+.mq-field{display:flex;gap:8px;}
+#mq-code{flex:1;min-width:0;height:44px;font-family:var(--font-body);font-size:16px;font-weight:600;
+  letter-spacing:.08em;color:var(--mp-text-primary);background:var(--mp-obsidian);
+  border:1px solid var(--mp-border-mid);border-radius:10px;padding:0 14px;outline:none;text-transform:uppercase;}
+#mq-code::placeholder{color:var(--mp-text-muted);font-weight:400;letter-spacing:.02em;text-transform:none;}
+#mq-code:focus-visible{border-color:var(--mp-cyan);box-shadow:0 0 0 1px var(--mp-cyan);}
+#mq-enter{cursor:pointer;height:44px;font-size:13px;font-weight:700;letter-spacing:.04em;color:#04121C;
+  background:var(--mp-cyan);border:none;border-radius:10px;padding:0 20px;transition:filter .15s;}
+#mq-enter:hover{filter:brightness(1.12);}
+#mq-enter:disabled{opacity:.55;cursor:wait;filter:none;}
+#mq-err{min-height:20px;margin-top:12px;font-size:13px;font-weight:500;color:var(--mp-red);}
+.mq-note{margin-top:18px;padding-top:16px;border-top:1px solid var(--mp-border);font-size:11px;line-height:1.6;color:var(--mp-text-muted);}
+.mq-note a{color:var(--mp-text-tertiary);text-decoration:none;}
+.mq-shake{animation:mq-shake .4s ease;}
+@keyframes mq-shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+
+/* ══════════════ chrome ══════════════ */
+.pr-top{position:fixed;top:0;left:0;right:0;height:var(--top-h);z-index:20;display:flex;align-items:center;gap:14px;
+  padding:0 28px;border-bottom:1px solid var(--mp-border);background:rgba(8,11,17,0.88);backdrop-filter:blur(8px);}
+.pr-brand{display:flex;align-items:center;gap:12px;}
+.pr-brand img{height:24px;width:auto;display:block;}
+.pr-brand .div{width:1px;height:20px;background:var(--mp-border-mid);}
+.pr-brand .nm{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-primary);}
+.pr-mode{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mp-text-tertiary);border:1px solid var(--mp-border-mid);border-radius:20px;padding:5px 11px;}
+.pr-mode i{width:6px;height:6px;border-radius:50%;background:var(--mp-accent);box-shadow:0 0 8px rgba(77,200,240,.7);animation:pr-pulse 2.4s ease-in-out infinite;}
+@keyframes pr-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.pr-dots{display:flex;gap:8px;margin-left:8px;}
+.pr-dots button{width:26px;height:26px;border-radius:50%;border:1px solid var(--mp-border-mid);background:transparent;color:var(--mp-text-tertiary);
+  font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.pr-dots button.on{background:var(--mp-cyan);color:#04121C;border-color:var(--mp-cyan);}
+.pr-dots button:hover:not(.on){border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.pr-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.pr-sel{display:flex;align-items:center;gap:8px;}
+.pr-sel label{font-size:11px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-muted);}
+.pr-sel select{font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--mp-text-primary);background:var(--mp-surface);
+  border:1px solid var(--mp-border-mid);border-radius:10px;padding:8px 12px;outline:none;cursor:pointer;}
+#pr-ticker{min-width:210px;}
+#pr-obs{min-width:150px;}
+.pr-sel select:focus-visible{border-color:var(--mp-cyan);}
+.pr-btn{cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-tertiary);
+  background:none;border:1px solid var(--mp-border);border-radius:10px;padding:9px 14px;transition:border-color .15s,color .15s,background .15s;}
+.pr-btn:hover{border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.pr-btn.on{border-color:var(--mp-cyan);color:var(--mp-cyan);background:rgba(0,174,255,0.08);}
+.pr-btn.lock:hover{border-color:var(--mp-red);color:var(--mp-red);}
+.pr-btn b{display:inline-block;margin-left:6px;font-weight:700;}
+
+/* ══════════════ stage ══════════════ */
+.pr-stage{position:fixed;top:var(--top-h);bottom:var(--bot-h);left:0;right:0;overflow:hidden;}
+.pr-screen{position:absolute;inset:0;display:none;padding:22px 56px 16px;overflow:auto;}
+.pr-screen.active{display:flex;flex-direction:column;animation:pr-in .4s ease both;}
+body.pr-cues-on .pr-screen{padding-bottom:124px;}
+@keyframes pr-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.pr-wrap{width:100%;max-width:1520px;margin:0 auto;flex:1 0 auto;display:flex;flex-direction:column;}
+.pr-eyebrow{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--mp-accent);margin-bottom:10px;}
+.pr-h1{font-family:var(--font-display);font-size:clamp(32px,3.4vw,52px);font-weight:700;letter-spacing:-0.025em;line-height:1.08;max-width:1180px;}
+.pr-h1.sm{font-size:clamp(26px,2.5vw,40px);}
+.pr-sub{margin-top:12px;font-size:clamp(16px,1.25vw,21px);line-height:1.5;color:var(--mp-text-secondary);max-width:1100px;}
+.pr-sub.sm{margin-top:8px;font-size:clamp(14px,1.05vw,17px);max-width:1200px;}
+.pr-sub b{color:var(--mp-text-primary);font-weight:600;}
+.pr-body{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;padding:16px 0 8px;}
+.pr-body.top{justify-content:flex-start;}
+.pr-foot-line{font-size:14px;color:var(--mp-text-tertiary);letter-spacing:.02em;padding-top:12px;border-top:1px solid var(--mp-border);}
+.pr-foot-line b{color:var(--mp-text-secondary);font-weight:600;}
+.pr-foot-line .st{color:var(--mp-accent);font-weight:700;}
+
+/* ══════════════ slide 1 — why it exists ══════════════ */
+.s1-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:6px;}
+.s1-card{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:22px 22px 20px;position:relative;overflow:hidden;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s1-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--mp-cyan));}
+.s1-card .k{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--c,var(--mp-accent));margin-bottom:10px;}
+.s1-card .t{font-size:clamp(16px,1.2vw,19px);font-weight:600;line-height:1.5;color:var(--mp-text-primary);letter-spacing:-0.005em;}
+.s1-arc{margin-top:20px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:14px 18px 12px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s1-arc svg{width:100%;height:auto;display:block;}
+.s1-arc text{font-family:var(--font-body);}
+.s1-line{margin-top:18px;font-family:var(--font-display);font-size:clamp(20px,1.9vw,30px);font-weight:700;letter-spacing:-0.02em;line-height:1.25;}
+.s1-line span{color:var(--mp-accent);}
+
+/* ══════════════ slide 2 — what it measures ══════════════ */
+.s2-thesis{margin:4px 0 6px;font-size:clamp(18px,1.55vw,26px);font-weight:600;letter-spacing:-0.015em;line-height:1.35;max-width:1240px;color:var(--mp-text-primary);}
+.s2-thesis span{color:var(--mp-accent);}
+.s2-life{width:100%;max-width:1440px;margin:4px auto 0;}
+.s2-life svg{width:100%;height:auto;display:block;}
+.s2-life text{font-family:var(--font-body);}
+.s2-meas{display:grid;grid-template-columns:repeat(9,1fr);gap:10px;margin-top:6px;}
+.s2-m{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;padding:12px 12px 11px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));min-width:0;}
+.s2-m::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--mp-cyan));}
+.s2-m .t{font-size:14px;font-weight:700;letter-spacing:-0.01em;line-height:1.25;margin-bottom:5px;}
+.s2-m .f{font-size:11px;line-height:1.45;color:var(--mp-text-tertiary);word-break:break-word;}
+.s2-not{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;margin-top:12px;}
+.s2-not .lbl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-muted);}
+.s2-not .x{font-size:13px;color:var(--mp-text-tertiary);text-decoration:line-through;text-decoration-color:rgba(255,77,77,.6);}
+.s2-not .is{font-size:13px;color:var(--mp-green);font-weight:600;}
+@media(max-width:1300px){.s2-meas{grid-template-columns:repeat(5,1fr);}}
+
+/* ══════════════ slide 3 — one system, two views ══════════════ */
+.s3-grid{display:grid;grid-template-columns:1.2fr 190px 1fr;gap:20px;align-items:stretch;flex:1;min-height:0;}
+.s3-left{display:flex;flex-direction:column;gap:8px;min-height:0;}
+.s3-cap{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-text-muted);font-weight:600;}
+.s3-cap b{color:var(--mp-text-secondary);font-weight:700;}
+.s3-cap .live{display:inline-flex;align-items:center;gap:6px;color:var(--mp-green);}
+.s3-cap .live i{width:6px;height:6px;border-radius:50%;background:var(--mp-green);box-shadow:0 0 8px rgba(0,222,148,.7);animation:pr-pulse 2.4s ease-in-out infinite;}
+.s3-tabs{display:flex;gap:6px;}
+.s3-tabs button{cursor:pointer;font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-tertiary);
+  background:var(--mp-surface);border:1px solid var(--mp-border-mid);border-radius:8px;padding:6px 10px;transition:all .15s;}
+.s3-tabs button.on{color:#04121C;background:var(--mp-cyan);border-color:var(--mp-cyan);}
+.s3-tabs button:hover:not(.on){border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.uf-wrap{position:relative;flex:1;min-height:150px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:8px 8px 4px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));overflow:hidden;}
+.uf-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#00AEFF,#7B61FF);z-index:2;}
+.uf-wrap svg{width:100%;height:100%;display:block;}
+.uf-wrap text{font-family:var(--font-body);}
+.uf-read{position:absolute;top:12px;left:14px;display:flex;gap:14px;align-items:baseline;pointer-events:none;
+  background:rgba(8,11,17,0.9);border:1px solid var(--mp-border);border-radius:10px;padding:7px 11px;opacity:0;transition:opacity .12s;z-index:3;}
+.uf-read.on{opacity:1;}
+.uf-read .d{font-size:13px;font-weight:700;color:var(--mp-text-primary);}
+.uf-read .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-muted);display:block;}
+.uf-read .v{font-size:16px;font-weight:600;color:var(--mp-text-primary);}
+.uf-legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:11px;color:var(--mp-text-tertiary);}
+.uf-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;}
+.uf-legend .hint{margin-left:auto;color:var(--mp-text-muted);}
+.s3-sec{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:14px;padding:10px 16px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s3-sec .tk{font-size:20px;font-weight:800;letter-spacing:-0.02em;}
+.s3-sec .nm{font-size:13px;color:var(--mp-text-tertiary);}
+.s3-sec .kv{font-size:12px;color:var(--mp-text-tertiary);}
+.s3-sec .kv b{display:block;font-size:16px;font-weight:600;color:var(--mp-text-primary);letter-spacing:-0.01em;}
+.s3-sec .tag{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--mp-border-mid);border-radius:20px;padding:4px 9px;color:var(--mp-text-tertiary);}
+.s3-sec .tag.today{color:var(--mp-green);border-color:rgba(0,222,148,.4);}
+.s3-flow{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;}
+.s3-flow .n{width:100%;text-align:center;border:1px solid var(--mp-border-mid);border-radius:12px;padding:14px 8px;font-size:12px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-secondary);background:var(--mp-surface);line-height:1.4;}
+.s3-flow .n.hi{border-color:rgba(0,174,255,.5);color:var(--mp-accent);}
+.s3-flow .a{font-size:22px;color:var(--mp-text-muted);line-height:1;}
+.s3-table{display:flex;flex-direction:column;min-height:0;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));position:relative;}
+.s3-table::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mp-cyan);}
+.s3-table .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px 9px;border-bottom:1px solid var(--mp-border);}
+.s3-table .hd .t{font-size:12px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-secondary);}
+.s3-table .hd .s{font-size:11px;letter-spacing:.04em;color:var(--mp-text-muted);text-align:right;}
+.s3-table .hd .s b{color:var(--mp-accent);font-weight:700;}
+.s3-table .bd{flex:1;min-height:0;overflow:auto;}
+.s3-table table{width:100%;border-collapse:collapse;}
+.s3-table td{padding:6px 16px;border-bottom:1px solid var(--mp-border);vertical-align:middle;}
+.s3-table tr:last-child td{border-bottom:none;}
+.s3-table td.k{font-size:13px;font-weight:600;color:var(--mp-text-tertiary);width:50%;letter-spacing:.01em;}
+.s3-table td.v{font-size:16px;font-weight:600;color:var(--mp-text-primary);text-align:right;white-space:nowrap;}
+.s3-table td.v.hi{color:var(--mp-accent);}
+.s3-table td.v small{display:block;font-size:11px;font-weight:500;color:var(--mp-text-muted);letter-spacing:.02em;}
+
+/* ══════════════ timeline (security view + slide 4 context) ══════════════ */
+.tl-wrap{position:relative;width:100%;height:100%;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:10px 12px 6px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));overflow:hidden;}
+.tl-wrap svg{width:100%;display:block;overflow:visible;}
+.tl-svg text{font-family:var(--font-body);}
+.tl-read{position:absolute;top:10px;right:14px;display:flex;gap:16px;align-items:baseline;pointer-events:none;
+  background:rgba(8,11,17,0.88);border:1px solid var(--mp-border);border-radius:10px;padding:7px 11px;opacity:0;transition:opacity .12s;z-index:3;}
+.tl-read.on{opacity:1;}
+.tl-read .d{font-size:13px;font-weight:700;color:var(--mp-text-primary);}
+.tl-read .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-muted);display:block;}
+.tl-read .v{font-size:16px;font-weight:600;color:var(--mp-text-primary);}
+
+/* ══════════════ slide 4 — what existed, and when ══════════════ */
+.s4-seq{display:grid;grid-template-columns:repeat(5,1fr);gap:0;align-items:stretch;margin-top:4px;}
+.s4-node{position:relative;background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:16px 18px 14px;margin-right:32px;min-height:150px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));display:flex;flex-direction:column;}
+.s4-node:last-child{margin-right:0;}
+.s4-node::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--mp-border-hover));border-radius:16px 16px 0 0;}
+.s4-node::after{content:'→';position:absolute;right:-28px;top:50%;transform:translateY(-50%);font-size:22px;color:var(--mp-text-muted);}
+.s4-node:last-child::after{content:none;}
+.s4-node .st{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-muted);margin-bottom:8px;}
+.s4-node .t{font-size:14px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;line-height:1.3;margin-bottom:8px;}
+.s4-node .v{font-size:17px;font-weight:700;letter-spacing:-0.01em;line-height:1.3;word-break:break-word;}
+.s4-node .v.big{font-size:20px;color:var(--mp-accent);}
+.s4-node .m{margin-top:6px;font-size:12px;line-height:1.5;color:var(--mp-text-tertiary);}
+.s4-node .m b{color:var(--mp-text-secondary);font-weight:600;}
+.s4-node.hi{border-color:rgba(77,200,240,.45);box-shadow:0 0 0 1px rgba(77,200,240,.18),0 0 40px rgba(0,174,255,.10);}
+.s4-node.out{border-style:dashed;border-color:rgba(255,184,0,.45);}
+.s4-node.out .st{color:var(--mp-amber);}
+.s4-node.out .v{color:var(--mp-amber);}
+.s4-regimes{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:14px;}
+.s4-reg{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:16px 22px 14px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));}
+.s4-reg::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c);}
+.s4-reg .t{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;}
+.s4-reg .r{font-size:22px;font-weight:700;letter-spacing:-0.015em;margin-bottom:8px;}
+.s4-reg .k{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13px;color:var(--mp-text-tertiary);}
+.s4-reg .k b{color:var(--mp-text-secondary);font-weight:600;}
+.s4-reg ul{margin:8px 0 0 18px;font-size:13px;line-height:1.55;color:var(--mp-text-tertiary);}
+.s4-reg ul b{color:var(--mp-text-secondary);font-weight:600;}
+.s4-meth{margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:12px 18px;border:1px solid var(--mp-border);border-radius:14px;background:rgba(255,255,255,0.02);}
+.s4-meth .l{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-violet);white-space:nowrap;}
+.s4-meth .t{font-size:14px;line-height:1.5;color:var(--mp-text-secondary);}
+.s4-meth .t b{color:var(--mp-text-primary);font-weight:600;}
+
+/* ══════════════ slide 5 — use, paper book, evaluation ══════════════ */
+.s5-cols{display:grid;grid-template-columns:0.9fr 1.25fr 1fr;gap:18px;align-items:stretch;margin-top:4px;}
+.s5-col{background:var(--mp-surface);border:1px solid var(--mp-border);border-radius:16px;padding:16px 18px 14px;position:relative;overflow:hidden;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));display:flex;flex-direction:column;min-width:0;}
+.s5-col::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--mp-cyan));}
+.s5-col .hd{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--c,var(--mp-accent));margin-bottom:10px;}
+.s5-col .hd small{margin-left:8px;font-size:11px;font-weight:500;letter-spacing:.02em;text-transform:none;color:var(--mp-text-muted);}
+.s5-bul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.s5-bul li{position:relative;padding-left:18px;font-size:clamp(14px,1.05vw,16px);line-height:1.5;color:var(--mp-text-primary);}
+.s5-bul li::before{content:'';position:absolute;left:0;top:.62em;width:8px;height:8px;border-radius:50%;background:var(--c,var(--mp-cyan));}
+.s5-bul li.mut{color:var(--mp-text-tertiary);font-size:13px;}
+.s5-bul li.mut::before{background:var(--mp-text-muted);}
+.pb-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.pb-tile{border:1px solid var(--mp-border);border-radius:12px;padding:8px 11px 7px;background:var(--mp-obsidian);min-width:0;}
+.pb-tile .k{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pb-tile .v{margin-top:2px;font-size:clamp(17px,1.3vw,22px);font-weight:700;letter-spacing:-0.02em;color:var(--mp-text-primary);white-space:nowrap;}
+.pb-tile .v.pos{color:var(--mp-green);}
+.pb-tile .v.neg{color:var(--mp-red);}
+.pb-tile .m{margin-top:1px;font-size:11px;color:var(--mp-text-tertiary);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pb-spark{margin-top:8px;background:var(--mp-obsidian);border:1px solid var(--mp-border);border-radius:12px;padding:6px 8px 0;}
+.pb-spark svg{width:100%;height:auto;display:block;}
+.pb-spark text{font-family:var(--font-body);}
+.pb-lim{margin-top:8px;display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.45;color:var(--mp-amber);}
+.pb-lim i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--mp-amber);margin-top:5px;}
+.pb-src{margin-top:4px;font-size:11px;color:var(--mp-text-muted);line-height:1.45;}
+.s5-q{display:flex;flex-direction:column;gap:8px;}
+.s5-qi{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;border:1px solid var(--mp-border);border-radius:12px;padding:9px 12px;background:var(--mp-obsidian);}
+.s5-qi .n{width:22px;height:22px;border-radius:50%;border:1px solid var(--c,var(--mp-cyan));color:var(--c,var(--mp-cyan));font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.s5-qi .t{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}
+.s5-qi .q{font-size:13px;line-height:1.45;color:var(--mp-text-secondary);}
+.s5-close{margin-top:14px;font-family:var(--font-display);font-size:clamp(20px,2vw,30px);font-weight:700;letter-spacing:-0.025em;line-height:1.2;}
+.s5-close span{color:var(--mp-accent);}
+
+/* ══════════════ bottom bar / nav / cues ══════════════ */
+.pr-bottom{position:fixed;left:0;right:0;bottom:0;height:var(--bot-h);z-index:20;display:flex;align-items:center;gap:16px;padding:0 28px;
+  border-top:1px solid var(--mp-border);background:rgba(8,11,17,0.88);backdrop-filter:blur(8px);}
+.pr-nav{display:flex;align-items:center;gap:8px;}
+.pr-nav button{cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-tertiary);
+  background:none;border:1px solid var(--mp-border);border-radius:10px;padding:9px 14px;transition:all .15s;}
+.pr-nav button:hover{border-color:var(--mp-border-hover);color:var(--mp-text-primary);}
+.pr-nav button:disabled{opacity:.35;cursor:default;}
+.pr-nav .cnt{font-size:12px;letter-spacing:.10em;color:var(--mp-text-muted);padding:0 8px;}
+.pr-keys{font-size:11px;letter-spacing:.04em;color:var(--mp-text-muted);}
+.pr-keys b{display:inline-block;border:1px solid var(--mp-border-mid);border-radius:5px;padding:1px 6px;color:var(--mp-text-tertiary);font-weight:600;margin:0 2px;}
+.pr-status{margin-left:auto;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-text-muted);}
+.pr-status b{color:var(--mp-text-tertiary);font-weight:600;}
+
+#pr-cue{position:fixed;left:50%;bottom:calc(var(--bot-h) + 14px);transform:translate(-50%,12px);z-index:25;width:min(1400px,calc(100% - 56px));
+  display:grid;grid-template-columns:1.5fr 1.3fr 0.9fr;gap:0;background:rgba(12,16,24,0.97);border:1px solid var(--mp-border-mid);border-radius:14px;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));opacity:0;visibility:hidden;transition:opacity .2s,transform .2s,visibility 0s linear .2s;}
+#pr-cue.on{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .2s,transform .2s,visibility 0s;}
+#pr-cue>div{padding:12px 16px;border-right:1px solid var(--mp-border);}
+#pr-cue>div:last-child{border-right:none;}
+#pr-cue .l{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:5px;}
+#pr-cue .main .l{color:var(--mp-accent);}
+#pr-cue .opt .l{color:var(--mp-text-tertiary);}
+#pr-cue .def .l{color:var(--mp-teal);}
+#pr-cue .def p{display:flex;flex-wrap:wrap;gap:4px 10px;}
+#pr-cue .def .fld{font-size:12px;font-weight:600;color:var(--mp-text-secondary);}
+#pr-cue p{font-size:13px;line-height:1.5;color:var(--mp-text-secondary);}
+
+/* ══════════════ research drawer ══════════════ */
+#pr-drawer{position:fixed;top:var(--top-h);right:0;bottom:var(--bot-h);width:min(560px,92vw);z-index:30;background:var(--mp-surface);
+  border-left:1px solid var(--mp-border-mid);transform:translateX(102%);transition:transform .25s ease;display:flex;flex-direction:column;
+  filter:drop-shadow(-8px 0 24px rgba(0,0,0,0.5));}
+#pr-drawer.on{transform:translateX(0);}
+.dr-hd{display:flex;align-items:center;gap:12px;padding:16px 20px 12px;border-bottom:1px solid var(--mp-border);}
+.dr-hd .t{font-size:16px;font-weight:700;letter-spacing:-0.01em;}
+.dr-hd .s{font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:var(--mp-text-muted);}
+.dr-hd button{margin-left:auto;}
+.dr-tabs{display:flex;gap:4px;padding:10px 14px 0;border-bottom:1px solid var(--mp-border);flex-wrap:wrap;}
+.dr-tabs button{cursor:pointer;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);background:none;border:none;
+  border-bottom:2px solid transparent;padding:8px 10px 10px;transition:color .15s;}
+.dr-tabs button.on{color:var(--mp-accent);border-bottom-color:var(--mp-accent);}
+.dr-body{flex:1;overflow:auto;padding:16px 20px 24px;}
+.dr-sec{margin-bottom:22px;}
+.dr-sec h4{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-text-tertiary);margin-bottom:8px;}
+.dr-sec p{font-size:13px;line-height:1.55;color:var(--mp-text-secondary);}
+.dr-sec p.mut{color:var(--mp-text-muted);}
+.dr-sec ul{margin:6px 0 0 18px;font-size:13px;line-height:1.55;color:var(--mp-text-secondary);}
+.dr-kv{width:100%;border-collapse:collapse;}
+.dr-kv td{padding:7px 0;border-bottom:1px solid var(--mp-border);vertical-align:top;font-size:13px;line-height:1.45;}
+.dr-kv td.k{color:var(--mp-text-tertiary);font-weight:600;width:44%;padding-right:12px;word-break:break-word;}
+.dr-kv td.v{color:var(--mp-text-primary);}
+.dr-kv td.v.num{font-size:16px;font-weight:600;}
+.dr-kv td.v small{display:block;font-size:11px;color:var(--mp-text-muted);margin-top:2px;line-height:1.4;}
+.dr-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.dr-tbl th{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mp-text-muted);text-align:right;padding:6px 6px;border-bottom:1px solid var(--mp-border);white-space:nowrap;}
+.dr-tbl td{padding:6px 6px;text-align:right;border-bottom:1px solid var(--mp-border);color:var(--mp-text-secondary);white-space:nowrap;font-size:13px;}
+.dr-tbl th:first-child,.dr-tbl td:first-child{text-align:left;}
+.dr-tbl td:first-child{color:var(--mp-text-primary);font-weight:600;}
+.dr-tbl td.pos{color:var(--mp-green);}
+.dr-tbl td.neg{color:var(--mp-red);}
+.dr-tbl-wrap{overflow-x:auto;}
+.dr-empty{font-size:13px;color:var(--mp-text-muted);padding:10px 0;}
+
+/* ══════════════ glossary / click-to-define ══════════════ */
+.fld{cursor:pointer;border-bottom:1px dotted rgba(77,200,240,.55);transition:color .12s;}
+.fld::after{content:'i';display:inline-block;margin-left:4px;width:13px;height:13px;line-height:13px;border-radius:50%;font-size:10px;font-weight:700;text-align:center;
+  color:var(--mp-accent);border:1px solid rgba(77,200,240,.55);vertical-align:2px;font-style:normal;letter-spacing:0;}
+svg .fld::after{content:none;}
+#fld-tip{position:fixed;z-index:60;max-width:360px;background:rgba(12,16,24,0.98);border:1px solid rgba(77,200,240,.45);border-radius:12px;padding:10px 12px 9px;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.55));opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .12s,transform .12s,visibility 0s linear .12s;pointer-events:none;}
+#fld-tip.on{opacity:1;visibility:visible;transform:translateY(0);transition:opacity .12s,transform .12s,visibility 0s;pointer-events:auto;}
+#fld-tip .f{font-size:13px;font-weight:700;color:var(--mp-text-primary);word-break:break-word;}
+#fld-tip .f small{margin-left:6px;font-size:10px;font-weight:600;color:var(--mp-text-muted);letter-spacing:.04em;}
+#fld-tip .d{margin-top:4px;font-size:13px;line-height:1.45;color:var(--mp-text-secondary);}
+#fld-tip .more{margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mp-accent);cursor:pointer;}
+#fld-tip .more:hover{text-decoration:underline;}
+.fld:hover{color:var(--mp-accent);border-bottom-color:var(--mp-accent);}
+svg text.fld{cursor:pointer;}
+.gl-search{width:100%;font-family:var(--font-body);font-size:14px;color:var(--mp-text-primary);background:var(--mp-obsidian);border:1px solid var(--mp-border-mid);
+  border-radius:10px;padding:10px 12px;outline:none;margin-bottom:12px;}
+.gl-search:focus-visible{border-color:var(--mp-cyan);}
+.gl-order{font-size:12px;line-height:1.6;color:var(--mp-text-tertiary);margin-bottom:14px;padding:10px 12px;border:1px solid var(--mp-border);border-radius:10px;background:var(--mp-obsidian);}
+.gl-order b{color:var(--mp-text-secondary);font-weight:600;}
+.gl-group{margin-bottom:18px;}
+.gl-group h5{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mp-accent);margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--mp-border);}
+.gl-card{border:1px solid var(--mp-border);border-radius:12px;padding:12px 14px;margin-bottom:8px;background:var(--mp-obsidian);scroll-margin-top:12px;transition:border-color .2s,box-shadow .2s;}
+.gl-card.hl{border-color:var(--mp-accent);box-shadow:0 0 0 1px rgba(77,200,240,.35),0 0 24px rgba(0,174,255,.12);}
+.gl-card .f{font-size:15px;font-weight:700;color:var(--mp-text-primary);word-break:break-word;}
+.gl-card .f small{font-size:11px;font-weight:500;color:var(--mp-text-muted);margin-left:8px;letter-spacing:.04em;}
+.gl-card .say{margin-top:6px;font-size:14px;line-height:1.5;color:var(--mp-text-primary);}
+.gl-card .say b{color:var(--mp-accent);font-weight:700;letter-spacing:.08em;font-size:10px;text-transform:uppercase;margin-right:6px;}
+.gl-card .def{margin-top:6px;font-size:13px;line-height:1.5;color:var(--mp-text-secondary);}
+.gl-card .read{margin-top:5px;font-size:12px;line-height:1.5;color:var(--mp-text-tertiary);}
+.gl-card .read b{color:var(--mp-text-secondary);font-weight:600;}
+.gl-card .cav{margin-top:5px;font-size:12px;line-height:1.5;color:var(--mp-amber);}
+.gl-card .src{margin-top:5px;font-size:11px;color:var(--mp-text-muted);}
+
+/* ══════════════ loading / error ══════════════ */
+#pr-load{position:fixed;top:var(--top-h);left:0;right:0;bottom:var(--bot-h);z-index:15;display:none;align-items:center;justify-content:center;background:rgba(8,11,17,.6);}
+#pr-load.on{display:flex;}
+#pr-load .b{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mp-text-tertiary);border:1px solid var(--mp-border-mid);border-radius:12px;padding:12px 18px;background:var(--mp-surface);}
+#pr-load .b.err{color:var(--mp-red);border-color:rgba(255,77,77,.4);text-transform:none;letter-spacing:.02em;max-width:600px;line-height:1.5;}
+
+@media(max-width:1180px){
+  .pr-screen{padding:20px 24px 16px;}
+  .s1-cards{grid-template-columns:1fr;}
+  .s2-meas{grid-template-columns:repeat(3,1fr);}
+  .s3-grid{grid-template-columns:1fr;}
+  .s3-flow{flex-direction:row;}
+  .s3-flow .a{transform:rotate(-90deg);}
+  .s4-seq{grid-template-columns:1fr 1fr;gap:16px;}
+  .s4-node{margin-right:0;}
+  .s4-node::after{content:none;}
+  .s4-regimes{grid-template-columns:1fr;}
+  .s5-cols{grid-template-columns:1fr;}
+  #pr-cue{grid-template-columns:1fr;}
+  .pr-keys{display:none;}
+}
+/* short displays (1366×768, 1440×810): tighten slide 4 so nothing scrolls */
+@media(max-height:840px){
+  .pr-body.top{padding:8px 0 2px;}
+  .pr-sub.sm{margin-top:6px;font-size:14px;}
+  .pr-screen[data-s="4"] .pr-sub{display:none;}
+  .pr-screen[data-s="4"] .pr-foot-line{padding-top:8px;font-size:13px;}
+  .s4-node{padding:12px 14px 10px;min-height:0;}
+  .s4-node .st{margin-bottom:5px;}
+  .s4-node .t{margin-bottom:5px;font-size:13px;}
+  .s4-node .v.big{font-size:18px;}
+  .s4-node .m{font-size:12px;line-height:1.4;}
+  .s4-regimes{margin-top:8px;gap:14px;}
+  .s4-reg{padding:12px 18px 10px;}
+  .s4-reg .r{font-size:18px;margin-bottom:4px;}
+  .s4-reg .k{font-size:12px;}
+  .s4-reg ul{font-size:12px;line-height:1.4;margin-top:4px;}
+  .s4-meth{margin-top:8px;padding:8px 14px;}
+  .s4-meth .t{font-size:12px;line-height:1.45;}
+  .s5-col{padding:14px 16px 12px;}
+  .s5-close{margin-top:10px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .pr-screen.active{animation:none;}
+  .pr-mode i,.s3-cap .live i{animation:none;}
+  .mq-shake{animation:none;}
+}
+</style>
+<script>
+window.__MQ = { authed: false };
+</script>
+</head>
+<body>
+
+<!-- ── access gate ── -->
+<div id="mq-gate" role="dialog" aria-modal="true" aria-label="Password required">
+  <div class="mq-card" id="mq-card">
+    <img src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+    <div class="mq-eyebrow">Founder Briefing</div>
+    <h1>Presentation Mode</h1>
+    <p class="sub">A read-only, five-slide briefing prepared for <b>Ashish</b> and the Data Sourcing &amp; Strategy team:
+      why Market Prism exists, what it measures, and how the live system becomes the institutional dataset.
+      Enter the presentation password to continue.</p>
+    <div class="mq-field">
+      <input id="mq-code" type="password" placeholder="Password" autocomplete="off" spellcheck="false" aria-label="Password">
+      <button id="mq-enter" type="button">Unlock</button>
+    </div>
+    <div id="mq-err" aria-live="polite"></div>
+    <div class="mq-note">Provided solely for evaluation under the terms of your agreement.
+      Forensic measurement layer — narrative structure, not investment advice.<br>
+      Questions · <a href="mailto:founder@marketprism.co">founder@marketprism.co</a></div>
+  </div>
+</div>
+
+<!-- ── top chrome ── -->
+<header class="pr-top">
+  <span class="pr-brand">
+    <img src="/assets/Market-Prism-Logo-Light.png" alt="Market Prism">
+    <span class="div"></span>
+    <span class="nm">Founder Briefing</span>
+  </span>
+  <span class="pr-mode" title="Read-only presentation view"><i></i>Presentation Mode</span>
+  <nav class="pr-dots" id="pr-dots" aria-label="Slides"></nav>
+  <div class="pr-right">
+    <div class="pr-sel" id="pr-sel">
+      <label for="pr-ticker">Security</label>
+      <select id="pr-ticker" aria-label="Select security"><option>Loading…</option></select>
+      <label for="pr-obs">Observation</label>
+      <select id="pr-obs" aria-label="Select observation date"><option>—</option></select>
+    </div>
+    <button class="pr-btn" id="pr-cues" type="button" aria-pressed="false">Presenter cues<b id="pr-cues-state">Off</b></button>
+    <button class="pr-btn" id="pr-details" type="button" aria-pressed="false">Research Details</button>
+    <button class="pr-btn lock" id="mq-lock" type="button" title="End this session">Lock</button>
+  </div>
+</header>
+
+<!-- ── stage ── -->
+<main class="pr-stage" id="pr-stage">
+
+  <!-- ═══ SLIDE 1 — WHY MARKET PRISM EXISTS ═══ -->
+  <section class="pr-screen" data-s="1">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">1 · Why Market Prism exists</div>
+      <h1 class="pr-h1">Built for Decisions Before It Was Built for Data Buyers</h1>
+      <p class="pr-sub">Market Prism began as an operating system for understanding changing market information — not as a retrospective dataset created for an institutional backtest.</p>
+      <div class="pr-body">
+        <div class="s1-cards">
+          <div class="s1-card" style="--c:#00AEFF"><div class="k">Founder lens</div><div class="t">More than a decade advising companies across industries on strategy, positioning, digital behavior and information systems.</div></div>
+          <div class="s1-card" style="--c:#38C8B8"><div class="k">Original purpose</div><div class="t">Reduce the information disadvantage faced by retail investors by turning fragmented evidence into understandable, actionable market states.</div></div>
+          <div class="s1-card" style="--c:#7B61FF"><div class="k">Real-world incentive</div><div class="t">Used in my own research and trading, so the objective is prospective usefulness, data integrity and operational reliability.</div></div>
+        </div>
+        <div class="s1-arc" id="s1-arc"></div>
+        <p class="s1-line">The operating system came first. <span>Institutional licensing came afterward.</span></p>
+      </div>
+      <div class="pr-foot-line">Not designed around any evaluator's specification. <b>The architecture, constructs and standards are the founder's own.</b></div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 2 — WHAT THE SYSTEM MEASURES ═══ -->
+  <section class="pr-screen" data-s="2">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">2 · What the system measures</div>
+      <h1 class="pr-h1">Information Has a Measurable Lifecycle</h1>
+      <div class="pr-body">
+        <p class="s2-thesis">Market Prism measures how narratives <span>form, strengthen, persist, decay and break</span> — and converts those states into quantitative features.</p>
+        <div class="s2-life" id="s2-life"></div>
+        <div class="s2-meas" id="s2-meas"></div>
+        <div class="s2-not">
+          <span class="lbl">Not</span>
+          <span class="x">sentiment scoring</span>
+          <span class="x">an LLM stock picker</span>
+          <span class="lbl" style="margin-left:6px">Is</span>
+          <span class="is">a measurement layer for the information state surrounding each security</span>
+        </div>
+      </div>
+      <div class="pr-foot-line">Names are the delivered field names. <b>Click any name</b> for its definition; formulas are available on request, not on the slide.</div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 3 — ONE SYSTEM, TWO VIEWS ═══ -->
+  <section class="pr-screen" data-s="3">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">3 · The live system becomes the dataset</div>
+      <h1 class="pr-h1 sm">One System, Two Views</h1>
+      <p class="pr-sub sm">Left: the operating system as it runs each day. Right: the same security and session as one timestamped row of the institutional feed.</p>
+      <div class="pr-body top">
+        <div class="s3-grid">
+          <div class="s3-left">
+            <div class="s3-cap">
+              <span class="s3-tabs" id="s3-tabs"><button type="button" data-k="universe" class="on">Narrative Universe · today</button><button type="button" data-k="security">This security · through time</button></span>
+              <span id="s3-cap-r"></span>
+            </div>
+            <div class="uf-wrap" id="uf-wrap"><div class="uf-read" id="uf-read"></div><div id="uf-field" style="height:100%"></div></div>
+            <div class="uf-legend" id="uf-legend"></div>
+            <div class="s3-sec" id="s3-sec"></div>
+          </div>
+          <div class="s3-flow">
+            <div class="n">Live market state</div>
+            <div class="a">↓</div>
+            <div class="n">Deterministic measurements</div>
+            <div class="a">↓</div>
+            <div class="n hi">Timestamped institutional features</div>
+          </div>
+          <div class="s3-table">
+            <div class="hd"><span class="t">Feed row</span><span class="s" id="s3-src">institutional feed v5</span></div>
+            <div class="bd"><table><tbody id="s3-rows"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+      <div class="pr-foot-line"><b>The interface is the human-readable expression. The feed is the research-ready expression.</b></div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 4 — WHAT EXISTED, AND WHEN ═══ -->
+  <section class="pr-screen" data-s="4">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">4 · What existed, and when</div>
+      <h1 class="pr-h1 sm">Designed to Be Independently Auditable</h1>
+      <p class="pr-sub sm">One actual live observation, in the order things happened. Everything after its timestamp is a realized outcome, not a model input.</p>
+      <div class="pr-body top">
+        <div class="s4-seq" id="s4-seq"></div>
+        <div class="s4-regimes" id="s4-regimes"></div>
+        <div class="s4-meth"><span class="l">Methodology vs. data quality</span><span class="t"><b>Methodology stability and point-in-time integrity are separate questions.</b> Source corrections, normalization improvements and processing repairs should not be conflated with formula optimization; any exception should be identified explicitly and evaluated on its own.</span></div>
+      </div>
+      <div class="pr-foot-line"><b>For strict predictive evaluation, use the March 2, 2026+ LIVE_PIT sample.</b></div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 5 — EVIDENCE, USE AND INDEPENDENT EVALUATION ═══ -->
+  <section class="pr-screen" data-s="5">
+    <div class="pr-wrap">
+      <div class="pr-eyebrow">5 · Evidence, use and independent evaluation</div>
+      <h1 class="pr-h1 sm">Built for Use. Evaluated by Researchers.</h1>
+      <div class="pr-body top">
+        <div class="s5-cols">
+          <div class="s5-col" style="--c:#38C8B8">
+            <div class="hd">A · My use</div>
+            <ul class="s5-bul">
+              <li>Market Prism currently informs my own research and trading.</li>
+              <li>I intend to deploy more of my own capital using its outputs.</li>
+              <li>That creates a practical incentive for prospective reliability rather than cosmetically strong backtests.</li>
+              <li class="mut">Not every generated signal is traded, and personal trading is not evidence of institutional alpha.</li>
+            </ul>
+          </div>
+          <div class="s5-col" style="--c:#00AEFF">
+            <div class="hd">B · Paper book<small id="pb-src-hd">paper_portfolio_daily_v6 · live table</small></div>
+            <div id="pb-body"><div class="dr-empty">Loading paper book…</div></div>
+          </div>
+          <div class="s5-col" style="--c:#7B61FF">
+            <div class="hd">C · Citadel's evaluation</div>
+            <div class="s5-q">
+              <div class="s5-qi" style="--c:#00AEFF"><div class="n">1</div><div><div class="t">Cross-sectional information</div><div class="q">Do stronger measurements predict different future-return distributions?</div></div></div>
+              <div class="s5-qi" style="--c:#38C8B8"><div class="n">2</div><div><div class="t">Horizon</div><div class="q">At what horizons does the information persist or decay?</div></div></div>
+              <div class="s5-qi" style="--c:#7B61FF"><div class="n">3</div><div><div class="t">Orthogonality</div><div class="q">Does Market Prism add information beyond conventional factors?</div></div></div>
+              <div class="s5-qi" style="--c:#FFB800"><div class="n">4</div><div><div class="t">Interactions</div><div class="q">Do state, velocity, persistence, exhaustion and structural support identify nonlinear behavior?</div></div></div>
+            </div>
+          </div>
+        </div>
+        <p class="s5-close">Market Prism provides the measurements.<br><span>Your researchers determine the alpha.</span></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="pr-load"><div class="b" id="pr-load-b">Connecting to feed…</div></div>
+<div id="fld-tip" role="tooltip"><div class="f" id="fld-tip-f"></div><div class="d" id="fld-tip-d"></div><div class="more" id="fld-tip-more">Full definition</div></div>
+
+<!-- ── presenter cues (hidden unless enabled with the button or the C key) ── -->
+<div id="pr-cue" aria-live="polite">
+  <div class="main"><div class="l">Say</div><p id="cue-main"></p></div>
+  <div class="opt"><div class="l">Also worth noting</div><p id="cue-opt"></p></div>
+  <div class="def"><div class="l">Fields on this slide · click to define</div><p id="cue-def"></p></div>
+</div>
+
+<!-- ── research details drawer ── -->
+<aside id="pr-drawer" aria-label="Research details">
+  <div class="dr-hd">
+    <div><div class="t">Research Details</div><div class="s" id="dr-ctx">Depth on demand</div></div>
+    <button class="pr-btn" id="dr-close" type="button">Close</button>
+  </div>
+  <div class="dr-tabs" id="dr-tabs">
+    <button data-t="fields" class="on">Glossary</button>
+    <button data-t="observation">Observation</button>
+    <button data-t="provenance">Provenance</button>
+    <button data-t="paper">Paper book</button>
+    <button data-t="method">Method</button>
+  </div>
+  <div class="dr-body" id="dr-body"></div>
+</aside>
+
+<!-- ── bottom bar ── -->
+<footer class="pr-bottom">
+  <div class="pr-nav">
+    <button id="pr-prev" type="button">← Previous</button>
+    <span class="cnt" id="pr-cnt">1 / 5</span>
+    <button id="pr-next" type="button">Next →</button>
+  </div>
+  <span class="pr-keys"><b>←</b><b>→</b> navigate · <b>Space</b> next · <b>1</b>–<b>5</b> jump · <b>D</b> details · <b>G</b> glossary · <b>C</b> presenter cues · hover a field name to define it</span>
+  <span class="pr-status" id="pr-status">Read-only · institutional feed</span>
+</footer>
+
+<script>
+(function(){
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════ */
+var S = {
+  screen: 1,
+  meta: null, universe: [],     // /api/present-data — feed extent, PIT counts, security picker
+  example: null,                // /api/present-os-data?part=example — the rule-chosen default
+  field: null,                  // /api/present-os-data?part=universe — today's scored universe
+  ticker: null, rows: [], window: null,
+  prices: null,                 // [{snapshot_date, price_close}] from /api/price-history (daily closes)
+  priceSource: null,            // 'price-history' | 'feed' | null
+  sel: -1,                      // selected observation index within rows
+  cues: false, drawer: false, drawerTab: 'fields',
+  s3view: 'universe',
+  paper: null
+};
+var TOTAL = 5;
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS — formatting. Missing → "—". Never fills.
+   ═══════════════════════════════════════════════════════════════ */
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function fmt(v, dp){ if (v == null || !isFinite(v)) return '—'; return Number(v).toLocaleString('en-US', {minimumFractionDigits: dp == null ? 2 : dp, maximumFractionDigits: dp == null ? 2 : dp}); }
+function fmtInt(v){ if (v == null || !isFinite(v)) return '—'; return Number(v).toLocaleString('en-US'); }
+function fmtPct(v, dp){ if (v == null || !isFinite(v)) return '—'; var s = Number(v).toFixed(dp == null ? 2 : dp); return (v > 0 ? '+' : '') + s + '%'; }
+function fmtSigned(v, dp){ return v == null || !isFinite(v) ? '—' : (v > 0 ? '+' : '') + Number(v).toFixed(dp == null ? 2 : dp); }
+function fmtMoney(v){ if (v == null || !isFinite(v)) return '—'; var a = Math.abs(v); var s = a >= 1000 ? a.toLocaleString('en-US', {maximumFractionDigits: 0}) : a.toFixed(2); return (v < 0 ? '−$' : '$') + s; }
+function pnlCls(v){ return v == null ? '' : (v > 0 ? 'pos' : v < 0 ? 'neg' : ''); }
+function txt(v){ return v == null || v === '' ? '—' : String(v); }
+function pad2(n){ return (n < 10 ? '0' : '') + n; }
+function fmtUtc(iso){
+  if (!iso) return '—';
+  var d = new Date(iso); if (isNaN(d)) return String(iso);
+  return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth()+1) + '-' + pad2(d.getUTCDate()) + ' ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds()) + ' UTC';
+}
+function fmtTs(iso){ if (!iso) return '—'; var d = new Date(iso); if (isNaN(d)) return String(iso); return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth()+1) + '-' + pad2(d.getUTCDate()) + ' ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + 'Z'; }
+// The same instant rendered in America/New_York — the calendar the production
+// system uses for trading dates. A rendering of the stored timestamp, not a
+// different value.
+function fmtEt(iso){
+  if (!iso) return '—';
+  var d = new Date(iso); if (isNaN(d)) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZoneName:'short'}).format(d);
+  } catch(_e){ return '—'; }
+}
+function fmtEtTime(iso){
+  if (!iso) return '—';
+  var d = new Date(iso); if (isNaN(d)) return '—';
+  try { return new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', hour:'2-digit', minute:'2-digit', hour12:false}).format(d) + ' ET'; } catch(_e){ return '—'; }
+}
+// ET calendar date + minute-of-day for the stored timestamp (used to place a
+// write relative to the 09:30 open and the 16:00 close).
+function etParts(iso){
+  if (!iso) return null;
+  var d = new Date(iso); if (isNaN(d)) return null;
+  try {
+    var parts = new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false}).formatToParts(d);
+    var p = {}; parts.forEach(function(x){ p[x.type] = x.value; });
+    return { date: p.year + '-' + p.month + '-' + p.day, minutes: (Number(p.hour) % 24) * 60 + Number(p.minute) };
+  } catch(_e){ return null; }
+}
+function todayEt(){ var p = etParts(new Date().toISOString()); return p ? p : { date: new Date().toISOString().slice(0, 10), minutes: 0 }; }
+function fmtDateLong(ymd){
+  if (!ymd) return '—';
+  var p = String(ymd).split('-'); if (p.length < 3) return ymd;
+  var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return M[Number(p[1])-1] + ' ' + Number(p[2]) + ', ' + p[0];
+}
+function fmtDateShort(ymd){
+  if (!ymd) return '';
+  var p = String(ymd).split('-'); var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return M[Number(p[1])-1] + ' ' + Number(p[2]);
+}
+function el(id){ return document.getElementById(id); }
+function selRow(){ return (S.sel >= 0 && S.rows[S.sel]) ? S.rows[S.sel] : null; }
+function tickerName(t){ for (var i = 0; i < S.universe.length; i++) if (S.universe[i].t === t) return S.universe[i].nm || ''; return ''; }
+function fieldRow(t){ if (!S.field || !S.field.rows) return null; for (var i = 0; i < S.field.rows.length; i++) if (S.field.rows[i].ticker === t) return S.field.rows[i]; return null; }
+
+var STATE_COLOR = { STRENGTHENING:'#00DE94', STABLE:'#00AEFF', DECAYING:'#FF4D4D', UNKNOWN:'#A0A8B0', NO_DATA:'#A0A8B0' };
+var REGIME_COLOR = { CLEAR_PATH:'#38C8B8', PERSISTENT:'#7B61FF', NEUTRAL:'#A0A8B0', EXHAUSTING:'#FFB800' };
+
+/* ═══════════════════════════════════════════════════════════════
+   GLOSSARY — every field the deck can name. `def` is the delivered
+   Data Dictionary v1.6 contract text (30 Aug 2026), lightly trimmed.
+   `say` is the same idea in plain English; `read` says what high and
+   low mean; `cav` carries a caveat worth knowing. Nothing here states
+   a formula the dictionary does not state. Shared with /present.
+   ═══════════════════════════════════════════════════════════════ */
+var GLOSSARY_GROUPS = [
+  {k:'id',   t:'1 · Identity & lineage — which narrative, how old, from where'},
+  {k:'prov', t:'2 · Provenance & timestamps — when the row existed'},
+  {k:'for',  t:'3 · Forensic scores — do the claims hold up, and who is pushing them'},
+  {k:'val',  t:'4 · Valuation anchor — what value says'},
+  {k:'phy',  t:'5 · Narrative physics & decay — building or burning out, how fast'},
+  {k:'reg',  t:'6 · Regime & direction — what the engine concludes'},
+  {k:'earn', t:'7 · Earnings context'},
+  {k:'opt',  t:'8 · Options context — where direction lives'},
+  {k:'beh',  t:'9 · Behavioural extremes'},
+  {k:'pap',  t:'10 · Paper book — operational tables'}
+];
+var GLOSSARY = [
+  /* identity */
+  {g:'id', f:'ticker', say:'The security. One row per ticker per trading date.', def:'US equity ticker symbol. Primary key with snapshot_date.', unit:'text'},
+  {g:'id', f:'snapshot_date', say:'The New York trading date the row was scored for.', def:'US/Eastern scoring date. One delivered row per observed ticker and snapshot date; the panel is not balanced — a missing row is not a zero signal.', unit:'date'},
+  {g:'id', f:'narrative', say:'The one representative narrative the engine scored for this ticker on this day.', def:'Representative narrative for the ticker on the scoring date.', read:'"Representative" is doing real work: the engine scores ONE narrative per ticker-day, so the representative can change from day to day.', unit:'text'},
+  {g:'id', f:'narrative_hash', say:'A stable ID for the same narrative across days. Use it, not the age field, to see whether the narrative changed.', def:'Stable deterministic identifier used to link the same narrative across dates.', read:'Same hash on consecutive days = same narrative being tracked. A new hash = the representative narrative switched.', unit:'text'},
+  {g:'id', f:'genesis_date', say:'When the narrative was first seen in the source corpus.', def:'Date the narrative was first observed in the source corpus; it may pre-date the delivered panel.', unit:'date'},
+  {g:'id', f:'days_elapsed', say:'How old the narrative is, in calendar days.', def:'Calendar-day age of the narrative as of snapshot_date.', cav:'Jumps of 300+ days between adjacent sessions are the representative narrative switching (see narrative_hash), not corruption.', unit:'calendar days'},
+  {g:'id', f:'cluster_id', say:'Which narrative cluster or theme the narrative belongs to.', def:'Narrative-cluster or semantic-theme identifier. It may contain semantic labels or legacy opaque identifiers; treat as open text.', unit:'text · ~51% null'},
+  {g:'id', f:'macro_theme', say:'The high-level theme: company-specific, AI infrastructure, earnings season, and so on.', def:'High-level macro or company-specific theme assigned to the narrative; treat labels case-insensitively.', unit:'text'},
+  {g:'id', f:'primary_publication_name', say:'The publication the representative narrative came from.', def:'Primary publication associated with the representative narrative.', unit:'text'},
+
+  /* provenance */
+  {g:'prov', f:'first_written_at', say:'The moment this row first entered the database. It is never rewritten, which is what allows an evaluator to verify when each value was known.', def:'UTC time the row was first written to narrative_scorecard (server default now() at insert; never rewritten). The knowledge timestamp for LIVE_PIT rows. For HISTORICAL_BACKFILL rows it is the reconstruction time, not a knowledge date.', read:'Compare it with snapshot_date: a live row is written on or shortly after its session.', cav:'Not yet in the 88-field v1.6 dictionary (it is the 89th column of the live view). Scheduled for inclusion in the next dictionary revision.', src:'column comment on the delivery view', unit:'timestamptz · UTC'},
+  {g:'prov', f:'updated_at', say:'The last time anything on the row was touched. It is a housekeeping watermark, not a knowledge timestamp.', def:'Last-write timestamp for the delivered row, equal to the greater of the source row\'s created_at and updated_at. It is not a point-in-time availability timestamp.', unit:'timestamptz · UTC'},
+  {g:'prov', f:'decay_provenance', say:'Which regime the row belongs to: live point-in-time, or reconstructed history.', def:'Per-row decay provenance. All rows on or after 2 March 2026 are LIVE_PIT in this delivery. Allowed: LIVE_PIT, HISTORICAL_BACKFILL.', read:'For strict predictive tests use LIVE_PIT only.', unit:'text'},
+  {g:'prov', f:'decay_is_pit', say:'The same thing as a true/false flag.', def:'TRUE exactly where decay_provenance is LIVE_PIT; FALSE for HISTORICAL_BACKFILL.', unit:'boolean'},
+  {g:'prov', f:'values_as_of / revision_at / is_restatement', say:'The lineage companion: when the values were first written, when they were last revised, and whether that revision came more than a day later.', def:'Revision companion view: values_as_of is the original scorecard write, revision_at is the latest operational mutation, and is_restatement marks revisions more than 24 hours later.', src:'view comment on the lineage companion view', unit:'timestamptz · boolean'},
+  {g:'prov', f:'data_quality_flags', say:'Machine-readable caveats delivered with the row, never silently cleaned away.', def:'Open-vocabulary machine-readable provenance and data-quality indicators. Multiple flags may be separated by comma or semicolon; split on either delimiter.', read:'Common tokens: HALF_LIFE_SENTINEL, ROW_RESTATED_AFTER_24H, WKS_VINTAGE_UNPROVEN, EXTREME_OR.', unit:'text'},
+  {g:'prov', f:'is_trading_session', say:'True on every delivered row. It is a contract assertion that non-session days are withheld.', def:'TRUE where snapshot_date is a US equity trading session. Every row in this delivery is TRUE; non-session rows are withheld from V5.', unit:'boolean'},
+  {g:'prov', f:'fit_status', say:'Whether a decay fit was attempted, whether it was significant, and whether it is live or backfilled.', def:'Fit status and provenance. Allowed: OK, OK_NOT_SIGNIFICANT, FLAT_WITHIN_EPS, MAGNITUDE_BAND_PIT, INVALID_INPUT, TOO_FEW_OBSERVATIONS, and the BACKFILL_* variants. OK means live and significant.', read:'Only OK and BACKFILL_FIT_OK carry a significant fit; the timing fields publish only then.', cav:'Live significant fits (OK) begin 2026-07-22, so the fitted decay layer is newly live rather than two years deep.', unit:'text'},
+
+  /* forensic */
+  {g:'for', f:'vms', say:'Verification Match Score: do the narrative\'s factual claims match what the company actually filed? Higher = the narrative checks out against filings.', def:'Verification Match Score. Measures alignment between factual narrative claims and available public company filings; higher means stronger match.', read:'High = claims corroborated by filings; low = claims the filings do not support. This is the "structural support" measure.', cav:'Not a speed measure. The velocity field is narrative_velocity_score.', unit:'0–100'},
+  {g:'for', f:'srs', say:'Source Reliability Score: how reliable the publication behind the narrative has been.', def:'Source Reliability Score. Market Prism reliability assessment of the publication or source; higher means greater reliability.', read:'A rating of the outlet, not of the claim.', cav:'Recalibrated 2026-06-10; earlier history is on a different, non-comparable scale.', unit:'0–100'},
+  {g:'for', f:'cvs', say:'Claim Verifiability Score: how testable the claims are at all.', def:'Claim Verifiability Score. Measures how testable the narrative\'s claims are against public evidence.', read:'Four levels in practice: 0, 30, 60, 90.', unit:'0–100 ordinal'},
+  {g:'for', f:'ccp', say:'Composite Confidence Percentile: how confident the engine is in its own assessment of this narrative.', def:'Composite Confidence Percentile attached to the narrative assessment.', unit:'0–100'},
+  {g:'for', f:'acs', say:'Actor Credibility Score: how credible the main person or source pushing the narrative is.', def:'Actor Credibility Score for the primary actor or source associated with the narrative.', unit:'0–100'},
+  {g:'for', f:'nrs', say:'Narrative Risk Score: how likely the narrative is to be misleading or dangerous to follow.', def:'Narrative Risk Score; higher values indicate greater modeled risk that the narrative is misleading or dangerous to follow.', read:'High = treat with suspicion.', unit:'0–100'},
+  {g:'for', f:'npi', say:'Narrative Persistence Index: the narrative\'s staying power.', def:'Narrative Persistence Index. Modeled staying power of the narrative; requires sufficient multi-day history.', unit:'0–100'},
+  {g:'for', f:'hds', say:'Hype Discipline Score: is the language evidence-dense or promotional? Most rows sit at 1.0 because disciplined language is the norm.', def:'Hype Discipline Score; higher values indicate more evidence-dense and less promotional narrative language.', read:'Low values (a few percent of rows) flag promotional language.', unit:'0–1'},
+  {g:'for', f:'overreaction_ratio', say:'How much the price moved relative to what the modeled fundamental change would justify.', def:'Relative overreaction measure comparing observed price response with Market Prism\'s modeled fundamental change; higher means greater overreaction.', read:'Heavy-tailed; extreme values are real and flagged with EXTREME_OR.', unit:'ratio'},
+  {g:'for', f:'fear_weighted_or', say:'The same overreaction measure, weighted more heavily when the move was to the downside.', def:'Proprietary downside-sensitive overreaction measure; higher values indicate greater asymmetric downside response.', unit:'ratio'},
+  {g:'for', f:'drift_score', say:'The gap between what the narrative claims and what the company\'s earnings reports actually say. Zero means measured and aligned; blank means it could not be judged.', def:'Narrative drift between claims and filing evidence. NULL means not adjudicable; zero means measured and aligned.', cav:'Never read NULL as zero here — they mean different things.', unit:'0–100'},
+  {g:'for', f:'omission_gap_score', say:'How much material filing information the narrative leaves out.', def:'Selective-omission measure; higher values indicate more material filing information absent from the narrative.', unit:'0–100 ordinal'},
+  {g:'for', f:'coordination_score', say:'Are many sources converging on the same thesis in a narrow window? Higher = more coordinated.', def:'Cross-source coordination intensity; higher values indicate greater modeled coordination.', read:'Most rows sit at 0; the top 5% reach about 60.', unit:'0–100 ordinal'},
+  {g:'for', f:'coordination_class', say:'The same thing as a label.', def:'Categorical coordination classification. Allowed: ORGANIC_SPREAD, SUSPICIOUS_PATTERN, LIKELY_COORDINATED.', unit:'text'},
+  {g:'for', f:'suspicion_score', say:'How anomalous the market activity around the narrative is. It says how far a name is likely to move, not which way.', def:'Market-activity anomaly intensity associated with the narrative; higher means greater anomaly intensity.', read:'The strongest single magnitude coordinate in the delivered validation report. The same score can precede a large move in either direction.', unit:'0–100 ordinal'},
+  {g:'for', f:'suspicion_class', say:'The same thing as a label.', def:'Categorical market-activity anomaly classification. Allowed: NORMAL_ACTIVITY, MODERATE_CONCERN, HIGH_MANIPULATION_RISK, MACRO_OVERRIDE.', unit:'text'},
+  {g:'for', f:'verdict', say:'The engine\'s daily one-line classification of the narrative, from 15 allowed labels.', def:'Daily forensic classification. Allowed: Narrative Trap, Narrative Risk, Structurally Supported, Drift Compression Short, Air Pocket Short, Omission Cascade, High Conviction Continuation, Accumulate, Near-Trap Watch, Coordinated Watch, Exhausted Narrative, Regime Uncertainty, Overvalued Stable, Monitoring, Unverified Premium.', read:'A state label, not a trade call.', unit:'text'},
+  {g:'for', f:'verdict_confidence', say:'How confident the engine is in that verdict.', def:'Confidence attached to the daily verdict.', unit:'0–100'},
+  {g:'for', f:'advanced_verdict', say:'An overlay on the verdict: standard, rapid decay, coordinated campaign, event horizon active, and so on.', def:'Advanced narrative-state overlay. Allowed: STANDARD, RAPID_DECAY, COORDINATED_CAMPAIGN, EVENT_HORIZON_ACTIVE, AUTHORITY_DRIVEN_NARRATIVE, NARRATIVE_SURGE.', unit:'text'},
+
+  /* valuation */
+  {g:'val', f:'fair_value', say:'Our fundamental value per share, produced without looking at the market price.', def:'Proprietary fundamental fair-value estimate per share, produced independently of current market price. NULL where no suitable anchor is available.', read:'The independence from price is what keeps the deviation measure non-circular.', unit:'USD per share · ~33% null'},
+  {g:'val', f:'fair_value_method', say:'Which valuation framework produced that number.', def:'Identifier for the valuation framework used on the row. Allowed: PE, FCF_BLENDED, EV_EBITDA, PS, FCF, PS_SPECULATIVE_FALLBACK, NAV, PE_FWD_FALLBACK, MNAV, NAV_BOOK_FLOOR, PE_FWD_CONFIG_OVERRIDE.', unit:'text'},
+  {g:'val', f:'fvd / fvd_pct', say:'How far the price sits above or below our fair value, in dollars and in percent. Positive = price above the anchor.', def:'fvd is current_price minus fair_value in USD per share; fvd_pct is the percentage distance. Positive values indicate price above the anchor.', read:'A large positive fvd_pct is a premium; on its own it is close to null as a predictor in the delivered report — it becomes informative in combination with crowding.', unit:'USD · percent'},
+  {g:'val', f:'fv_low', say:'A conservative downside anchor.', def:'Conservative downside valuation anchor.', unit:'USD per share'},
+  {g:'val', f:'price_cushion_pct', say:'How far the price could fall to the conservative anchor, as a percent.', def:'Percentage cushion relative to fv_low, computed as (current_price − fv_low) / current_price × 100 when inputs are available.', unit:'percent'},
+  {g:'val', f:'current_price', say:'The reference price the scoring pipeline used at score time. Not an official close — never use it for returns.', def:'Split-basis-coherent score-time reference price used by the scoring pipeline. It is not a validated official closing price.', cav:'All returns on this deck use an independent daily price ledger.', unit:'USD'},
+
+  /* physics */
+  {g:'phy', f:'narrative_mass', say:'How big or heavy the narrative is.', def:'Proprietary narrative-mass measure; higher values indicate greater modeled narrative size or weight.', read:'Compressed near the top of the scale; not used as a headline predictive coordinate in the delivered report.', unit:'0–1'},
+  {g:'phy', f:'narrative_mass_score', say:'A second, distinct mass measure used inside the physics model.', def:'Second proprietary mass channel used within the narrative-physics framework; distinct from narrative_mass.', unit:'0–1'},
+  {g:'phy', f:'narrative_velocity_score', say:'How fast the narrative is spreading or attention is changing.', def:'Rate of narrative spread or attention change; higher values indicate a faster-moving narrative.', read:'This is the velocity field. It ranks movement intensity, not direction.', unit:'score'},
+  {g:'phy', f:'narrative_pressure', say:'How much pressure or intensity the narrative is exerting.', def:'Proprietary narrative-pressure or intensity measure; higher values indicate greater modeled pressure.', unit:'score'},
+  {g:'phy', f:'narrative_energy_absolute', say:'The narrative\'s initial energy — the stock it started with.', def:'Initial narrative-energy magnitude. Higher values indicate greater modeled initial energy; delivered scale is capped at 1,000.', unit:'0–1,000'},
+  {g:'phy', f:'narrative_energy_t', say:'The narrative\'s current energy. Watch it rise as a narrative builds and fall as it burns out.', def:'Current narrative-energy measure. Treat as a distinct scale from narrative_energy_absolute.', read:'Zero on days the representative narrative switched — the physics re-seeds. High energy is where the intensity measurements separate most.', unit:'score'},
+  {g:'phy', f:'energy_remaining_dynamic', say:'What share of the initial energy is left, as a percent.', def:'Estimated narrative energy remaining.', read:'Bimodal — it piles up at both ends.', unit:'0–100'},
+  {g:'phy', f:'exhaustion_days_dynamic', say:'How many days until the narrative is projected to run out of energy.', def:'Projected days until the narrative is effectively exhausted. A value of 120 indicates the projection reaches the operating horizon.', read:'Small = close to exhaustion. 120 = the projection ran to the horizon.', unit:'days'},
+  {g:'phy', f:'lambda_decay', say:'The operational decay rate. Positive = fading, negative = strengthening.', def:'Signed fitted narrative-decay rate. Positive values indicate fading; negative values indicate strengthening.', read:'The median narrative is very slightly strengthening; do not assume "decay" means everything fades.', unit:'rate per day'},
+  {g:'phy', f:'half_life', say:'The operational half-life, capped at 90 days. Prefer decay_state plus fitted_half_life.', def:'Operational decay half-life estimate. The delivered value is capped at 90; consult quality flags and the value itself for sentinel use.', cav:'Rows before 2026-07-22 may hold a literal 90 sentinel (flag HALF_LIFE_SENTINEL). Do not treat NULL or 90 as measured persistence.', unit:'days'},
+  {g:'phy', f:'decay_state', say:'Is the narrative strengthening, stable, or decaying? Read this before any of the timing fields.', def:'Canonical decay classification. Allowed: STABLE, STRENGTHENING, DECAYING, UNKNOWN.', read:'The lifecycle label. STRENGTHENING is formation; DECAYING is compression or reset.', unit:'text'},
+  {g:'phy', f:'fitted_lambda', say:'The raw regression estimate of the decay rate, where a fit exists.', def:'Raw fitted decay estimate where a regression fit is available.', cav:'Differs from lambda_decay on most rows: lambda_decay carries an operational adjustment on top of the raw fit.', unit:'rate per day · ~57% null'},
+  {g:'phy', f:'fitted_lambda_se', say:'The standard error on that fit. The timing fields publish only when the fit is significant.', def:'Standard error associated with fitted_lambda where published. Gate directly on non-NULL availability.', read:'Timing fields require |fitted_lambda / fitted_lambda_se| ≥ 2.', unit:'rate per day'},
+  {g:'phy', f:'fitted_half_life', say:'The uncapped half-life, for decaying narratives only.', def:'Uncapped half-life estimate for decaying narratives where available.', read:'Mutually exclusive with doubling_time: a row gets one or the other. About 10% of rows carry a significant fit, so it is sparse by design.', unit:'days · ~96% null'},
+  {g:'phy', f:'doubling_time', say:'How long the narrative takes to double in energy, for strengthening narratives only.', def:'Estimated doubling time for strengthening narratives where available.', unit:'days · ~94% null'},
+  {g:'phy', f:'effective_narrative_horizon', say:'How many days forward the narrative is expected to stay operative.', def:'Point-in-time forward horizon over which the narrative is expected to remain operative.', unit:'days'},
+  {g:'phy', f:'horizon_source', say:'Where that horizon came from: an earnings date, an estimate, or the decay fit.', def:'Source of effective_narrative_horizon. Allowed: EARNINGS_DATE, ESTIMATED_EARNINGS, DECAY_FIT, NO_VALID_HORIZON, DECAY_CAPPED_BY_EARNINGS.', read:'Only about 16% of horizons come from the decay fit; most come from the earnings calendar.', unit:'text'},
+  {g:'phy', f:'is_horizon_capped', say:'True when the decay horizon hit the operating cap.', def:'TRUE when the decay-derived horizon reaches the operating cap.', unit:'boolean'},
+
+  /* regime */
+  {g:'reg', f:'wks_score', say:'Walsh Keyword Score: the canonical directional channel. Positive = bullish evidence, negative = bearish.', def:'Proprietary Walsh Keyword Score. Positive values indicate bullish directional evidence; negative values indicate bearish evidence.', read:'The "tape energy" axis of the Narrative Universe. In the delivered report its magnitude IC is flat across 1–20 days; its signed IC is small.', unit:'−100 to +100'},
+  {g:'reg', f:'current_sentiment', say:'A legacy signed sentiment read, kept for continuity. Prefer wks_score.', def:'Signed directional read retained for continuity; use wks_score as the canonical directional channel where available.', cav:'17 February 2026 is an outage placeholder: all 103 rows read 0.0. Treat that session as unavailable for this field only.', unit:'−100 to +100'},
+  {g:'reg', f:'walsh_regime', say:'The narrative-energy regime: clear path, persistent, neutral, or exhausting.', def:'Narrative-energy regime. Allowed: PERSISTENT, NEUTRAL, EXHAUSTING, CLEAR_PATH.', read:'EXHAUSTING is the exhaustion stage of the lifecycle; PERSISTENT is drift.', unit:'text'},
+  {g:'reg', f:'signal_regime', say:'An attention-and-energy overlay: neutral, momentum disconnect, saturation, fresh energy, and two rare collapse states.', def:'Attention and energy state overlay. Allowed: NEUTRAL, MOMENTUM_DISCONNECT, SATURATION, FRESH_ENERGY, YELLOW_COLLAPSE, TRIPLE_THREAT.', unit:'text'},
+  {g:'reg', f:'regime_direction', say:'The direction the active regime implies.', def:'Direction implied by the active regime. Allowed: BULLISH, BEARISH, NEUTRAL.', unit:'text'},
+  {g:'reg', f:'regime_direction_score', say:'Whether the evidence confirms or contradicts that direction. It is confirmation, not direction — easy to misread.', def:'Signed directional confirmation measure; positive values indicate confirmation and negative values contradiction.', unit:'−100 to +100'},
+  {g:'reg', f:'regime_strength', say:'How much conviction the engine has in the regime.', def:'Composite regime conviction; higher values indicate stronger modeled conviction.', unit:'0–1'},
+  {g:'reg', f:'mass_streak_days', say:'How many consecutive days narrative mass has pushed in one direction. Sign is the direction.', def:'Signed consecutive-day streak of directional narrative mass. Positive is bullish, negative bearish; values are clipped at ±10.', read:'Mostly zero; the top 5% reach about 6. Its meaning changes with regime — inside EXHAUSTING it behaves differently from universe-wide.', unit:'signed days'},
+  {g:'reg', f:'market_regime_class / sector_regime_class', say:'The market and sector backdrop: bull, bear, choppy, or unknown.', def:'Market-level and sector-level regime context. Allowed: BULL, BEAR, CHOPPY, UNKNOWN.', cav:'Reads UNKNOWN on roughly 38–40% of live rows.', unit:'text'},
+  {g:'reg', f:'amihud_conviction_decay', say:'How fast conviction per dollar traded is decaying, from price impact and liquidity.', def:'Conviction-per-dollar decay indicator based on price-impact and liquidity dynamics.', unit:'0–1'},
+
+  /* earnings */
+  {g:'earn', f:'days_to_earnings', say:'Days until the next relevant earnings event.', def:'Forward days to the relevant earnings event. Implausible or stale historical horizons are withheld rather than emitted as extreme values.', unit:'calendar days · ~41% null'},
+  {g:'earn', f:'earnings_date_status', say:'How sure we are of that date. Unverifiable dates are never promoted to confirmed — it fails closed.', def:'Point-in-time provenance of the earnings date. UNKNOWN or ESTIMATED is retained instead of promoting unverifiable dates to CONFIRMED. Allowed: CONFIRMED, ESTIMATED, UNKNOWN, STALE, INFERRED.', read:'Fail-closed by design: an unverifiable date is never promoted to CONFIRMED.', unit:'text'},
+  {g:'earn', f:'eps_surprise_pct / revenue_surprise_pct', say:'The latest EPS and revenue surprise versus consensus, stored as fractions: 0.05 means +5%.', def:'Most recent surprise versus consensus, in fraction units (0.05 = +5%). Extreme values can arise when the consensus denominator is near zero; unverifiable values are withheld.', cav:'Fractions, not percents. Do not multiply or divide by 100.', unit:'decimal fraction'},
+  {g:'earn', f:'guidance_direction', say:'What management last did with guidance.', def:'Latest verifiable management guidance action. Allowed: MAINTAINED, RAISED, LOWERED, WITHDRAWN (contractual, not observed in this delivery).', unit:'text · ~70% null'},
+  {g:'earn', f:'earnings_credibility_score', say:'How credible management\'s earnings and guidance have been, as a percentile. Low credibility tends to go with larger moves.', def:'Management earnings and guidance credibility percentile. Historical score values are preserved; delivery repairs do not recompute this score.', read:'Inverted as a magnitude coordinate in the delivered report: low credibility, bigger moves. Event-dependent — it needs earnings history to populate.', unit:'0–100'},
+
+  /* options */
+  {g:'opt', f:'max_pain', say:'The nearest-expiry strike where option holders would lose the most.', def:'Nearest-expiry max-pain strike from the available options snapshot.', unit:'USD strike'},
+  {g:'opt', f:'distance_from_max_pain_pct', say:'How far the price sits from that strike, in percent. The strongest standalone directional field in the delivered report, and one that can be computed from public options data.', def:'Percentage distance between the split-basis-coherent score-time price and nearest-expiry max-pain strike.', read:'Far below max pain has preceded rises; far above has preceded falls, monotonically across deciles.', cav:'Options fields begin 9 June 2026, so this family carries roughly three months of history.', unit:'percent'},
+  {g:'opt', f:'put_call_skew', say:'Near-the-money put versus call open interest. Above 1 = heavier put positioning.', def:'Near-the-money put/call open-interest skew. Values above 1 indicate heavier put positioning.', unit:'ratio'},
+  {g:'opt', f:'gex_estimate', say:'Net dealer gamma. Positive tends to dampen moves; negative tends to amplify them.', def:'Net dealer gamma-exposure estimate. Positive values are generally associated with dampening positioning and negative values with amplifying positioning.', unit:'contracts × gamma'},
+  {g:'opt', f:'total_call_oi / total_put_oi', say:'Open interest across the tracked contracts.', def:'Total call and put open interest across tracked contracts.', unit:'contracts'},
+  {g:'opt', f:'days_to_nearest_opex / nearest_opex_date', say:'Days to, and date of, the nearest tracked expiration.', def:'Days to the nearest tracked options expiration, and its date.', unit:'calendar days · date'},
+
+  /* behavioural */
+  {g:'beh', f:'fomo_score', say:'A crowd-chase gauge: how much the crowd is piling in. Descriptive and contextual.', def:'Proprietary crowd-chase gauge; higher values indicate greater crowding or FOMO intensity. Descriptive and contextual.', read:'On its own it is context. Combined with a valuation premium it is the cleanest interaction in the delivered report.', unit:'0–100 · from 2026-06-09'},
+  {g:'beh', f:'fomo_band', say:'The same gauge as a label, from Calm to Blow-Off.', def:'Categorical interpretation of fomo_score. Current and legacy labels coexist across history. Allowed: Calm, Warming, Hot, Overheated, Blow-Off / Extreme.', unit:'text'},
+  {g:'beh', f:'bubble_score', say:'An explosive-price-behaviour statistic. Above 100 is an active signal; blank means not evaluated, never "no bubble".', def:'Normalized explosive-price-behavior statistic. The scale may exceed 100; NULL means not evaluable.', cav:'Never coalesce NULL to zero.', unit:'score · from 2026-06-21'},
+
+  /* paper book (operational tables, not in the delivered feed) */
+  {g:'pap', f:'portfolio_value', say:'Mark-to-market value of the paper book at the snapshot: cash plus open positions at modeled prices.', def:'paper_portfolio_daily_v6.portfolio_value — cash + mark-to-market value of open positions. Gross; modeled fills; no execution costs.', src:'internal table paper_portfolio_daily_v6 (not in the delivered feed)', unit:'USD'},
+  {g:'pap', f:'realized_pnl_cumulative', say:'Profit and loss on positions that have been closed, summed since the book started.', def:'paper_portfolio_daily_v6.realized_pnl_cumulative — cumulative closed-trade P&L, gross.', src:'internal table paper_portfolio_daily_v6 (not in the delivered feed)', unit:'USD'},
+  {g:'pap', f:'unrealized_pnl', say:'Profit and loss on positions still open, at the snapshot\'s modeled prices.', def:'paper_portfolio_daily_v6.unrealized_pnl — open-position P&L at mark, gross.', src:'internal table paper_portfolio_daily_v6 (not in the delivered feed)', unit:'USD'}
+];
+
+// The 12 representative fields shown as the machine-readable row on slide 3.
+var ROW_FIELDS = [
+  ['ticker', function(r){ return txt(r.ticker); }],
+  ['snapshot_date', function(r){ return txt(r.snapshot_date); }],
+  ['first_written_at', function(r){ return fmtUtc(r.first_written_at); }, true],
+  ['narrative_energy_t', function(r){ return fmt(r.narrative_energy_t, 2); }],
+  ['narrative_velocity_score', function(r){ return fmt(r.narrative_velocity_score, 4); }],
+  ['fitted_half_life', function(r){ return r.fitted_half_life == null ? '—' : fmt(r.fitted_half_life, 2) + ' d'; }],
+  ['decay_state', function(r){ return txt(r.decay_state); }],
+  ['vms', function(r){ return fmt(r.vms, 1); }],
+  ['exhaustion_days_dynamic', function(r){ return r.exhaustion_days_dynamic == null ? '—' : fmt(r.exhaustion_days_dynamic, 1) + ' d'; }],
+  ['walsh_regime', function(r){ return txt(r.walsh_regime); }],
+  ['coordination_score', function(r){ return fmt(r.coordination_score, 1); }],
+  ['decay_provenance', function(r){ return txt(r.decay_provenance); }]
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   PRESENTER CUES — one per slide, hidden unless enabled. Written in
+   the first person so each line can be read aloud as it stands.
+   ═══════════════════════════════════════════════════════════════ */
+var CUES = {
+  1: { main: 'I built Market Prism as an operating system for making decisions, not as a dataset for buyers. When I started, I did not know the alternative-data industry existed.',
+       opt: 'AI-assisted research later suggested the underlying dataset might have institutional value and pointed me to this channel; it accelerated my learning. The architecture, constructs, decisions, standards and responsibility are mine. Market Prism was not built around Citadel\'s evaluation criteria, or anyone else\'s. Advising companies across industries taught me to see a company as interacting systems — management decisions, competitive positioning, operating fundamentals, customer behavior and public narrative — rather than as isolated variables.',
+       def: [] },
+  2: { main: 'The predictive relationships emerged after I built a structured way to measure the information environment. I did not start from conventional quant factors and reverse-engineer the system around a desired backtest.',
+       opt: 'Each stage of the lifecycle maps to delivered fields with the names shown here. Definitions are in the glossary; formulas are available on request rather than on the slide.',
+       def: ['narrative_energy_t','narrative_velocity_score','narrative_mass','fitted_half_life','decay_state','vms','exhaustion_days_dynamic','drift_score','coordination_score'] },
+  3: { main: 'This is what I look at every day. The field on the left is this morning\'s scored universe; the row on the right is one security on one session, resolved into delivered fields. The feed is not a separate product — it is the system\'s own output in research-ready form.',
+       opt: 'The default example was chosen by a stated rule from the live period, not by outcome. Any security and any session in the window can be selected; the rule is in Research Details.',
+       def: ['first_written_at','decay_state','walsh_regime','vms','coordination_score','decay_provenance'] },
+  4: { main: 'March 2, 2026 forward is the clean live point-in-time regime. first_written_at is a server-default insert timestamp and is the knowledge timestamp for live rows. Everything before March 2 was reconstructed after the fact and is labeled HISTORICAL_BACKFILL, so I do not represent it as strict point-in-time.',
+       opt: 'Methodology stability and point-in-time integrity are separate questions. The core framework has been stable; much of the later work improved source quality, normalization, coverage, lineage and processing reliability. Any change that affects methodology, or any historical correction, should be identified precisely and evaluated on its own.',
+       def: ['first_written_at','updated_at','decay_provenance','decay_is_pit','fit_status','data_quality_flags'] },
+  5: { main: 'Market Prism informs my own research and trading, and I intend to deploy more of my own capital using its outputs. That gives me a practical incentive for prospective reliability rather than a cosmetically strong backtest. It does not mean every signal is traded, and my own trading is not proof of institutional alpha.',
+       opt: 'The paper book is gross, with modeled fills and no execution costs — shown so the machinery can be seen running, not as a track record. The strongest claim I make is that these are novel, structured, timestamped measurements. Whether they contain incremental alpha is your researchers\' determination.',
+       def: ['portfolio_value','realized_pnl_cumulative','unrealized_pnl'] }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════════════════ */
+function go(n){
+  n = Math.max(1, Math.min(TOTAL, n));
+  S.screen = n;
+  var secs = document.querySelectorAll('.pr-screen');
+  for (var i = 0; i < secs.length; i++) secs[i].classList.toggle('active', Number(secs[i].getAttribute('data-s')) === n);
+  var dots = el('pr-dots').children;
+  for (var j = 0; j < dots.length; j++) dots[j].classList.toggle('on', Number(dots[j].getAttribute('data-n')) === n);
+  el('pr-cnt').textContent = n + ' / ' + TOTAL;
+  el('pr-prev').disabled = n === 1;
+  el('pr-next').textContent = n === TOTAL ? 'End' : 'Next →';
+  el('pr-next').disabled = n === TOTAL;
+  el('pr-sel').style.visibility = (n === 3 || n === 4) ? 'visible' : 'hidden';
+  renderCue();
+  if (S.drawer) renderDrawer();
+  if (n === 3) setTimeout(renderS3Left, 30);
+  if (n === 5) setTimeout(loadPaper, 30);
+  syncUrl();
+}
+function buildDots(){
+  var h = '';
+  for (var i = 1; i <= TOTAL; i++) h += '<button type="button" data-n="' + i + '" aria-label="Slide ' + i + '">' + i + '</button>';
+  el('pr-dots').innerHTML = h;
+  el('pr-dots').addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) go(Number(b.getAttribute('data-n'))); });
+}
+function syncUrl(){
+  try {
+    var u = new URL(location.href);
+    u.searchParams.set('s', String(S.screen));
+    if (S.ticker) u.searchParams.set('ticker', S.ticker);
+    var r = selRow(); if (r) u.searchParams.set('obs', r.snapshot_date);
+    history.replaceState(null, '', u.toString());
+  } catch(_e){}
+}
+document.addEventListener('keydown', function(e){
+  if (!document.body.classList.contains('mq-open')) return;
+  var t = e.target; var tag = t && t.tagName ? t.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(S.screen + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(S.screen - 1); }
+  else if (e.key === 'Escape') { if (TIP.pinned || el('fld-tip').classList.contains('on')) hideTip(true); else if (S.drawer) toggleDrawer(false); }
+  else if (e.key === 'd' || e.key === 'D') { toggleDrawer(); }
+  else if (e.key === 'g' || e.key === 'G') { S.drawerTab = 'fields'; toggleDrawer(true); }
+  else if (e.key === 'c' || e.key === 'C') { toggleCues(); }
+  else if (e.key === 'Home') { go(1); }
+  else if (e.key === 'End') { go(TOTAL); }
+  else if (/^[1-5]$/.test(e.key)) { go(Number(e.key)); }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   CUES — off at every load; never restored from storage, so an
+   audience never sees them unless the presenter enables them.
+   ═══════════════════════════════════════════════════════════════ */
+function toggleCues(force){
+  S.cues = typeof force === 'boolean' ? force : !S.cues;
+  el('pr-cues').classList.toggle('on', S.cues);
+  el('pr-cues').setAttribute('aria-pressed', S.cues ? 'true' : 'false');
+  el('pr-cues-state').textContent = S.cues ? 'On' : 'Off';
+  document.body.classList.toggle('pr-cues-on', S.cues);
+  renderCue();
+  if (S.screen === 3) setTimeout(renderS3Left, 30);
+}
+function renderCue(){
+  var c = CUES[S.screen] || CUES[1];
+  el('cue-main').textContent = c.main; el('cue-opt').textContent = c.opt;
+  el('cue-def').innerHTML = (c.def && c.def.length) ? c.def.map(function(f){ return '<span class="fld" data-field="' + esc(f) + '">' + esc(f) + '</span>'; }).join('') : '<span style="color:var(--mp-text-muted)">No field names on this slide.</span>';
+  el('pr-cue').classList.toggle('on', S.cues);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SLIDE 1 — the order things happened (static, conceptual)
+   ═══════════════════════════════════════════════════════════════ */
+function renderSlide1(){
+  var W = 1400, H = 104;
+  var steps = [
+    {t:'Advisory practice', s:'10+ years · strategy, positioning, information systems', c:'#A0A8B0'},
+    {t:'Market Prism built', s:'an operating system for retail decision-making', c:'#00AEFF'},
+    {t:'Own research & trading', s:'prospective usefulness, integrity, reliability', c:'#38C8B8'},
+    {t:'Institutional dataset', s:'the same measurements, delivered as a feed', c:'#7B61FF'}
+  ];
+  var n = steps.length, left = 120, right = W - 120, gap = (right - left) / (n - 1), y = 44;
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Sequence: advisory practice, Market Prism built, own research and trading, institutional dataset">';
+  h += '<line x1="' + left + '" y1="' + y + '" x2="' + right + '" y2="' + y + '" stroke="rgba(255,255,255,.14)" stroke-width="2"/>';
+  for (var i = 0; i < n; i++){
+    var x = left + i * gap;
+    h += '<circle cx="' + x + '" cy="' + y + '" r="9" fill="#0C1018" stroke="' + steps[i].c + '" stroke-width="3"/>';
+    h += '<text x="' + x + '" y="' + (y - 20) + '" text-anchor="middle" font-size="17" font-weight="700" fill="#FFFFFF" letter-spacing="-0.01em">' + esc(steps[i].t) + '</text>';
+    h += '<text x="' + x + '" y="' + (y + 32) + '" text-anchor="middle" font-size="12" fill="#A0A8B0" letter-spacing=".02em">' + esc(steps[i].s) + '</text>';
+    if (i < n - 1) h += '<text x="' + (x + gap / 2) + '" y="' + (y + 5) + '" text-anchor="middle" font-size="14" fill="rgba(255,255,255,.3)">→</text>';
+  }
+  h += '<text x="' + left + '" y="' + (H - 4) + '" font-size="11" fill="rgba(255,255,255,.34)" letter-spacing=".14em">IN THIS ORDER · THE DATASET IS THE EXHAUST OF A SYSTEM BUILT FOR USE</text>';
+  h += '</svg>';
+  el('s1-arc').innerHTML = h;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SLIDE 2 — lifecycle arc + the delivered measurements
+   ═══════════════════════════════════════════════════════════════ */
+function renderSlide2(){
+  var W = 1400, H = 222;
+  var stages = [
+    {t:'Formation',     s:'narrative_energy_t seeds · narrative_velocity_score', f:'narrative_energy_t',       c:'#00DE94'},
+    {t:'Strengthening', s:'decay_state · STRENGTHENING · doubling_time',          f:'decay_state',              c:'#00AEFF'},
+    {t:'Persistence',   s:'fitted_half_life · walsh_regime · PERSISTENT · vms',   f:'fitted_half_life',         c:'#7B61FF'},
+    {t:'Exhaustion',    s:'exhaustion_days_dynamic · walsh_regime · EXHAUSTING',   f:'exhaustion_days_dynamic',  c:'#FFB800'},
+    {t:'Decay / Reset', s:'decay_state · DECAYING · narrative_hash switches',      f:'narrative_hash',           c:'#FF4D4D'}
+  ];
+  var n = stages.length, left = 150, right = W - 170, gap = (right - left) / (n - 1);
+  // arc: energy rises through formation and strengthening, holds through
+  // persistence, peaks at exhaustion when no new information arrives, then
+  // decays until it resets or a new narrative replaces it.
+  var ys = [170, 112, 84, 74, 158];
+  var path = '';
+  for (var i = 0; i < n; i++){
+    var x = left + i * gap;
+    if (i === 0) path += 'M' + x + ' ' + ys[i];
+    else { var px = left + (i-1) * gap; var cx = (px + x) / 2; path += ' C' + cx + ' ' + ys[i-1] + ' ' + cx + ' ' + ys[i] + ' ' + x + ' ' + ys[i]; }
+  }
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Conceptual narrative lifecycle">';
+  h += '<defs><linearGradient id="lg2" x1="0" x2="1"><stop offset="0" stop-color="#00DE94"/><stop offset=".45" stop-color="#00AEFF"/><stop offset=".78" stop-color="#FFB800"/><stop offset="1" stop-color="#FF4D4D"/></linearGradient></defs>';
+  h += '<path d="' + path + '" fill="none" stroke="url(#lg2)" stroke-width="3" opacity=".85"/>';
+  for (var k = 0; k < n; k++){
+    var xx = left + k * gap;
+    h += '<circle cx="' + xx + '" cy="' + ys[k] + '" r="9" fill="#0C1018" stroke="' + stages[k].c + '" stroke-width="3"/>';
+    h += '<text x="' + xx + '" y="' + (ys[k] - 22) + '" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF" letter-spacing="-0.01em">' + esc(stages[k].t) + '</text>';
+    h += '<text class="fld" data-field="' + esc(stages[k].f) + '" x="' + xx + '" y="' + (H - 16) + '" text-anchor="middle" font-size="11" font-weight="600" fill="#A0A8B0" letter-spacing=".04em">' + esc(stages[k].s) + '</text>';
+    if (k < n - 1) h += '<text x="' + (xx + gap/2) + '" y="' + (H - 16) + '" text-anchor="middle" font-size="14" fill="rgba(255,255,255,.3)">→</text>';
+  }
+  h += '<text x="' + left + '" y="20" font-size="11" font-weight="600" fill="rgba(255,255,255,.34)" letter-spacing=".14em">CONCEPTUAL LIFECYCLE · HEIGHT = NARRATIVE ENERGY · LABELS BENEATH ARE THE DELIVERED STATE FIELDS</text>';
+  h += '<line x1="34" y1="' + (H - 50) + '" x2="34" y2="56" stroke="rgba(255,255,255,.22)" stroke-width="1.5"/>';
+  h += '<path d="M28 64 L34 54 L40 64" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.5"/>';
+  h += '<text transform="translate(18 ' + ((H - 50 + 56) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11" font-weight="600" fill="#A0A8B0" letter-spacing=".12em">NARRATIVE ENERGY</text>';
+  h += '</svg>';
+  el('s2-life').innerHTML = h;
+
+  var meas = [
+    {t:'Narrative energy',   f:'narrative_energy_t',        c:'#00AEFF'},
+    {t:'Narrative velocity', f:'narrative_velocity_score',  c:'#38C8B8'},
+    {t:'Narrative mass',     f:'narrative_mass',            c:'#00AEFF'},
+    {t:'Persistence',        f:'fitted_half_life',          c:'#00DE94'},
+    {t:'Decay state',        f:'decay_state',               c:'#00DE94'},
+    {t:'Structural support', f:'vms',                       c:'#7B61FF'},
+    {t:'Exhaustion',         f:'exhaustion_days_dynamic',   c:'#FFB800'},
+    {t:'Drift',              f:'drift_score',               c:'#FF4D4D'},
+    {t:'Coordination',       f:'coordination_score',        c:'#FF4D4D'}
+  ];
+  var mh = '';
+  meas.forEach(function(m){ mh += '<div class="s2-m" style="--c:' + m.c + '"><div class="t">' + esc(m.t) + '</div><div class="f"><span class="fld" data-field="' + esc(m.f) + '">' + esc(m.f) + '</span></div></div>'; });
+  el('s2-meas').innerHTML = mh;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SLIDE 3 — left: the operating system (Narrative Universe field, or
+   one security through time); right: the feed row for the selected
+   observation. Both are read-only renderings of the same rows.
+   ═══════════════════════════════════════════════════════════════ */
+function priceMap(){
+  var m = {};
+  if (S.prices) for (var i = 0; i < S.prices.length; i++) m[S.prices[i].snapshot_date] = S.prices[i].price_close;
+  return m;
+}
+function fieldColor(r){ return REGIME_COLOR[r.walsh_regime] || '#A0A8B0'; }
+
+// Narrative Universe, read-only: the dashboard's own axes, drawn in 2D.
+// x = fvd_pct (valuation: price vs the fundamental anchor, symmetric log,
+// clamped ±100%), y = wks_score (tape energy, −100..+100), dot size =
+// narrative_mass, colour = walsh_regime. One dot per security scored today.
+function renderField(){
+  var c = el('uf-field'); if (!c) return;
+  var F = S.field;
+  if (!F || !F.rows || !F.rows.length){ c.innerHTML = '<div class="dr-empty" style="padding:14px">Universe not loaded.</div>'; return; }
+  var W = Math.max(420, c.clientWidth || 800), H = Math.max(150, c.clientHeight || 260);
+  var L = 58, R = 18, T = 24, B = 34;
+  var pw = W - L - R, ph = H - T - B;
+  var sx = function(v){ var cl = Math.max(-100, Math.min(100, v)); var s = (cl < 0 ? -1 : 1) * Math.log10(1 + Math.abs(cl)) / Math.log10(101); return L + (s + 1) / 2 * pw; };
+  var sy = function(v){ var cl = Math.max(-100, Math.min(100, v)); return T + (1 - (cl + 100) / 200) * ph; };
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+  // grid + axes
+  h += '<line x1="' + L + '" y1="' + sy(0) + '" x2="' + (L + pw) + '" y2="' + sy(0) + '" stroke="rgba(255,255,255,.12)"/>';
+  h += '<line x1="' + sx(0) + '" y1="' + T + '" x2="' + sx(0) + '" y2="' + (T + ph) + '" stroke="rgba(255,255,255,.12)"/>';
+  [-100, -30, -10, 10, 30, 100].forEach(function(v){ h += '<line x1="' + sx(v) + '" y1="' + T + '" x2="' + sx(v) + '" y2="' + (T + ph) + '" stroke="rgba(255,255,255,.05)"/><text x="' + sx(v) + '" y="' + (T + ph + 14) + '" text-anchor="middle" font-size="11" fill="rgba(255,255,255,.4)">' + (v > 0 ? '+' : '') + v + '%</text>'; });
+  [-50, 50].forEach(function(v){ h += '<line x1="' + L + '" y1="' + sy(v) + '" x2="' + (L + pw) + '" y2="' + sy(v) + '" stroke="rgba(255,255,255,.05)"/>'; });
+  [-100, -50, 0, 50, 100].forEach(function(v){ h += '<text x="' + (L - 8) + '" y="' + (sy(v) + 4) + '" text-anchor="end" font-size="11" fill="rgba(255,255,255,.4)">' + (v > 0 ? '+' : '') + v + '</text>'; });
+  h += '<text x="' + (L + pw / 2) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="11" font-weight="600" fill="#A0A8B0" letter-spacing=".10em">← BELOW ANCHOR · VALUATION · <tspan class="fld" data-field="fvd / fvd_pct">fvd_pct</tspan> · ABOVE ANCHOR →</text>';
+  h += '<text transform="translate(14 ' + (T + ph / 2) + ') rotate(-90)" text-anchor="middle" font-size="11" font-weight="600" fill="#A0A8B0" letter-spacing=".10em">TAPE ENERGY · <tspan class="fld" data-field="wks_score">wks_score</tspan></text>';
+  h += '<text x="' + (L + 4) + '" y="' + (T - 8) + '" font-size="11" font-weight="600" fill="rgba(255,255,255,.34)" letter-spacing=".12em">NARRATIVE UNIVERSE · ' + esc(String(F.snapshot_date || '').toUpperCase()) + ' · SIZE = narrative_mass · COLOUR = walsh_regime</text>';
+  // dots (selected last, on top)
+  var selIdx = -1, skipped = 0;
+  for (var i = 0; i < F.rows.length; i++){
+    var r = F.rows[i];
+    if (r.fvd_pct == null || r.wks_score == null){ skipped++; continue; }
+    if (r.ticker === S.ticker){ selIdx = i; continue; }
+    var rad = 2.6 + 6 * Math.max(0, Math.min(1, r.narrative_mass == null ? 0.5 : r.narrative_mass));
+    h += '<circle data-i="' + i + '" cx="' + sx(r.fvd_pct).toFixed(1) + '" cy="' + sy(r.wks_score).toFixed(1) + '" r="' + rad.toFixed(1) + '" fill="' + fieldColor(r) + '" opacity=".72" style="cursor:pointer"/>';
+  }
+  if (selIdx >= 0){
+    var s = F.rows[selIdx]; var px = sx(s.fvd_pct), py = sy(s.wks_score);
+    var rs = 3 + 6 * Math.max(0, Math.min(1, s.narrative_mass == null ? 0.5 : s.narrative_mass));
+    h += '<circle cx="' + px + '" cy="' + py + '" r="' + (rs + 9) + '" fill="none" stroke="#4DC8F0" stroke-width="1.5" opacity=".9"/>';
+    h += '<circle data-i="' + selIdx + '" cx="' + px + '" cy="' + py + '" r="' + rs + '" fill="' + fieldColor(s) + '" stroke="#FFFFFF" stroke-width="1.5" style="cursor:pointer"/>';
+    var lx = px + rs + 14, anchor = 'start'; if (lx > L + pw - 90){ lx = px - rs - 14; anchor = 'end'; }
+    h += '<text x="' + lx + '" y="' + (py + 5) + '" text-anchor="' + anchor + '" font-size="14" font-weight="800" fill="#FFFFFF" letter-spacing="-0.01em">' + esc(s.ticker) + '</text>';
+  } else if (S.ticker && fieldRow(S.ticker)){
+    h += '<text x="' + (L + pw - 6) + '" y="' + (T + 14) + '" text-anchor="end" font-size="11" fill="#FFB800">' + esc(S.ticker) + ' has no valuation anchor today — not plotted</text>';
+  }
+  h += '</svg>';
+  c.innerHTML = h;
+  var svg = c.querySelector('svg'); var read = el('uf-read');
+  svg.addEventListener('mousemove', function(ev){
+    var t = ev.target; if (!t || !t.getAttribute) return; var ii = t.getAttribute('data-i'); if (ii == null) { read.classList.remove('on'); return; }
+    var r = F.rows[Number(ii)];
+    read.innerHTML = '<span class="d">' + esc(r.ticker) + (tickerName(r.ticker) ? ' · ' + esc(tickerName(r.ticker)) : '') + '</span>' +
+      '<span><span class="k">verdict</span><span class="v" style="font-size:13px">' + esc(txt(r.verdict)) + '</span></span>' +
+      '<span><span class="k">wks_score</span><span class="v">' + esc(fmt(r.wks_score, 1)) + '</span></span>' +
+      '<span><span class="k">fvd_pct</span><span class="v">' + esc(fmtPct(r.fvd_pct, 1)) + '</span></span>' +
+      '<span><span class="k">state</span><span class="v" style="font-size:13px">' + esc(txt(r.decay_state)) + ' · ' + esc(txt(r.walsh_regime)) + '</span></span>';
+    read.classList.add('on');
+  });
+  svg.addEventListener('mouseleave', function(){ read.classList.remove('on'); });
+  svg.addEventListener('click', function(ev){
+    var t = ev.target; if (!t || !t.getAttribute) return; var ii = t.getAttribute('data-i'); if (ii == null) return;
+    pickTicker(F.rows[Number(ii)].ticker);
+  });
+  var lg = '';
+  for (var k in REGIME_COLOR) lg += '<span><i style="background:' + REGIME_COLOR[k] + ';opacity:.8"></i>' + esc(k) + '</span>';
+  lg += '<span><i style="background:none;border:1.5px solid #4DC8F0"></i>selected security</span>';
+  lg += '<span class="hint">' + esc(fmtInt(F.n)) + ' securities scored · ' + (skipped ? esc(fmtInt(skipped)) + ' without a fair-value anchor not plotted · ' : '') + 'click a dot to select</span>';
+  el('uf-legend').innerHTML = lg;
+}
+
+var LANES = [
+  {k:'narrative_energy_t',       t:'Narrative Energy',    f:'narrative_energy_t',       c:'#00AEFF', dp:2},
+  {k:'narrative_velocity_score', t:'Velocity',            f:'narrative_velocity_score', c:'#38C8B8', dp:4},
+  {k:'fitted_half_life',         t:'Persistence / Decay', f:'fitted_half_life (days)',  c:'#00DE94', dp:2, dots:true},
+  {k:'vms',                      t:'Structural Support',  f:'vms · Verification Match Score', c:'#7B61FF', dp:1},
+  {k:'exhaustion_days_dynamic',  t:'Exhaustion',          f:'exhaustion_days_dynamic (days)', c:'#FFB800', dp:1}
+];
+
+// One security through time — the /present timeline, sized to its box.
+function renderTimeline(container){
+  var rows = S.rows; var n = rows.length;
+  if (!n) { container.innerHTML = '<div class="dr-empty" style="padding:14px">No feed rows for this security.</div>'; return; }
+  var W = Math.max(600, container.clientWidth || 1000), H = Math.max(160, container.clientHeight || 300);
+  var left = 168, right = 30, top = 44, laneGap = 6, stripH = 16, axisH = 26;
+  var lanes = LANES;
+  var laneH = Math.floor((H - top - stripH - axisH - 10) / lanes.length) - laneGap;
+  if (laneH < 34) { lanes = [LANES[0], LANES[1], LANES[3]]; laneH = Math.floor((H - top - stripH - axisH - 10) / lanes.length) - laneGap; }
+  laneH = Math.max(28, Math.min(84, laneH));
+  var plotW = W - left - right;
+  var dx = n > 1 ? plotW / (n - 1) : plotW;
+  var x = function(i){ return left + (n > 1 ? i * dx : plotW / 2); };
+  var sel = S.sel;
+  var h = '<svg class="tl-svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+  var bandTop = top - 6, bandBot = top + lanes.length * (laneH + laneGap) - laneGap;
+  var i0 = 0;
+  for (var i = 1; i <= n; i++){
+    if (i === n || rows[i].decay_state !== rows[i0].decay_state){
+      var st = rows[i0].decay_state || 'UNKNOWN';
+      var xa = x(i0) - dx/2, xb = x(i-1) + dx/2;
+      var col = STATE_COLOR[st] || '#A0A8B0';
+      h += '<rect x="' + xa + '" y="' + bandTop + '" width="' + (xb - xa) + '" height="' + (bandBot - bandTop) + '" fill="' + col + '" opacity="' + (st === 'STABLE' ? 0.045 : 0.075) + '"/>';
+      if (xb - xa > 70) h += '<text x="' + ((xa + xb)/2) + '" y="' + (bandTop - 6) + '" text-anchor="middle" font-size="11" font-weight="700" fill="' + col + '" letter-spacing=".10em" opacity=".9">' + esc(st) + '</text>';
+      if (i < n) h += '<line x1="' + xb + '" y1="' + bandTop + '" x2="' + xb + '" y2="' + bandBot + '" stroke="rgba(255,255,255,.10)" stroke-dasharray="3 4"/>';
+      i0 = i;
+    }
+  }
+  if (sel >= 0 && sel < n - 1){
+    var xs = x(sel);
+    h += '<rect x="' + xs + '" y="' + bandTop + '" width="' + (x(n-1) + dx/2 - xs) + '" height="' + (bandBot - bandTop) + '" fill="rgba(255,184,0,0.05)"/>';
+    h += '<text x="' + (x(n-1) + dx/2 - 4) + '" y="' + (bandTop - 24) + '" text-anchor="end" font-size="11" font-weight="700" fill="#FFB800" letter-spacing=".12em">REALIZED OUTCOME — NOT MODEL INPUT</text>';
+  }
+  var y0 = top;
+  for (var L2 = 0; L2 < lanes.length; L2++){
+    var ln = lanes[L2]; var vals = rows.map(function(r){ return r[ln.k]; });
+    var mx = -Infinity, mn = Infinity, cnt = 0;
+    for (var a = 0; a < n; a++) if (vals[a] != null && isFinite(vals[a])) { mx = Math.max(mx, vals[a]); mn = Math.min(mn, vals[a]); cnt++; }
+    var lo = 0, hi = cnt ? Math.max(mx, 0) : 1; if (hi === lo) hi = lo + 1;
+    var yv = (function(y0_, hi_, lo_){ return function(v){ return y0_ + laneH - 10 - ((v - lo_) / (hi_ - lo_)) * (laneH - 20); }; })(y0, hi, lo);
+    h += '<line x1="' + left + '" y1="' + (y0 + laneH - 10) + '" x2="' + (left + plotW) + '" y2="' + (y0 + laneH - 10) + '" stroke="rgba(255,255,255,.08)"/>';
+    h += '<text x="' + (left - 14) + '" y="' + (y0 + laneH/2 - 3) + '" text-anchor="end" font-size="13" font-weight="700" fill="#FFFFFF">' + esc(ln.t) + '</text>';
+    h += '<text class="fld" data-field="' + esc(ln.k) + '" x="' + (left - 14) + '" y="' + (y0 + laneH/2 + 12) + '" text-anchor="end" font-size="11" fill="#A0A8B0">' + esc(ln.f) + '</text>';
+    if (!cnt){
+      h += '<text x="' + (left + plotW/2) + '" y="' + (y0 + laneH/2) + '" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.34)">— not delivered in this window —</text>';
+    } else {
+      var seg = '', open = false;
+      for (var b = 0; b < n; b++){
+        var v = vals[b];
+        if (v == null || !isFinite(v)) { open = false; continue; }
+        if (ln.dots){ h += '<circle cx="' + x(b) + '" cy="' + yv(v) + '" r="3.2" fill="' + ln.c + '"/>'; continue; }
+        seg += (open ? ' L' : ' M') + x(b) + ' ' + yv(v); open = true;
+      }
+      if (seg) h += '<path d="' + seg + '" fill="none" stroke="' + ln.c + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      if (!ln.dots) for (var c2 = 0; c2 < n; c2++){ var vv = vals[c2]; if (vv != null && isFinite(vv)) h += '<circle cx="' + x(c2) + '" cy="' + yv(vv) + '" r="2" fill="' + ln.c + '" opacity=".9"/>'; }
+      h += '<text x="' + (left + plotW + 4) + '" y="' + (y0 + 11) + '" font-size="10" fill="rgba(255,255,255,.34)">' + esc(fmt(hi, ln.dp > 2 ? 2 : ln.dp)) + '</text>';
+    }
+    y0 += laneH + laneGap;
+  }
+  var sy0 = y0 + 2;
+  h += '<text x="' + (left - 14) + '" y="' + (sy0 + stripH - 4) + '" text-anchor="end" font-size="11" fill="#A0A8B0">walsh_regime</text>';
+  var j0 = 0;
+  for (var j = 1; j <= n; j++){
+    if (j === n || rows[j].walsh_regime !== rows[j0].walsh_regime){
+      var rg = rows[j0].walsh_regime || '—'; var rc = REGIME_COLOR[rg] || '#A0A8B0';
+      var ra = x(j0) - dx/2, rb = x(j-1) + dx/2;
+      h += '<rect x="' + (ra + 1) + '" y="' + sy0 + '" width="' + Math.max(1, rb - ra - 2) + '" height="' + stripH + '" rx="3" fill="' + rc + '" opacity=".55"/>';
+      if (rb - ra > 78) h += '<text x="' + ((ra + rb)/2) + '" y="' + (sy0 + stripH - 4) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#04121C" letter-spacing=".06em">' + esc(rg) + '</text>';
+      j0 = j;
+    }
+  }
+  y0 = sy0 + stripH + 6;
+  var step = n > 30 ? 5 : (n > 16 ? 3 : 2);
+  for (var q = 0; q < n; q++){
+    if (q % step === 0 || q === n - 1) h += '<text x="' + x(q) + '" y="' + (y0 + 14) + '" text-anchor="middle" font-size="11" fill="#A0A8B0">' + esc(fmtDateShort(rows[q].snapshot_date)) + '</text>';
+  }
+  for (var sw = 1; sw < n; sw++){
+    if (rows[sw].narrative_hash && rows[sw-1].narrative_hash && rows[sw].narrative_hash !== rows[sw-1].narrative_hash){
+      h += '<path d="M' + (x(sw) - 5) + ' ' + (bandTop - 2) + ' L' + (x(sw) + 5) + ' ' + (bandTop - 2) + ' L' + x(sw) + ' ' + (bandTop + 6) + ' Z" fill="rgba(255,255,255,.45)"/>';
+    }
+  }
+  if (sel >= 0 && sel < n){
+    h += '<line x1="' + x(sel) + '" y1="' + (bandTop - 2) + '" x2="' + x(sel) + '" y2="' + (y0 + 2) + '" stroke="#4DC8F0" stroke-width="1.5"/>';
+    h += '<rect x="' + (x(sel) - 4) + '" y="' + (bandTop - 2) + '" width="8" height="8" rx="2" fill="#4DC8F0"/>';
+    h += '<text x="' + (x(sel) - 8) + '" y="' + (bandTop - 24) + '" text-anchor="end" font-size="11" font-weight="700" fill="#4DC8F0" letter-spacing=".10em">SELECTED OBSERVATION · ' + esc(rows[sel].snapshot_date) + '</text>';
+  }
+  h += '<g>';
+  for (var z = 0; z < n; z++) h += '<rect data-i="' + z + '" x="' + (x(z) - dx/2) + '" y="' + (bandTop - 2) + '" width="' + dx + '" height="' + (y0 - bandTop + 4) + '" fill="transparent" style="cursor:pointer"/>';
+  h += '</g></svg>';
+  container.innerHTML = h;
+  var svg = container.querySelector('svg'); var read = el('uf-read'); var pm = priceMap();
+  svg.addEventListener('mousemove', function(ev){
+    var t = ev.target; if (!t || !t.getAttribute) return; var ii = t.getAttribute('data-i'); if (ii == null) return;
+    var r = rows[Number(ii)]; var p = pm[r.snapshot_date];
+    read.innerHTML = '<span class="d">' + esc(fmtDateLong(r.snapshot_date)) + '</span>' +
+      '<span><span class="k">energy</span><span class="v">' + esc(fmt(r.narrative_energy_t, 1)) + '</span></span>' +
+      '<span><span class="k">velocity</span><span class="v">' + esc(fmt(r.narrative_velocity_score, 3)) + '</span></span>' +
+      '<span><span class="k">half-life</span><span class="v">' + esc(r.fitted_half_life == null ? '—' : fmt(r.fitted_half_life, 1)) + '</span></span>' +
+      '<span><span class="k">vms</span><span class="v">' + esc(fmt(r.vms, 1)) + '</span></span>' +
+      '<span><span class="k">state</span><span class="v" style="font-size:13px">' + esc(txt(r.decay_state)) + '</span></span>' +
+      '<span><span class="k">close</span><span class="v">' + esc(p != null ? fmt(p, 2) : '—') + '</span></span>';
+    read.classList.add('on');
+  });
+  svg.addEventListener('mouseleave', function(){ read.classList.remove('on'); });
+  svg.addEventListener('click', function(ev){
+    var t = ev.target; if (!t || !t.getAttribute) return; var ii = t.getAttribute('data-i'); if (ii == null) return;
+    setSelected(Number(ii));
+  });
+}
+
+function renderS3Left(){
+  if (S.screen !== 3) return;
+  var box = el('uf-field'); if (!box) return;
+  var cap = el('s3-cap-r'); var F = S.field;
+  document.querySelectorAll('#s3-tabs button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-k') === S.s3view); });
+  if (S.s3view === 'universe'){
+    cap.innerHTML = F ? '<span class="live"><i></i>live</span> · scored <b>' + esc(fmtDateLong(F.snapshot_date)) + '</b> · <b>' + esc(fmtInt(F.n)) + '</b> securities · written ' + esc(fmtEtTime(F.first_write)) + ' – ' + esc(fmtEtTime(F.last_write)) : '';
+    renderField();
+  } else {
+    cap.innerHTML = '<b>' + esc(S.ticker || '—') + '</b> · ' + (S.window && S.window.from ? esc(fmtDateShort(S.window.from)) + ' → ' + esc(fmtDateShort(S.window.to)) + ' · <b>' + S.window.returned_sessions + '</b> sessions' : '') + ' · click a session to select it';
+    renderTimeline(box);
+    el('uf-legend').innerHTML = '<span><i style="background:#00DE94;opacity:.6"></i>STRENGTHENING</span><span><i style="background:#00AEFF;opacity:.6"></i>STABLE</span><span><i style="background:#FF4D4D;opacity:.6"></i>DECAYING</span><span style="color:var(--mp-text-muted)">decay_state regions · ▾ representative narrative switched (energy re-seeds)</span><span class="hint">selected observation marked · everything after it is realized outcome</span>';
+  }
+  renderSecStrip();
+}
+
+function renderSecStrip(){
+  var box = el('s3-sec'); if (!box) return;
+  var t = S.ticker; var f = fieldRow(t); var r = selRow();
+  var pm = priceMap(); var lastBar = S.prices && S.prices.length ? S.prices[S.prices.length - 1] : null;
+  var h = '<span class="tk">' + esc(t || '—') + '</span><span class="nm">' + esc(tickerName(t)) + '</span>';
+  if (f){
+    h += '<span class="tag today">today · ' + esc(f.snapshot_date) + '</span>';
+    h += '<span class="kv">decay_state<b>' + esc(txt(f.decay_state)) + '</b></span>';
+    h += '<span class="kv">walsh_regime<b>' + esc(txt(f.walsh_regime)) + '</b></span>';
+    h += '<span class="kv">verdict<b style="font-size:14px">' + esc(txt(f.verdict)) + '</b></span>';
+    h += '<span class="kv">narrative_energy_t<b>' + esc(fmt(f.narrative_energy_t, 1)) + '</b></span>';
+    h += '<span class="kv">vms<b>' + esc(fmt(f.vms, 1)) + '</b></span>';
+  } else {
+    h += '<span class="tag">not scored today</span>';
+  }
+  if (lastBar && lastBar.price_close != null) h += '<span class="kv">price · ' + esc(lastBar.snapshot_date) + '<b>' + esc(fmtMoney(lastBar.price_close)) + '</b></span>';
+  else if (f && f.current_price != null) h += '<span class="kv">current_price at scoring<b>' + esc(fmtMoney(f.current_price)) + '</b></span>';
+  h += '<span class="tag" style="margin-left:auto">selected observation · ' + esc(r ? r.snapshot_date : '—') + '</span>';
+  box.innerHTML = h;
+}
+
+function renderFeedRow(){
+  var r = selRow();
+  el('s3-src').innerHTML = 'institutional feed v5 · <b>' + esc(S.ticker || '—') + (r ? ' · ' + esc(r.snapshot_date) : '') + '</b>';
+  var h = '';
+  for (var i = 0; i < ROW_FIELDS.length; i++){
+    var f = ROW_FIELDS[i];
+    var v = r ? f[1](r) : '—';
+    h += '<tr><td class="k"><span class="fld" data-field="' + esc(f[0]) + '">' + esc(f[0]) + '</span></td><td class="v' + (f[2] ? ' hi' : '') + '">' + esc(v) + '</td></tr>';
+  }
+  el('s3-rows').innerHTML = h;
+}
+
+function fillObsSelect(){
+  var sel = el('pr-obs'); if (!sel) return;
+  var h = '';
+  for (var i = S.rows.length - 1; i >= 0; i--) h += '<option value="' + i + '">' + esc(S.rows[i].snapshot_date) + '</option>';
+  sel.innerHTML = h || '<option>—</option>';
+  if (S.sel >= 0) sel.value = String(S.sel);
+}
+function setSelected(i){
+  if (i < 0 || i >= S.rows.length) return;
+  S.sel = i;
+  var sel = el('pr-obs'); if (sel) sel.value = String(i);
+  renderS3Left(); renderFeedRow(); renderSlide4();
+  if (S.drawer) renderDrawer();
+  syncUrl();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REALIZED OUTCOME — arithmetic on two daily closes from the price
+   ledger, never from the feed's score-time price. The base close is the
+   first daily close AFTER first_written_at (a pre-open write on session D
+   makes D's close the base; a post-close write makes the next session's
+   close the base). A horizon counts only if its session is complete.
+   ═══════════════════════════════════════════════════════════════ */
+function sessionComplete(ymd){
+  var now = todayEt();
+  return ymd < now.date || (ymd === now.date && now.minutes >= 16 * 60 + 5);
+}
+function outcomeBase(r){
+  if (!r || !S.prices || !S.prices.length) return -1;
+  var idx = -1;
+  for (var i = 0; i < S.prices.length; i++) if (S.prices[i].snapshot_date === r.snapshot_date) { idx = i; break; }
+  if (idx < 0) return -1;
+  var et = etParts(r.first_written_at);
+  if (!et) return idx;
+  var k = idx;
+  while (k < S.prices.length){
+    var d = S.prices[k].snapshot_date;
+    if (d > et.date || (d === et.date && et.minutes < 16 * 60)) break;
+    k++;
+  }
+  return k < S.prices.length ? k : -1;
+}
+function realizedAfter(r, k){
+  var b = outcomeBase(r);
+  if (b < 0 || b + k >= S.prices.length) return null;
+  var p0 = S.prices[b].price_close, p1 = S.prices[b + k].price_close;
+  if (p0 == null || p1 == null || !p0) return null;
+  if (!sessionComplete(S.prices[b + k].snapshot_date)) return null;
+  return { pct: (p1 / p0 - 1) * 100, from: S.prices[b].snapshot_date, to: S.prices[b + k].snapshot_date, p0: p0, p1: p1, baseShift: b };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SLIDE 4 — what existed, and when
+   ═══════════════════════════════════════════════════════════════ */
+function renderSlide4(){
+  var r = selRow(); var m = S.meta || {};
+  var flags = r && r.data_quality_flags ? String(r.data_quality_flags).split(/[,;]/).filter(Boolean) : [];
+  var o5 = realizedAfter(r, 5), o10 = realizedAfter(r, 10);
+  var lin = r && r.lineage ? r.lineage : null;
+  var et = r ? etParts(r.first_written_at) : null;
+  var whenNote = '';
+  if (r && et){
+    if (et.date < r.snapshot_date) whenNote = 'written the evening before the session';
+    else if (et.date === r.snapshot_date && et.minutes < 9 * 60 + 30) whenNote = 'written before the 09:30 ET open';
+    else if (et.date === r.snapshot_date && et.minutes < 16 * 60) whenNote = 'written during the session';
+    else whenNote = 'written after the session close';
+  }
+  var h = '';
+  h += '<div class="s4-node" style="--c:#A0A8B0"><div class="st">1 · Market information available</div><div class="t">Trading session</div>' +
+       '<div class="v">' + esc(r ? fmtDateLong(r.snapshot_date) : '—') + '</div>' +
+       '<div class="m"><span class="fld" data-field="snapshot_date">snapshot_date</span> · New York trading date<br><span class="fld" data-field="is_trading_session">is_trading_session</span> · <b>' + esc(r ? (r.is_trading_session === true ? 'true' : r.is_trading_session === false ? 'false' : '—') : '—') + '</b></div></div>';
+  h += '<div class="s4-node" style="--c:#7B61FF"><div class="st">2 · System processes the session</div><div class="t">Engine scores the narrative</div>' +
+       '<div class="v">' + esc(r ? txt(r.decay_provenance) : '—') + '</div>' +
+       '<div class="m"><span class="fld" data-field="decay_provenance">decay_provenance</span> · <span class="fld" data-field="fit_status">fit_status</span> <b>' + esc(r ? txt(r.fit_status) : '—') + '</b><br>' + (flags.length ? flags.length + ' <span class="fld" data-field="data_quality_flags">data_quality_flags</span> delivered, none hidden' : 'no data_quality_flags') + '</div></div>';
+  h += '<div class="s4-node hi" style="--c:#4DC8F0"><div class="st">3 · Immutable timestamp</div><div class="t"><span class="fld" data-field="first_written_at">first_written_at</span></div>' +
+       '<div class="v big">' + esc(r ? fmtUtc(r.first_written_at) : '—') + '</div>' +
+       '<div class="m">' + esc(r ? fmtEt(r.first_written_at) : '—') + '<br>server-default insert time, never rewritten' + (whenNote ? ' · <b>' + esc(whenNote) + '</b>' : '') + '</div></div>';
+  h += '<div class="s4-node" style="--c:#00AEFF"><div class="st">4 · Measurement values exist</div><div class="t">The delivered row</div>' +
+       '<div class="m" style="margin-top:0;font-size:12px;line-height:1.65">' +
+       '<span class="fld" data-field="narrative_energy_t">narrative_energy_t</span> <b>' + esc(r ? fmt(r.narrative_energy_t, 2) : '—') + '</b><br>' +
+       '<span class="fld" data-field="narrative_velocity_score">narrative_velocity_score</span> <b>' + esc(r ? fmt(r.narrative_velocity_score, 4) : '—') + '</b><br>' +
+       '<span class="fld" data-field="decay_state">decay_state</span> <b>' + esc(r ? txt(r.decay_state) : '—') + '</b> · <span class="fld" data-field="fitted_half_life">fitted_half_life</span> <b>' + esc(r && r.fitted_half_life != null ? fmt(r.fitted_half_life, 2) + ' d' : '—') + '</b><br>' +
+       '<span class="fld" data-field="vms">vms</span> <b>' + esc(r ? fmt(r.vms, 1) : '—') + '</b> · <span class="fld" data-field="walsh_regime">walsh_regime</span> <b>' + esc(r ? txt(r.walsh_regime) : '—') + '</b><br>' +
+       '<span class="fld" data-field="updated_at">updated_at</span> <b>' + esc(r ? fmtTs(r.updated_at) : '—') + '</b>' + (lin && lin.is_restatement ? ' · <span style="color:#FFB800">restated later</span>' : (lin ? ' · not restated' : '')) +
+       '</div></div>';
+  h += '<div class="s4-node out" style="--c:#FFB800"><div class="st">5 · Subsequent market returns</div><div class="t">Realized outcome — not model input</div>' +
+       '<div class="m" style="margin-top:0;font-size:13px;line-height:1.7">' +
+       '+5 sessions <b>' + esc(o5 ? fmtPct(o5.pct, 2) : '—') + '</b>' + (o5 ? ' <span style="color:var(--mp-text-muted)">to ' + esc(fmtDateShort(o5.to)) + '</span>' : '') + '<br>' +
+       '+10 sessions <b>' + esc(o10 ? fmtPct(o10.pct, 2) : '—') + '</b>' + (o10 ? ' <span style="color:var(--mp-text-muted)">to ' + esc(fmtDateShort(o10.to)) + '</span>' : '') + '<br>' +
+       '<span style="color:var(--mp-text-muted)">' + (S.priceSource === 'price-history' ? (o5 ? 'close ' + esc(fmtDateShort(o5.from)) + ' → close, daily price ledger' : 'daily closes, first close after the timestamp') : 'price series unavailable') + '</span></div></div>';
+  el('s4-seq').innerHTML = h;
+
+  var pitFrom = m.first_pit_written;
+  var rh = '';
+  rh += '<div class="s4-reg" style="--c:#00DE94"><div class="t" style="color:#00DE94">Strict live PIT</div><div class="r">March 2, 2026 → present</div>' +
+        '<div class="k"><span>rows <b>' + esc(fmtInt(m.rows_pit)) + '</b></span><span>latest session <b>' + esc(m.last_snapshot_date ? fmtDateLong(m.last_snapshot_date) : '—') + '</b></span>' +
+        '<span>first live write <b>' + esc(pitFrom ? fmtUtc(pitFrom.first_written_at) : '—') + '</b></span></div>' +
+        '<ul><li><b>first_written_at</b> is the knowledge / provenance timestamp.</li><li><b>decay_provenance = LIVE_PIT</b>.</li><li>Intended for strict predictive evaluation.</li></ul></div>';
+  rh += '<div class="s4-reg" style="--c:#A0A8B0"><div class="t" style="color:#A0A8B0">Historical / backfilled context</div><div class="r">Before March 2, 2026</div>' +
+        '<div class="k"><span>rows <b>' + esc(fmtInt(m.rows_backfill)) + '</b></span><span>earliest session <b>' + esc(m.first_snapshot_date ? fmtDateLong(m.first_snapshot_date) : '—') + '</b></span></div>' +
+        '<ul><li>Reconstructed after the fact.</li><li><b>first_written_at</b> reflects reconstruction time, not the historical knowledge time.</li><li><b>decay_provenance = HISTORICAL_BACKFILL</b>. Useful for context and exploratory work; not represented as strict live PIT.</li></ul></div>';
+  el('s4-regimes').innerHTML = rh;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SLIDE 5 — the paper book, read from the live table
+   ═══════════════════════════════════════════════════════════════ */
+function sparkline(rows, key, W, H){
+  var v = rows.map(function(r){ return r[key]; });
+  var pts = []; for (var i = 0; i < v.length; i++) if (v[i] != null && isFinite(v[i])) pts.push([i, v[i]]);
+  if (pts.length < 2) return '<div class="dr-empty">Not enough rows to draw.</div>';
+  var mn = Infinity, mx = -Infinity; pts.forEach(function(p){ mn = Math.min(mn, p[1]); mx = Math.max(mx, p[1]); });
+  var pad = (mx - mn) || 1, L = 62, R = 12, T = 12, B = 22, n = v.length;
+  var x = function(i){ return L + (n > 1 ? i * (W - L - R) / (n - 1) : 0); };
+  var y = function(val){ return T + (H - T - B) - ((val - mn) / pad) * (H - T - B); };
+  var d = ''; pts.forEach(function(p, k){ d += (k ? ' L' : 'M') + x(p[0]).toFixed(1) + ' ' + y(p[1]).toFixed(1); });
+  var first = pts[0][1], last = pts[pts.length - 1][1];
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+  h += '<line x1="' + L + '" y1="' + y(first) + '" x2="' + (W - R) + '" y2="' + y(first) + '" stroke="rgba(255,255,255,.14)" stroke-dasharray="3 4"/>';
+  h += '<path d="' + d + '" fill="none" stroke="' + (last >= first ? '#00DE94' : '#FF4D4D') + '" stroke-width="2"/>';
+  h += '<text x="' + (L - 8) + '" y="' + (y(mx) + 4) + '" text-anchor="end" font-size="11" fill="#A0A8B0">' + esc(fmtMoney(mx)) + '</text>';
+  h += '<text x="' + (L - 8) + '" y="' + (y(mn) + 4) + '" text-anchor="end" font-size="11" fill="#A0A8B0">' + esc(fmtMoney(mn)) + '</text>';
+  var step = Math.max(1, Math.round(n / 6));
+  for (var q = 0; q < n; q += step) h += '<text x="' + x(q) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11" fill="#A0A8B0">' + esc(fmtDateShort(rows[q].snapshot_date)) + '</text>';
+  h += '</svg>';
+  return h;
+}
+// Sessions = marked rows that moved. A row identical to the prior one with
+// zero P&L is a non-session mark (weekday holidays are written as flat rows).
+function paperSessions(rows){
+  var s = 0, marks = 0;
+  for (var i = 0; i < rows.length; i++){
+    var r = rows[i], p = rows[i - 1];
+    var flat = i > 0 && (r.daily_pnl === 0 || r.daily_pnl == null) && (r.daily_return_pct === 0 || r.daily_return_pct == null) && p && r.portfolio_value === p.portfolio_value;
+    if (flat) marks++; else s++;
+  }
+  return { sessions: s, flatMarks: marks };
+}
+function paperBook(){
+  var P = S.paper; if (!P || !P.books) return null;
+  for (var i = 0; i < P.books.length; i++) if (P.books[i].key === 'v6') return P.books[i];
+  return null;
+}
+function renderPaper(){
+  var box = el('pb-body'); if (!box) return;
+  var P = S.paper; var book = paperBook();
+  if (!P || !book || !book.rows || !book.rows.length){ box.innerHTML = '<div class="dr-empty">Paper book not available.</div>'; return; }
+  var rows = book.rows; var first = rows[0], last = rows[rows.length - 1];
+  var ret = (first.portfolio_value && last.portfolio_value) ? (last.portfolio_value / first.portfolio_value - 1) * 100 : null;
+  var ps = paperSessions(rows);
+  var h = '<div class="pb-tiles">' +
+    '<div class="pb-tile"><div class="k">Baseline</div><div class="v">' + esc(fmtDateShort(P.baseline || first.snapshot_date)) + ', ' + esc(String(first.snapshot_date).slice(0, 4)) + '</div><div class="m">' + esc(fmtMoney(first.portfolio_value)) + ' on ' + esc(first.snapshot_date) + '</div></div>' +
+    '<div class="pb-tile"><div class="k"><span class="fld" data-field="portfolio_value">portfolio_value</span></div><div class="v">' + esc(fmtMoney(last.portfolio_value)) + '</div><div class="m">latest mark · ' + esc(last.snapshot_date) + '</div></div>' +
+    '<div class="pb-tile"><div class="k">Gross return since baseline</div><div class="v ' + pnlCls(ret) + '">' + esc(ret == null ? '—' : fmtSigned(ret, 2) + '%') + '</div><div class="m">mark-to-market, before any costs</div></div>' +
+    '<div class="pb-tile"><div class="k"><span class="fld" data-field="realized_pnl_cumulative">realized P&amp;L</span></div><div class="v ' + pnlCls(last.realized_pnl_cumulative) + '">' + esc(fmtMoney(last.realized_pnl_cumulative)) + '</div><div class="m">closed positions, cumulative</div></div>' +
+    '<div class="pb-tile"><div class="k"><span class="fld" data-field="unrealized_pnl">unrealized P&amp;L</span></div><div class="v ' + pnlCls(last.unrealized_pnl) + '">' + esc(fmtMoney(last.unrealized_pnl)) + '</div><div class="m">' + esc(fmtInt(last.open_count)) + ' open · cash ' + esc(fmtMoney(last.cash)) + '</div></div>' +
+    '<div class="pb-tile"><div class="k">Sessions</div><div class="v">' + esc(fmtInt(ps.sessions)) + '</div><div class="m">' + esc(fmtInt(rows.length)) + ' daily marks' + (ps.flatMarks ? ' · ' + ps.flatMarks + ' non-session marks excluded' : '') + '</div></div>' +
+  '</div>';
+  h += '<div class="pb-spark">' + sparkline(rows, 'portfolio_value', 640, 96) + '</div>';
+  h += '<div class="pb-lim"><i></i><span>Paper portfolio. Modeled fills. Gross returns. No execution costs. Not a live-executed track record.</span></div>';
+  h += '<div class="pb-src">Source: <b>' + esc(book.table) + '</b>, read as written; row updated_at ' + esc(fmtTs(last.updated_at)) + '. Drawdown and risk-adjusted statistics are withheld from this slide pending independent verification of their calculation.</div>';
+  box.innerHTML = h;
+}
+function loadPaper(){
+  if (S.paper) { renderPaper(); return; }
+  api('/api/present-data?part=paper').then(function(j){ S.paper = j; renderPaper(); if (S.drawer && S.drawerTab === 'paper') renderDrawer(); })
+    .catch(function(e){ var box = el('pb-body'); if (box) box.innerHTML = '<div class="dr-empty">Could not load: ' + esc(e && e.message ? e.message : 'error') + '</div>'; });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DRAWER — depth on demand
+   ═══════════════════════════════════════════════════════════════ */
+function toggleDrawer(force){
+  S.drawer = typeof force === 'boolean' ? force : !S.drawer;
+  el('pr-drawer').classList.toggle('on', S.drawer);
+  el('pr-details').classList.toggle('on', S.drawer);
+  el('pr-details').setAttribute('aria-pressed', S.drawer ? 'true' : 'false');
+  if (S.drawer) renderDrawer();
+}
+function renderDrawer(){
+  var tabs = el('dr-tabs').children;
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-t') === S.drawerTab);
+  el('dr-ctx').textContent = 'Slide ' + S.screen + (S.ticker ? ' · ' + S.ticker : '');
+  var b = el('dr-body'); var t = S.drawerTab;
+  if (t === 'fields') b.innerHTML = drawerFields();
+  else if (t === 'observation') b.innerHTML = drawerObservation();
+  else if (t === 'provenance') b.innerHTML = drawerProvenance();
+  else if (t === 'paper') b.innerHTML = drawerPaper();
+  else b.innerHTML = drawerMethod();
+}
+var GL_QUERY = '';
+function glossaryCard(g){
+  return '<div class="gl-card" id="fld-' + esc(g.f.replace(/[^A-Za-z0-9_]/g, '_')) + '">' +
+    '<div class="f">' + esc(g.f) + (g.unit ? '<small>' + esc(g.unit) + '</small>' : '') + '</div>' +
+    '<div class="say"><b>In plain terms</b>' + esc(g.say) + '</div>' +
+    '<div class="def">' + esc(g.def) + '</div>' +
+    (g.read ? '<div class="read"><b>Reading it:</b> ' + esc(g.read) + '</div>' : '') +
+    (g.cav ? '<div class="cav">' + esc(g.cav) + '</div>' : '') +
+    '<div class="src">Source: ' + esc(g.src || 'Data Dictionary v1.6 (30 Aug 2026)') + '</div></div>';
+}
+function drawerFields(){
+  var q = GL_QUERY.trim().toLowerCase();
+  var h = '<input class="gl-search" id="gl-search" type="search" placeholder="Search a field or a word (e.g. exhaustion, half-life, vms)" value="' + esc(GL_QUERY) + '" aria-label="Search glossary">';
+  h += '<div class="gl-order">Walk a row in this order: <b>Identity</b> (which narrative, how old) → <b>Provenance</b> (when it existed) → <b>Forensic</b> (do the claims hold up) → <b>Physics</b> (building or burning out, how fast) → <b>Anchors</b> (what value and options say) → <b>Output</b> (what the engine concludes). Definitions are the delivered Data Dictionary v1.6; the plain-terms line restates each in one sentence.</div>';
+  var any = false;
+  GLOSSARY_GROUPS.forEach(function(gr){
+    var items = GLOSSARY.filter(function(g){ return g.g === gr.k && (!q || (g.f + ' ' + g.say + ' ' + g.def + ' ' + (g.read || '') + ' ' + gr.t).toLowerCase().indexOf(q) >= 0); });
+    if (!items.length) return;
+    any = true;
+    h += '<div class="gl-group"><h5>' + esc(gr.t) + '</h5>' + items.map(glossaryCard).join('') + '</div>';
+  });
+  if (!any) h += '<div class="dr-empty">No field matches "' + esc(GL_QUERY) + '".</div>';
+  return h;
+}
+function openField(name){
+  var key = String(name || '').replace(/[^A-Za-z0-9_]/g, '_');
+  var hit = GLOSSARY.some(function(g){ return g.f.replace(/[^A-Za-z0-9_]/g, '_') === key; });
+  GL_QUERY = hit ? '' : String(name || '');
+  S.drawerTab = 'fields';
+  toggleDrawer(true);
+  setTimeout(function(){
+    var card = el('fld-' + key);
+    if (!card) return;
+    document.querySelectorAll('.gl-card.hl').forEach(function(c){ c.classList.remove('hl'); });
+    card.classList.add('hl');
+    card.scrollIntoView({block:'start', behavior:'smooth'});
+  }, 30);
+}
+function glossaryFor(name){
+  var n = String(name || '');
+  for (var i = 0; i < GLOSSARY.length; i++) if (GLOSSARY[i].f === n) return GLOSSARY[i];
+  for (var j = 0; j < GLOSSARY.length; j++){ var parts = GLOSSARY[j].f.split(' / '); if (parts.indexOf(n) >= 0) return GLOSSARY[j]; }
+  return null;
+}
+var TIP = { pinned: false, field: null, anchor: null };
+function showTip(elm, field, pin){
+  var g = glossaryFor(field);
+  var tip = el('fld-tip');
+  el('fld-tip-f').innerHTML = esc(field) + (g && g.unit ? '<small>' + esc(g.unit) + '</small>' : '');
+  el('fld-tip-d').textContent = g ? g.say : 'No short definition on file.';
+  el('fld-tip-more').style.display = g ? '' : 'none';
+  TIP.field = field; TIP.anchor = elm; TIP.pinned = !!pin;
+  tip.classList.add('on');
+  var r = elm.getBoundingClientRect(); var tw = tip.offsetWidth || 320, th = tip.offsetHeight || 80;
+  var left = Math.max(8, Math.min(window.innerWidth - tw - 8, r.left));
+  var top = r.top - th - 8; if (top < 8) top = r.bottom + 8;
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}
+function hideTip(force){ if (TIP.pinned && !force) return; el('fld-tip').classList.remove('on'); TIP.pinned = false; TIP.field = null; TIP.anchor = null; }
+document.addEventListener('mouseover', function(e){
+  var t = e.target && e.target.closest ? e.target.closest('.fld') : null;
+  if (!t || TIP.pinned) return;
+  var f = t.getAttribute('data-field'); if (f) showTip(t, f, false);
+});
+document.addEventListener('mouseout', function(e){
+  var t = e.target && e.target.closest ? e.target.closest('.fld') : null;
+  if (!t || TIP.pinned) return;
+  var to = e.relatedTarget; if (to && to.closest && to.closest('#fld-tip')) return;
+  hideTip(false);
+});
+document.addEventListener('click', function(e){
+  var more = e.target && e.target.closest ? e.target.closest('#fld-tip-more') : null;
+  if (more){ e.preventDefault(); var f0 = TIP.field; hideTip(true); if (f0) openField(f0); return; }
+  if (e.target && e.target.closest && e.target.closest('#fld-tip')) return;
+  var t = e.target && e.target.closest ? e.target.closest('.fld') : null;
+  if (!t){ if (TIP.pinned) hideTip(true); return; }
+  var f = t.getAttribute('data-field'); if (!f) return;
+  e.preventDefault(); e.stopPropagation();
+  if (TIP.pinned && TIP.field === f) { hideTip(true); return; }
+  showTip(t, f, true);
+}, true);
+document.addEventListener('scroll', function(){ if (!TIP.pinned) hideTip(false); }, true);
+el('dr-body').addEventListener('input', function(e){
+  if (e.target && e.target.id === 'gl-search'){ GL_QUERY = e.target.value; var pos = e.target.selectionStart; renderDrawer(); var i = el('gl-search'); if (i){ i.focus(); try { i.setSelectionRange(pos, pos); } catch(_e){} } }
+});
+function drawerObservation(){
+  var r = selRow(); if (!r) return '<div class="dr-empty">Select an observation on slide 3 or 4.</div>';
+  var lin = r.lineage || {};
+  var o5 = realizedAfter(r, 5), o10 = realizedAfter(r, 10);
+  var kv = [
+    ['ticker', txt(r.ticker)], ['snapshot_date', txt(r.snapshot_date)], ['is_trading_session', r.is_trading_session == null ? '—' : String(r.is_trading_session)],
+    ['first_written_at', fmtUtc(r.first_written_at) + '<small>' + esc(fmtEt(r.first_written_at)) + ' · America/New_York</small>'],
+    ['updated_at', fmtUtc(r.updated_at)],
+    ['values_as_of (lineage)', fmtUtc(lin.values_as_of)], ['revision_at (lineage)', fmtUtc(lin.revision_at)], ['is_restatement (lineage)', lin.is_restatement == null ? '—' : String(lin.is_restatement)],
+    ['decay_provenance', txt(r.decay_provenance)], ['decay_is_pit', r.decay_is_pit == null ? '—' : String(r.decay_is_pit)], ['fit_status', txt(r.fit_status)],
+    ['narrative_energy_absolute', fmt(r.narrative_energy_absolute, 2)], ['narrative_energy_t', fmt(r.narrative_energy_t, 2)], ['energy_remaining_dynamic', fmt(r.energy_remaining_dynamic, 2)],
+    ['narrative_velocity_score', fmt(r.narrative_velocity_score, 4)], ['narrative_pressure', fmt(r.narrative_pressure, 2)], ['narrative_mass', fmt(r.narrative_mass, 3)],
+    ['decay_state', txt(r.decay_state)], ['fitted_half_life', r.fitted_half_life == null ? '—' : fmt(r.fitted_half_life, 2) + ' d'], ['fitted_lambda', r.fitted_lambda == null ? '—' : fmt(r.fitted_lambda, 6)],
+    ['half_life (legacy)', r.half_life == null ? '—' : fmt(r.half_life, 2) + ' d'], ['lambda_decay (legacy)', r.lambda_decay == null ? '—' : fmt(r.lambda_decay, 6)],
+    ['vms (Verification Match Score)', fmt(r.vms, 1)], ['srs (Source Reliability Score)', fmt(r.srs, 1)], ['nrs (Narrative Risk Score)', fmt(r.nrs, 1)], ['npi (Narrative Persistence Index)', fmt(r.npi, 1)],
+    ['suspicion_score / class', fmt(r.suspicion_score, 1) + ' · ' + txt(r.suspicion_class)], ['verdict / confidence', txt(r.verdict) + ' · ' + fmt(r.verdict_confidence, 1)], ['advanced_verdict', txt(r.advanced_verdict)],
+    ['wks_score', fmt(r.wks_score, 1)], ['fvd_pct', r.fvd_pct == null ? '—' : fmtPct(r.fvd_pct, 1)], ['distance_from_max_pain_pct', r.distance_from_max_pain_pct == null ? '—' : fmtPct(r.distance_from_max_pain_pct, 2)], ['put_call_skew', fmt(r.put_call_skew, 3)],
+    ['fomo_score / band', fmt(r.fomo_score, 1) + ' · ' + txt(r.fomo_band)], ['doubling_time', r.doubling_time == null ? '—' : fmt(r.doubling_time, 2) + ' d'], ['effective_narrative_horizon / source', (r.effective_narrative_horizon == null ? '—' : fmt(r.effective_narrative_horizon, 0) + ' d') + ' · ' + txt(r.horizon_source)],
+    ['narrative_hash', r.narrative_hash ? esc(String(r.narrative_hash).slice(0, 18)) + '…' : '—'], ['genesis_date / days_elapsed', txt(r.genesis_date) + ' · ' + fmtInt(r.days_elapsed)],
+    ['exhaustion_days_dynamic', r.exhaustion_days_dynamic == null ? '—' : fmt(r.exhaustion_days_dynamic, 1) + ' d'],
+    ['walsh_regime', txt(r.walsh_regime)], ['signal_regime', txt(r.signal_regime)], ['regime_direction', txt(r.regime_direction)],
+    ['coordination_score', fmt(r.coordination_score, 1)], ['coordination_class', txt(r.coordination_class)], ['mass_streak_days', fmtInt(r.mass_streak_days)],
+    ['current_price (at scoring)', fmt(r.current_price, 2)], ['macro_theme', txt(r.macro_theme)],
+    ['data_quality_flags', r.data_quality_flags ? esc(String(r.data_quality_flags).split(',').join(', ')) : '—']
+  ];
+  var h = '<div class="dr-sec"><h4>Selected observation · as delivered</h4><table class="dr-kv">';
+  kv.forEach(function(p){ h += '<tr><td class="k">' + esc(p[0]) + '</td><td class="v">' + p[1] + '</td></tr>'; });
+  h += '</table></div>';
+  h += '<div class="dr-sec"><h4>Realized outcome — not model input</h4><table class="dr-kv">' +
+       '<tr><td class="k">+5 sessions</td><td class="v num">' + esc(o5 ? fmtPct(o5.pct, 2) : '—') + (o5 ? '<small>' + esc(fmt(o5.p0, 2)) + ' → ' + esc(fmt(o5.p1, 2)) + ' close, ' + esc(o5.from) + ' → ' + esc(o5.to) + '</small>' : '<small>not yet complete, or no price series</small>') + '</td></tr>' +
+       '<tr><td class="k">+10 sessions</td><td class="v num">' + esc(o10 ? fmtPct(o10.pct, 2) : '—') + (o10 ? '<small>' + esc(fmt(o10.p0, 2)) + ' → ' + esc(fmt(o10.p1, 2)) + ' close, ' + esc(o10.from) + ' → ' + esc(o10.to) + '</small>' : '<small>not yet complete, or no price series</small>') + '</td></tr>' +
+       '</table><p class="mut" style="margin-top:8px">Source: ' + (S.priceSource === 'price-history' ? 'daily closes via /api/price-history (independent price ledger)' : 'unavailable') + '. The base is the first daily close after first_written_at; horizons count only completed sessions. Arithmetic on two closes — nothing modeled.</p></div>';
+  return h;
+}
+function drawerProvenance(){
+  var m = S.meta || {}; var r = selRow();
+  var h = '<div class="dr-sec"><h4>Two regimes in one feed</h4><table class="dr-kv">' +
+    '<tr><td class="k">LIVE_PIT · rows</td><td class="v num">' + esc(fmtInt(m.rows_pit)) + '<small>snapshot_date ≥ ' + esc(txt(m.pit_start)) + ' · first_written_at is the knowledge timestamp</small></td></tr>' +
+    '<tr><td class="k">HISTORICAL_BACKFILL · rows</td><td class="v num">' + esc(fmtInt(m.rows_backfill)) + '<small>snapshot_date &lt; ' + esc(txt(m.pit_start)) + ' · first_written_at is the reconstruction time</small></td></tr>' +
+    '<tr><td class="k">earliest / latest session</td><td class="v">' + esc(txt(m.first_snapshot_date)) + ' → ' + esc(txt(m.last_snapshot_date)) + '</td></tr>' +
+    '<tr><td class="k">first live write</td><td class="v">' + esc(m.first_pit_written ? fmtUtc(m.first_pit_written.first_written_at) : '—') + (m.first_pit_written ? '<small>' + esc(m.first_pit_written.ticker) + ' · ' + esc(m.first_pit_written.snapshot_date) + '</small>' : '') + '</td></tr>' +
+    '<tr><td class="k">counts generated</td><td class="v">' + esc(fmtUtc(m.generated_at)) + '</td></tr></table>' +
+    '<p class="mut" style="margin-top:8px">Exact row counts over the delivery view at generation time. The view\'s own provenance flag keys on snapshot_date ≥ 2026-03-01; March 1 was a Sunday, so March 2 is the first live session.</p></div>';
+  h += '<div class="dr-sec"><h4>What the timestamps mean</h4><ul>' +
+    '<li><b>first_written_at</b> — server-default insert time on the scorecard row; never rewritten. For LIVE_PIT rows this is when the observation first existed. For HISTORICAL_BACKFILL rows it is when the reconstruction was written, not a knowledge date.</li>' +
+    '<li><b>updated_at</b> — last-write watermark; housekeeping, not availability.</li>' +
+    '<li><b>values_as_of / revision_at / is_restatement</b> — the lineage companion: original write, latest operational mutation, and whether that mutation came more than 24 hours later.</li>' +
+    '<li><b>data_quality_flags</b> — machine-readable caveats delivered with the row, never silently cleaned away.</li></ul></div>';
+  h += '<div class="dr-sec"><h4>Methodology vs. data-quality work</h4><p>The core conceptual framework — narratives as measurable states with energy, velocity, persistence, exhaustion and structural support — has remained stable. Much subsequent work improved source quality, normalization, coverage, lineage and processing reliability. Those are data-quality changes, and the flags on each row record them. Any change that affects methodology, and any correction to historical values, should be identified precisely and evaluated separately rather than folded into either regime. No absolute claim of immutability is made for the full history.</p></div>';
+  if (r){
+    var flags = r.data_quality_flags ? String(r.data_quality_flags).split(/[,;]/).filter(Boolean) : [];
+    h += '<div class="dr-sec"><h4>Flags on the selected observation · ' + esc(r.ticker) + ' · ' + esc(r.snapshot_date) + '</h4>';
+    h += flags.length ? '<ul>' + flags.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '<div class="dr-empty">No flags.</div>';
+    h += '<p class="mut" style="margin-top:8px">Delivered verbatim; split on comma or semicolon. Repair and vintage tokens describe data-quality work on the row; ROW_RESTATED_AFTER_24H marks a later revision.</p></div>';
+  }
+  return h;
+}
+function drawerPaper(){
+  var P = S.paper; var book = paperBook();
+  if (!P || !book) return '<div class="dr-empty">Paper book loads on slide 5.</div>';
+  var rows = book.rows; var last = rows[rows.length - 1], first = rows[0]; var ps = paperSessions(rows);
+  var st = null; for (var i = 0; i < P.books.length; i++) if (P.books[i].key === 'stats_v6') st = P.books[i];
+  var sl = st && st.rows.length ? st.rows[st.rows.length - 1] : null;
+  var h = '<div class="dr-sec"><h4>' + esc(book.table) + ' · read as written</h4><p class="mut" style="margin-bottom:6px">' + esc(book.note) + '</p><table class="dr-kv">' +
+    '<tr><td class="k">display baseline</td><td class="v">' + esc(P.baseline) + '<small>' + esc(fmtMoney(first.portfolio_value)) + ' on the baseline row · nominal book size ' + esc(fmtMoney(book.base)) + '</small></td></tr>' +
+    '<tr><td class="k">latest mark</td><td class="v">' + esc(last.snapshot_date) + '<small>created_at ' + esc(fmtTs(last.created_at)) + ' · updated_at ' + esc(fmtTs(last.updated_at)) + '</small></td></tr>' +
+    '<tr><td class="k">portfolio_value</td><td class="v num">' + esc(fmtMoney(last.portfolio_value)) + '</td></tr>' +
+    '<tr><td class="k">realized_pnl_cumulative</td><td class="v num">' + esc(fmtMoney(last.realized_pnl_cumulative)) + '</td></tr>' +
+    '<tr><td class="k">unrealized_pnl</td><td class="v num">' + esc(fmtMoney(last.unrealized_pnl)) + '</td></tr>' +
+    '<tr><td class="k">open_count · open_exposure · cash</td><td class="v">' + esc(fmtInt(last.open_count)) + ' · ' + esc(fmtMoney(last.open_exposure)) + ' · ' + esc(fmtMoney(last.cash)) + '</td></tr>' +
+    '<tr><td class="k">marks · sessions</td><td class="v">' + esc(fmtInt(rows.length)) + ' · ' + esc(fmtInt(ps.sessions)) + '<small>' + ps.flatMarks + ' flat marks (weekday holidays written as unchanged rows) excluded from the session count</small></td></tr></table></div>';
+  var show = rows.slice(-8).reverse();
+  h += '<div class="dr-sec"><h4>Last eight marks</h4><div class="dr-tbl-wrap"><table class="dr-tbl"><thead><tr><th>snapshot_date</th><th>portfolio_value</th><th>daily_pnl</th><th>daily_return_pct</th><th>open</th><th>realized cum.</th><th>unrealized</th></tr></thead><tbody>';
+  show.forEach(function(r){ h += '<tr><td>' + esc(r.snapshot_date) + '</td><td>' + esc(fmtMoney(r.portfolio_value)) + '</td><td class="' + pnlCls(r.daily_pnl) + '">' + esc(fmtMoney(r.daily_pnl)) + '</td><td class="' + pnlCls(r.daily_return_pct) + '">' + esc(r.daily_return_pct == null ? '—' : fmtSigned(r.daily_return_pct, 2) + '%') + '</td><td>' + esc(fmtInt(r.open_count)) + '</td><td class="' + pnlCls(r.realized_pnl_cumulative) + '">' + esc(fmtMoney(r.realized_pnl_cumulative)) + '</td><td class="' + pnlCls(r.unrealized_pnl) + '">' + esc(fmtMoney(r.unrealized_pnl)) + '</td></tr>'; });
+  h += '</tbody></table></div></div>';
+  if (sl){
+    h += '<div class="dr-sec"><h4>' + esc(st.table) + ' · latest run ' + esc(sl.stat_date) + '</h4><table class="dr-kv">' +
+      '<tr><td class="k">total_trades</td><td class="v num">' + esc(fmtInt(sl.total_trades)) + '</td></tr>' +
+      '<tr><td class="k">win_rate · long · short</td><td class="v">' + esc(fmt(sl.win_rate, 1)) + '% · ' + esc(fmt(sl.long_win_rate, 1)) + '% · ' + esc(fmt(sl.short_win_rate, 1)) + '%</td></tr>' +
+      '<tr><td class="k">avg_return_pct · profit_factor</td><td class="v">' + esc(fmtSigned(sl.avg_return_pct, 2)) + '% · ' + esc(fmt(sl.profit_factor, 2)) + '</td></tr>' +
+      '<tr><td class="k">total_pnl</td><td class="v num">' + esc(fmtMoney(sl.total_pnl)) + '</td></tr></table>' +
+      '<p class="mut" style="margin-top:8px">Cumulative statistics over the paper-trade ledger, gross, modeled fills. The table also stores a Sharpe ratio; it is deliberately not shown anywhere on this deck because its sampling frequency and calculation have not been independently verified.</p></div>';
+  }
+  h += '<div class="dr-sec"><p class="mut">Paper portfolio. Modeled fills. Gross returns. No execution costs. Not a live-executed track record, and not evidence of institutional alpha.</p></div>';
+  return h;
+}
+function drawerMethod(){
+  var E = S.example; var F = S.field;
+  var h = '<div class="dr-sec"><h4>How the default example was chosen</h4>';
+  if (!E) h += '<div class="dr-empty">Not loaded.</div>';
+  else {
+    h += '<p class="mut" style="margin-bottom:6px">Chosen by rule from the live regime, not by outcome. Recomputed from the feed each time (cached 15 minutes).</p><ul>';
+    (E.rule && E.rule.criteria ? E.rule.criteria : []).forEach(function(c){ h += '<li>' + esc(c) + '</li>'; });
+    h += '<li><b>Ranking:</b> ' + esc(E.rule ? E.rule.ranking : '') + '</li></ul>';
+    h += '<table class="dr-kv" style="margin-top:8px">' +
+      '<tr><td class="k">window</td><td class="v">' + esc(E.window ? E.window.from + ' → ' + E.window.to + ' · ' + E.window.sessions + ' sessions' : '—') + '</td></tr>' +
+      '<tr><td class="k">rows scanned · securities · eligible</td><td class="v">' + esc(E.considered ? fmtInt(E.considered.rows) + ' · ' + fmtInt(E.considered.securities) + ' · ' + fmtInt(E.considered.eligible) : '—') + '</td></tr>' +
+      '<tr><td class="k">chosen</td><td class="v"><b>' + esc(txt(E.ticker)) + '</b> · ' + esc(txt(E.snapshot_date)) + '</td></tr></table>';
+    if (E.ranked && E.ranked.length){
+      h += '<div class="dr-tbl-wrap" style="margin-top:8px"><table class="dr-tbl"><thead><tr><th>Security</th><th>Sessions</th><th>Qualifying</th><th>Transitions</th><th>Latest qualifying</th></tr></thead><tbody>';
+      E.ranked.forEach(function(r){ h += '<tr><td>' + esc(r.ticker) + '</td><td>' + r.sessions + '</td><td>' + r.qualifying + '</td><td>' + r.transitions + '</td><td>' + esc(r.latest_qualifying) + '</td></tr>'; });
+      h += '</tbody></table></div>';
+    }
+  }
+  h += '</div>';
+  h += '<div class="dr-sec"><h4>The Narrative Universe field on slide 3</h4><p class="mut">A read-only 2D rendering of the dashboard\'s Narrative Universe, drawn from the latest scored session of the feed (one row per security):</p><ul>' +
+    '<li>x · <b>' + esc(F && F.axes ? F.axes.x : 'fvd_pct') + '</b></li><li>y · <b>' + esc(F && F.axes ? F.axes.y : 'wks_score') + '</b></li><li>dot size · <b>narrative_mass</b>; colour · <b>walsh_regime</b></li>' +
+    '<li>securities without a fair-value anchor (fvd_pct null) are counted but not plotted' + (F ? ' · ' + esc(fmtInt(F.fvd_missing)) + ' today' : '') + '</li></ul>' +
+    (F ? '<p class="mut" style="margin-top:6px">Scored ' + esc(F.snapshot_date) + ' · ' + esc(fmtInt(F.n)) + ' securities · first write ' + esc(fmtUtc(F.first_write)) + ' · last write ' + esc(fmtUtc(F.last_write)) + ' · generated ' + esc(fmtUtc(F.generated_at)) + '.</p>' : '') + '</div>';
+  h += '<div class="dr-sec"><h4>Sources on this deck</h4><ul>' +
+    '<li><b>institutional feed v5</b> and its lineage companion — every measurement, timestamp and regime count (service-role read, cached 15 minutes).</li>' +
+    '<li><b>/api/price-history</b> — daily closes for the realized-outcome arithmetic and the price shown on slide 3.</li>' +
+    '<li><b>paper_portfolio_daily_v6</b> and <b>paper_portfolio_stats_v6</b> — the paper book on slide 5, read as written.</li>' +
+    '<li>Company names — the earnings calendar table, cosmetic only.</li></ul><p class="mut" style="margin-top:6px">Nothing on this page writes to any table; the page holds no credentials.</p></div>';
+  return h;
+}
+el('dr-tabs').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; S.drawerTab = b.getAttribute('data-t'); renderDrawer(); });
+el('dr-close').onclick = function(){ toggleDrawer(false); };
+el('pr-details').onclick = function(){ toggleDrawer(); };
+el('pr-cues').onclick = function(){ toggleCues(); };
+el('pr-prev').onclick = function(){ go(S.screen - 1); };
+el('pr-next').onclick = function(){ go(S.screen + 1); };
+el('s3-tabs').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; S.s3view = b.getAttribute('data-k'); renderS3Left(); });
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════════════════════ */
+function showLoad(msg, err){ var b = el('pr-load-b'); b.textContent = msg; b.classList.toggle('err', !!err); el('pr-load').classList.add('on'); }
+function hideLoad(){ el('pr-load').classList.remove('on'); }
+function api(url){
+  return fetch(url, {cache:'no-store'}).then(function(r){
+    if (r.status === 401) { if (typeof window.__mqRelock === 'function') window.__mqRelock('expired'); throw new Error('access_code_required'); }
+    return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j && j.error ? j.error + (j.detail ? ' — ' + j.detail : '') : 'HTTP ' + r.status); return j; });
+  });
+}
+function loadMeta(){
+  showLoad('Connecting to feed…');
+  return Promise.all([
+    api('/api/present-data'),
+    api('/api/present-os-data?part=example').catch(function(){ return null; }),
+    api('/api/present-os-data?part=universe').catch(function(){ return null; })
+  ]).then(function(res){
+    var j = res[0];
+    S.meta = j.meta || null; S.universe = j.universe || []; S.example = res[1]; S.field = res[2];
+    var sel = el('pr-ticker'); var h = '';
+    S.universe.forEach(function(u){ h += '<option value="' + esc(u.t) + '">' + esc(u.t) + (u.nm ? ' — ' + esc(u.nm) : '') + '</option>'; });
+    sel.innerHTML = h || '<option>No securities</option>';
+    var want = null;
+    try { want = new URL(location.href).searchParams.get('ticker'); } catch(_e){}
+    want = want ? String(want).toUpperCase() : null;
+    var has = S.universe.some(function(u){ return u.t === want; });
+    var ex = S.example && S.example.ticker && S.universe.some(function(u){ return u.t === S.example.ticker; }) ? S.example.ticker : null;
+    S.ticker = has ? want : (ex || j.defaultTicker || (S.universe[0] && S.universe[0].t) || null);
+    if (S.ticker) sel.value = S.ticker;
+    el('pr-status').innerHTML = 'Read-only · ' + esc(txt(S.meta && S.meta.feed)) + ' · latest session <b>' + esc(S.meta && S.meta.last_snapshot_date ? S.meta.last_snapshot_date : '—') + '</b>';
+    return loadTicker(S.ticker);
+  });
+}
+function loadTicker(t){
+  if (!t) { hideLoad(); return Promise.resolve(); }
+  showLoad('Loading ' + t + '…');
+  S.ticker = t; S.rows = []; S.prices = null; S.priceSource = null; S.sel = -1;
+  var pSeries = api('/api/present-data?ticker=' + encodeURIComponent(t) + '&days=40');
+  var pPrice = fetch('/api/price-history?ticker=' + encodeURIComponent(t) + '&days=150', {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+  return Promise.all([pSeries, pPrice]).then(function(res){
+    var j = res[0], p = res[1];
+    S.rows = j.rows || []; S.window = j.window || null;
+    if (p && Array.isArray(p.series) && p.series.length) { S.prices = p.series; S.priceSource = 'price-history'; }
+    else if (S.rows.some(function(r){ return r.current_price != null; })) { S.prices = S.rows.map(function(r){ return {snapshot_date: r.snapshot_date, price_close: r.current_price}; }); S.priceSource = 'feed'; }
+    // Default observation: the rule-chosen example when this is the example
+    // security (or ?obs= in the URL); otherwise eleven sessions before the last
+    // one so a completed subsequent window exists. Prefer a LIVE_PIT row.
+    var n = S.rows.length; var idx = -1;
+    var wantObs = null; try { wantObs = new URL(location.href).searchParams.get('obs'); } catch(_e){}
+    if (wantObs) for (var w = 0; w < n; w++) if (S.rows[w].snapshot_date === wantObs) idx = w;
+    if (idx < 0 && S.example && S.example.ticker === t && S.example.snapshot_date) for (var q = 0; q < n; q++) if (S.rows[q].snapshot_date === S.example.snapshot_date) idx = q;
+    if (idx < 0) { idx = Math.max(0, n - 12); while (idx > 0 && S.rows[idx].decay_provenance && S.rows[idx].decay_provenance !== 'LIVE_PIT') idx--; }
+    S.sel = n ? idx : -1;
+    fillObsSelect();
+    renderS3Left(); renderFeedRow(); renderSlide4();
+    if (S.drawer) renderDrawer();
+    hideLoad(); syncUrl();
+  }).catch(function(e){
+    if (e && e.message === 'access_code_required') { hideLoad(); return; }
+    showLoad('Could not load ' + t + ': ' + (e && e.message ? e.message : 'unknown error'), true);
+  });
+}
+function pickTicker(t){ if (!t || t === S.ticker) return; var sel = el('pr-ticker'); if (sel) sel.value = t; loadTicker(t); }
+el('pr-ticker').addEventListener('change', function(){ loadTicker(this.value); });
+el('pr-obs').addEventListener('change', function(){ setSelected(Number(this.value)); });
+window.addEventListener('resize', function(){ renderS3Left(); });
+
+/* ═══════════════════════════════════════════════════════════════
+   GATE (mirrors /present — same password cookie)
+   ═══════════════════════════════════════════════════════════════ */
+var booted = false;
+function boot(){
+  document.body.classList.add('mq-open');
+  if (!booted){
+    booted = true;
+    loadMeta().catch(function(e){ if (!(e && e.message === 'access_code_required')) showLoad('Could not connect: ' + (e && e.message ? e.message : 'unknown error'), true); });
+  } else {
+    loadMeta().catch(function(){});
+  }
+}
+window.__mqRelock = function(reason){
+  window.__MQ.authed = false;
+  document.body.classList.remove('mq-open');
+  var err = el('mq-err');
+  if (err) err.textContent = reason === 'expired' ? 'Session expired — enter the password again.' : '';
+  setTimeout(function(){ var i = el('mq-code'); if (i) i.focus(); }, 250);
+};
+function unlock(){
+  var inp = el('mq-code'), btn = el('mq-enter'), err = el('mq-err');
+  var code = (inp.value || '').trim(); if (!code) { inp.focus(); return; }
+  btn.disabled = true; err.textContent = '';
+  fetch('/api/present-session', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({code: code})})
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {status: r.status, body: j}; }); })
+    .then(function(res){
+      btn.disabled = false;
+      if (res.status === 200 && res.body && res.body.ok){ window.__MQ.authed = true; inp.value = ''; boot(); return; }
+      var card = el('mq-card'); card.classList.remove('mq-shake'); void card.offsetWidth; card.classList.add('mq-shake');
+      if (res.status === 503) err.textContent = 'Access is not configured yet — contact founder@marketprism.co.';
+      else if (res.status === 429) err.textContent = 'Too many attempts — wait a moment and try again.';
+      else err.textContent = 'That password was not recognized.';
+      inp.focus(); inp.select();
+    }).catch(function(){ btn.disabled = false; err.textContent = 'Network error — try again.'; });
+}
+el('mq-enter').onclick = unlock;
+el('mq-code').addEventListener('keydown', function(e){ if (e.key === 'Enter') unlock(); });
+el('mq-lock').onclick = function(){ fetch('/api/present-session', {method:'DELETE'}).catch(function(){}).then(function(){ location.reload(); }); };
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT — cues always start Off; nothing about them is persisted.
+   ═══════════════════════════════════════════════════════════════ */
+buildDots();
+renderSlide1();
+renderSlide2();
+renderFeedRow(); renderSlide4();
+toggleCues(false);
+var startScreen = 1;
+try { var qs = new URL(location.href).searchParams.get('s'); if (qs && Number(qs) >= 1 && Number(qs) <= TOTAL) startScreen = Number(qs); } catch(_e){}
+go(startScreen);
+if (window.__MQ.authed) boot();
+else setTimeout(function(){ var i = el('mq-code'); if (i) i.focus(); }, 300);
+})();
+</script>
+</body>
+</html>

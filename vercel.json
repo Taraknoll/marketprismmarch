@@ -277,6 +277,10 @@
       "destination": "/api/present"
     },
     {
+      "source": "/present-os",
+      "destination": "/api/present-os"
+    },
+    {
       "source": "/api/signature-data",
       "destination": "/api/signature-data"
     },
@@ -436,6 +440,9 @@
     },
     "api/present.js": {
       "includeFiles": "_present.html"
+    },
+    "api/present-os.js": {
+      "includeFiles": "_present_os.html"
     },
     "api/forensic-data.js": {
       "maxDuration": 30
