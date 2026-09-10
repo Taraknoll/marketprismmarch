@@ -810,7 +810,7 @@ var GLOSSARY = [
   {g:'for', f:'hds', say:'Hype Discipline Score: is the language evidence-dense or promotional? Most rows sit at 1.0 because disciplined language is the norm.', def:'Hype Discipline Score; higher values indicate more evidence-dense and less promotional narrative language.', read:'Low values (a few percent of rows) flag promotional language.', unit:'0–1'},
   {g:'for', f:'overreaction_ratio', say:'How much the price moved relative to what the modeled fundamental change would justify.', def:'Relative overreaction measure comparing observed price response with Market Prism\'s modeled fundamental change; higher means greater overreaction.', read:'Heavy-tailed; extreme values are real and flagged with EXTREME_OR.', unit:'ratio'},
   {g:'for', f:'fear_weighted_or', say:'The same overreaction measure, weighted more heavily when the move was to the downside.', def:'Proprietary downside-sensitive overreaction measure; higher values indicate greater asymmetric downside response.', unit:'ratio'},
-  {g:'for', f:'drift_score', say:'How far the narrative has drifted from what the filings support. Zero means measured and aligned; blank means it could not be judged.', def:'Narrative drift between claims and filing evidence. NULL means not adjudicable; zero means measured and aligned.', cav:'Never read NULL as zero here — they mean different things.', unit:'0–100'},
+  {g:'for', f:'drift_score', say:'The gap between what the narrative claims and what the company\'s earnings reports actually say. Zero means measured and aligned; blank means it could not be judged.', def:'Narrative drift between claims and filing evidence. NULL means not adjudicable; zero means measured and aligned.', cav:'Never read NULL as zero here — they mean different things.', unit:'0–100'},
   {g:'for', f:'omission_gap_score', say:'How much material filing information the narrative leaves out.', def:'Selective-omission measure; higher values indicate more material filing information absent from the narrative.', unit:'0–100 ordinal'},
   {g:'for', f:'coordination_score', say:'Are many sources converging on the same thesis in a narrow window? Higher = more coordinated.', def:'Cross-source coordination intensity; higher values indicate greater modeled coordination.', read:'Most rows sit at 0; the top 5% reach about 60.', unit:'0–100 ordinal'},
   {g:'for', f:'coordination_class', say:'The same thing as a label.', def:'Categorical coordination classification. Allowed: ORGANIC_SPREAD, SUSPICIOUS_PATTERN, LIKELY_COORDINATED.', unit:'text'},
@@ -1043,7 +1043,12 @@ function renderScreen1(){
     h += '<text class="fld" data-field="' + esc(capField) + '" x="' + xx + '" y="' + (H - 18) + '" text-anchor="middle" font-size="12" font-weight="600" fill="#A0A8B0" letter-spacing=".06em">' + esc(stages[k].s) + '</text>';
     if (k < n - 1) h += '<text x="' + (xx + gap/2) + '" y="' + (H - 18) + '" text-anchor="middle" font-size="14" fill="rgba(255,255,255,.3)">→</text>';
   }
-  h += '<text x="' + left + '" y="22" font-size="12" font-weight="600" fill="rgba(255,255,255,.34)" letter-spacing=".14em">CONCEPTUAL LIFECYCLE · LABELS BENEATH ARE THE DELIVERED STATE FIELDS</text>';
+  h += '<text x="' + left + '" y="22" font-size="12" font-weight="600" fill="rgba(255,255,255,.34)" letter-spacing=".14em">CONCEPTUAL LIFECYCLE · HEIGHT = NARRATIVE ENERGY · LABELS BENEATH ARE THE DELIVERED STATE FIELDS</text>';
+  // vertical axis cue: the curve's height is the narrative's energy
+  h += '<line x1="34" y1="' + (H - 60) + '" x2="34" y2="58" stroke="rgba(255,255,255,.22)" stroke-width="1.5"/>';
+  h += '<path d="M28 66 L34 56 L40 66" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.5"/>';
+  h += '<text transform="translate(18 ' + ((H - 60 + 58) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11" font-weight="600" fill="#A0A8B0" letter-spacing=".12em">NARRATIVE ENERGY</text>';
+  h += '<text x="' + left + '" y="' + (H - 2) + '" font-size="11" fill="rgba(255,255,255,.34)">A narrative gathers energy as it forms and drifts, peaks at exhaustion when no new information arrives, then decays until it resets or a new narrative replaces it.</text>';
   h += '</svg>';
   el('s1-life').innerHTML = h;
 
@@ -1074,7 +1079,7 @@ var S2M = [
     { f: 'narrative_mass', u: '0–1', say: 'How big or heavy the narrative is.', rd: 'Compressed near the top of the scale; context rather than a headline predictor.' } ] },
   { col: 'Forensics & direction — does it hold up, who is pushing it', c: '#7B61FF', fields: [
     { f: 'vms', u: 'Verification Match Score · 0–100', say: 'Do the narrative\'s factual claims match what the company actually filed? Higher = the narrative checks out.', rd: 'The structural-support measure; speed is a separate field.' },
-    { f: 'drift_score', u: '0–100', say: 'How far the narrative has drifted from what the filings support.', rd: '<b>0</b> = measured and aligned. <b>Blank</b> = could not be judged. Never the same thing.' },
+    { f: 'drift_score', u: '0–100', say: 'The gap between what the narrative claims and what the earnings reports actually say.', rd: '<b>0</b> = measured and aligned. <b>Blank</b> = could not be judged. Never the same thing.' },
     { f: 'coordination_score', u: '0–100', say: 'Are many sources converging on the same thesis inside a narrow window?', rd: 'Most rows sit at 0. Classes: ORGANIC_SPREAD → SUSPICIOUS_PATTERN → LIKELY_COORDINATED.' },
     { f: 'suspicion_score', u: '0–100', say: 'How anomalous the market activity around the narrative is.', rd: 'Says how <b>far</b> a name may move, not which way. The strongest single magnitude coordinate in the delivered report.' },
     { f: 'wks_score', u: 'Walsh Keyword Score · −100 to +100', say: 'The directional read from the text evidence. Positive = bullish evidence, negative = bearish.', rd: 'The regime label <b>walsh_regime</b> sits beside it: CLEAR_PATH · PERSISTENT · NEUTRAL · EXHAUSTING.' } ] }
