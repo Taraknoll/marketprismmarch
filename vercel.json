@@ -354,7 +354,7 @@
     "api/author.js": {
       "includeFiles": "_author.html"
     },
-"api/methodology.js": {
+    "api/methodology.js": {
       "includeFiles": "_methodology.html"
     },
     "api/about.js": {
@@ -396,7 +396,7 @@
     "api/pricing.js": {
       "includeFiles": "pricing.html"
     },
-"api/scorer-dev.js": {
+    "api/scorer-dev.js": {
       "includeFiles": "_scorer_dev.html"
     },
     "api/home-dev.js": {
@@ -441,9 +441,6 @@
     "api/present.js": {
       "includeFiles": "_present.html"
     },
-    "api/present-os.js": {
-      "includeFiles": "_present_os.html"
-    },
     "api/forensic-data.js": {
       "maxDuration": 30
     },
@@ -458,17 +455,35 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
       ]
     },
     {
       "source": "/assets/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     }
   ]

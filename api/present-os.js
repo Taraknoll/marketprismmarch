@@ -9,14 +9,23 @@
 // (api/_require-present.js). The shell contains no data and no Supabase keys.
 // Nothing here writes anywhere, and nothing in /present is touched.
 
+const fs = require('fs');
+const path = require('path');
 const resolveTemplate = require('./_resolve-template');
+
+// Static asset reference: the bundler's file tracer sees this literal path and
+// ships _present_os.html next to this function, so no vercel.json includeFiles
+// entry is required. resolveTemplate() then finds it at __dirname/../.
+const TEMPLATE_PATH = path.join(__dirname, '..', '_present_os.html');
+function rawTemplate() { return fs.readFileSync(TEMPLATE_PATH, 'utf8'); }
 const rateLimit = require('./_rate-limit');
 const gate = require('./_require-present');
 
 module.exports = async (req, res) => {
   if (!rateLimit(req, res, 'present-os-page', 30)) return;
   try {
-    let html = resolveTemplate('_present_os.html');
+    let html;
+    try { html = resolveTemplate('_present_os.html'); } catch (_e) { html = rawTemplate(); }
     if (gate.isAuthed(req)) {
       html = html.replace('window.__MQ = { authed: false };', 'window.__MQ = { authed: true };');
     }
