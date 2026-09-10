@@ -14323,14 +14323,29 @@ function gcTierIcon(tier){
    the 43 MOMENTUM_CONFIRMED rows, `confidence` holds 15 distinct values while
    `keyword_adjusted_confidence` holds 31.) Walk the chain newest-first so the
    card shows the most refined number the pipeline actually produced — matching
-   what mod-trading-cards.js and tcBuildFromData already do. */
+   what mod-trading-cards.js and tcBuildFromData already do — then apply the
+   display governor below.
+
+   Display governor (mirrors refresh_trade_cards_live(), migration 081,
+   2026-08-14): a card whose signal is not registry-validated must not display
+   more than 79% confidence. The database only caps the base prior and leaves
+   the refined stages raw so ranking can still use them, which is how this
+   resolver came to print 99% on unvalidated cards (CVNA, 2026-09-09). Rows that
+   carry no signal_tier (the dashboard bundle does not ship it) count as
+   unvalidated. gcRankConf() deliberately reads the raw value instead. */
+var GC_UNVALIDATED_DISPLAY_CAP=0.79;
+function gcIsValidatedSignal(d){
+  return !!d&&Number(d.signal_tier)>0;
+}
 function gcResolveConfidence(d){
   if(!d) return null;
   var chain=[d.keyword_adjusted_confidence,d.regime_adjusted_confidence,d.confidence];
   for(var i=0;i<chain.length;i++){
     if(chain[i]==null) continue;
     var v=Number(chain[i]);
-    if(isFinite(v)&&v>0) return v;
+    if(!(isFinite(v)&&v>0)) continue;
+    if(v>GC_UNVALIDATED_DISPLAY_CAP&&!gcIsValidatedSignal(d)) return GC_UNVALIDATED_DISPLAY_CAP;
+    return v;
   }
   return null;
 }

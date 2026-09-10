@@ -7405,8 +7405,8 @@ async function loadData(){
         || (isTrap
           ? 'Coordinated narrative and valuation distortion detected. Historically leads to rapid downside unwind. Expected Move: ~2–3% downside'
           : 'Price is diverging from fundamentals. Mean reversion probability elevated. Expected Move: ~2–3% downside');
-      // Confidence as integer % (prefer regime-adjusted)
-      var adjConf = r.regime_adjusted_confidence != null ? Number(r.regime_adjusted_confidence) : (r.confidence != null ? Number(r.confidence) : null);
+      // Confidence as integer % — most refined stage, display-governed (see gcResolveConfidence)
+      var adjConf = gcResolveConfidence(r);
       var confPct = adjConf != null ? Math.round(adjConf * 100) : null;
       // Merge with snapshot for sector fallback
       var snap = snapshotMap[r.ticker]||{};
@@ -13071,13 +13071,25 @@ function buildStratCard(d){
    floor is re-checked on the most refined confidence the pipeline produced so
    the gallery never keeps a card its own numbers would not support. */
 var GC_CONFIDENCE_FLOOR=0.65;
+/* Display governor (mirrors refresh_trade_cards_live(), migration 081,
+   2026-08-14): a card whose signal is not registry-validated must not display
+   more than 79% confidence. The database only caps the base prior and leaves
+   the refined stages raw, so any renderer that prefers them must re-apply the
+   cap. Rows without a signal_tier (the dashboard bundle does not ship it)
+   count as unvalidated. gcRankConf() deliberately reads the raw value. */
+var GC_UNVALIDATED_DISPLAY_CAP=0.79;
+function gcIsValidatedSignal(d){
+  return !!d&&Number(d.signal_tier)>0;
+}
 function gcResolveConfidence(d){
   if(!d) return null;
   var chain=[d.keyword_adjusted_confidence,d.regime_adjusted_confidence,d.confidence];
   for(var i=0;i<chain.length;i++){
     if(chain[i]==null) continue;
     var v=Number(chain[i]);
-    if(isFinite(v)&&v>0) return v;
+    if(!(isFinite(v)&&v>0)) continue;
+    if(v>GC_UNVALIDATED_DISPLAY_CAP&&!gcIsValidatedSignal(d)) return GC_UNVALIDATED_DISPLAY_CAP;
+    return v;
   }
   return null;
 }
@@ -14564,9 +14576,9 @@ function tcBuildFromData(){
         : (r.biasText ? r.biasText.toUpperCase() : 'HOLD STEADY');
     // Win rate from regime backtest
     var winRate = regimeInfo ? regimeInfo.acc : '';
-    // Confidence — prefer regime-adjusted
-    var confRaw = r.regime_adjusted_confidence != null ? Number(r.regime_adjusted_confidence)
-      : r.confidence != null ? Number(r.confidence) : 0.5;
+    // Confidence — most refined stage, display-governed (see gcResolveConfidence)
+    var confRaw = gcResolveConfidence(r);
+    if(confRaw == null) confRaw = 0.5;
     var confPct = Math.round(confRaw * 100);
     // Window
     var win = r._winOverride || (r.holding_days ? r.holding_days + (r.holding_days > 1 ? ' days' : ' day') : '3\u20137d');
