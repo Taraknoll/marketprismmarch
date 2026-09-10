@@ -3234,6 +3234,15 @@ body.mp-teaser-locked #mi-show-more,body.mp-teaser-locked #mi-nmap-detail{displa
 .tcg-header h1{font-family:var(--font-display);font-size:24px;font-weight:400;color:var(--mp-text-primary);}
 .tcg-header p{font-size:13px;color:var(--mp-text-tertiary);margin-top:2px;}
 .tcg-count{font-family:var(--font-body);font-size:12px;color:var(--mp-text-tertiary);}
+.tcg-header-right{display:flex;align-items:center;gap:10px;}
+.tcg-toggle{
+  font-family:var(--font-body);font-size:12px;font-weight:600;
+  color:var(--mp-cyan,#4DC8F0);background:rgba(0,174,255,0.08);
+  border:1px solid rgba(0,174,255,0.2);border-radius:999px;
+  padding:5px 12px;cursor:pointer;transition:border-color .2s,background .2s;
+}
+.tcg-toggle:hover{border-color:rgba(0,174,255,0.45);background:rgba(0,174,255,0.14);}
+body.mp-teaser-locked .tcg-toggle{display:none;}
 .tcg-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
@@ -6055,7 +6064,10 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
 
       <div class="tcg-header">
         <div></div>
-        <span class="tcg-count" id="tcg-count"></span>
+        <div class="tcg-header-right">
+          <span class="tcg-count" id="tcg-count"></span>
+          <button type="button" class="tcg-toggle" id="tcg-toggle" style="display:none;" onclick="gcToggleDeck()">Show all</button>
+        </div>
       </div>
       <div class="strat-cards-grid" id="tcg-grid">
         <!-- Populated by JS -->
@@ -14493,23 +14505,100 @@ function buildStratCard(d){
    keeps the two in agreement, so a card can never display a percentage that
    falls below the floor the gallery claims to enforce. */
 var GC_CONFIDENCE_FLOOR=0.65;
+/* Deck sizing (2026-09-09). trade_cards_live grew from ~9 collectible cards a
+   day in June to 35-70 by September: in a bull tape the engine labels most of
+   the universe MOMENTUM_CONFIRMED, and the tier view grants GOLD to any
+   YELLOW_COLLAPSE/HOLLOW card with keyword-adjusted confidence >= 0.55. The
+   confidence governor then pins every unvalidated card at 0.79, so a higher
+   floor cannot thin the deck. Two client-side rules keep the gallery readable:
+     1. GC_EXCLUDED_LABELS never enter the deck (server filter + client check).
+        MOMENTUM_CONFIRMED resolved 608 predictions in the 120 days to
+        2026-09-09 at a 19.9% logged hit rate, against 31-38% for every other
+        label.
+     2. Cards are ranked — registry-validated signal_tier first (T1 before T5),
+        then keyword_adjusted_confidence (the one stage the governor leaves
+        uncapped), then trade_score — and cut to GC_DECK_SIZE. Per-label and
+        per-sector caps shape WHICH cards fill the slots; they never shrink the
+        deck below GC_DECK_SIZE while enough cards exist. "Show all" reveals
+        the rest in the same rank order.
+   The durable fix (tightening the GOLD rule in v_trade_cards) belongs in the
+   engine repo; these rules only govern what this gallery shows. */
+var GC_EXCLUDED_LABELS=['MOMENTUM_CONFIRMED'];
+var GC_DECK_SIZE=12;
+var GC_DECK_LABEL_CAP=5;
+var GC_DECK_SECTOR_CAP=2;
+var STRAT_EXPANDED=false;
+function gcExcludedLabelsQuery(){
+  if(!GC_EXCLUDED_LABELS.length)return'';
+  return'&or=(primary_label.is.null,primary_label.not.in.('+GC_EXCLUDED_LABELS.map(encodeURIComponent).join(',')+'))';
+}
+function gcLabelExcluded(d){
+  return GC_EXCLUDED_LABELS.indexOf(String((d&&d.primary_label)||'').toUpperCase())!==-1;
+}
+function gcRankConf(d){
+  var v=Number(d&&d.keyword_adjusted_confidence);
+  if(isFinite(v)&&v>0)return v;
+  v=Number(d&&d.confidence);
+  return(isFinite(v)&&v>0)?v:0;
+}
+function gcDeckCompare(a,b){
+  var ta=Number(a.signal_tier)||0,tb=Number(b.signal_tier)||0;
+  var va=ta>0?1:0,vb=tb>0?1:0;
+  if(va!==vb)return vb-va;
+  if(va&&ta!==tb)return ta-tb;
+  var ca=gcRankConf(a),cb=gcRankConf(b);
+  if(ca!==cb)return cb-ca;
+  var sa=Number(a.trade_score)||0,sb=Number(b.trade_score)||0;
+  if(sa!==sb)return sb-sa;
+  return String(a.ticker||'').localeCompare(String(b.ticker||''));
+}
+function gcDeckSector(d){
+  return String(d.sector||d.sector_name||'').trim().toLowerCase();
+}
+function gcBuildDeck(rows){
+  var ranked=rows.slice().sort(gcDeckCompare);
+  if(ranked.length<=GC_DECK_SIZE)return ranked;
+  var picked=[],taken={},byLabel={},bySector={};
+  ranked.forEach(function(d,i){
+    if(picked.length>=GC_DECK_SIZE)return;
+    var lab=String(d.primary_label||'').toUpperCase();
+    var sec=gcDeckSector(d);
+    if(lab&&(byLabel[lab]||0)>=GC_DECK_LABEL_CAP)return;
+    if(sec&&(bySector[sec]||0)>=GC_DECK_SECTOR_CAP)return;
+    picked.push(d);taken[i]=true;
+    if(lab)byLabel[lab]=(byLabel[lab]||0)+1;
+    if(sec)bySector[sec]=(bySector[sec]||0)+1;
+  });
+  for(var i=0;i<ranked.length&&picked.length<GC_DECK_SIZE;i++){
+    if(!taken[i])picked.push(ranked[i]);
+  }
+  return picked.sort(gcDeckCompare);
+}
+function gcToggleDeck(){
+  STRAT_EXPANDED=!STRAT_EXPANDED;
+  renderStratCards(STRAT_FILTER);
+}
+function gcCardEligible(d,filter){
+  if(!d)return false;
+  if(gcLabelExcluded(d))return false;
+  var conf=gcResolveConfidence(d);
+  if(conf==null||conf<=GC_CONFIDENCE_FLOOR)return false;
+  var tier=(d.card_tier||'').toUpperCase(),dir=(d.direction||'').toUpperCase();
+  if(filter==='unicorn'&&tier!=='UNICORN')return false;
+  if(filter==='platinum'&&tier!=='PLATINUM')return false;
+  if(filter==='gold'&&tier!=='GOLD')return false;
+  if(filter==='surprise'&&tier!=='SURPRISE')return false;
+  if(filter==='bearish'&&dir!=='BEARISH')return false;
+  if(filter==='bullish'&&dir!=='BULLISH')return false;
+  return true;
+}
 function renderStratCards(filter){
   var grid=document.getElementById('tcg-grid');
   if(!grid)return;
-  grid.innerHTML='';
-  var shown=0;
-  STRAT_DATA.forEach(function(d){
-    var show=true;
-    var conf=gcResolveConfidence(d);
-    if(conf==null||conf<=GC_CONFIDENCE_FLOOR)show=false;
-    if(filter==='unicorn'&&(d.card_tier||'').toUpperCase()!=='UNICORN')show=false;
-    if(filter==='platinum'&&(d.card_tier||'').toUpperCase()!=='PLATINUM')show=false;
-    if(filter==='gold'&&(d.card_tier||'').toUpperCase()!=='GOLD')show=false;
-    if(filter==='surprise'&&(d.card_tier||'').toUpperCase()!=='SURPRISE')show=false;
-    if(filter==='bearish'&&(d.direction||'').toUpperCase()!=='BEARISH')show=false;
-    if(filter==='bullish'&&(d.direction||'').toUpperCase()!=='BULLISH')show=false;
-    if(show){grid.innerHTML+=buildStratCard(d);shown++;}
-  });
+  var eligible=STRAT_DATA.filter(function(d){return gcCardEligible(d,filter);});
+  var deck=STRAT_EXPANDED?eligible.slice().sort(gcDeckCompare):gcBuildDeck(eligible);
+  var shown=deck.length,total=eligible.length;
+  grid.innerHTML=deck.map(function(d){return buildStratCard(d);}).join('');
   /* Attach flip handlers — on mobile, tap navigates straight to the ticker page
      (the back-face View Ticker button gets clipped by the fixed card height). */
   grid.querySelectorAll('.strat-scene').forEach(function(scene){
@@ -14523,7 +14612,12 @@ function renderStratCards(filter){
     });
   });
   var countEl=document.getElementById('tcg-count');
-  if(countEl)countEl.textContent=shown+' card'+(shown!==1?'s':'');
+  if(countEl)countEl.textContent=(shown<total)?('Top '+shown+' of '+total+' cards'):(shown+' card'+(shown!==1?'s':''));
+  var toggleEl=document.getElementById('tcg-toggle');
+  if(toggleEl){
+    toggleEl.style.display=(total>GC_DECK_SIZE)?'':'none';
+    toggleEl.textContent=STRAT_EXPANDED?('Show top '+GC_DECK_SIZE):('Show all '+total);
+  }
   if(!shown){
     grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--mp-text-tertiary);padding:40px;">No cards match this filter.</div>';
   }
@@ -14567,7 +14661,7 @@ async function loadStrategyData(){
   try{
     // Use trade_cards_live (pre-computed table) instead of v_trade_cards (slow view ~8s)
     var cols='ticker,price,primary_label,direction,confidence,'
-      +'regime_adjusted_confidence,keyword_adjusted_confidence,holding_days,entry_date,exit_date,'
+      +'regime_adjusted_confidence,keyword_adjusted_confidence,signal_tier,holding_days,entry_date,exit_date,'
       +'description,phase,status,card_tier,tier_label,trade_score,snapshot_date,sector_name,sector,industry,'
       +'story_claim,forensic_rebuttal,primary_driver,fair_value,pct_above_fair_value,pe_ratio,'
       +'energy,nrs,vms,coordination_class,dark_pool_signal,dark_pool_direction,narrative_tone,'
@@ -14586,9 +14680,14 @@ async function loadStrategyData(){
     // gating on the pipeline's own conviction gate; renderStratCards() re-applies
     // the same floor to the resolved value so a card can never display a number
     // that contradicts the floor.
+    // Label exclusion: GC_EXCLUDED_LABELS (see the deck rules above
+    // renderStratCards) are dropped at the source too, so the gallery never
+    // downloads them. Null-safe: a row with no primary_label is kept rather than
+    // silently vanishing behind a bare NOT IN.
     var cardUrl=SUPABASE_URL+'/rest/v1/trade_cards_live?select='+cols
       +'&card_tier=in.(UNICORN,PLATINUM,GOLD,SURPRISE)'
       +'&confidence=gt.0.65'
+      +gcExcludedLabelsQuery()
       +'&order=trade_score.desc';
     var res=await fetch(cardUrl,{headers:hdrs});
     if(!res.ok)throw new Error('trade_cards_live fetch failed: '+res.status);
