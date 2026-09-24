@@ -3268,6 +3268,117 @@
     color: var(--mp-text-primary);
   }
 
+  /* ── Verdict History (last 10 scorecard sessions) ── */
+  .vh-wrap { padding: 20px; }
+  .vh-bull    { --vh-c: #00DE94; --vh-bg: rgba(0,222,148,0.22);  --vh-bd: rgba(0,222,148,0.45); }
+  .vh-caution { --vh-c: #FFB800; --vh-bg: rgba(255,184,0,0.22);  --vh-bd: rgba(255,184,0,0.45); }
+  .vh-bear    { --vh-c: #FF4D4D; --vh-bg: rgba(255,77,77,0.22);  --vh-bd: rgba(255,77,77,0.45); }
+  .vh-neutral { --vh-c: #00AEFF; --vh-bg: rgba(0,174,255,0.22);  --vh-bd: rgba(0,174,255,0.45); }
+  .vh-strip { display: flex; gap: 3px; }
+  .vh-cell {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--vh-bg);
+    border: 1px solid var(--vh-bd);
+    transition: transform .2s;
+  }
+  .vh-cell:hover { transform: translateY(-2px); }
+  /* Wider gap where the verdict changed, so same-colour runs of different
+     verdicts (e.g. Accumulate -> Structurally Supported) still read as breaks. */
+  .vh-cell.vh-chg { margin-left: 7px; }
+  .vh-cell.vh-now { background: var(--vh-c); border-color: var(--vh-c); }
+  .vh-strip-dates {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--mp-text-tertiary);
+  }
+  .vh-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--mp-text-tertiary);
+  }
+  .vh-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .vh-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--vh-c);
+    flex-shrink: 0;
+  }
+  .vh-runs {
+    margin-top: 16px;
+    border-top: 1px solid var(--mp-border);
+  }
+  .vh-run {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--mp-border);
+  }
+  .vh-run:last-child { border-bottom: none; padding-bottom: 0; }
+  .vh-run-left { min-width: 0; }
+  .vh-run-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--mp-text-primary);
+    line-height: 1.5;
+  }
+  .vh-run-now {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    color: var(--mp-text-secondary);
+    background: var(--mp-surface2);
+    border: 1px solid var(--mp-border);
+  }
+  .vh-run-meta {
+    font-size: 12px;
+    color: var(--mp-text-tertiary);
+    margin-top: 4px;
+    padding-left: 16px;
+  }
+  .vh-run-right { text-align: right; flex-shrink: 0; }
+  .vh-run-price {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--mp-text-primary);
+  }
+  .vh-run-price-lbl {
+    font-size: 11px;
+    color: var(--mp-text-tertiary);
+    margin-top: 2px;
+  }
+  .vh-note {
+    font-size: 13px;
+    color: var(--mp-text-secondary);
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+  .vh-note strong { color: var(--mp-text-primary); font-weight: 600; }
+  @media (max-width: 480px) {
+    .vh-wrap { padding: 16px; }
+    .vh-strip { gap: 2px; }
+    .vh-cell.vh-chg { margin-left: 4px; }
+  }
+
   /* ── Stories Feed (right column) ── */
   .tk-feed {
     position: sticky;
@@ -5169,6 +5280,20 @@ body.mp-new-coverage .mp-new-banner{display:flex;}
             <div class="tug-bar-wrap">
               <div class="skel" style="height:10px;margin-bottom:14px;border-radius:99px;"></div>
               <div class="skel" style="height:30px;border-radius:8px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4b. VERDICT HISTORY (last 10 scorecard sessions) -->
+        <div class="section" id="verdict-history-section">
+          <div class="section-label">
+            Verdict History
+            <span class="section-label-sub" id="verdict-history-sub">Last 10 sessions</span>
+          </div>
+          <div class="section-body" id="verdict-history-body">
+            <div class="vh-wrap">
+              <div class="skel" style="height:28px;border-radius:6px;margin-bottom:14px;"></div>
+              <div class="skel" style="height:13px;width:70%;"></div>
             </div>
           </div>
         </div>
@@ -11047,6 +11172,199 @@ function renderWarranted(p) {
     + '</div>';
 }
 
+// ── Verdict History (Overview tab, below Warranted vs Hype) ─────────────────
+// The last 10 daily narrative_scorecard verdicts (one row per ticker per
+// trading session), drawn as a strip plus runs of the same verdict. Labels +
+// tone mirror lib/narrativeEngine.js VERDICT_MAP so they match the verdict
+// pill api/ticker.js injects at the top of the page.
+var VH_SESSIONS = 10;
+var VH_LOOKBACK_DAYS = 21; // calendar days fetched; extra rows beyond the 10
+                           // shown let the oldest run report its true start
+var VH_VERDICTS = {
+  'narrative trap':               ['Narrative Trap', 'bear'],
+  'near-trap watch':              ['Near-Trap Watch', 'caution'],
+  'near trap watch':              ['Near-Trap Watch', 'caution'],
+  'exhausted narrative':          ['Exhausted Narrative', 'bear'],
+  'narrative risk':               ['Narrative Risk', 'caution'],
+  'coordinated watch':            ['Coordinated Watch', 'caution'],
+  'omission cascade':             ['Omission Cascade', 'bear'],
+  'air pocket short':             ['Air Pocket Short', 'bear'],
+  'drift compression short':      ['Drift Compression Short', 'bear'],
+  'overvalued stable':            ['Overvalued Stable', 'caution'],
+  'unverified premium':           ['Unverified Premium', 'caution'],
+  'regime uncertainty':           ['Regime Uncertainty', 'neutral'],
+  'monitoring':                   ['Monitoring', 'neutral'],
+  'structurally supported':       ['Structurally Supported', 'bull'],
+  'accumulate':                   ['Accumulate', 'bull'],
+  'high conviction continuation': ['High Conviction Continuation', 'bull']
+};
+var VH_FAMILY_LABEL = { bull: 'Bullish', neutral: 'Neutral', caution: 'Caution', bear: 'Bearish' };
+
+function vhVerdictInfo(raw) {
+  var s = String(raw || '').toLowerCase().replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
+  var hit = VH_VERDICTS[s];
+  if (hit) return { label: hit[0], fam: hit[1] };
+  // Unseen variant: keep the scorer's own wording, infer the tone the same
+  // way narrativeEngine.normalizeVerdict() does.
+  var fam = 'neutral';
+  if (s.indexOf('trap') >= 0 && s.indexOf('near') >= 0) fam = 'caution';
+  else if (/trap|exhaust|omission|air pocket|drift/.test(s)) fam = 'bear';
+  else if (/coordinat|overvalued|unverified/.test(s)) fam = 'caution';
+  else if (s.indexOf('regime') >= 0) fam = 'neutral';
+  else if (/continuation|accumulate|support/.test(s)) fam = 'bull';
+  else if (s.indexOf('risk') >= 0) fam = 'caution';
+  return { label: String(raw).replace(/_+/g, ' ').trim(), fam: fam };
+}
+
+function vhFmtDate(iso) {
+  var d = String(iso || '').slice(0, 10);
+  return d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+}
+
+function vhFmtPrice(p) {
+  var n = Number(p);
+  if (p == null || !isFinite(n) || n <= 0) return '';
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function loadVerdictHistory() {
+  var section = document.getElementById('verdict-history-section');
+  if (!section || !TICKER) return;
+  var since = new Date();
+  since.setDate(since.getDate() - VH_LOOKBACK_DAYS);
+  var sinceIso = since.getFullYear() + '-' + String(since.getMonth() + 1).padStart(2, '0') + '-' + String(since.getDate()).padStart(2, '0');
+  var rows;
+  try {
+    rows = await sbFetch('narrative_scorecard', {
+      select: 'snapshot_date,verdict,scorecard_price,current_price',
+      ticker: 'eq.' + TICKER,
+      verdict: 'not.is.null',
+      snapshot_date: 'gte.' + sinceIso,
+      order: 'snapshot_date.desc,updated_at.desc',
+      limit: '40'
+    });
+  } catch (e) {
+    console.warn('[ticker] verdict history failed:', e);
+    // refreshAll() re-runs every 5 min + on tab focus: a transient timeout/5xx
+    // keeps whatever already rendered and only hides a never-rendered skeleton.
+    if (!section.querySelector('.vh-strip')) section.style.display = 'none';
+    return;
+  }
+  renderVerdictHistory(Array.isArray(rows) ? rows : []);
+}
+
+function renderVerdictHistory(rows) {
+  var section = document.getElementById('verdict-history-section');
+  var body = document.getElementById('verdict-history-body');
+  var sub = document.getElementById('verdict-history-sub');
+  if (!section || !body) return;
+
+  // One entry per session (newest first). The scorer writes one row per
+  // ticker per day, but dedupe defensively — first row per date wins, which
+  // the updated_at.desc tiebreak makes the freshest.
+  var seen = {};
+  var all = [];
+  rows.forEach(function (r) {
+    var d = String(r.snapshot_date || '').slice(0, 10);
+    if (!d || seen[d] || !String(r.verdict || '').trim()) return;
+    seen[d] = true;
+    var info = vhVerdictInfo(r.verdict);
+    var price = r.scorecard_price != null ? r.scorecard_price : r.current_price;
+    all.push({ date: d, label: info.label, fam: info.fam, price: price });
+  });
+  if (!all.length) { section.style.display = 'none'; return; }
+
+  var shown = all.slice(0, VH_SESSIONS).reverse(); // oldest -> newest
+  var n = shown.length;
+  if (sub) sub.textContent = n === 1 ? 'Latest session' : 'Last ' + n + ' sessions';
+
+  // Strip: one cell per session; a wider gap marks each verdict change.
+  var changes = 0;
+  var cells = shown.map(function (s, i) {
+    var chg = i > 0 && s.label !== shown[i - 1].label;
+    if (chg) changes++;
+    var cls = 'vh-cell vh-' + s.fam + (chg ? ' vh-chg' : '') + (i === n - 1 ? ' vh-now' : '');
+    var tip = vhFmtDate(s.date) + ' · ' + s.label + (vhFmtPrice(s.price) ? ' · ' + vhFmtPrice(s.price) : '');
+    return '<div class="' + cls + '" title="' + esc(tip) + '"></div>';
+  }).join('');
+
+  var datesHtml = '<div class="vh-strip-dates">'
+    + '<span>' + esc(vhFmtDate(shown[0].date)) + '</span>'
+    + (n > 1 ? '<span>' + esc(vhFmtDate(shown[n - 1].date)) + '</span>' : '')
+    + '</div>';
+
+  var famsPresent = {};
+  shown.forEach(function (s) { famsPresent[s.fam] = true; });
+  var legendHtml = '<div class="vh-legend">'
+    + ['bull', 'neutral', 'caution', 'bear'].filter(function (f) { return famsPresent[f]; }).map(function (f) {
+        return '<span class="vh-' + f + '"><span class="vh-dot"></span>' + VH_FAMILY_LABEL[f] + '</span>';
+      }).join('')
+    + '</div>';
+
+  // Runs of the same verdict, built oldest -> newest.
+  var runs = [];
+  shown.forEach(function (s) {
+    var last = runs[runs.length - 1];
+    if (last && last.label === s.label) { last.end = s.date; last.n++; }
+    else runs.push({ label: s.label, fam: s.fam, start: s.date, end: s.date, n: 1, price: s.price, open: false });
+  });
+  // The oldest run may have started before the window — walk back through the
+  // extra fetched rows so it reports its real start date + price at call.
+  var oldest = runs[0];
+  for (var k = n; k < all.length && all[k].label === oldest.label; k++) {
+    oldest.start = all[k].date; oldest.price = all[k].price; oldest.n++;
+  }
+  if (k === all.length && all.length > n) oldest.open = true; // unchanged across everything fetched
+
+  var runsHtml = runs.slice().reverse().map(function (r, i) {
+    var isNow = i === 0;
+    var span = r.start === r.end ? vhFmtDate(r.start) : vhFmtDate(r.start) + ' – ' + vhFmtDate(r.end);
+    var meta = !r.open
+      ? span + ' · ' + r.n + (r.n === 1 ? ' session' : ' sessions')
+      : isNow
+        ? 'Since at least ' + vhFmtDate(r.start) + ' · ' + r.n + '+ sessions'
+        : vhFmtDate(r.start) + ' or earlier – ' + vhFmtDate(r.end) + ' · ' + r.n + '+ sessions';
+    var priceStr = vhFmtPrice(r.price);
+    return '<div class="vh-run">'
+      +   '<div class="vh-run-left">'
+      +     '<div class="vh-run-name vh-' + r.fam + '"><span class="vh-dot"></span><span>' + esc(r.label)
+      +       (isNow ? '<span class="vh-run-now">Current</span>' : '')
+      +     '</span></div>'
+      +     '<div class="vh-run-meta">' + esc(meta) + '</div>'
+      +   '</div>'
+      +   (priceStr
+            ? '<div class="vh-run-right"><div class="vh-run-price">' + esc(priceStr) + '</div>'
+              + '<div class="vh-run-price-lbl">' + (r.open ? 'price on ' + esc(vhFmtDate(r.start)) : 'price at call') + '</div></div>'
+            : '')
+      + '</div>';
+  }).join('');
+
+  var cur = runs[runs.length - 1];
+  var note;
+  if (n === 1) {
+    note = 'Only one scored session so far — <strong>' + esc(cur.label) + '</strong>.';
+  } else if (changes === 0) {
+    note = '<strong>' + esc(cur.label) + '</strong> on every one of the last ' + n + ' sessions — no verdict changes'
+      + (cur.n > n ? ' (unchanged since ' + (cur.open ? 'at least ' : '') + esc(vhFmtDate(cur.start)) + ')' : '') + '.';
+  } else {
+    note = 'Now <strong>' + esc(cur.label) + '</strong> since ' + esc(vhFmtDate(cur.start)) + '. '
+      + '<strong>' + changes + '</strong> verdict ' + (changes === 1 ? 'change' : 'changes') + ' across the last ' + n + ' sessions.';
+    var firstFam = shown[0].fam, lastFam = shown[n - 1].fam;
+    if (firstFam !== lastFam) {
+      note += ' Tone moved from ' + VH_FAMILY_LABEL[firstFam].toLowerCase() + ' to ' + VH_FAMILY_LABEL[lastFam].toLowerCase() + '.';
+    }
+  }
+
+  body.innerHTML = '<div class="vh-wrap">'
+    + '<div class="vh-strip">' + cells + '</div>'
+    + datesHtml
+    + legendHtml
+    + '<div class="vh-note">' + note + '</div>'
+    + '<div class="vh-runs">' + runsHtml + '</div>'
+    + '</div>';
+  section.style.display = ''; // recover if an earlier refresh hid it
+}
+
 // ── Render: Sidebar panels ───────────────────────────────────────────────────
 function renderSidebar(p, h) {
   if (!p) return;
@@ -13217,7 +13535,8 @@ async function refreshAll() {
     loadEarnings(),
     loadScholarlyReferences(heroData),
     loadClaimTrap(),
-    loadPremiseVerdicts()
+    loadPremiseVerdicts(),
+    loadVerdictHistory()
   ]);
 }
 
