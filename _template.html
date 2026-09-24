@@ -877,6 +877,20 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
 .tls-more:hover{color:var(--mp-text-primary);border-color:var(--mp-border-hover);}
 .tls-empty{font-size:13px;color:var(--mp-text-muted);padding:26px;border:1px dashed var(--mp-border);border-radius:12px;text-align:center;line-height:1.5;}
 .tls-note{font-size:11px;color:var(--mp-text-muted);margin-top:12px;line-height:1.5;}
+/* Day Trade: names added after the 9:30 ET open — collapsed, muted, never scored */
+.tls-late{margin-top:4px;border:1px dashed var(--mp-border);border-radius:12px;padding:0 14px;}
+.tls-late>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:12px 0;font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--mp-text-tertiary);}
+.tls-late>summary::-webkit-details-marker{display:none;}
+.tls-late>summary::before{content:'\25B8';font-size:11px;transition:transform .2s;}
+.tls-late[open]>summary::before{transform:rotate(90deg);}
+.tls-late>summary .n{opacity:.6;font-size:11px;}
+.tls-late-note{font-size:13px;color:var(--mp-text-muted);line-height:1.5;margin:0 0 10px;}
+.tls-late-rows{display:flex;flex-direction:column;gap:10px;padding-bottom:14px;}
+.tls-row.late{opacity:.55;}
+.tls-row.late:hover{opacity:.85;}
+.tls-mixed{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#FFB800;border:1px solid rgba(255,184,0,0.3);background:rgba(255,184,0,0.08);border-radius:6px;padding:2px 8px;}
+.tls-head-meta.wrap{white-space:normal;text-align:right;}
+.tls-meta-seg{white-space:nowrap;}
 /* ── Teaser blur for free / non-paying users. Paying subscribers, beta users and the
    admin email all pass BILLING.hasAccess() and NEVER see this (see mpRecomputeTeaser,
    fail-open). Cosmetic layer only — real protection is server-side withholding. ── */
@@ -9402,10 +9416,177 @@ var TLS_ROWS=[],TLS_FILTER='top',TLS_CAP=8;
 // subscription has positively resolved as "no access". Paying subscribers, beta users
 // and the admin email all pass BILLING.hasAccess() → never locked. See mpRecomputeTeaser().
 var MP_TEASER_LOCKED=false, MP_SUB_RESOLVED=false, _MP_TEASER_APPLIED=null;
+// ── Day Trade: freeze at the open + one direction per row ────────────────────
+// New rule effective 2026-09-25 — compare Day Trade outcomes before/after that
+// date. Two problems it fixes, both checked against live data 2026-09-24:
+//  1. The backend re-ranks the Day Trade list during the session, so names
+//     appeared after the open that nobody could have traded at the open (they
+//     were 45% of the tab's loss 09-21..23). daily_play_slate_snapshots records
+//     when each name was first seen; names first seen at/after 09:30 ET move to
+//     a collapsed "Added after the open (not scored)" sub-list with no ✓/✗.
+//  2. The view can label a row LONG while its own forecast is negative (ACM
+//     09-24: LONG, forecast_5d −6.32). The paper book (tracked_daily_plays)
+//     trades the sign of forecast_5d, so rows are resolved ONCE in
+//     loadTradeLanes into row._dir and every direction cue renders from it.
+// DAY_DIR_RULE:
+//   'forecast' (default, matches the book) — sign of forecast_5d_return_pct,
+//              else sign of forecast_1d_return_pct, else trade_direction.
+//              Pre-open rows prefer the snapshot's forecast_5d (frozen at first
+//              sight = the D−1 forecast the book trades), and then take their
+//              chip magnitude from that same frozen snapshot forecast.
+//   'flag'     — keep the view's trade_direction, badge conflicting rows
+//              "Mixed signal" and keep them out of Top picks.
+//   'view'     — pre-2026-09-25 rendering (pill from trade_direction, arrow
+//              from expected_direction). The pre-open split still applies.
+var DAY_DIR_RULE='forecast';
+var TLS_DT_LATE=[],TLS_LATE_OPEN=false;
+// 09:30 America/New_York on dateStr (YYYY-MM-DD) as UTC epoch ms — 13:30 UTC in
+// EDT, 14:30 UTC in EST. The ET offset is read at 12:00 UTC that day, which is
+// after the 2am DST switch on both changeover Sundays.
+function dtOpenCutoffUTC(dateStr){
+  var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr||''));
+  if(!m)return null;
+  var y=+m[1],mo=+m[2]-1,d=+m[3];
+  var noon=Date.UTC(y,mo,d,12,0);
+  var etHour=null;
+  try{
+    new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date(noon))
+      .forEach(function(p){if(p.type==='hour')etHour=+p.value;});
+  }catch(_){}
+  var off=(etHour!=null&&!isNaN(etHour))?12-etHour:4;
+  return Date.UTC(y,mo,d,9+off,30);
+}
+// PostgREST timestamptz → epoch ms. Hand-parsed because Safari's Date.parse
+// rejects the space separator / 6-digit fractions Postgres can emit.
+function dtParseTs(s){
+  var m=/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?\s*(Z|[+-]\d{2}(?::?\d{2})?)?$/i.exec(String(s||'').trim());
+  if(!m)return NaN;
+  var ms=Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0),m[7]?Math.round(Number('0.'+m[7])*1000):0);
+  var tz=m[8];
+  if(tz&&tz.toUpperCase()!=='Z'){
+    var sg=tz[0]==='-'?-1:1,hh=+tz.slice(1,3),mm=+(tz.replace(':','').slice(3,5)||0);
+    ms-=sg*(hh*60+mm)*60000;
+  }
+  return ms;
+}
+// Split the Day Trade rows into pre-open / late. Fails open (every row
+// pre-open) when there are no snapshot rows (fetch failed or empty) or the
+// open hasn't happened yet. After the open a row is pre-open only if its
+// ticker was first seen before the cutoff; no snapshot row at all = late (the
+// snapshot job captures every 15 min, so a pre-open name always has one).
+function classifyPreOpen(rows,snaps,nowUTC){
+  rows=rows||[];
+  var out={pre:[],late:[],snapBy:{},cutoff:null,applied:false};
+  (snaps||[]).forEach(function(s){if(s&&s.ticker)out.snapBy[s.ticker]=s;});
+  var laneDate=rows.length?(rows[0]._snapshotDate||rows[0].snapshot_date):null;
+  out.cutoff=laneDate?dtOpenCutoffUTC(laneDate):null;
+  if(!snaps||!snaps.length||out.cutoff==null||!(nowUTC>=out.cutoff)){out.pre=rows.slice();return out;}
+  out.applied=true;
+  rows.forEach(function(r){
+    var s=out.snapBy[r.ticker];
+    if(!s){out.late.push(r);return;}
+    var t=dtParseTs(s.first_seen_at);
+    // A snapshot row with an unreadable timestamp fails open for that row.
+    if(!isNaN(t)&&t>=out.cutoff)out.late.push(r);else out.pre.push(r);
+  });
+  return out;
+}
+function dtSign(v){
+  if(v==null||v==='')return 0;
+  var n=Number(v);
+  return (isNaN(n)||n===0)?0:(n>0?1:-1);
+}
+function dtViewDir(r){
+  var td=String(r&&r.trade_direction||'').toUpperCase();
+  return (td==='LONG'||td==='SHORT')?td:null;
+}
+// 'forecast' direction for one Day Trade row. Pass snap only for pre-open rows.
+function resolveDayDir(row,snap){
+  var s=snap?dtSign(snap.forecast_5d_return_pct):0;
+  if(!s)s=dtSign(row.forecast_5d_return_pct);
+  if(!s)s=dtSign(row.forecast_1d_return_pct);
+  if(s)return s>0?'LONG':'SHORT';
+  return dtViewDir(row);
+}
+function dtFlipTitle(viewDir,dir){
+  return 'Trade idea said '+viewDir+'; forecast says '+dir+'. Shown in the forecast direction (matches the paper book)';
+}
+// Single-session expected move for a Day Trade row (view row or snapshot row):
+// the 1d forecast, else the 5d scaled down by sqrt(5), else the capped target,
+// so chips never present long-horizon expectations as a one-day return.
+function dtDayPred(src){
+  var ret1=src.forecast_1d_return_pct!=null?Number(src.forecast_1d_return_pct):null;
+  var ret5=src.forecast_5d_return_pct!=null?Number(src.forecast_5d_return_pct):null;
+  var tgt=src.target_pct!=null?Number(src.target_pct):null;
+  if(ret1!=null)return ret1;
+  if(ret5!=null){var s5=ret5<0?-1:1;return s5*Math.min(Math.abs(ret5)/Math.sqrt(5),2.5);}
+  if(tgt!=null){var st=tgt<0?-1:1;return st*Math.min(Math.abs(tgt),2.5);}
+  return null;
+}
+// Resolve row._dir (+ chip / pred signed by it) under DAY_DIR_RULE.
+function dtApplyDir(r,snap){
+  var viewDir=dtViewDir(r);
+  var fcDir=resolveDayDir(r,snap);
+  var v=r._predPct;
+  if(DAY_DIR_RULE==='flag'){
+    r._dir=viewDir||fcDir;
+    r._mixed=!!(viewDir&&fcDir&&viewDir!==fcDir);
+    if(r._mixed)r._dirTitle='Trade idea says '+viewDir+'; forecast says '+fcDir+'. Kept out of Top picks.';
+  }else{
+    r._dir=fcDir;
+    if(viewDir&&fcDir&&viewDir!==fcDir)r._dirTitle=dtFlipTitle(viewDir,fcDir);
+    // Direction came from the frozen snapshot → so does the magnitude, so the
+    // chip is a number the model actually produced at first sight.
+    if(snap&&dtSign(snap.forecast_5d_return_pct)&&(snap.forecast_1d_return_pct!=null||snap.forecast_5d_return_pct!=null))v=dtDayPred(snap);
+  }
+  r._dirResolved=true;
+  if(v!=null&&!isNaN(Number(v))){
+    var mag=Math.abs(Number(v));
+    v=r._dir==='SHORT'?-mag:r._dir==='LONG'?mag:Number(v);
+  }
+  r._predPct=v;
+  r._chip=v!=null?tlFmtReturnPct(v)+' today':'today';
+  return r;
+}
+// Full Day Trade pass: pre-open split, direction, then the |pred|<0.05 noise
+// drop (deferred from the bucket loop so it sees the final pred).
+function dtPrepareDayTrade(rows,snaps,nowUTC){
+  var cls=classifyPreOpen(rows,snaps,nowUTC);
+  function finish(list,isLate){
+    var out=[];
+    list.forEach(function(r){
+      if(DAY_DIR_RULE!=='view')dtApplyDir(r,isLate?null:(cls.snapBy[r.ticker]||null));
+      if(isLate)r._late=true;
+      if(r._predPct!=null&&Math.abs(Number(r._predPct))<0.05)return;
+      out.push(r);
+    });
+    return out;
+  }
+  return {pre:finish(cls.pre,false),late:finish(cls.late,true),applied:cls.applied,cutoff:cls.cutoff};
+}
+// Long/short mix + direction-signed average day move of the pre-open Day Trade
+// rows vs SPY. Display only.
+function dtExposure(rows,quotes){
+  var out={long:0,short:0,avg:null,n:0,spy:null},sum=0;
+  (rows||[]).forEach(function(r){
+    var d=tlsRowDir(r);
+    if(d==='LONG')out.long++;else if(d==='SHORT')out.short++;else return;
+    var q=quotes&&quotes[r.ticker];
+    var c=q&&q.changePct!=null?Number(q.changePct):NaN;
+    if(!isNaN(c)){sum+=(d==='SHORT'?-c:c);out.n++;}
+  });
+  if(out.n)out.avg=sum/out.n;
+  var sq=quotes&&quotes.SPY;
+  if(sq&&sq.changePct!=null&&!isNaN(Number(sq.changePct)))out.spy=Number(sq.changePct);
+  return out;
+}
+function tlsRowDir(r){
+  return r._dirResolved?(r._dir||''):String(r.trade_direction||'').toUpperCase();
+}
 // Conviction: direction-aligned model probability for the lane's horizon.
 // Used for RANKING only — deliberately not displayed (a ~55 probability
 // reads as a weak score and confused users).
-function tlsConv(r){
+function tlsConvProb(r){
   var p=null,l=r.lane;
   if(l==='DAY_TRADE')p=r.forecast_1d_prob_up!=null?r.forecast_1d_prob_up:r.forecast_5d_prob_up;
   else if(l==='MOMENTUM')p=r.forecast_10d_prob_up!=null?r.forecast_10d_prob_up:r.forecast_5d_prob_up;
@@ -9414,32 +9595,70 @@ function tlsConv(r){
   if(p==null)return null;
   p=Number(p);if(isNaN(p))return null;
   if(p<=1)p=p*100;
-  var c=(String(r.trade_direction||'').toUpperCase()==='SHORT')?100-p:p;
+  return p;
+}
+function tlsConv(r){
+  var p=tlsConvProb(r);
+  if(p==null)return null;
+  var c=(tlsRowDir(r)==='SHORT')?100-p:p;
   return Math.max(1,Math.min(99,Math.round(c)));
 }
+// Ranking guard: prob_up has been ONE value for every ticker each day (0.485–
+// 0.496 since 2026-09-01), which collapsed "conviction" into shorts-above-longs.
+// A lane whose ranking input is one shared value across ≥2 rows is ranked by
+// lane_rank. (Checked on the raw probability, not _conv — the direction flip
+// gives a constant-prob lane two _conv values.) A lane with 0–1 usable values
+// isn't evidence of a constant, so it keeps the conviction order it had.
+// AI picks rank on Claude's conviction.
+function tlsConvBasis(r){return r.lane==='AI_PICK'?r._conv:tlsConvProb(r);}
+function tlsLaneFlat(rows){
+  var seen={},n=0,cnt=0;
+  rows.forEach(function(r){
+    var b=tlsConvBasis(r);
+    if(b==null||isNaN(Number(b)))return;
+    cnt++;
+    var k=String(Number(b));
+    if(!seen[k]){seen[k]=1;n++;}
+  });
+  return cnt>=2&&n<=1;
+}
+function tlsByConv(a,b){return (b._conv||0)-(a._conv||0);}
+function tlsByRank(a,b){return (Number(a.lane_rank)||99)-(Number(b.lane_rank)||99);}
+function tlsSortLane(rows){return rows.slice().sort(tlsLaneFlat(rows)?tlsByRank:tlsByConv);}
 function tlsVisibleRows(){
   if(TLS_FILTER==='top'){
     // Top picks = tracked trade lanes only — Value Picks are FYI and the
     // AI picks live under their own tab at the end. Max 2 per lane.
-    var perLane={},out=[];
-    TLS_ROWS.filter(function(r){return r.lane!=='VALUE_PICK'&&r.lane!=='AI_PICK';})
-      .slice().sort(function(a,b){return (b._conv||0)-(a._conv||0);})
-      .forEach(function(r){
-        perLane[r.lane]=perLane[r.lane]||0;
-        if(perLane[r.lane]>=2)return;
-        perLane[r.lane]++;out.push(r);
-      });
-    return out;
+    var byLane={},lanes=[],anyFlat=false,out=[];
+    TLS_ROWS.forEach(function(r){
+      if(r.lane==='VALUE_PICK'||r.lane==='AI_PICK'||r._mixed)return;
+      if(!byLane[r.lane]){byLane[r.lane]=[];lanes.push(r.lane);}
+      byLane[r.lane].push(r);
+    });
+    lanes.sort(function(a,b){
+      var ia=TLS_ORDER.indexOf(a),ib=TLS_ORDER.indexOf(b);
+      return (ia<0?99:ia)-(ib<0?99:ib);
+    });
+    lanes.forEach(function(l){
+      if(tlsLaneFlat(byLane[l]))anyFlat=true;
+      tlsSortLane(byLane[l]).slice(0,2).forEach(function(r,i){out.push({r:r,pos:i});});
+    });
+    // Cross-lane order: by conviction only when every lane's conviction is
+    // real; otherwise round-robin (each lane's #1, then each lane's #2).
+    out.sort(anyFlat?function(a,b){return a.pos-b.pos;}:function(a,b){return tlsByConv(a.r,b.r);});
+    return out.map(function(x){return x.r;});
   }
-  return TLS_ROWS.filter(function(r){return r.lane===TLS_FILTER;}).slice().sort(function(a,b){return (b._conv||0)-(a._conv||0);});
+  return tlsSortLane(TLS_ROWS.filter(function(r){return r.lane===TLS_FILTER;}));
 }
 function tlsRenderFilters(){
   var el=document.getElementById('tls-filters');if(!el)return;
   var counts={};TLS_ROWS.forEach(function(r){counts[r.lane]=(counts[r.lane]||0)+1;});
   var h='<button class="tls-chipbtn'+(TLS_FILTER==='top'?' active':'')+'" data-tls-f="top">Top picks</button>';
   TLS_ORDER.forEach(function(l){
-    if(!counts[l])return;
-    h+='<button class="tls-chipbtn'+(TLS_FILTER===l?' active':'')+'" data-tls-f="'+l+'">'+TLS_LANES[l].label+'<span class="n">'+counts[l]+'</span></button>';
+    // Day Trade stays reachable when every name was added after the open, so
+    // its "Added after the open" sub-list can still be opened.
+    if(!counts[l]&&!(l==='DAY_TRADE'&&TLS_DT_LATE.length))return;
+    h+='<button class="tls-chipbtn'+(TLS_FILTER===l?' active':'')+'" data-tls-f="'+l+'">'+TLS_LANES[l].label+'<span class="n">'+(counts[l]||0)+'</span></button>';
   });
   el.innerHTML=h;
   if(!el._tlsHooked){
@@ -9454,9 +9673,13 @@ function tlsRenderFilters(){
 function tlsBuildRow(r){
   var lane=TLS_LANES[r.lane]||{label:r.lane,cls:'day'};
   var isFyi=r.lane==='VALUE_PICK';
-  var short=String(r.trade_direction||'').toUpperCase()==='SHORT';
+  // Day Trade rows carry one resolved direction (row._dir, see DAY_DIR_RULE);
+  // pill, bull/bear class, arrow, chip and data-prism-dir all render from it.
+  var dirSet=r._dirResolved===true;
+  var short=dirSet?r._dir==='SHORT':String(r.trade_direction||'').toUpperCase()==='SHORT';
   var rowCls=isFyi?'fyi':(short?'bear':'bull');
-  var d=tlDir(r);
+  if(r._late)rowCls+=' late';
+  var d=dirSet?{up:r._dir==='LONG',down:r._dir==='SHORT',color:r._dir==='LONG'?'#00DE94':r._dir==='SHORT'?'#FF4D4D':'#A0A8B8',arrow:r._dir==='LONG'?'▲':r._dir==='SHORT'?'▼':''}:tlDir(r);
   var sub=(typeof SECTOR_MAP!=='undefined'&&SECTOR_MAP[r.ticker]&&SECTOR_MAP[r.ticker][0])||'';
   var entry=r.ideal_entry_price!=null?Number(r.ideal_entry_price):null;
   var target=r.ideal_exit_price!=null?Number(r.ideal_exit_price):null;
@@ -9465,11 +9688,16 @@ function tlsBuildRow(r){
   // inconsistency (a long's target must be above its entry). Don't render a self-contradicting
   // band — fall back to the live price. Shorts are correct as-is (entry above target).
   if(!short && entry!=null && target!=null && target<=entry){ entry=null; target=null; }
+  // A resolved Day Trade SHORT can still carry the view's LONG band (target above
+  // entry) when the forecast flipped it — same fallback, mirrored.
+  if(dirSet && short && entry!=null && target!=null && target>=entry){ entry=null; target=null; }
   var priceLbl=(entry!=null&&target!=null)?'Entry / Target':'Price';
   var priceTxt=(entry!=null&&target!=null)?('$'+fmtPrice(entry)+' → $'+fmtPrice(target)):(r.price!=null?'$'+fmtPrice(Number(r.price)):'');
   var chip=r._chip||'';
   var dirAttr=d.up?'up':d.down?'down':'';
-  var titleAttr=r._thesis?' title="'+esc(r._thesis)+'"':(stop!=null?' title="Stop: $'+fmtPrice(stop)+'"':'');
+  // A flipped row's stop was set for the view's direction, so it is replaced by
+  // the flip explanation rather than shown on the wrong side of the price.
+  var titleAttr=r._thesis?' title="'+esc(r._thesis)+'"':r._dirTitle?' title="'+esc(r._dirTitle)+'"':(stop!=null?' title="Stop: $'+fmtPrice(stop)+'"':'');
   var laneQS=r.lane&&r.lane!=='AI_PICK'?'?lane='+encodeURIComponent(r.lane):'';
   return '<a class="tls-row '+rowCls+'" href="/ticker/'+encodeURIComponent(r.ticker)+laneQS+'"'+titleAttr+'>'
     +'<span class="tls-lane '+lane.cls+'">'+esc(lane.label)+'</span>'
@@ -9477,28 +9705,67 @@ function tlsBuildRow(r){
       +'<span class="tls-tk-row"><span class="tls-tk">'+esc(r.ticker)+'</span>'
       +'<span class="tls-tk-px" data-live-price="'+esc(r.ticker)+'">'+(r.price!=null?'$'+fmtPrice(Number(r.price)):'')+'</span>'
       +'<span class="tls-tk-chg" data-live-change="'+esc(r.ticker)+'"></span></span>'
-      +(sub?'<span class="tls-name">'+esc(sub)+'</span>':'')+'</span></span>'
+      +(sub?'<span class="tls-name">'+esc(sub)+'</span>':'')
+      +(r._mixed?'<span class="tls-mixed">Mixed signal</span>':'')+'</span></span>'
     +'<span class="tls-est">'+(chip?'<span class="tls-est-l">Prism Est.</span><span class="tls-est-v"><span style="color:'+d.color+';">'+d.arrow+'</span> '+esc(chip)+'</span>':'')+'</span>'
     +'<span class="tls-prices">'+(priceTxt?'<span class="tls-price-l">'+priceLbl+'</span><span class="tls-price-v">'+esc(priceTxt)+'</span>':'')+'</span>'
     +'<span class="tls-bias '+(isFyi?'fyi':short?'short':'long')+'">'+(isFyi?'FYI':short?'Short':'Long')+'</span>'
-    +(dirAttr&&r.lane!=='AI_PICK'?'<span class="tl-row-hit" data-prism-hit="'+esc(r.ticker)+'" data-prism-dir="'+dirAttr+'"'+(r._predPct!=null?' data-prism-pct="'+Number(r._predPct)+'"':'')+(r.price?' data-prism-entry="'+Number(r.price)+'"':'')+'></span>':'<span></span>')
+    // Late Day Trade rows (added after the open) are never scored: an inert,
+    // invisible .tl-row-hit placeholder (no data-prism-hit) keeps the mobile order.
+    +(dirAttr&&r.lane!=='AI_PICK'&&!r._late?'<span class="tl-row-hit" data-prism-hit="'+esc(r.ticker)+'" data-prism-dir="'+dirAttr+'"'+(r._predPct!=null?' data-prism-pct="'+Number(r._predPct)+'"':'')+(r.price?' data-prism-entry="'+Number(r.price)+'"':'')+'></span>':r._late?'<span class="tl-row-hit"></span>':'<span></span>')
   +'</a>';
+}
+function tlsLateListHTML(){
+  if(TLS_FILTER!=='DAY_TRADE'||!TLS_DT_LATE.length)return'';
+  return '<details class="tls-late"'+(TLS_LATE_OPEN?' open':'')+' ontoggle="TLS_LATE_OPEN=this.open">'
+    +'<summary>Added after the open (not scored)<span class="n">'+TLS_DT_LATE.length+'</span></summary>'
+    +'<div class="tls-late-note">These names joined the Day Trade list after the 9:30 ET open, so they could not have been traded at the open. Shown for reference only: no ✓/✗, and not in Top picks.</div>'
+    +'<div class="tls-late-rows">'+TLS_DT_LATE.map(tlsBuildRow).join('')+'</div>'
+  +'</details>';
+}
+// Day Trade meta: "N long · M short", plus the direction-signed average day move
+// of the pre-open rows vs SPY once live quotes are in. Display only.
+function tlsDtExpoHTML(quotes){
+  var e=dtExposure(TLS_ROWS.filter(function(r){return r.lane==='DAY_TRADE';}),quotes);
+  if(e.avg==null)return'';
+  // Round first so a −0.04 move reads "0.0%", not "−0.0%".
+  var f=function(v){return tlFmtReturnPct(Math.round(v*10)/10);};
+  var tot=e.long+e.short;
+  return ' <span class="tls-meta-seg" title="Equal-weight average of today’s move across the '+e.n+' Day Trade names listed before the open that have a live quote, each signed by its direction (a short gains when the stock falls). Display only.">· avg today '+f(e.avg)+(e.n<tot?' ('+e.n+' of '+tot+' priced)':'')+(e.spy!=null?' vs SPY '+f(e.spy):'')+'</span>';
+}
+function tlsUpdateExposure(quotes){
+  if(TLS_FILTER!=='DAY_TRADE')return;
+  var el=document.getElementById('tls-dt-expo');
+  if(el)el.innerHTML=tlsDtExpoHTML(quotes);
 }
 function tlsRenderSlate(){
   var list=document.getElementById('tls-list');if(!list)return;
   var rows=tlsVisibleRows();
-  var shown=rows.slice(0,TLS_CAP);
-  list.innerHTML=shown.length?shown.map(tlsBuildRow).join(''):'<div class="tls-empty">No plays in this lane today.</div>';
+  // With a late sub-list under it, the Day Trade list (≤10 rows) is shown whole
+  // so "Show more" never sits below the late block or inserts rows above it.
+  var dtLateShown=TLS_FILTER==='DAY_TRADE'&&TLS_DT_LATE.length>0;
+  var cap=dtLateShown?rows.length:TLS_CAP;
+  var shown=rows.slice(0,cap);
+  var empty=dtLateShown?'No Day Trade plays were listed before the open today.':'No plays in this lane today.';
+  list.innerHTML=(shown.length?shown.map(tlsBuildRow).join(''):'<div class="tls-empty">'+empty+'</div>')+tlsLateListHTML();
   var foot=document.getElementById('tls-foot');
   var more=document.getElementById('tls-more');
   if(foot&&more){
-    if(rows.length>TLS_CAP){foot.style.display='flex';more.textContent='Show '+(rows.length-TLS_CAP)+' more';}
+    if(rows.length>cap){foot.style.display='flex';more.textContent='Show '+(rows.length-cap)+' more';}
     else foot.style.display='none';
   }
   var meta=document.getElementById('tls-meta');
   if(meta){
     var total=TLS_ROWS.filter(function(r){return r.lane!=='VALUE_PICK'&&r.lane!=='AI_PICK';}).length;
-    meta.textContent=shown.length+' of '+total+' picks shown'+(window._TLS_DATE?' · '+window._TLS_DATE:'');
+    var base=shown.length+' of '+total+' picks shown'+(window._TLS_DATE?' · '+window._TLS_DATE:'');
+    if(TLS_FILTER==='DAY_TRADE'){
+      var mix=dtExposure(rows,null);
+      meta.classList.add('wrap');
+      meta.innerHTML='<span class="tls-meta-seg">'+esc(base)+'</span> <span class="tls-meta-seg">· '+mix.long+' long · '+mix.short+' short</span><span id="tls-dt-expo">'+tlsDtExpoHTML(window.__LIVE_QUOTES_CACHE)+'</span>';
+    }else{
+      meta.classList.remove('wrap');
+      meta.textContent=base;
+    }
   }
   tlsApplyTeaser();
 }
@@ -9566,7 +9833,8 @@ function mpRecomputeTeaser(subscription){
   if(typeof tlsRenderSlate==='function') tlsRenderSlate();
 }
 window.tlsShowMore=function(){TLS_CAP+=8;tlsRenderSlate();};
-function tlsSetRows(buckets){
+function tlsSetRows(buckets,dtLate){
+  TLS_DT_LATE=(dtLate||[]).map(function(r){var row=Object.assign({},r);row.lane='DAY_TRADE';return row;});
   var rows=[];
   Object.keys(buckets).forEach(function(lane){
     buckets[lane].forEach(function(r){
@@ -9646,6 +9914,16 @@ async function loadTradeLanes(){
       ticker:MP_EXCLUDED_TICKERS,
       order:'snapshot_date.desc,lane_rank.asc'
     });
+    // Day Trade first-sight snapshot (anon-readable), fetched alongside the
+    // plays. null on any failure → fail open (nothing marked late).
+    function dtFetchSnapshots(d){
+      return restFetch('daily_play_slate_snapshots',{
+        select:'ticker,first_seen_at,trade_direction,forecast_1d_return_pct,forecast_5d_return_pct',
+        lane:'eq.DAY_TRADE',
+        snapshot_date:'eq.'+d
+      },8000).catch(function(e){console.warn('[TL] Day Trade snapshot fetch failed; list not frozen at the open:',e);return null;});
+    }
+    var dtSnapP=dtFetchSnapshots(scDate);
 
     // Scorecard + earnings — still fed to AI picks and signal summary boxes
     var scP=restFetch('narrative_scorecard',{
@@ -9722,14 +10000,9 @@ async function loadTradeLanes(){
       var tgt=row.target_pct!=null?Number(row.target_pct):null;
       var dte=liveDTE(row);
       if(p.lane==='DAY_TRADE'){
-        // Use the 1d forecast for single-session moves. Fall back to 5d
-        // scaled down by sqrt(5), then capped target_pct, so chips never
-        // present long-horizon expectations as a one-day return.
-        var v;
-        if(ret1!=null){ v=ret1; }
-        else if(ret5!=null){ var _s5=ret5<0?-1:1; v=_s5*Math.min(Math.abs(ret5)/Math.sqrt(5),2.5); }
-        else if(tgt!=null){ var _st=tgt<0?-1:1; v=_st*Math.min(Math.abs(tgt),2.5); }
-        else { v=null; }
+        // Use the 1d forecast for single-session moves (see dtDayPred).
+        // Direction and the noise drop are resolved after the pre-open split.
+        var v=dtDayPred(row);
         row._chip=v!=null?tlFmtReturnPct(v)+' today':'today';
         row._predPct=v;
       } else if(p.lane==='SWING_TRADE'){
@@ -9756,11 +10029,22 @@ async function loadTradeLanes(){
       }
       // Drop trades whose expected return rounds to 0.0% (noise signal, not a real edge).
       // Earnings lane has no predicted return — its chip is the countdown — so exempt it.
-      if(p.lane!=='EARNINGS_PLAY'&&row._predPct!=null&&Math.abs(Number(row._predPct))<0.05)return;
+      // Day Trade applies the same rule in dtPrepareDayTrade, on its final pred.
+      if(p.lane!=='EARNINGS_PLAY'&&p.lane!=='DAY_TRADE'&&row._predPct!=null&&Math.abs(Number(row._predPct))<0.05)return;
       // Frontend block: hide RBLX from Day Trade lane.
       if(p.lane==='DAY_TRADE'&&p.ticker==='RBLX')return;
       buckets[p.lane].push(row);
     });
+    // ── Day Trade: freeze at the open + one direction per row (rule effective
+    // 2026-09-25, see DAY_DIR_RULE). Carryover lanes use their own date's
+    // snapshot and open. Pre-open names that later fell out of the view's
+    // top 10 are not reconstructed.
+    var dtDate=laneNewestDate.DAY_TRADE||null;
+    var dtSnaps=null;
+    if(dtDate&&buckets.DAY_TRADE.length)dtSnaps=await(dtDate===scDate?dtSnapP:dtFetchSnapshots(dtDate));
+    var dtSplit=dtPrepareDayTrade(buckets.DAY_TRADE,dtSnaps,Date.now());
+    buckets.DAY_TRADE=dtSplit.pre;
+    var dtLate=dtSplit.late;
     // ── Supplement Earnings Play lane with earnings_context tickers not already present ──
     var earnTickers={};
     buckets.EARNINGS_PLAY.forEach(function(r){earnTickers[r.ticker]=true;});
@@ -9794,8 +10078,8 @@ async function loadTradeLanes(){
       var tlsDt=new Date(tlsNewest+'T00:00:00');
       window._TLS_DATE=tlsDt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
     }
-    tlsSetRows(buckets);
-    var anyLane=(buckets.DAY_TRADE.length||buckets.SWING_TRADE.length||buckets.MOMENTUM.length||buckets.EARNINGS_PLAY.length||buckets.VALUE_PICK.length||buckets.NARRATIVE_TRAP.length);
+    tlsSetRows(buckets,dtLate);
+    var anyLane=(buckets.DAY_TRADE.length||dtLate.length||buckets.SWING_TRADE.length||buckets.MOMENTUM.length||buckets.EARNINGS_PLAY.length||buckets.VALUE_PICK.length||buckets.NARRATIVE_TRAP.length);
     container.style.display=anyLane?'block':'none';
 
     // Earnings On Deck rail (the old right-rail Upcoming Earnings, full-width)
@@ -10416,7 +10700,10 @@ async function mpDownloadDailyPage(triggerEl){
     +'#tab-daily .sector-card,#tab-daily .lb-card{background:#0C1018 !important;border:1px solid rgba(255,255,255,0.09) !important;}'
     +'#tab-daily .ph-italic,#tab-daily .daily-title-italic,#tab-daily .dhb-h em,#tab-daily .disc-hero-h em{'
     +'background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;'
-    +'-webkit-text-fill-color:#4DC8F0 !important;color:#4DC8F0 !important;}';
+    +'-webkit-text-fill-color:#4DC8F0 !important;color:#4DC8F0 !important;}'
+    // html2canvas paints a closed <details>' body (the Day Trade "Added after
+    // the open" list) — keep collapsed content collapsed in the image.
+    +'#tab-daily details:not([open])>:not(summary){display:none !important;}';
   try{
     // 2× for crispness, backing off on very tall pages so canvas height stays
     // under the ~32,767px browser cap (a blank/failed PNG otherwise).
@@ -17547,6 +17834,9 @@ async function liveQuotesRefreshDaily(){
   });
   var list=Object.keys(tickers);
   if(!list.length)return;
+  // SPY is the benchmark for the Day Trade exposure line (tlsUpdateExposure);
+  // it is only read from the quote cache, never rendered as a row.
+  if(!tickers.SPY)list.push('SPY');
   _liveQuotesInFlight=true;
   var ok=false;
   try{
@@ -17649,6 +17939,8 @@ async function liveQuotesRefreshDaily(){
       // Lock hits permanently so they don't un-check on price pullback
       if(isHit)el.setAttribute('data-prism-locked','1');
     });
+    // Day Trade meta line: direction-signed average day move vs SPY.
+    if(typeof tlsUpdateExposure==='function'){try{tlsUpdateExposure(quotes);}catch(_){}}
     // Update per-lane hit counters from tracked_daily_plays (cumulative for today,
     // includes ALL tickers tracked — even ones swapped out intraday — so earlier
     // hits aren't lost when backend rotates the plays)
