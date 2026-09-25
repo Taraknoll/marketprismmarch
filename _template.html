@@ -4956,32 +4956,6 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
         </div>
       </div>
 
-      <!-- KNOWN-ISSUE NOTICE (added 2026-09-25): trading picks + Trading Cards
-           bug is being fixed. Once the fix ships, delete BOTH notice blocks: this
-           one (holds the styles) and the one in the Trading Cards tab.
-           Deliberately not mp-export-hide, so Save PNG exports carry it.
-           Icon stroke is an attribute, not currentColor: html2canvas serializes
-           SVGs without computed styles. -->
-      <style id="mp-issue-styles">
-        .mp-issue{display:flex;align-items:flex-start;gap:14px;margin:0 0 20px;padding:14px 18px;border:1px solid rgba(255,184,0,0.30);border-radius:12px;background:rgba(255,184,0,0.06);}
-        .mp-issue-ico{flex:0 0 auto;width:18px;height:18px;margin-top:2px;}
-        .mp-issue-body{flex:1;min-width:0;}
-        .mp-issue-lbl{font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#FFB800;margin-bottom:4px;}
-        .mp-issue-text{font-family:var(--font-body);font-size:13px;line-height:1.55;color:var(--mp-text-secondary);}
-        .mp-issue-text strong{color:var(--mp-text-primary);font-weight:600;}
-        [data-theme="light"] .mp-issue{border-color:rgba(154,103,0,0.28);background:rgba(255,184,0,0.08);}
-        [data-theme="light"] .mp-issue-ico{stroke:#9A6700;}
-        [data-theme="light"] .mp-issue-lbl{color:#9A6700;}
-      </style>
-      <div class="mp-issue" id="daily-known-issue" role="note">
-        <svg class="mp-issue-ico" viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-        <div class="mp-issue-body">
-          <div class="mp-issue-lbl">Known issue · Fix in progress</div>
-          <div class="mp-issue-text"><strong>Trading picks and Trading Cards are affected by a bug we're fixing.</strong> Until it's resolved, please don't act on these trades as real ideas. We'll remove this notice once the fix is live.</div>
-        </div>
-      </div>
-      <!-- /KNOWN-ISSUE NOTICE -->
-
       <!-- Dashboard data error banner (shown when loadData() throws — e.g. dashboard-data 500, RLS blocks, missing keys) -->
       <div id="daily-error-banner" style="display:none;background:rgba(255,77,77,0.10);border:1px solid rgba(255,77,77,0.32);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#FF8B8B;line-height:1.55;">
         <div style="font-family:'Inter',system-ui,sans-serif;font-size:18px;color:#FF4D4D;margin-bottom:6px;letter-spacing:-0.01em;">Live data unavailable</div>
@@ -6076,17 +6050,6 @@ a.sl-row:hover .sl-tkr{color:#4DC8F0;}
         <span class="ph-italic">Live signals, ranked and scored.</span>
         <p>High-conviction trade signals powered by narrative forensics + live market data</p>
       </div>
-
-      <!-- KNOWN-ISSUE NOTICE (added 2026-09-25): same notice as Daily Plays;
-           styles live in #mp-issue-styles there. Delete both blocks together. -->
-      <div class="mp-issue" id="cards-known-issue" role="note">
-        <svg class="mp-issue-ico" viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-        <div class="mp-issue-body">
-          <div class="mp-issue-lbl">Known issue · Fix in progress</div>
-          <div class="mp-issue-text"><strong>Trading picks and Trading Cards are affected by a bug we're fixing.</strong> Until it's resolved, please don't act on these trades as real ideas. We'll remove this notice once the fix is live.</div>
-        </div>
-      </div>
-      <!-- /KNOWN-ISSUE NOTICE -->
 
       <div class="mp-tcta">
         <div class="mp-tcta-text"><span class="mp-tcta-lock">&#128274; Pro</span><strong>Today's top card is on us.</strong> Pro unlocks the full deck — every Unicorn, Platinum and Gold signal, with live prices and win rates.</div>
