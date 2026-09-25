@@ -9599,7 +9599,73 @@ function dtPrepareDayTrade(rows,snaps,nowUTC){
     });
     return out;
   }
-  return {pre:finish(cls.pre,false),late:finish(cls.late,true),applied:cls.applied,cutoff:cls.cutoff};
+  return {pre:finish(cls.pre,false),late:finish(cls.late,true),applied:cls.applied,cutoff:cls.cutoff,snapBy:cls.snapBy};
+}
+// ── Day Trade order: repeat names step down (rule effective 2026-09-25) ──────
+// The view orders Day Trade by ticker_sizing_learned.tier FIRST, and only ~6 of
+// ~38 candidates are tier A/B, so the same names held the top for weeks (CMCSA
+// #1–#5 every session 09-21..09-24; 59% of Top-picks slots went to a name that
+// was already on the list the day before). Backtest over 105 sessions of the
+// paper book: the tier-first top 2 did no better than a random pick from the top
+// 10, and no field the dashboard has (confidence, lane_confidence, impact
+// score, expected move vs ATR) predicted the day's result; a blend of them was
+// worse. So the order keeps the view's rank frozen at first sight and adds a
+// penalty per consecutive earlier session on the list:
+//   score = first_rank + DT_STREAK_LAMBDA × min(streak, DT_STREAK_CAP), low first
+// then frozen sizing tier, then first_rank, then live lane_rank, then ticker.
+// Top-2 turnover 0.71 → 0.87, repeats in Top picks 61% → 25%. The return effect
+// was +0.25 pp/day with a CI spanning 0: it rotates the list and is not an edge.
+// Membership is unchanged (still the view's top 10); only the order moves.
+// DAY_RANK_RULE: 'score' (default) | 'view' (kill switch: the view's lane_rank).
+var DAY_RANK_RULE='score';
+var DT_STREAK_LAMBDA=2,DT_STREAK_CAP=5,DT_STREAK_LOOKBACK_DAYS=14;
+function dtShiftDate(d,n){
+  var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||''));
+  if(!m)return null;
+  return new Date(Date.UTC(+m[1],+m[2]-1,+m[3])+n*86400000).toISOString().slice(0,10);
+}
+// ticker → consecutive list dates before laneDate the name was on the Day Trade
+// list (capped). The calendar is the distinct snapshot dates in the history, so
+// a day with no snapshots (pipeline outage) doesn't break a streak. Rows hidden
+// by the frontend don't count; names added after the open do (they were shown,
+// in the late sub-list). A row first seen on a later ET day than its date is
+// skipped: the capture job keeps writing under D until the D+1 list publishes
+// (CMG "09-22" was first seen 09-23 06:00 ET), which isn't a session on the list.
+function dtStreaks(hist,laneDate){
+  var byDate={},out={};
+  (hist||[]).forEach(function(h){
+    if(!h||!h.ticker||!h.snapshot_date||h.frontend_hidden===true||!(String(h.snapshot_date)<String(laneDate)))return;
+    var seen=dtParseTs(h.first_seen_at),next=dtOpenCutoffUTC(dtShiftDate(h.snapshot_date,1));
+    if(!isNaN(seen)&&next!=null&&seen>=next-9.5*3600000)return; // ≥ 00:00 ET on D+1
+    (byDate[h.snapshot_date]=byDate[h.snapshot_date]||{})[h.ticker]=1;
+  });
+  var dates=Object.keys(byDate).sort().reverse();
+  if(!dates.length)return out;
+  Object.keys(byDate[dates[0]]).forEach(function(t){
+    var k=0;
+    while(k<dates.length&&k<DT_STREAK_CAP&&byDate[dates[k]][t])k++;
+    out[t]=k;
+  });
+  return out;
+}
+// Frozen snapshot tier, tiebreak only: A<B<C<D<E, "A+" counts as A, none last.
+function dtTierRank(t){var m=/^([A-E])/.exec(String(t||'').toUpperCase());return m?'ABCDE'.indexOf(m[1]):9;}
+// Sets r._dtOrder (0 = first) on each row; tlsByDtOrder / tlsSortLane read it.
+function dtRankRows(rows,snapBy,streakBy){
+  rows=rows||[];
+  rows.forEach(function(r){
+    var s=(snapBy&&snapBy[r.ticker])||null;
+    var base=Number(s&&s.first_rank!=null?s.first_rank:r.lane_rank);
+    r._dtBase=isFinite(base)&&base>0?base:99;
+    r._dtStreak=(streakBy&&streakBy[r.ticker])||0;
+    r._dtScore=r._dtBase+DT_STREAK_LAMBDA*Math.min(r._dtStreak,DT_STREAK_CAP);
+    r._dtTier=dtTierRank(s&&s.sizing_tier);
+  });
+  rows.slice().sort(function(a,b){
+    return (a._dtScore-b._dtScore)||(a._dtTier-b._dtTier)||(a._dtBase-b._dtBase)
+      ||((Number(a.lane_rank)||99)-(Number(b.lane_rank)||99))||(a.ticker<b.ticker?-1:a.ticker>b.ticker?1:0);
+  }).forEach(function(r,i){r._dtOrder=i;});
+  return rows;
 }
 // Long/short mix + direction-signed average day move of the pre-open Day Trade
 // rows vs SPY. Display only.
@@ -9661,7 +9727,12 @@ function tlsLaneFlat(rows){
 }
 function tlsByConv(a,b){return (b._conv||0)-(a._conv||0);}
 function tlsByRank(a,b){return (Number(a.lane_rank)||99)-(Number(b.lane_rank)||99);}
-function tlsSortLane(rows){return rows.slice().sort(tlsLaneFlat(rows)?tlsByRank:tlsByConv);}
+function tlsByDtOrder(a,b){return ((a._dtOrder!=null?a._dtOrder:999)-(b._dtOrder!=null?b._dtOrder:999))||tlsByRank(a,b);}
+// Day Trade rows carry the dashboard's own order (_dtOrder, see DAY_RANK_RULE).
+function tlsSortLane(rows){
+  if(rows.length&&rows.every(function(r){return r.lane==='DAY_TRADE'&&r._dtOrder!=null;}))return rows.slice().sort(tlsByDtOrder);
+  return rows.slice().sort(tlsLaneFlat(rows)?tlsByRank:tlsByConv);
+}
 function tlsVisibleRows(){
   if(TLS_FILTER==='top'){
     // Top picks = tracked trade lanes only — Value Picks are FYI and the
@@ -9955,12 +10026,19 @@ async function loadTradeLanes(){
     // plays. null on any failure → fail open (nothing marked late).
     function dtFetchSnapshots(d){
       return restFetch('daily_play_slate_snapshots',{
-        select:'ticker,first_seen_at,trade_direction,forecast_1d_return_pct,forecast_5d_return_pct',
+        select:'ticker,first_seen_at,first_rank,sizing_tier,trade_direction,forecast_1d_return_pct,forecast_5d_return_pct',
         lane:'eq.DAY_TRADE',
         snapshot_date:'eq.'+d
       },8000).catch(function(e){console.warn('[TL] Day Trade snapshot fetch failed; list not frozen at the open:',e);return null;});
     }
     var dtSnapP=dtFetchSnapshots(scDate);
+    // Earlier sessions' Day Trade lists, for the repeat-name penalty
+    // (DAY_RANK_RULE). null on failure → ranked without the penalty.
+    var dtHistP=DAY_RANK_RULE==='score'?restFetch('daily_play_slate_snapshots',{
+      select:'snapshot_date,ticker,first_seen_at,frontend_hidden',
+      lane:'eq.DAY_TRADE',
+      snapshot_date:'gte.'+dtShiftDate(scDate,-DT_STREAK_LOOKBACK_DAYS)
+    },8000).catch(function(e){console.warn('[TL] Day Trade history fetch failed; ranked without the repeat penalty:',e);return null;}):null;
 
     // Scorecard + earnings — still fed to AI picks and signal summary boxes
     var scP=restFetch('narrative_scorecard',{
@@ -10082,6 +10160,13 @@ async function loadTradeLanes(){
     var dtSplit=dtPrepareDayTrade(buckets.DAY_TRADE,dtSnaps,Date.now());
     buckets.DAY_TRADE=dtSplit.pre;
     var dtLate=dtSplit.late;
+    // Re-rank (see DAY_RANK_RULE). The late sub-list gets the same order.
+    if(DAY_RANK_RULE==='score'&&dtDate&&(dtSplit.pre.length||dtLate.length)){
+      var dtStreakBy=dtStreaks(await dtHistP,dtDate);
+      dtRankRows(dtSplit.pre,dtSplit.snapBy,dtStreakBy);
+      dtRankRows(dtLate,dtSplit.snapBy,dtStreakBy);
+      dtLate.sort(tlsByDtOrder);
+    }
     // ── Supplement Earnings Play lane with earnings_context tickers not already present ──
     var earnTickers={};
     buckets.EARNINGS_PLAY.forEach(function(r){earnTickers[r.ticker]=true;});
@@ -10105,7 +10190,7 @@ async function loadTradeLanes(){
     }
 
     Object.keys(buckets).forEach(function(k){
-      buckets[k].sort(function(a,b){return(Number(a.lane_rank)||99)-(Number(b.lane_rank)||99);});
+      buckets[k].sort(k==='DAY_TRADE'?tlsByDtOrder:function(a,b){return(Number(a.lane_rank)||99)-(Number(b.lane_rank)||99);});
     });
 
     // ═══ Render 6 lanes + AI Picks lane (appended last to fill trailing grid slot) ═══
